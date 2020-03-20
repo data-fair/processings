@@ -109,7 +109,7 @@ export default {
   }),
   computed: {
     datasetsUrl() {
-      return process.env.publicUrl + '/data-fair/dataset/'
+      return process.env.dataFairUrl + '/dataset/'
     }
   },
   watch: {},
@@ -122,7 +122,7 @@ export default {
         this.processings = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings')
         this.processings.results.forEach(async processing => {
           if (processing.dataset && processing.dataset.id) {
-            processing.dataset = await this.$axios.$get(process.env.publicUrl + '/data-fair/api/v1/datasets/' + processing.dataset.id)
+            processing.dataset = await this.$axios.$get(process.env.localDataFairUrl + '/api/v1/datasets/' + processing.dataset.id)
           }
         })
       } catch (error) {

@@ -99,7 +99,7 @@ export default {
     }
   },
   async mounted() {
-    this.vocabulary = await this.$axios.$get(process.env.publicUrl + '/data-fair/api/v1/vocabulary')
+    this.vocabulary = await this.$axios.$get(process.env.dataFairUrl + '/api/v1/vocabulary')
     this.processingSchema = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings/_schema')
   },
   methods: {

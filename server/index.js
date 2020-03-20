@@ -31,18 +31,21 @@ if (process.env.NODE_ENV === 'development') {
 
 // re-expose remote data-fair using local api-key
 const dataFairUrl = new URL(config.dataFairUrl)
-app.use('/data-fair', session.auth, proxy({
-  target: dataFairUrl.origin,
-  pathRewrite: { '^/data-fair': dataFairUrl.pathname },
-  secure: false,
-  logLevel: 'debug',
-  changeOrigin: true,
-  onProxyReq (proxyReq, req, res) {
-    if (!req.user || !req.user.adminMode) return res.status(403).send('Super admin only')
-    proxyReq.setHeader('cookie', '')
-    proxyReq.setHeader('x-apiKey', config.dataFairAPIKey)
-  }
-}))
+const dataFairIsLocal = new URL(config.publicUrl).origin === dataFairUrl.origin
+if (!dataFairIsLocal) {
+  app.use('/data-fair-proxy', session.auth, proxy({
+    target: dataFairUrl.origin,
+    pathRewrite: { '^/data-fair-proxy': dataFairUrl.pathname },
+    secure: false,
+    logLevel: 'debug',
+    changeOrigin: true,
+    onProxyReq (proxyReq, req, res) {
+      if (!req.user || !req.user.adminMode) return res.status(403).send('Super admin only')
+      proxyReq.setHeader('cookie', '')
+      proxyReq.setHeader('x-apiKey', config.dataFairAPIKey)
+    }
+  }))
+}
 
 app.use(cookieParser())
 app.use(bodyParser.json())

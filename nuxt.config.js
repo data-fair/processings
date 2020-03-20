@@ -1,6 +1,8 @@
 const URL = require('url').URL
-let config = require('config')
+let config = { ...require('config') }
 config.basePath = new URL(config.publicUrl + '/').pathname
+const dataFairIsLocal = new URL(config.publicUrl).origin === new URL(config.dataFairUrl).origin
+config.localDataFairUrl = dataFairIsLocal ? config.dataFairUrl : config.publicUrl + '/data-fair-proxy'
 
 if (process.env.NODE_ENV === 'production') {
   const nuxtConfigInject = require('@koumoul/nuxt-config-inject')
@@ -47,7 +49,9 @@ module.exports = {
   },
   env: {
     publicUrl: config.publicUrl,
-    directoryUrl: config.directoryUrl
+    directoryUrl: config.directoryUrl,
+    dataFairUrl: config.dataFairUrl,
+    localDataFairUrl: config.localDataFairUrl
   },
   head: {
     title: 'Data Fair Processings',

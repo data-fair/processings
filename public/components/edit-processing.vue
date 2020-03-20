@@ -112,7 +112,7 @@ export default {
           if (this.processing.owner) {
             params.owner = 'organization:' + this.processing.owner.id
           }
-          let datasets = (await this.$axios.$get(process.env.publicUrl + '/data-fair/api/v1/datasets', { params })).results
+          let datasets = (await this.$axios.$get(process.env.localDataFairUrl + '/api/v1/datasets', { params })).results
           if (this.processing.source && this.processing.source.type) {
             const schema = require('../../sources/' + this.processing.source.type + '/schema.json')
             datasets = datasets.filter(d => schemaIncluded(schema, d.schema))
@@ -135,7 +135,7 @@ export default {
         dataset.owner = processing.owner
       }
       try {
-        await this.$axios.$post(process.env.publicUrl + '/data-fair/api/v1/datasets', dataset)
+        await this.$axios.$post(process.env.localDataFairUrl + '/api/v1/datasets', dataset)
         this.fetchDatasets()
       } catch (error) {
         eventBus.$emit('notification', { error, msg: 'Erreur pendant la création du jeu de données' })
