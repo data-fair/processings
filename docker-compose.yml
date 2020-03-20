@@ -1,0 +1,36 @@
+version: '3'
+services:
+  sd:
+    image: koumoul/simple-directory:2
+    ports:
+      - 5700:8080
+      - 1080:1080
+    environment:
+      - ADMINS=["superadmin@test.com"]
+      - PUBLIC_URL=http://localhost:5600/simple-directory
+      - MAILDEV_ACTIVE=true
+      - STORAGE_TYPE=mongo
+
+  data-fair:
+    image: koumoul/data-fair:master
+    restart: on-failure:10
+    network_mode: host
+    environment:
+      - DEBUG=files
+      - MONGO_URL=mongodb://localhost:27017/data-fair
+      - OPENAPI_VIEWER_URL=http://localhost:5600/openapi-viewer/
+      - DIRECTORY_URL=http://localhost:5600/simple-directory
+      - PUBLIC_URL=http://localhost:8080
+      - WS_PUBLIC_URL=ws://localhost:8080
+
+  elasticsearch:
+    image: koumoul/data-fair-elasticsearch:latest
+    ports:
+      - 9200:9200
+    environment:
+      - discovery.type=single-node
+
+  mongo:
+    image: mongo:4.1
+    ports:
+      - 27017:27017

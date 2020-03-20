@@ -1,0 +1,32 @@
+[{
+    "key": "vehiculeId",
+    "type": "string"
+  },
+  {
+    "key": "currentStopSequence",
+    "type": "integer"
+  },
+  {
+    "key": "currentStatus",
+    "type": "string"
+  },
+  {
+    "key": "routeId",
+    "type": "string"
+  },
+  {
+    "key": "latitude",
+    "type": "number",
+    "x-refersTo": "http://schema.org/latitude"
+  },
+  {
+    "key": "longitude",
+    "type": "number",
+    "x-refersTo": "http://schema.org/longitude"
+  },
+  {
+    "key": "dateTime",
+    "type": "string",
+    "format": "date-time"
+  }
+]

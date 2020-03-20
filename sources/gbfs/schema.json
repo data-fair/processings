@@ -1,0 +1,62 @@
+[
+  {
+    "key": "station_id",
+    "type": "string",
+    "title": "Identifiant station"
+  },
+  {
+    "key": "num_bikes_available",
+    "type": "integer",
+    "title": "Vélos disponibles"
+  },
+  {
+    "key": "num_docks_available",
+    "type": "integer",
+    "title": "Emplacements libres"
+  },
+  {
+    "key": "is_renting",
+    "type": "boolean",
+    "title": "Location de vélos active"
+  },
+  {
+    "key": "is_returning",
+    "type": "boolean",
+    "title": "Retour de vélos possible"
+  },
+  {
+    "key": "last_reported",
+    "type": "string",
+    "format": "date-time",
+    "title": "Date de remontée depuis la station"
+  },
+  {
+    "key": "name",
+    "type": "string",
+    "x-refersTo": "http://www.w3.org/2000/01/rdf-schema#label",
+    "title": "Nom de la station"
+  },
+  {
+    "key": "capacity",
+    "type": "integer",
+    "title": "Capacité"
+  },
+  {
+    "key": "lat",
+    "type": "number",
+    "x-refersTo": "http://schema.org/latitude",
+    "title": "Latitude"
+  },
+  {
+    "key": "lon",
+    "type": "number",
+    "x-refersTo": "http://schema.org/longitude",
+    "title": "Longitude"
+  },
+  {
+    "key": "update_date",
+    "type": "string",
+    "format": "date-time",
+    "title": "Date de mise à jour"
+  }
+]

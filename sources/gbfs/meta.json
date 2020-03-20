@@ -1,0 +1,25 @@
+{
+  "title": "GBFS",
+  "description": "Données en temps réel de l'état des stations vélo au format GBFS",
+  "x-output": "Une ligne par station, mise à jour avec les dernière informations reçues",
+  "properties":{
+    "type":{
+      "const": "gbfs"
+    },
+    "config": {
+      "type": "object",
+      "properties": {
+        "infosUrl": {
+          "title": "URL source pour les informations sur les stations",
+          "type": "string",
+          "default": "https://vannes-gbfs.klervi.net/gbfs/en/station_information.json"
+        },
+        "statusUrl": {
+          "title": "URL source pour les statuts des stations",
+          "type": "string",
+          "default": "https://vannes-gbfs.klervi.net/gbfs/en/station_status.json"
+        }
+      }
+    }
+  }
+}
