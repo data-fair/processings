@@ -40,7 +40,6 @@ app.use('/data-fair', session.auth, proxy({
   onProxyReq (proxyReq, req, res) {
     if (!req.user || !req.user.adminMode) return res.status(403).send('Super admin only')
     proxyReq.setHeader('cookie', '')
-    console.log('API KEY', config.dataFairAPIKey)
     proxyReq.setHeader('x-apiKey', config.dataFairAPIKey)
   }
 }))
