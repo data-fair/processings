@@ -132,7 +132,7 @@ export default {
         schema: require('../../sources/' + this.processing.source.type + '/schema.json')
       }
       if (processing.owner) {
-        dataset.owner = processing.owner
+        dataset.owner = { type: 'organization', ...processing.owner }
       }
       try {
         await this.$axios.$post(process.env.localDataFairUrl + '/api/v1/datasets', dataset)
