@@ -22,7 +22,7 @@
         </v-toolbar>
         <v-card-text>
           <v-form ref="form">
-            <v-jsf v-if="processingSchema" v-model="processing" :options="{hideReadOnly: true}" :schema="processingSchema" @error="error => eventBus.$emit('notification', {error})" />
+            <v-jsf v-if="processingSchema" v-model="processing" :options="{deleteReadOnly: true}" :schema="processingSchema" @error="error => eventBus.$emit('notification', {error})" />
           </v-form>
           <v-row v-if="this.schema" class="px-5" align="center">
             <v-text-field v-model="newDatasetTitle" label="Titre du nouveau jeu de données" />

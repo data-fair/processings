@@ -38,7 +38,7 @@
     "@koumoul/nuxt-config-inject": "^0.4.1",
     "@koumoul/sd-express": "^0.18.1",
     "@koumoul/sd-vue": "^0.17.1",
-    "@koumoul/vjsf": "1.0.0-beta.14",
+    "@koumoul/vjsf": "1.0.0-beta.16",
     "@nuxtjs/axios": "^5.5.4",
     "@nuxtjs/vuetify": "^1.9.0",
     "ajv": "^6.10.2",
