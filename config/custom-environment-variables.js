@@ -1,5 +1,6 @@
 module.exports = {
   publicUrl: 'PUBLIC_URL',
+  port: 'PORT',
   sessionDomain: 'SESSION_DOMAIN',
   directoryUrl: 'DIRECTORY_URL',
   dataFairUrl: 'DATA_FAIR_URL',
