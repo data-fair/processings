@@ -19,6 +19,7 @@ module.exports = {
   },
   loading: { color: '#1e88e5' }, // Customize the progress bar color
   plugins: [
+    { src: '~plugins/filters' },
     { src: '~plugins/moment' },
     { src: '~plugins/session', ssr: false }
   ],
