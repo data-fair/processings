@@ -10,7 +10,9 @@
       </v-flex>
     </v-layout>
     <v-col v-else class="fill-height">
-      <section-subtitle :text="`${processings.count} demandes d'assistance`" />
+      <h3 class="'title grey--text text--darken-3 my-3'">
+        {{ processings.count }} traitement(s)
+      </h3>
       <v-layout wrap>
         <v-flex v-for="processing in processings.results" :key="processing.id" md4 sm6 xs12>
           <nuxt-link
@@ -19,21 +21,56 @@
           >
             <v-hover>
               <v-card slot-scope="{ hover }" :class="`elevation-${hover ? 16 : 2}`" style="cursor:pointer;height:100%;">
-                <v-card-title>
-                  <card-title :text="processing.title | truncate(32)" />
-                  <v-spacer />
-                  <!-- <v-chip v-if="processing.criticity === 'low'" class="success">
-                      {{ categoryLabel[processing.category] }}
-                    </v-chip>
-                    <v-chip v-if="processing.criticity === 'medium'" class="warning">
-                      {{ categoryLabel[processing.category] }}
-                    </v-chip>
-                    <v-chip v-if="processing.criticity === 'high'" class="error">
-                      {{ categoryLabel[processing.category] }}
-                    </v-chip> -->
+                <v-card-title class="title">
+                  <v-flex text-center pa-0>
+                    {{ processing.title }}
+                  </v-flex>
                 </v-card-title>
-                <v-card-text style="height:110px;overflow:hidden;">
-                  {{ processing.description }}
+                <v-card-text>
+                  <v-list>
+                    <v-list-item dense>
+                      <v-list-item-content>
+                        <div v-if="processing.dataset">
+                          Jeu de données associé : <a :href="datasetUrl(processing.dataset.id)" target="_blank">{{ processing.dataset.title }}</a>
+                          &nbsp;<v-chip :color="processing.dataset.status === 'error' ? 'error': 'success'" small>
+                            {{ processing.dataset.status }}
+                          </v-chip>
+                        </div>
+                      </v-list-item-content>
+                    </v-list-item>
+                    <v-list-item dense>
+                      <v-list-item-content>
+                        <div>
+                          Type de traitement : <processing-infos :processing="processing" />
+                        </div>
+                      </v-list-item-content>
+                    </v-list-item>
+                    <v-list-item dense>
+                      <v-list-item-content>
+                        <div>
+                          Périodicité : <span class="accent--text">Toutes les {{ processing.periodicity.value }} {{ processing.periodicity.unit }}</span>
+                        </div>
+                      </v-list-item-content>
+                    </v-list-item>
+                    <v-list-item v-if="processing['last-execution']" dense>
+                      <v-list-item-content>
+                        <div>
+                          Dernière exécution :
+                          <span class="accent--text">{{ processing['last-execution'].date | moment('from') }}</span>
+                          &nbsp;<v-chip :color="processing['last-execution'].status === 'ok' ? 'success' : 'error'" small>
+                            {{ processing['last-execution'].status }}
+                          </v-chip>
+                        </div>
+                      </v-list-item-content>
+                    </v-list-item>
+                    <v-list-item dense>
+                      <v-list-item-content>
+                        <div>
+                          Actif : <span class="accent--text">{{ processing.active ? 'oui' : 'non' }}</span>
+                        </div>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </v-list>
                 </v-card-text>
                 <v-divider />
                 <v-card-text class="px-5">
@@ -57,8 +94,10 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import ProcessingInfos from '~/components/processing-infos.vue'
 
 export default {
+  components: { ProcessingInfos },
   layout: 'embed',
   middleware: 'admin-required',
   data: () => ({
@@ -72,18 +111,18 @@ export default {
       if (newV !== oldV) {
         this.refresh()
       }
-    },
-    entity() {
-      this.$scrollTo()
     }
   },
   mounted() {
     this.refresh()
   },
   methods: {
+    datasetUrl(datasetId) {
+      return process.env.publicDatasetsUrlTemplate.replace('{id}', datasetId)
+    },
     async refresh() {
       try {
-        // this.processings = await this.$axios.$get(`${process.env.publicUrl}/api/v1/processings/${this.activeAccount.type}/${this.activeAccount.id}`)
+        this.processings = await this.$axios.$get(`${process.env.publicUrl}/api/v1/processings/${this.activeAccount.type}/${this.activeAccount.id}`)
       } catch (err) {
         console.log(err)
       }

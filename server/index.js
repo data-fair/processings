@@ -52,7 +52,7 @@ app.use(bodyParser.json())
 app.use(bodyParser.text())
 
 app.use('/api/v1/session', session.router)
-app.use('/api/v1', session.auth, api)
+app.use('/api/v1', session.requiredAuth, api)
 
 let httpServer
 async function main() {

@@ -52,7 +52,8 @@ module.exports = {
     publicUrl: config.publicUrl,
     directoryUrl: config.directoryUrl,
     dataFairUrl: config.dataFairUrl,
-    localDataFairUrl: config.localDataFairUrl
+    localDataFairUrl: config.localDataFairUrl,
+    publicDatasetsUrlTemplate: config.publicDatasetsUrlTemplate
   },
   head: {
     title: 'Data Fair Processings',

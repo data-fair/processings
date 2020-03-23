@@ -4,16 +4,11 @@
     <v-container grid-list-xl>
       <v-subheader>{{ (processings && processings.count) || 0 }} traitements</v-subheader>
       <v-layout v-if="processings" wrap>
-        <v-flex
-          v-for="processing in processings.results" :key="processing.id" md4 sm6 xs12
-        >
+        <v-flex v-for="processing in processings.results" :key="processing.id" md4 sm6 xs12>
           <v-card :elevation="4">
             <v-card-title class="title">
-              <v-flex
-                text-center
-                pa-0
-              >
-                {{ processing.title }}
+              <v-flex text-center pa-0>
+                {{ processing.title }} <span v-if="processing.owner">({{ processing.owner.name }})</span>
               </v-flex>
             </v-card-title>
             <v-divider />
@@ -23,7 +18,7 @@
                 <v-list-item dense>
                   <v-list-item-content>
                     <div v-if="processing.dataset">
-                      Jeu de données associé : <a :href="datasetsUrl + processing.dataset.id + '/tabular'" target="_blank">{{ processing.dataset.title }}</a>
+                      Jeu de données associé : <a :href="datasetUrl(processing.dataset.id)" target="_blank">{{ processing.dataset.title }}</a>
                       &nbsp;<v-chip :color="processing.dataset.status === 'error' ? 'error': 'success'" small>
                         {{ processing.dataset.status }}
                       </v-chip>
@@ -103,16 +98,14 @@ export default {
   data: () => ({
     processings: null
   }),
-  computed: {
-    datasetsUrl() {
-      return process.env.dataFairUrl + '/dataset/'
-    }
-  },
   watch: {},
   created() {
     this.refresh()
   },
   methods: {
+    datasetUrl(datasetId) {
+      return process.env.publicDatasetsUrlTemplate.replace('{id}', datasetId)
+    },
     async refresh() {
       try {
         this.processings = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings')

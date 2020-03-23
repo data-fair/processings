@@ -1,6 +1,6 @@
 // Util functions shared accross the main find (GET on collection) endpoints
 
-exports.query = (reqQuery, fieldsMap) => {
+exports.query = (reqQuery, fieldsMap = {}) => {
   const query = {}
   if (!reqQuery) return query
 

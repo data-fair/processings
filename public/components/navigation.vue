@@ -5,7 +5,7 @@
         <v-list-item-action>
           <v-icon>mdi-home</v-icon>
         </v-list-item-action>
-        <v-list-item-title>Traitements péridiques</v-list-item-title>
+        <v-list-item-title>Traitements périodiques</v-list-item-title>
       </v-list-item>
 
       <template v-if="!embed">

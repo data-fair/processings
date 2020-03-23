@@ -7,6 +7,7 @@ const asyncWrap = require('../utils/async-wrap')
 const slug = require('slugify')
 const scheduler = require('../utils/scheduler')
 const tasksUtils = require('../utils/tasks')
+const permissions = require('../utils/permissions')
 const router = express.Router()
 
 router.get('/_schema', asyncWrap(async(req, res, next) => {
@@ -14,10 +15,10 @@ router.get('/_schema', asyncWrap(async(req, res, next) => {
 }))
 
 // Get the list of processings
-router.get('', asyncWrap(async (req, res, next) => {
+router.get('', permissions.isAdmin, asyncWrap(async (req, res, next) => {
   const sort = findUtils.sort(req.query.sort)
   const [skip, size] = findUtils.pagination(req.query)
-  const query = findUtils.query(req.query, { paid: 'paid', quotes: 'quotes', entity: 'entity.id' })
+  const query = findUtils.query(req.query)
   const project = { _id: 0, logs: 0 }
   const processings = req.app.get('db').collection('processings')
   const [results, count] = await Promise.all([
@@ -28,7 +29,7 @@ router.get('', asyncWrap(async (req, res, next) => {
 }))
 
 // Create a processing
-router.post('', asyncWrap(async(req, res, next) => {
+router.post('', permissions.isAdmin, asyncWrap(async(req, res, next) => {
   const valid = validate(req.body)
   if (!valid) return res.status(400).send(validate.errors)
   req.body.status = req.body.status || 'stopped'
@@ -58,7 +59,7 @@ router.post('', asyncWrap(async(req, res, next) => {
 }))
 
 // Patch some of the attributes of a processing
-router.patch('/:id', asyncWrap(async(req, res, next) => {
+router.patch('/:id', permissions.isAdmin, asyncWrap(async(req, res, next) => {
   const processing = await req.app.get('db').collection('processings').findOne({ id: req.params.id }, { projection: { _id: 0, logs: 0 } })
   if (!processing) return res.status(404)
   // Restrict the parts of the processing that can be edited by API
@@ -94,25 +95,42 @@ router.patch('/:id', asyncWrap(async(req, res, next) => {
 router.get('/:id', asyncWrap(async(req, res, next) => {
   const processing = await req.app.get('db').collection('processings').findOne({ id: req.params.id }, { projection: { _id: 0, logs: 0 } })
   if (!processing) return res.sendStatus(404)
+  if (!permissions.isOwner(req.user, processing)) return res.sendStatus(403)
   res.status(200).json(processing)
 }))
 
 router.get('/:id/logs', asyncWrap(async(req, res, next) => {
   const processing = await req.app.get('db').collection('processings').findOne({ id: req.params.id }, { projection: { logs: 1 } })
+  if (!processing) return res.sendStatus(404)
+  if (!permissions.isOwner(req.user, processing)) return res.sendStatus(403)
   res.status(200).json((processing.logs || []).reverse())
 }))
 
-router.delete('/:id', asyncWrap(async(req, res, next) => {
+router.delete('/:id', permissions.isAdmin, asyncWrap(async(req, res, next) => {
   await req.app.get('db').collection('processings').deleteOne({ id: req.params.id })
   scheduler.delete(req.params.id)
   res.sendStatus(204)
 }))
 
-router.post('/:id/_run', asyncWrap(async (req, res, next) => {
+router.post('/:id/_run', permissions.isAdmin, asyncWrap(async (req, res, next) => {
   const db = req.app.get('db')
   const processing = await db.collection('processings').findOne({ id: req.params.id })
   await tasksUtils.run(processing, db)
   res.status(200).send()
+}))
+
+router.get('/:type/:id', permissions.isAccountAdmin, asyncWrap(async(req, res, next) => {
+  const sort = findUtils.sort(req.query.sort)
+  const [skip, size] = findUtils.pagination(req.query)
+  const query = findUtils.query(req.query)
+  query['owner.id'] = req.params.id
+  const project = { _id: 0, logs: 0 }
+  const processings = req.app.get('db').collection('processings')
+  const [results, count] = await Promise.all([
+    size > 0 ? processings.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
+    processings.countDocuments(query)
+  ])
+  res.json({ results, count })
 }))
 
 module.exports = router

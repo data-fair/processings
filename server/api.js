@@ -5,11 +5,6 @@ const express = require('express')
 
 const api = module.exports = express.Router()
 
-api.use((req, res, next) => {
-  if (!req.user || !req.user.adminMode) return res.status(403).send('Superadmin only')
-  next()
-})
-
 api.use('/processings', require('./routers/processings'))
 
 //

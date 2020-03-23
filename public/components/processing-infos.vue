@@ -43,13 +43,13 @@
                               {{ sourceType['x-output'] }}
                             </td>
                           </tr>
-                          <tr>
+                          <tr v-if="datasetSchema">
                             <td class="text-left">Champs</td>
                             <td>
                               {{ datasetSchema.map(f => f.key).join(', ') }}
                             </td>
                           </tr>
-                          <tr>
+                          <tr v-if="datasetSchema">
                             <td class="text-left">Concepts</td>
                             <td>
                               <v-chip v-for="concept in datasetSchema.filter(f => f['x-refersTo']).map(f => conceptLabel(f['x-refersTo']))" :key="concept" color="primary" class="ma-1">
@@ -95,7 +95,12 @@ export default {
       return this.processingSchema && this.processingSchema.properties.source.oneOf.find(s => s.properties.type.const === this.processing.source.type)
     },
     datasetSchema() {
-      return require('../../sources/' + this.processing.source.type + '/schema.json')
+      try {
+        return require('../../sources/' + this.processing.source.type + '/schema.json')
+      } catch (err) {
+        console.log('No schema for processing type')
+      }
+      return null
     }
   },
   async mounted() {
