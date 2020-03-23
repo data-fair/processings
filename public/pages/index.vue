@@ -98,6 +98,7 @@ import ProcessingLogs from '~/components/processing-logs.vue'
 import eventBus from '../event-bus'
 
 export default {
+  middleware: 'superadmin-required',
   components: {
     EditProcessing,
     RemoveProcessing,
