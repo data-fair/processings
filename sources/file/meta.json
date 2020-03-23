@@ -1,0 +1,20 @@
+{
+  "title": "File",
+  "description": "Synchronise régulièrement un fichier depuis un lien vers un jeu de données",
+  "x-output": "",
+  "properties":{
+    "type":{
+      "const": "file"
+    },
+    "config": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "title": "URL source",
+          "type": "string",
+          "default": "https://koumoul.com/s/data-fair/api/v1/datasets/fr-en-calendrier-scolaire/raw"
+        }
+      }
+    }
+  }
+}

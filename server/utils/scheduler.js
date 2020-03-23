@@ -1,9 +1,5 @@
 const schedule = require('node-schedule')
-const path = require('path')
-const config = require('config')
-const baseUrl = config.dataFairUrl + '/api/v1/datasets'
-const axios = require('axios')
-
+const tasksUtils = require('./tasks')
 const tasks = {}
 
 function register(processing, db) {
@@ -17,28 +13,13 @@ function register(processing, db) {
     delete tasks[processing.id]
   }
   console.log('Registering task', processing.title, str + ' * * *')
-  const task = require(path.join(__dirname, '../../sources', processing.source.type))
   tasks[processing.id] = schedule.scheduleJob(str + ' * * *', async function() {
-    let status = 'ok'
-    let logMessage = ''
-    try {
-      const data = await task(processing.source.config)
-      const results = await axios.post(baseUrl + '/' + processing.dataset.id + '/_bulk_lines', data, { headers: { 'x-apiKey': config.dataFairAPIKey } })
-      // TODO : throw error of results.data.ndErrors > 0
-      logMessage = `${results.data.nbOk} éléments mis à jour`
-    } catch (err) {
-      logMessage = err
-      status = 'erreur'
-    }
-    await db.collection('processings').findOneAndUpdate({ id: processing.id }, {
-      $set: { 'last-execution': { date: new Date(), status } },
-      $push: { logs: { $each: [{ date: new Date(), message: logMessage, status }], $slice: -10000 } }
-    })
+    await tasksUtils.run(processing, db)
   })
 }
 
 exports.init = async function(db) {
-  const processings = await db.collection('processings').find({ status: 'running' }).toArray()
+  const processings = await db.collection('processings').find({ active: true }).toArray()
   processings.forEach(processing => {
     register(processing, db)
   })

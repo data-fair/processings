@@ -6,6 +6,7 @@ const findUtils = require('../utils/find')
 const asyncWrap = require('../utils/async-wrap')
 const slug = require('slugify')
 const scheduler = require('../utils/scheduler')
+const tasksUtils = require('../utils/tasks')
 const router = express.Router()
 
 router.get('/_schema', asyncWrap(async(req, res, next) => {
@@ -85,19 +86,17 @@ router.patch('/:id', asyncWrap(async(req, res, next) => {
   var valid = validate(JSON.parse(JSON.stringify(patchedprocessing)))
   if (!valid) return res.status(400).send(validate.errors)
   await req.app.get('db').collection('processings').findOneAndUpdate({ id: req.params.id }, patch)
-  if (patchedprocessing.status === 'running') scheduler.update(patchedprocessing, req.app.get('db'))
+  if (patchedprocessing.active) scheduler.update(patchedprocessing, req.app.get('db'))
   else scheduler.delete(patchedprocessing.id)
   res.status(200).json(patchedprocessing)
 }))
 
-// Read a processing
 router.get('/:id', asyncWrap(async(req, res, next) => {
   const processing = await req.app.get('db').collection('processings').findOne({ id: req.params.id }, { projection: { _id: 0, logs: 0 } })
   if (!processing) return res.sendStatus(404)
   res.status(200).json(processing)
 }))
 
-// Read a processing
 router.get('/:id/logs', asyncWrap(async(req, res, next) => {
   const processing = await req.app.get('db').collection('processings').findOne({ id: req.params.id }, { projection: { logs: 1 } })
   res.status(200).json((processing.logs || []).reverse())
@@ -107,6 +106,13 @@ router.delete('/:id', asyncWrap(async(req, res, next) => {
   await req.app.get('db').collection('processings').deleteOne({ id: req.params.id })
   scheduler.delete(req.params.id)
   res.sendStatus(204)
+}))
+
+router.post('/:id/_run', asyncWrap(async (req, res, next) => {
+  const db = req.app.get('db')
+  const processing = await db.collection('processings').findOne({ id: req.params.id })
+  await tasksUtils.run(processing, db)
+  res.status(200).send()
 }))
 
 module.exports = router

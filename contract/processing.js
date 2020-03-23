@@ -9,7 +9,7 @@ const sources = fs.readdirSync(path.join(__dirname, '../sources'))
 module.exports = {
   type: 'object',
   additionalProperties: false,
-  required: ['title'],
+  required: ['title', 'source', 'dataset'],
   properties: {
     id: {
       type: 'string',
@@ -24,6 +24,11 @@ module.exports = {
       title: 'Source des données',
       type: 'object',
       oneOf: sources
+    },
+    active: {
+      title: 'Actif',
+      type: 'boolean',
+      default: false
     },
     periodicity: {
       title: 'Périodicité de la récupération',
@@ -40,7 +45,7 @@ module.exports = {
           type: 'string',
           enum: ['secondes', 'minutes', 'heures'],
           'x-class': 'xs6',
-          default: 'secondes'
+          default: 'minutes'
         }
       }
     },
@@ -80,7 +85,7 @@ module.exports = {
         status: {
           title: 'Statut',
           type: 'string',
-          enum: ['ok', 'erreur']
+          enum: ['ok', 'ko']
         }
       }
     },

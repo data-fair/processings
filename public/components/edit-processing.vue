@@ -21,12 +21,12 @@
           </v-btn>
         </v-toolbar>
         <v-card-text>
-          <v-form ref="form" v-model="valid">
+          <v-form ref="form">
             <v-jsf v-if="processingSchema" v-model="processing" :options="{hideReadOnly: true}" :schema="processingSchema" @error="error => eventBus.$emit('notification', {error})" />
           </v-form>
-          <v-row class="px-5" align="center">
+          <v-row v-if="this.schema" class="px-5" align="center">
             <v-text-field v-model="newDatasetTitle" label="Titre du nouveau jeu de données" />
-            <v-btn :disabled="!processing.source || !processing.source.type || !newDatasetTitle" text @click="createDataset(processing)">
+            <v-btn :disabled="!newDatasetTitle" text @click="createDataset(processing)">
               Créer un jeu de données
             </v-btn>
           </v-row>
@@ -36,7 +36,7 @@
           <v-btn text @click.native="dialog = false">
             Annuler
           </v-btn>
-          <v-btn v-if="valid" color="primary" @click.native="confirm">
+          <v-btn color="primary" @click.native="confirm">
             Enregistrer
           </v-btn>
         </v-card-actions>
@@ -67,12 +67,19 @@ export default {
       dialog: null,
       valid: false,
       processing: {},
+      schema: null,
       newDatasetTitle: null,
       processingSchema: null
     }
   },
   watch: {
     'processing.source.type'() {
+      try {
+        this.schema = require('../../sources/' + this.processing.source.type + '/schema.json')
+      } catch (err) {
+        console.log('Fail to read schema for processing type')
+        this.schema = null
+      }
       if (this.dialog) this.fetchDatasets()
     },
     'processing.owner'() {
@@ -86,7 +93,6 @@ export default {
   },
   methods: {
     async confirm () {
-      console.log('confirm')
       if (this.$refs.form.validate()) {
         try {
           if (this.processingId) {
@@ -113,9 +119,8 @@ export default {
             params.owner = 'organization:' + this.processing.owner.id
           }
           let datasets = (await this.$axios.$get(process.env.localDataFairUrl + '/api/v1/datasets', { params })).results
-          if (this.processing.source && this.processing.source.type) {
-            const schema = require('../../sources/' + this.processing.source.type + '/schema.json')
-            datasets = datasets.filter(d => schemaIncluded(schema, d.schema))
+          if (this.schema) {
+            datasets = datasets.filter(d => schemaIncluded(this.schema, d.schema))
           }
           this.$set(this.processingSchema.properties.dataset, 'enum', datasets.map(d => ({ id: d.id, title: d.title })))
         }
@@ -129,7 +134,7 @@ export default {
         title: this.newDatasetTitle,
         isRest: true,
         rest: {},
-        schema: require('../../sources/' + this.processing.source.type + '/schema.json')
+        schema: this.schema
       }
       if (processing.owner) {
         dataset.owner = { type: 'organization', ...processing.owner }

@@ -22,7 +22,7 @@
               <v-list>
                 <v-list-item dense>
                   <v-list-item-content>
-                    <div>
+                    <div v-if="processing.dataset">
                       Jeu de données associé : <a :href="datasetsUrl + processing.dataset.id + '/tabular'" target="_blank">{{ processing.dataset.title }}</a>
                       &nbsp;<v-chip :color="processing.dataset.status === 'error' ? 'error': 'success'" small>
                         {{ processing.dataset.status }}
@@ -58,7 +58,7 @@
                 <v-list-item dense>
                   <v-list-item-content>
                     <div>
-                      Statut : <span class="accent--text">{{ processing.status }}</span>
+                      Actif : <span class="accent--text">{{ processing.active ? 'oui' : 'non' }}</span>
                     </div>
                   </v-list-item-content>
                 </v-list-item>
@@ -67,14 +67,9 @@
             <v-divider />
             <v-card-actions class="py-0">
               <v-spacer />
-              <v-btn
-                icon color="primary" text @click="toggle(processing)"
-              >
-                <v-icon v-if="processing.status === 'stopped'">
+              <v-btn :disabled="processing.status === 'running'" icon color="primary" text @click="run(processing)">
+                <v-icon>
                   mdi-play
-                </v-icon>
-                <v-icon v-else>
-                  mdi-stop
                 </v-icon>
               </v-btn>
               <processing-logs :processing-id="processing.id" />
@@ -130,11 +125,10 @@ export default {
         eventBus.$emit('notification', { error, msg: 'Erreur pendant la récupération de la liste des traitements' })
       }
     },
-    async toggle(processing) {
+    async run(processing) {
       try {
-        const status = (processing.status === 'running') ? 'stopped' : 'running'
-        await this.$axios.$patch(process.env.publicUrl + '/api/v1/processings/' + processing.id, { status })
-        processing.status = status
+        await this.$axios.$post(process.env.publicUrl + '/api/v1/processings/' + processing.id + '/_run')
+        this.refresh()
       } catch (error) {
         eventBus.$emit('notification', { error, msg: 'Erreur pendant le changement de statut du traitement' })
       }
