@@ -31,6 +31,9 @@ export default {
         this.$router.go()
       }
     }
+  },
+  mounted() {
+    this.$store.commit('setAny', { embed: this.$route.query.embed === 'true' })
   }
 }
 

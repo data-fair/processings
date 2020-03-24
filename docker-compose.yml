@@ -20,8 +20,8 @@ services:
       - MONGO_URL=mongodb://localhost:27017/data-fair
       - OPENAPI_VIEWER_URL=http://localhost:5600/openapi-viewer/
       - DIRECTORY_URL=http://localhost:5600/simple-directory
-      - PUBLIC_URL=http://localhost:8080
-      - WS_PUBLIC_URL=ws://localhost:8080
+      - PUBLIC_URL=http://localhost:5600/data-fair
+      - WS_PUBLIC_URL=ws://localhost:5600/data-fair
 
   elasticsearch:
     image: koumoul/data-fair-elasticsearch:latest

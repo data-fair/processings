@@ -20,67 +20,73 @@
             style="text-decoration:none"
           >
             <v-hover>
-              <v-card slot-scope="{ hover }" :class="`elevation-${hover ? 16 : 2}`" style="cursor:pointer;height:100%;">
-                <v-card-title class="title">
+              <v-card slot-scope="{ hover }" :class="`elevation-${hover ? 16 : 2}`" class="fill-height" style="cursor:pointer;height:100%;display:flex;flex-direction:column;">
+                <v-card-title class="title px-1">
                   <v-flex text-center pa-0>
-                    {{ processing.title }}
+                    {{ processing.title | truncate(30) }}
                   </v-flex>
                 </v-card-title>
-                <v-card-text>
+                <v-divider />
+                <v-card-text style="flex: 1;" class="py-0">
                   <v-list>
-                    <v-list-item dense>
+                    <!-- <v-list-item dense>
                       <v-list-item-content>
                         <div v-if="processing.dataset">
                           Jeu de données associé : <a :href="datasetUrl(processing.dataset.id)" target="_blank">{{ processing.dataset.title }}</a>
-                          &nbsp;<v-chip :color="processing.dataset.status === 'error' ? 'error': 'success'" small>
-                            {{ processing.dataset.status }}
-                          </v-chip>
+                        </div>
+                      </v-list-item-content>
+                    </v-list-item> -->
+                    <v-list-item dense>
+                      <v-list-item-content>
+                        <div>
+                          <span class="grey--text text--darken-2">Type de traitement :</span> <processing-infos :processing="processing" :no-modal="true" />
                         </div>
                       </v-list-item-content>
                     </v-list-item>
                     <v-list-item dense>
                       <v-list-item-content>
                         <div>
-                          Type de traitement : <processing-infos :processing="processing" />
+                          <span class="grey--text text--darken-2">Périodicité :</span> <span>Toutes les {{ processing.periodicity.value }} {{ processing.periodicity.unit }}</span>
                         </div>
                       </v-list-item-content>
                     </v-list-item>
                     <v-list-item dense>
                       <v-list-item-content>
                         <div>
-                          Périodicité : <span class="accent--text">Toutes les {{ processing.periodicity.value }} {{ processing.periodicity.unit }}</span>
-                        </div>
-                      </v-list-item-content>
-                    </v-list-item>
-                    <v-list-item v-if="processing['last-execution']" dense>
-                      <v-list-item-content>
-                        <div>
-                          Dernière exécution :
-                          <span class="accent--text">{{ processing['last-execution'].date | moment('from') }}</span>
-                          &nbsp;<v-chip :color="processing['last-execution'].status === 'ok' ? 'success' : 'error'" small>
-                            {{ processing['last-execution'].status }}
-                          </v-chip>
+                          <span class="grey--text text--darken-2">Exécuté :</span>
+                          <span v-if="processing['last-execution']">
+                            <span>{{ processing['last-execution'].date | moment('from') }}</span>
+                            &nbsp;<v-chip :color="processing['last-execution'].status === 'ok' ? 'success' : 'error'" small>
+                              {{ processing['last-execution'].status }}
+                            </v-chip>
+                          </span><span v-else>jamais</span>
                         </div>
                       </v-list-item-content>
                     </v-list-item>
                     <v-list-item dense>
                       <v-list-item-content>
-                        <div>
-                          Actif : <span class="accent--text">{{ processing.active ? 'oui' : 'non' }}</span>
-                        </div>
+                        <span>
+                          <span class="grey--text text--darken-2">Actif :</span> <v-icon :color="processing.active ? 'success' : 'error'">
+                            mdi-circle
+                          </v-icon>
+                        </span>
                       </v-list-item-content>
                     </v-list-item>
                   </v-list>
                 </v-card-text>
                 <v-divider />
-                <v-card-text class="px-5">
-                  <v-row align="center">
-                    <v-icon size="18">
-                      mdi-plus-circle-outline
-                    </v-icon>&nbsp;{{ processing.created.date | moment('from') }}
-                    &nbsp;<v-icon size="18">
-                      mdi-update
-                    </v-icon>&nbsp;{{ processing.updated.date | moment('from') }}
+                <v-card-text class="px-5 py-0">
+                  <v-row>
+                    <v-col>
+                      <v-icon size="18">
+                        mdi-plus-circle-outline
+                      </v-icon>&nbsp;{{ processing.created.date | moment('from') }}
+                    </v-col>
+                    <v-col>
+                      <v-icon size="18">
+                        mdi-update
+                      </v-icon>&nbsp;{{ processing.updated.date | moment('from') }}
+                    </v-col>
                   </v-row>
                 </v-card-text>
               </v-card>
@@ -117,9 +123,6 @@ export default {
     this.refresh()
   },
   methods: {
-    datasetUrl(datasetId) {
-      return process.env.publicDatasetsUrlTemplate.replace('{id}', datasetId)
-    },
     async refresh() {
       try {
         this.processings = await this.$axios.$get(`${process.env.publicUrl}/api/v1/processings/${this.activeAccount.type}/${this.activeAccount.id}`)

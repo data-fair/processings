@@ -1,15 +1,15 @@
 <template lang="html">
   <span>
-    <span class="accent--text">{{ (sourceType && sourceType.title) || 'Non défini' }}</span>
+    <span>{{ (sourceType && sourceType.title) || 'Non défini' }}</span>
     <v-tooltip v-if="processing" top>
       <template v-slot:activator="{ on }">
-        <v-btn text v-on="on" @click="stepper=0;dialog=true">
-          <v-icon color="accent">
+        <v-btn text style="height:20px" v-on="on" @click="dialog=!noModal">
+          <v-icon color="primary" size="20">
             mdi-information
           </v-icon>
         </v-btn>
       </template>
-      <span>Description du traitement</span>
+      <span>{{ noModal ? sourceType && sourceType.description : 'Description du traitement' }}</span>
       <v-dialog v-model="dialog" :fullscreen="$vuetify.breakpoint.mdAndDown" :max-width="1200">
         <v-card class="py-3">
           <v-simple-table>
@@ -81,7 +81,8 @@
 
 export default {
   props: {
-    processing: { type: Object, required: true }
+    processing: { type: Object, required: true },
+    noModal: { type: Boolean, default: false }
   },
   data() {
     return {

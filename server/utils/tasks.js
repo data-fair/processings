@@ -4,6 +4,15 @@ const baseUrl = config.dataFairUrl + '/api/v1/datasets'
 const axios = require('axios')
 const FormData = require('form-data')
 
+function displayBytes(aSize) {
+  aSize = Math.abs(parseInt(aSize, 10))
+  if (aSize === 0) return '0 octets'
+  const def = [[1, 'octets'], [1000, 'ko'], [1000 * 1000, 'Mo'], [1000 * 1000 * 1000, 'Go'], [1000 * 1000 * 1000 * 1000, 'To'], [1000 * 1000 * 1000 * 1000 * 1000, 'Po']]
+  for (var i = 0; i < def.length; i++) {
+    if (aSize < def[i][0]) return (aSize / def[i - 1][0]).toLocaleString() + ' ' + def[i - 1][1]
+  }
+}
+
 exports.run = async (processing, db) => {
   await db.collection('processings').findOneAndUpdate({ id: processing.id }, {
     $set: { status: 'running' }
@@ -13,6 +22,7 @@ exports.run = async (processing, db) => {
   let logMessage = ''
   try {
     const source = require(path.join(__dirname, '../../sources', processing.source.type))
+    const startTime = process.hrtime()
     const result = await source.run(processing.source.config)
     if (result.bulkLines) {
       const results = await axios.post(baseUrl + '/' + processing.dataset.id + '/_bulk_lines', result.bulkLines, { headers: { 'x-apiKey': config.dataFairAPIKey } })
@@ -22,6 +32,9 @@ exports.run = async (processing, db) => {
       const formData = new FormData()
       formData.append('file', result.fileStream, { filename: result.fileName, knownLength: Number(result.headers['content-length']) })
       await axios.post(baseUrl + '/' + processing.dataset.id, formData, { headers: { ...formData.getHeaders(), 'content-length': formData.getLengthSync(), 'x-apiKey': config.dataFairAPIKey } })
+      const elapsed = process.hrtime(startTime)
+      const elapsedSeconds = (elapsed[0] + (elapsed[1] / 1e9)).toFixed(2)
+      logMessage = `Fichier ${result.fileName} de ${displayBytes(Number(result.headers['content-length']))} transféré en ${elapsedSeconds} sec.`
     } else {
       throw new Error('Source should return "bulkLines" or "fileStream".')
     }

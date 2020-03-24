@@ -26,7 +26,7 @@ const app = express()
 if (process.env.NODE_ENV === 'development') {
   // Create a mono-domain environment with other services in dev
   app.use('/simple-directory', proxy({ target: 'http://localhost:5700', pathRewrite: { '^/simple-directory': '' } }))
-  // app.use('/data-fair', proxy({ target: 'http://localhost:8080', pathRewrite: { '^/data-fair': '' }, ws: true }))
+  app.use('/data-fair', proxy({ target: 'http://localhost:8080', pathRewrite: { '^/data-fair': '' }, ws: true }))
 }
 
 // re-expose remote data-fair using local api-key

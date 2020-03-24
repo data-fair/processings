@@ -37,9 +37,6 @@ export default () => {
       setAny(state, params) {
         Object.assign(state, params)
       }
-    },
-    async nuxtServerInit({ commit, dispatch }, { req, env, app, route }) {
-      commit('setAny', { embed: route.query.embed === 'true' })
     }
   })
 }

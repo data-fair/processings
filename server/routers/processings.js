@@ -9,9 +9,19 @@ const scheduler = require('../utils/scheduler')
 const tasksUtils = require('../utils/tasks')
 const permissions = require('../utils/permissions')
 const router = express.Router()
+const path = require('path')
+
+module.exports = router
 
 router.get('/_schema', asyncWrap(async(req, res, next) => {
   res.status(200).json(processingschema)
+}))
+
+router.post('/_init-dataset', permissions.isAdmin, asyncWrap(async(req, res, next) => {
+  const processing = req.body
+  const source = require(path.join(__dirname, '../../sources', processing.source.type))
+  if (source.initDataset) await source.initDataset(processing)
+  res.status(200).send()
 }))
 
 // Get the list of processings
@@ -132,5 +142,3 @@ router.get('/:type/:id', permissions.isAccountAdmin, asyncWrap(async(req, res, n
   ])
   res.json({ results, count })
 }))
-
-module.exports = router

@@ -21,6 +21,7 @@ module.exports = {
   plugins: [
     { src: '~plugins/filters' },
     { src: '~plugins/moment' },
+    { src: '~plugins/typography' },
     { src: '~plugins/session', ssr: false }
   ],
   router: {
@@ -53,7 +54,7 @@ module.exports = {
     directoryUrl: config.directoryUrl,
     dataFairUrl: config.dataFairUrl,
     localDataFairUrl: config.localDataFairUrl,
-    publicDatasetsUrlTemplate: config.publicDatasetsUrlTemplate
+    datasetsUrlTemplate: config.datasetsUrlTemplate
   },
   head: {
     title: 'Data Fair Processings',

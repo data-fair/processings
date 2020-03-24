@@ -5,15 +5,15 @@
       <v-subheader>{{ (processings && processings.count) || 0 }} traitements</v-subheader>
       <v-layout v-if="processings" wrap>
         <v-flex v-for="processing in processings.results" :key="processing.id" md4 sm6 xs12>
-          <v-card :elevation="4">
-            <v-card-title class="title">
+          <v-card :elevation="4" class="fill-height" style="display:flex;flex-direction:column;">
+            <v-card-title class="title px-1">
               <v-flex text-center pa-0>
-                {{ processing.title }} <span v-if="processing.owner">({{ processing.owner.name }})</span>
+                {{ processing.title | truncate(32) }}
               </v-flex>
             </v-card-title>
             <v-divider />
 
-            <v-card-text class="px-0 pt-0">
+            <v-card-text class="px-0 pt-0" style="flex: 1;">
               <v-list>
                 <v-list-item dense>
                   <v-list-item-content>
@@ -22,6 +22,13 @@
                       &nbsp;<v-chip :color="processing.dataset.status === 'error' ? 'error': 'success'" small>
                         {{ processing.dataset.status }}
                       </v-chip>
+                    </div>
+                  </v-list-item-content>
+                </v-list-item>
+                <v-list-item v-if="processing.owner" dense>
+                  <v-list-item-content>
+                    <div>
+                      Propriétaire : {{ processing.owner.name }}
                     </div>
                   </v-list-item-content>
                 </v-list-item>
@@ -52,9 +59,11 @@
                 </v-list-item>
                 <v-list-item dense>
                   <v-list-item-content>
-                    <div>
-                      Actif : <span class="accent--text">{{ processing.active ? 'oui' : 'non' }}</span>
-                    </div>
+                    <span>
+                      Actif : <v-icon :color="processing.active ? 'success' : 'error'">
+                        mdi-circle
+                      </v-icon>
+                    </span>
                   </v-list-item-content>
                 </v-list-item>
               </v-list>
@@ -104,7 +113,7 @@ export default {
   },
   methods: {
     datasetUrl(datasetId) {
-      return process.env.publicDatasetsUrlTemplate.replace('{id}', datasetId)
+      return process.env.datasetsUrlTemplate.replace('{id}', datasetId)
     },
     async refresh() {
       try {
