@@ -69,11 +69,12 @@ exports.run = async (processing, db) => {
       const formData = new FormData()
       formData.append('file', fs.createReadStream(result.tmpFile.path), { filename: result.fileName })
       formData.getLength = util.promisify(formData.getLength)
-      await axios.post(baseUrl + '/' + processing.dataset.id, formData, { headers: { ...formData.getHeaders(), 'content-length': await formData.getLength(), 'x-apiKey': config.dataFairAPIKey } })
+      const contentLength = await formData.getLength()
+      await axios.post(baseUrl + '/' + processing.dataset.id, formData, { headers: { ...formData.getHeaders(), 'content-length': contentLength, 'x-apiKey': config.dataFairAPIKey } })
       result.tmpFile.cleanup()
       const elapsed = process.hrtime(startTime)
       const elapsedSeconds = (elapsed[0] + (elapsed[1] / 1e9)).toFixed(2)
-      logMessage = `Fichier ${result.fileName} de ${displayBytes(Number(result.headers['content-length']))} transféré en ${elapsedSeconds} sec.`
+      logMessage = `Fichier ${result.fileName} de ${displayBytes(contentLength)} transféré en ${elapsedSeconds} sec.`
     } else {
       throw new Error('Source should return "bulkLines" or "fileStream".')
     }
