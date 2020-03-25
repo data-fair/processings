@@ -23,12 +23,6 @@ debug('Public host', publicHost)
 // Second express application for proxying requests based on host
 const app = express()
 
-if (process.env.NODE_ENV === 'development') {
-  // Create a mono-domain environment with other services in dev
-  app.use('/simple-directory', proxy({ target: 'http://localhost:5700', pathRewrite: { '^/simple-directory': '' } }))
-  app.use('/data-fair', proxy({ target: 'http://localhost:8080', pathRewrite: { '^/data-fair': '' }, ws: true }))
-}
-
 // re-expose remote data-fair using local api-key
 const dataFairUrl = new URL(config.dataFairUrl)
 const dataFairIsLocal = new URL(config.publicUrl).origin === dataFairUrl.origin
@@ -45,6 +39,12 @@ if (!dataFairIsLocal) {
       proxyReq.setHeader('x-apiKey', config.dataFairAPIKey)
     }
   }))
+}
+
+if (process.env.NODE_ENV === 'development') {
+  // Create a mono-domain environment with other services in dev
+  app.use('/simple-directory', proxy({ target: 'http://localhost:5700', pathRewrite: { '^/simple-directory': '' } }))
+  app.use('/data-fair', proxy({ target: 'http://localhost:8080', pathRewrite: { '^/data-fair': '' }, ws: true }))
 }
 
 app.use(cookieParser())
@@ -65,7 +65,7 @@ async function main() {
   app.set('client', client)
   scheduler.init(db)
   app.use((err, req, res, next) => {
-    console.error('Error in HTTP request', err)
+    console.error('Error in HTTP request', err.response ? err.response.data : err)
     res.status(err.status || 500).send(err.message)
   })
 

@@ -27,6 +27,7 @@ export default {
       if (typeof notif === 'string') notif = { msg: notif }
       if (notif.error) {
         notif.type = 'error'
+        console.log('error notification', notif.error)
         notif.errorMsg = (notif.error.response && (notif.error.response.data || notif.error.response.status)) || notif.error.message || notif.error
       }
       this.notification = notif

@@ -25,8 +25,8 @@
             <v-jsf v-if="processingSchema" v-model="processing" :options="{deleteReadOnly: true}" :schema="processingSchema" @error="error => eventBus.$emit('notification', {error})" />
           </v-form>
           <v-row class="px-5" align="center">
-            <v-text-field v-if="schema" v-model="newDatasetTitle" label="Titre du nouveau jeu de données" />
-            <v-btn :disabled="schema && !newDatasetTitle" text @click="createDataset(processing)">
+            <v-text-field v-model="newDatasetTitle" label="Titre du nouveau jeu de données" />
+            <v-btn :disabled="!processing.source || !processing.source.type || (schema && !newDatasetTitle)" text @click="createDataset(processing)">
               Créer un jeu de données
             </v-btn>
           </v-row>
@@ -87,6 +87,7 @@ export default {
     },
     dialog () {
       if (this.dialog) this.fetchDatasets()
+      if (this.dialog && !this.processingId) this.processing = {}
     }
   },
   async mounted() {
@@ -134,23 +135,12 @@ export default {
     },
     async createDataset(processing) {
       try {
-        if (this.schema) {
-          const dataset = {
-            // title: 'Etat des stations du service VLS Vélocéo de Vannes',
-            title: this.newDatasetTitle,
-            isRest: true,
-            rest: {},
-            schema: this.schema
-          }
-          if (processing.owner) {
-            dataset.owner = { type: 'organization', ...processing.owner }
-          }
-          await this.$axios.$post(process.env.localDataFairUrl + '/api/v1/datasets', dataset)
-        } else {
-          await this.$axios.$post(process.env.publicUrl + '/api/v1/processings/_init-dataset', this.processing)
-          eventBus.$emit('notification', 'Le jeu de données a bien été créé')
-        }
+        const newDataset = await this.$axios.$post(process.env.publicUrl + '/api/v1/processings/_init-dataset', { ...this.processing, newDatasetTitle: this.newDatasetTitle })
         this.fetchDatasets()
+        this.processing.dataset = {
+          id: newDataset.id,
+          title: newDataset.title
+        }
       } catch (error) {
         eventBus.$emit('notification', { error, msg: 'Erreur pendant la création du jeu de données' })
       }
