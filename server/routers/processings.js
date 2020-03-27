@@ -8,7 +8,10 @@ const slug = require('slugify')
 const scheduler = require('../utils/scheduler')
 const tasksUtils = require('../utils/tasks')
 const permissions = require('../utils/permissions')
+const cronUtils = require('../utils/cron')
 const router = express.Router()
+
+const CronJob = require('cron').CronJob
 
 module.exports = router
 
@@ -112,9 +115,19 @@ router.get('/:id/logs', asyncWrap(async(req, res, next) => {
   res.status(200).json((processing.logs || []).reverse())
 }))
 
+router.get('/:id/schedule', asyncWrap(async(req, res, next) => {
+  const processing = await req.app.get('db').collection('processings').findOne({ id: req.params.id }, { projection: { scheduling: 1 } })
+  if (!processing) return res.sendStatus(404)
+  if (!permissions.isOwner(req.user, processing)) return res.sendStatus(403)
+  const cronStr = cronUtils.fromScheduling(processing.scheduling)
+  console.log(cronStr)
+  const job = new CronJob(cronStr, async function() {})
+  res.status(200).json(job.nextDates(20).map(d => d.toISOString()))
+}))
+
 router.delete('/:id', permissions.isAdmin, asyncWrap(async(req, res, next) => {
-  await req.app.get('db').collection('processings').deleteOne({ id: req.params.id })
-  scheduler.delete(req.params.id)
+  const processing = await req.app.get('db').collection('processings').findOneAndDelete({ id: req.params.id })
+  if (processing) scheduler.delete(processing)
   res.sendStatus(204)
 }))
 

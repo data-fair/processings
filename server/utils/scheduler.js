@@ -1,21 +1,21 @@
-const schedule = require('node-schedule')
+const CronJob = require('cron').CronJob
 const tasksUtils = require('./tasks')
+const cronUtils = require('../utils/cron')
 const tasks = {}
+const debug = require('debug')('scheduler')
 
 function register(processing, db) {
-  let str = '*/' + processing.periodicity.value
-  if (processing.periodicity.unit === 'heures') str = '* ' + str
-  else if (processing.periodicity.unit === 'minutes') str = str + ' *'
-  else str = str + ' * *'
+  const cronStr = cronUtils.fromScheduling(processing.scheduling)
   if (tasks[processing.id]) {
-    console.log('task', processing.title, 'is already registered, canceling it')
-    tasks[processing.id].cancel()
+    debug('Task :', processing.title, 'is already registered, canceling it')
+    tasks[processing.id].stop()
     delete tasks[processing.id]
   }
-  console.log('Registering task', processing.title, str + ' * * *')
-  tasks[processing.id] = schedule.scheduleJob(str + ' * * *', async function() {
+  debug('Registering task :', processing.title, cronStr)
+  tasks[processing.id] = new CronJob(cronStr, async function() {
+    debug('Running task :', processing.title)
     await tasksUtils.run(processing, db)
-  })
+  }, null, true)
 }
 
 exports.init = async function(db) {
@@ -27,10 +27,10 @@ exports.init = async function(db) {
 
 exports.update = register
 
-exports.delete = function(processingId) {
-  if (tasks[processingId]) {
-    console.log('deleting task', processingId)
-    tasks[processingId].cancel()
-    delete tasks[processingId]
+exports.delete = function(processing) {
+  if (tasks[processing.id]) {
+    debug('Deleting task :', processing.title)
+    tasks[processing.id].stop()
+    delete tasks[processing.id]
   }
 }

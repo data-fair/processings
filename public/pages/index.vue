@@ -42,7 +42,7 @@
                 <v-list-item dense>
                   <v-list-item-content>
                     <div>
-                      Périodicité : <span class="accent--text">Toutes les {{ processing.periodicity.value }} {{ processing.periodicity.unit }}</span>
+                      Périodicité : <span class="accent--text">Toutes les {{ processing.scheduling.interval }} {{ processing.scheduling.unit }}</span>
                     </div>
                   </v-list-item-content>
                 </v-list-item>
@@ -76,6 +76,7 @@
                   mdi-play
                 </v-icon>
               </v-btn>
+              <processing-schedule :processing-id="processing.id" />
               <processing-logs :processing-id="processing.id" />
               <edit-processing :processing-id="processing.id" @updated="refresh" />
               <remove-processing :processing="processing" @removed="refresh" />
@@ -94,6 +95,7 @@ import EditProcessing from '~/components/edit-processing.vue'
 import RemoveProcessing from '~/components/remove-processing.vue'
 import ProcessingInfos from '~/components/processing-infos.vue'
 import ProcessingLogs from '~/components/processing-logs.vue'
+import ProcessingSchedule from '~/components/processing-schedule.vue'
 import eventBus from '../event-bus'
 
 export default {
@@ -102,7 +104,8 @@ export default {
     EditProcessing,
     RemoveProcessing,
     ProcessingInfos,
-    ProcessingLogs
+    ProcessingLogs,
+    ProcessingSchedule
   },
   data: () => ({
     processings: null

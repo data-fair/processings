@@ -3,11 +3,11 @@
     <template v-slot:activator="{ on }">
       <v-btn text v-on="on" @click="dialog=true">
         <v-icon color="primary">
-          mdi-text-subject
+          mdi-calendar
         </v-icon>
       </v-btn>
     </template>
-    <span>Journal du traitement</span>
+    <span>Planification du traitement</span>
     <v-dialog v-model="dialog" :fullscreen="$vuetify.breakpoint.mdAndDown" :max-width="1200">
       <v-card class="py-3">
         <v-simple-table dense>
@@ -17,19 +17,19 @@
                 <th>
                   Date
                 </th>
-                <th>
+                <!-- <th>
                   Message
                 </th>
                 <th c>
                   Statut
-                </th>
+                </th> -->
               </tr>
             </thead>
             <tbody>
-              <tr v-for="log in logs" :key="log.date">
-                <td>{{ log.date | moment('Do MMM YYYY - HH:mm:ss') }}</td>
-                <td>{{ log.message }}</td>
-                <td>{{ log.status }}</td>
+              <tr v-for="date in schedule" :key="date">
+                <td>{{ date | moment('Do MMM YYYY - HH:mm:ss') }}</td>
+                <!-- <td>{{ log.message }}</td>
+                <td>{{ log.status }}</td> -->
               </tr>
             </tbody>
           </template>
@@ -49,7 +49,7 @@ export default {
   data() {
     return {
       dialog: null,
-      logs: []
+      schedule: []
     }
   },
   watch: {
@@ -63,9 +63,9 @@ export default {
   methods: {
     async refresh() {
       try {
-        this.logs = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings/' + this.processingId + '/logs')
+        this.schedule = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings/' + this.processingId + '/schedule')
       } catch (error) {
-        eventBus.$emit('notification', { error, msg: 'Erreur pendant la récupération du journal du traitement' })
+        eventBus.$emit('notification', { error, msg: 'Erreur pendant la récupération des informations de planification du traitement' })
         this.dialog = false
       }
     }

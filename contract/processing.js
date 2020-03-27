@@ -2,6 +2,7 @@ const config = require('config')
 const path = require('path')
 const fs = require('fs')
 const owner = require('./owner')
+const scheduling = require('./scheduling')
 
 const sources = fs.readdirSync(path.join(__dirname, '../sources'))
   .map(s => require('../sources/' + s + '/meta.json'))
@@ -9,7 +10,7 @@ const sources = fs.readdirSync(path.join(__dirname, '../sources'))
 module.exports = {
   type: 'object',
   additionalProperties: false,
-  required: ['title', 'source', 'dataset'],
+  required: ['title', 'source', 'dataset', 'scheduling'],
   properties: {
     id: {
       type: 'string',
@@ -30,25 +31,7 @@ module.exports = {
       type: 'boolean',
       default: false
     },
-    periodicity: {
-      title: 'Périodicité de la récupération',
-      type: 'object',
-      properties: {
-        value: {
-          title: 'Valeur',
-          type: 'integer',
-          'x-class': 'xs6',
-          default: 10
-        },
-        unit: {
-          title: 'Unité',
-          type: 'string',
-          enum: ['secondes', 'minutes', 'heures'],
-          'x-class': 'xs6',
-          default: 'minutes'
-        }
-      }
-    },
+    scheduling,
     dataset: {
       title: 'Jeu de données Data Fair',
       type: 'object',
