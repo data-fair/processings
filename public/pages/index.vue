@@ -116,7 +116,6 @@ export default {
   },
   methods: {
     datasetUrl(datasetId) {
-      console.log(process.env)
       return process.env.datasetsUrlTemplate.replace('{id}', datasetId)
     },
     async refresh() {

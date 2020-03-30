@@ -63,7 +63,7 @@ router.post('', permissions.isAdmin, asyncWrap(async(req, res, next) => {
     }
   }
   delete req.body._id
-  if (req.body.status === 'running') scheduler.update(req.body, req.app.get('db'))
+  if (req.body.active) scheduler.update(req.body, req.app.get('db'))
   res.status(200).json(req.body)
 }))
 
@@ -97,7 +97,7 @@ router.patch('/:id', permissions.isAdmin, asyncWrap(async(req, res, next) => {
   if (!valid) return res.status(400).send(validate.errors)
   await req.app.get('db').collection('processings').findOneAndUpdate({ id: req.params.id }, patch)
   if (patchedprocessing.active) scheduler.update(patchedprocessing, req.app.get('db'))
-  else scheduler.delete(patchedprocessing.id)
+  else scheduler.delete(patchedprocessing)
   res.status(200).json(patchedprocessing)
 }))
 
@@ -120,7 +120,6 @@ router.get('/:id/schedule', asyncWrap(async(req, res, next) => {
   if (!processing) return res.sendStatus(404)
   if (!permissions.isOwner(req.user, processing)) return res.sendStatus(403)
   const cronStr = cronUtils.fromScheduling(processing.scheduling)
-  console.log(cronStr)
   const job = new CronJob(cronStr, async function() {})
   res.status(200).json(job.nextDates(20).map(d => d.toISOString()))
 }))
