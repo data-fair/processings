@@ -126,7 +126,7 @@ router.get('/:id/schedule', asyncWrap(async(req, res, next) => {
 
 router.delete('/:id', permissions.isAdmin, asyncWrap(async(req, res, next) => {
   const processing = await req.app.get('db').collection('processings').findOneAndDelete({ id: req.params.id })
-  if (processing) scheduler.delete(processing)
+  if (processing && processing.value) scheduler.delete(processing.value)
   res.sendStatus(204)
 }))
 
