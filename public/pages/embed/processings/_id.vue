@@ -34,7 +34,7 @@
                 <v-list-item dense>
                   <v-list-item-content>
                     <div>
-                      <span class="grey--text text--darken-2">Périodicité :</span> <span>Toutes les {{ processing.periodicity.value }} {{ processing.periodicity.unit }}</span>
+                      <span class="grey--text text--darken-2">Périodicité :</span> <span>{{ format(processing.scheduling) }}</span>
                     </div>
                   </v-list-item-content>
                 </v-list-item>
@@ -64,7 +64,10 @@
             </v-card-text>
             <v-divider />
             <v-card-text class="px-5 py-0">
-              <v-row>
+              <v-row align="center">
+                <v-col>
+                  <processing-schedule :processing-id="processing.id" />
+                </v-col>
                 <v-col>
                   <v-icon size="18">
                     mdi-plus-circle-outline
@@ -118,10 +121,12 @@
 <script>
 import { mapState } from 'vuex'
 import ProcessingInfos from '~/components/processing-infos.vue'
+import ProcessingSchedule from '~/components/processing-schedule.vue'
 import VJsf from '@koumoul/vjsf/lib/VJsf.js'
+import format from '~/assets/format.js'
 
 export default {
-  components: { ProcessingInfos, VJsf },
+  components: { ProcessingInfos, ProcessingSchedule, VJsf },
   layout: 'embed',
   middleware: 'admin-required',
   data: () => ({
@@ -144,7 +149,8 @@ export default {
   methods: {
     datasetUrl(datasetId) {
       return process.env.datasetsUrlTemplate.replace('{id}', datasetId)
-    }
+    },
+    format
   }
 }
 </script>

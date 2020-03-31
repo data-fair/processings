@@ -42,7 +42,7 @@
                 <v-list-item dense>
                   <v-list-item-content>
                     <div>
-                      Périodicité : <span class="accent--text">Toutes les {{ processing.scheduling.interval }} {{ processing.scheduling.unit }}</span>
+                      Périodicité : <span class="accent--text">{{ format(processing.scheduling) }}</span>
                     </div>
                   </v-list-item-content>
                 </v-list-item>
@@ -96,6 +96,7 @@ import RemoveProcessing from '~/components/remove-processing.vue'
 import ProcessingInfos from '~/components/processing-infos.vue'
 import ProcessingLogs from '~/components/processing-logs.vue'
 import ProcessingSchedule from '~/components/processing-schedule.vue'
+import format from '~/assets/format.js'
 import eventBus from '../event-bus'
 
 export default {
@@ -137,7 +138,8 @@ export default {
       } catch (error) {
         eventBus.$emit('notification', { error, msg: 'Erreur pendant le changement de statut du traitement' })
       }
-    }
+    },
+    format
   }
 }
 </script>

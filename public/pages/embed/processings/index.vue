@@ -46,7 +46,7 @@
                     <v-list-item dense>
                       <v-list-item-content>
                         <div>
-                          <span class="grey--text text--darken-2">Périodicité :</span> <span>Toutes les {{ processing.periodicity.value }} {{ processing.periodicity.unit }}</span>
+                          <span class="grey--text text--darken-2">Périodicité :</span> <span>{{ format (processing.scheduling) }}</span>
                         </div>
                       </v-list-item-content>
                     </v-list-item>
@@ -101,6 +101,7 @@
 <script>
 import { mapGetters } from 'vuex'
 import ProcessingInfos from '~/components/processing-infos.vue'
+import format from '~/assets/format.js'
 
 export default {
   components: { ProcessingInfos },
@@ -129,7 +130,8 @@ export default {
       } catch (err) {
         console.log(err)
       }
-    }
+    },
+    format
   }
 }
 </script>
