@@ -5,7 +5,7 @@ module.exports = {
   title: 'Propriétaire',
   additionalProperties: false,
   required: ['id'],
-  'x-fromUrl': config.directoryUrl + '/api/organizations',
+  'x-fromUrl': config.directoryUrl + '/api/organizations?size=1000',
   'x-itemsProp': 'results',
   'x-itemTitle': 'name',
   'x-itemKey': 'id',

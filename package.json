@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@gitlab.com/koumoul/data-fair-processings.git"
+    "url": "git+ssh://git@github.com/koumoul-dev/data-fair-processings.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://gitlab.com/koumoul/data-fair-processings/issues"
+    "url": "https://github.com/koumoul-dev/data-fair-processings/issues"
   },
-  "homepage": "https://gitlab.com/koumoul/data-fair-processings#readme",
+  "homepage": "https://github.com/koumoul-dev/data-fair-processings#readme",
   "devDependencies": {
     "babel-eslint": "^10.0.2",
     "eslint": "^6.5.1",
