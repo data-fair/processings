@@ -24,6 +24,7 @@ RUN npm run build
 # Adding server files
 ADD server server
 ADD contract contract
+ADD upgrade upgrade
 
 ADD README.md .
 
