@@ -66,6 +66,13 @@
                     </span>
                   </v-list-item-content>
                 </v-list-item>
+                <v-list-item dense>
+                  <v-list-item-content>
+                    <span>
+                      Clé webhook : <code>{{ processing.webhookKey }}</code> <processing-key :processing="processing" />
+                    </span>
+                  </v-list-item-content>
+                </v-list-item>
               </v-list>
             </v-card-text>
             <v-divider />
@@ -96,6 +103,7 @@ import RemoveProcessing from '~/components/remove-processing.vue'
 import ProcessingInfos from '~/components/processing-infos.vue'
 import ProcessingLogs from '~/components/processing-logs.vue'
 import ProcessingSchedule from '~/components/processing-schedule.vue'
+import ProcessingKey from '~/components/processing-key.vue'
 import format from '~/assets/format.js'
 import eventBus from '../event-bus'
 
@@ -106,7 +114,8 @@ export default {
     RemoveProcessing,
     ProcessingInfos,
     ProcessingLogs,
-    ProcessingSchedule
+    ProcessingSchedule,
+    ProcessingKey
   },
   data: () => ({
     processings: null

@@ -52,7 +52,7 @@ app.use(bodyParser.json())
 app.use(bodyParser.text())
 
 app.use('/api/v1/session', session.router)
-app.use('/api/v1', session.requiredAuth, api)
+app.use('/api/v1', api)
 
 let httpServer
 async function main() {
@@ -62,6 +62,7 @@ async function main() {
   app.use(nuxtMiddleware)
   const { client, db } = await dbUtils.init()
   app.set('db', db)
+  await require('../upgrade')(db)
   app.set('client', client)
   scheduler.init(db)
   app.use((err, req, res, next) => {

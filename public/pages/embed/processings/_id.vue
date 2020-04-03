@@ -60,6 +60,13 @@
                     </span>
                   </v-list-item-content>
                 </v-list-item>
+                <v-list-item dense>
+                  <v-list-item-content>
+                    <span>
+                      <span class="grey--text text--darken-2">Clé webhook :</span> <code>{{ processing.webhookKey }}</code> <processing-key :processing="processing" />
+                    </span>
+                  </v-list-item-content>
+                </v-list-item>
               </v-list>
             </v-card-text>
             <v-divider />
@@ -122,11 +129,12 @@
 import { mapState } from 'vuex'
 import ProcessingInfos from '~/components/processing-infos.vue'
 import ProcessingSchedule from '~/components/processing-schedule.vue'
+import ProcessingKey from '~/components/processing-key.vue'
 import VJsf from '@koumoul/vjsf/lib/VJsf.js'
 import format from '~/assets/format.js'
 
 export default {
-  components: { ProcessingInfos, ProcessingSchedule, VJsf },
+  components: { ProcessingInfos, ProcessingSchedule, ProcessingKey, VJsf },
   layout: 'embed',
   middleware: 'admin-required',
   data: () => ({

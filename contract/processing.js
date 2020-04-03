@@ -72,6 +72,11 @@ module.exports = {
         }
       }
     },
+    webhookKey: {
+      type: 'string',
+      title: 'Identifiant du traitement',
+      readOnly: true
+    },
     created: {
       type: 'object',
       additionalProperties: false,

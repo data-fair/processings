@@ -124,6 +124,14 @@ module.exports = {
           }
         }
       }
+    },
+    {
+      title: 'Déclenchement manuel',
+      properties: {
+        unit: {
+          const: 'trigger'
+        }
+      }
     }
   ]
 }

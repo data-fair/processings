@@ -1,3 +1,4 @@
+const config = require('config')
 const express = require('express')
 const ajv = require('ajv')()
 const processingschema = require('../../contract/processing')
@@ -10,21 +11,28 @@ const tasksUtils = require('../utils/tasks')
 const permissions = require('../utils/permissions')
 const cronUtils = require('../utils/cron')
 const router = express.Router()
+const cryptoRandomString = require('crypto-random-string')
+
+const session = require('@koumoul/sd-express')({
+  publicUrl: config.publicUrl,
+  directoryUrl: config.directoryUrl,
+  cookieDomain: config.sessionDomain
+})
 
 const CronJob = require('cron').CronJob
 
 module.exports = router
 
-router.get('/_schema', asyncWrap(async(req, res, next) => {
+router.get('/_schema', session.requiredAuth, asyncWrap(async(req, res, next) => {
   res.status(200).json(processingschema)
 }))
 
-router.post('/_init-dataset', permissions.isAdmin, asyncWrap(async(req, res, next) => {
+router.post('/_init-dataset', session.requiredAuth, permissions.isAdmin, asyncWrap(async(req, res, next) => {
   res.status(200).send(await tasksUtils.initDataset(req.body))
 }))
 
 // Get the list of processings
-router.get('', permissions.isAdmin, asyncWrap(async (req, res, next) => {
+router.get('', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, res, next) => {
   const sort = findUtils.sort(req.query.sort)
   const [skip, size] = findUtils.pagination(req.query)
   const query = findUtils.query(req.query)
@@ -38,10 +46,11 @@ router.get('', permissions.isAdmin, asyncWrap(async (req, res, next) => {
 }))
 
 // Create a processing
-router.post('', permissions.isAdmin, asyncWrap(async(req, res, next) => {
+router.post('', session.requiredAuth, permissions.isAdmin, asyncWrap(async(req, res, next) => {
   const valid = validate(req.body)
   if (!valid) return res.status(400).send(validate.errors)
   req.body.status = req.body.status || 'stopped'
+  req.body.webhookKey = cryptoRandomString({ length: 16, type: 'url-safe' })
   req.body.created = req.body.updated = {
     id: req.user.id,
     name: req.user.name,
@@ -68,7 +77,7 @@ router.post('', permissions.isAdmin, asyncWrap(async(req, res, next) => {
 }))
 
 // Patch some of the attributes of a processing
-router.patch('/:id', permissions.isAdmin, asyncWrap(async(req, res, next) => {
+router.patch('/:id', session.requiredAuth, permissions.isAdmin, asyncWrap(async(req, res, next) => {
   const processing = await req.app.get('db').collection('processings').findOne({ id: req.params.id }, { projection: { _id: 0, logs: 0 } })
   if (!processing) return res.status(404)
   // Restrict the parts of the processing that can be edited by API
@@ -101,21 +110,21 @@ router.patch('/:id', permissions.isAdmin, asyncWrap(async(req, res, next) => {
   res.status(200).json(patchedprocessing)
 }))
 
-router.get('/:id', asyncWrap(async(req, res, next) => {
+router.get('/:id', session.requiredAuth, asyncWrap(async(req, res, next) => {
   const processing = await req.app.get('db').collection('processings').findOne({ id: req.params.id }, { projection: { _id: 0, logs: 0 } })
   if (!processing) return res.sendStatus(404)
   if (!permissions.isOwner(req.user, processing)) return res.sendStatus(403)
   res.status(200).json(processing)
 }))
 
-router.get('/:id/logs', asyncWrap(async(req, res, next) => {
+router.get('/:id/logs', session.requiredAuth, asyncWrap(async(req, res, next) => {
   const processing = await req.app.get('db').collection('processings').findOne({ id: req.params.id }, { projection: { logs: 1 } })
   if (!processing) return res.sendStatus(404)
   if (!permissions.isOwner(req.user, processing)) return res.sendStatus(403)
   res.status(200).json((processing.logs || []).reverse())
 }))
 
-router.get('/:id/schedule', asyncWrap(async(req, res, next) => {
+router.get('/:id/schedule', session.requiredAuth, asyncWrap(async(req, res, next) => {
   const processing = await req.app.get('db').collection('processings').findOne({ id: req.params.id }, { projection: { scheduling: 1 } })
   if (!processing) return res.sendStatus(404)
   if (!permissions.isOwner(req.user, processing)) return res.sendStatus(403)
@@ -124,20 +133,29 @@ router.get('/:id/schedule', asyncWrap(async(req, res, next) => {
   res.status(200).json(job.nextDates(20).map(d => d.toISOString()))
 }))
 
-router.delete('/:id', permissions.isAdmin, asyncWrap(async(req, res, next) => {
+router.delete('/:id', session.requiredAuth, permissions.isAdmin, asyncWrap(async(req, res, next) => {
   const processing = await req.app.get('db').collection('processings').findOneAndDelete({ id: req.params.id })
   if (processing && processing.value) scheduler.delete(processing.value)
   res.sendStatus(204)
 }))
 
-router.post('/:id/_run', permissions.isAdmin, asyncWrap(async (req, res, next) => {
+router.post('/:id/_run', session.auth, asyncWrap(async (req, res, next) => {
   const db = req.app.get('db')
   const processing = await db.collection('processings').findOne({ id: req.params.id })
-  await tasksUtils.run(processing, db)
-  res.status(200).send()
+  if (req.user && req.user.adminMode) {
+    await tasksUtils.run(processing, db)
+    return res.status(200).send()
+  } else if (req.headers && req.headers['x-apikey'] === processing.webhookKey) {
+    if (!processing.active) return res.status(429).send('Processing is not active')
+    else {
+      await tasksUtils.run(processing, db)
+      return res.status(200).send()
+    }
+  }
+  return res.sendStatus(401)
 }))
 
-router.get('/:type/:id', permissions.isAccountAdmin, asyncWrap(async(req, res, next) => {
+router.get('/:type/:id', session.requiredAuth, permissions.isAccountAdmin, asyncWrap(async(req, res, next) => {
   const sort = findUtils.sort(req.query.sort)
   const [skip, size] = findUtils.pagination(req.query)
   const query = findUtils.query(req.query)

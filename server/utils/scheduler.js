@@ -5,6 +5,10 @@ const tasks = {}
 const debug = require('debug')('scheduler')
 
 function register(processing, db) {
+  if (processing.scheduling && processing.scheduling.unit === 'trigger') {
+    debug('Task :', processing.title, 'is triggered manually')
+    return
+  }
   const cronStr = cronUtils.fromScheduling(processing.scheduling)
   if (tasks[processing.id]) {
     debug('Task :', processing.title, 'is already registered, canceling it')
