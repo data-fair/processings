@@ -118,14 +118,14 @@ router.get('/:id', session.requiredAuth, asyncWrap(async(req, res, next) => {
 }))
 
 router.get('/:id/logs', session.requiredAuth, asyncWrap(async(req, res, next) => {
-  const processing = await req.app.get('db').collection('processings').findOne({ id: req.params.id }, { projection: { logs: 1 } })
+  const processing = await req.app.get('db').collection('processings').findOne({ id: req.params.id }, { projection: { logs: 1, owner: 1 } })
   if (!processing) return res.sendStatus(404)
   if (!permissions.isOwner(req.user, processing)) return res.sendStatus(403)
   res.status(200).json((processing.logs || []).reverse())
 }))
 
 router.get('/:id/schedule', session.requiredAuth, asyncWrap(async(req, res, next) => {
-  const processing = await req.app.get('db').collection('processings').findOne({ id: req.params.id }, { projection: { scheduling: 1 } })
+  const processing = await req.app.get('db').collection('processings').findOne({ id: req.params.id }, { projection: { scheduling: 1, owner: 1 } })
   if (!processing) return res.sendStatus(404)
   if (!permissions.isOwner(req.user, processing)) return res.sendStatus(403)
   const cronStr = cronUtils.fromScheduling(processing.scheduling)
