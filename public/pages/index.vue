@@ -130,7 +130,7 @@ export default {
     },
     async refresh() {
       try {
-        this.processings = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings')
+        this.processings = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings', { params: { size: 100 } })
         this.processings.results.forEach(async processing => {
           if (processing.dataset && processing.dataset.id) {
             processing.dataset = await this.$axios.$get(process.env.localDataFairUrl + '/api/v1/datasets/' + processing.dataset.id)
