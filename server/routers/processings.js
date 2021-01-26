@@ -47,15 +47,15 @@ router.get('', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, 
 
 // Create a processing
 router.post('', session.requiredAuth, permissions.isAdmin, asyncWrap(async(req, res, next) => {
-  const valid = validate(req.body)
-  if (!valid) return res.status(400).send(validate.errors)
   req.body.status = req.body.status || 'stopped'
   req.body.webhookKey = cryptoRandomString({ length: 16, type: 'url-safe' })
   req.body.created = req.body.updated = {
     id: req.user.id,
     name: req.user.name,
-    date: new Date()
+    date: new Date().toISOString()
   }
+  const valid = validate(req.body)
+  if (!valid) return res.status(400).send(validate.errors)
   // Generate ids and try insertion until there is no conflict on id
   const baseId = req.body.id || slug(req.body.title, { lower: true })
   req.body.id = baseId
@@ -128,6 +128,7 @@ router.get('/:id/schedule', session.requiredAuth, asyncWrap(async(req, res, next
   const processing = await req.app.get('db').collection('processings').findOne({ id: req.params.id }, { projection: { scheduling: 1, owner: 1 } })
   if (!processing) return res.sendStatus(404)
   if (!permissions.isOwner(req.user, processing)) return res.sendStatus(403)
+  if (!processing.scheduling || processing.scheduling.unit === 'trigger') return res.status(200).json([])
   const cronStr = cronUtils.fromScheduling(processing.scheduling)
   const job = new CronJob(cronStr, async function() {})
   res.status(200).json(job.nextDates(20).map(d => d.toISOString()))

@@ -13,23 +13,11 @@ export default () => {
       embed: false
     },
     getters: {
-      activeAccount(state) {
-        const user = state.session && state.session.user
-        if (!user) return null
-        if (user.organization) {
-          return {
-            type: 'organization',
-            key: 'organization:' + user.organization.id,
-            id: user.organization.id,
-            name: user.organization.name
-          }
-        } else {
-          return {
-            type: 'user',
-            key: 'user:' + user.id,
-            id: user.id,
-            name: user.name
-          }
+      embed() {
+        try {
+          return window.self !== window.top
+        } catch (e) {
+          return true
         }
       }
     },

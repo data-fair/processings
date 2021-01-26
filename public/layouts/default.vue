@@ -1,50 +1,29 @@
 <template>
   <v-app>
-    <v-content>
-      <v-layout>
-        <navigation />
-        <v-container fluid style="padding-left:330px;" class="padded">
-          <nuxt />
-        </v-container>
-      </v-layout>
+    <client-only><app-bar v-if="!embed" /></client-only>
+    <v-main>
+      <nuxt-child />
       <notifications />
-    </v-content>
+    </v-main>
   </v-app>
 </template>
 
 <script>
-import { mapState } from 'vuex'
+import 'iframe-resizer/js/iframeResizer.contentWindow'
+import { mapGetters } from 'vuex'
 import Notifications from '../components/notifications.vue'
-import Navigation from '../components/navigation.vue'
-
+import AppBar from '~/components/layout/app-bar.vue'
 export default {
-  components: {
-    Notifications,
-    Navigation
-  },
+  components: { AppBar, Notifications },
   computed: {
-    ...mapState('session', ['user'])
-  },
-  watch: {
-    user(newV, oldV) {
-      if (oldV && !newV) {
-        this.$router.go()
-      }
-    }
-  },
-  mounted() {
-    this.$store.commit('setAny', { embed: this.$route.query.embed === 'true' })
+    ...mapGetters(['embed'])
   }
 }
 
 </script>
 
 <style>
-.v-navigation-drawer{
-    z-index:0!important;
-}
-
-body .v-application {
+/* body .v-application {
   font-family: 'Nunito', sans-serif;
-}
+} */
 </style>

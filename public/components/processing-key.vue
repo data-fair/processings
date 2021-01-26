@@ -1,26 +1,32 @@
 <template lang="html">
-  <v-tooltip v-if="processing" top>
-    <template v-slot:activator="{ on }">
-      <v-btn text v-on="on" @click="dialog=true">
-        <v-icon color="primary" small>
-          mdi-help
-        </v-icon>
-      </v-btn>
+  <v-menu v-if="processing" v-model="menu" :max-width="1000" :close-on-content-click="false">
+    <template v-slot:activator="{ on: menu, attrs }">
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on: tooltip }">
+          <v-btn
+            text
+            v-bind="attrs"
+            v-on="{ ...tooltip, ...menu }"
+          >
+            <v-icon color="primary" small>
+              mdi-help
+            </v-icon>
+          </v-btn>
+        </template>
+        <span>Déclenchement par webhook</span>
+      </v-tooltip>
     </template>
-    <span>Déclenchement par webhook</span>
-    <v-dialog v-model="dialog" :fullscreen="$vuetify.breakpoint.mdAndDown" :max-width="1000">
-      <v-card>
-        <v-card-title>
-          Vous pouvez déclencher une éxécution du traitement avec l'appel suivant :
-        </v-card-title>
-        <v-card-text>
-          <code style="width:100%">
-            {{ curl }}
-          </code>
-        </v-card-text>
-      </v-card>
-    </v-dialog>
-  </v-tooltip>
+    <v-card>
+      <v-card-title>
+        Vous pouvez déclencher une éxécution du traitement avec l'appel suivant :
+      </v-card-title>
+      <v-card-text>
+        <code style="width:100%">
+          {{ curl }}
+        </code>
+      </v-card-text>
+    </v-card>
+  </v-menu>
 </template>
 
 <script>
@@ -30,7 +36,7 @@ export default {
   },
   data() {
     return {
-      dialog: null
+      menu: null
     }
   },
   computed: {

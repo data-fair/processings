@@ -27,7 +27,7 @@
                 <v-list-item dense>
                   <v-list-item-content>
                     <div>
-                      <span class="grey--text text--darken-2">Type de traitement :</span> <processing-infos :processing="processing" :no-modal="true" />
+                      <span class="grey--text text--darken-2">Type de traitement :</span> <processing-infos :processing="processing" />
                     </div>
                   </v-list-item-content>
                 </v-list-item>
@@ -72,7 +72,7 @@
             <v-divider />
             <v-card-text class="px-5 py-0">
               <v-row align="center">
-                <v-col>
+                <v-col v-if="processing.scheduling && processing.scheduling.unit !== 'trigger'">
                   <processing-schedule :processing-id="processing.id" />
                 </v-col>
                 <v-col>

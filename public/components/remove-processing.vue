@@ -1,8 +1,5 @@
 <template>
-  <v-dialog
-    v-model="dialog"
-    width="500"
-  >
+  <v-menu v-model="menu" width="500" :close-on-click="false" :close-on-content-click="false">
     <template v-slot:activator="{ on }">
       <v-btn
         icon color="warning" text v-on="on"
@@ -31,7 +28,7 @@
 
       <v-card-actions>
         <v-spacer />
-        <v-btn text @click.native="dialog = false">
+        <v-btn text @click.native="menu = false">
           Annuler
         </v-btn>
         <v-btn
@@ -42,7 +39,7 @@
         </v-btn>
       </v-card-actions>
     </v-card>
-  </v-dialog>
+  </v-menu>
 </template>
 
 <script>
@@ -53,11 +50,11 @@ export default {
     processing: { type: Object, default: null }
   },
   data: () => ({
-    dialog: false
+    menu: false
   }),
   methods: {
     open (e) {
-      this.dialog = true
+      this.menu = true
       e.stopPropagation()
     },
     async confirm () {
@@ -67,7 +64,7 @@ export default {
       } catch (error) {
         eventBus.$emit('notification', { error, msg: 'Erreur pendant la suppression du traitement' })
       } finally {
-        this.dialog = false
+        this.menu = false
       }
     }
   }

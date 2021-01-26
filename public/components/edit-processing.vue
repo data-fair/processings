@@ -1,7 +1,7 @@
 <template>
   <v-tooltip top>
     <template v-slot:activator="{ on }">
-      <v-btn :fab="!processingId" :right="!processingId" :text="!!processingId" :absolute="!processingId" v-on="on" @click="stepper=0;dialog=true">
+      <v-btn :fab="!processingId" :right="!processingId" :text="!!processingId" :absolute="!processingId" v-on="on" @click="stepper=0;menu=true">
         <v-icon v-if="!processingId" color="primary">
           mdi-plus
         </v-icon>
@@ -11,12 +11,12 @@
       </v-btn>
     </template>
     <span>{{ processingId ? 'Editer' : 'Ajouter' }} un traitement</span>
-    <v-dialog v-model="dialog" :fullscreen="$vuetify.breakpoint.mdAndDown" :max-width="1200">
-      <v-card v-if="dialog" class="px-3">
+    <v-menu v-model="menu" :max-width="1200" :close-on-click="false" :close-on-content-click="false">
+      <v-card v-if="menu" class="px-3">
         <v-toolbar dense flat>
           <v-toolbar-title>{{ processingId ? 'Editer' : 'Ajouter' }} un traitement</v-toolbar-title>
           <v-spacer />
-          <v-btn icon @click.native="dialog = false">
+          <v-btn icon @click.native="menu = false">
             <v-icon>mdi-close</v-icon>
           </v-btn>
         </v-toolbar>
@@ -33,7 +33,7 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn text @click.native="dialog = false">
+          <v-btn text @click.native="menu = false">
             Annuler
           </v-btn>
           <v-btn color="primary" @click.native="confirm">
@@ -41,7 +41,7 @@
           </v-btn>
         </v-card-actions>
       </v-card>
-    </v-dialog>
+    </v-menu>
   </v-tooltip>
 </template>
 
@@ -64,7 +64,7 @@ export default {
   data() {
     return {
       eventBus,
-      dialog: null,
+      menu: null,
       valid: false,
       processing: {},
       schema: null,
@@ -80,14 +80,14 @@ export default {
         console.log('Fail to read schema for processing type')
         this.schema = null
       }
-      if (this.dialog) this.fetchDatasets()
+      if (this.menu) this.fetchDatasets()
     },
     'processing.owner'() {
-      if (this.dialog) this.fetchDatasets()
+      if (this.menu) this.fetchDatasets()
     },
-    dialog () {
-      if (this.dialog) this.fetchDatasets()
-      if (this.dialog && !this.processingId) this.processing = {}
+    menu () {
+      if (this.menu) this.fetchDatasets()
+      if (this.menu && !this.processingId) this.processing = {}
     }
   },
   async mounted() {
@@ -112,7 +112,7 @@ export default {
         } catch (error) {
           eventBus.$emit('notification', { error, msg: 'Erreur pendant la creation du traitement' })
         } finally {
-          this.dialog = false
+          this.menu = false
         }
       }
     },

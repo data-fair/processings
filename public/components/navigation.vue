@@ -53,7 +53,7 @@ export default {
   computed: {
     ...mapState('session', ['user']),
     ...mapState(['embed']),
-    ...mapGetters(['activeAccount'])
+    ...mapGetters('session', ['activeAccount'])
   },
   methods: {
     ...mapActions('session', ['switchOrganization', 'logout', 'setAdminMode'])

@@ -43,7 +43,14 @@ exports.initDataset = async (processing) => {
       if (processing.owner)formData.append('owner', JSON.stringify({ type: 'organization', ...processing.owner }))
       formData.append('file', fs.createReadStream(result.tmpFile.path), { filename: result.fileName })
       formData.getLength = util.promisify(formData.getLength)
-      const res = await axios.post(baseUrl, formData, { headers: { ...formData.getHeaders(), 'content-length': await formData.getLength(), 'x-apiKey': config.dataFairAPIKey } })
+      const res = await axios({
+        method: 'post',
+        url: baseUrl,
+        data: formData,
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+        headers: { ...formData.getHeaders(), 'content-length': await formData.getLength(), 'x-apiKey': config.dataFairAPIKey }
+      })
       result.tmpFile.cleanup()
       return res.data
     }
@@ -70,7 +77,14 @@ exports.run = async (processing, db) => {
       formData.append('file', fs.createReadStream(result.tmpFile.path), { filename: result.fileName })
       formData.getLength = util.promisify(formData.getLength)
       const contentLength = await formData.getLength()
-      await axios.post(baseUrl + '/' + processing.dataset.id, formData, { headers: { ...formData.getHeaders(), 'content-length': contentLength, 'x-apiKey': config.dataFairAPIKey } })
+      await axios({
+        method: 'post',
+        url: baseUrl + '/' + processing.dataset.id,
+        data: formData,
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+        headers: { ...formData.getHeaders(), 'content-length': contentLength, 'x-apiKey': config.dataFairAPIKey }
+      })
       result.tmpFile.cleanup()
       const elapsed = process.hrtime(startTime)
       const elapsedSeconds = (elapsed[0] + (elapsed[1] / 1e9)).toFixed(2)

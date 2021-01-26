@@ -83,7 +83,7 @@
                   mdi-play
                 </v-icon>
               </v-btn>
-              <processing-schedule :processing-id="processing.id" />
+              <processing-schedule v-if="processing.scheduling && processing.scheduling.unit !== 'trigger'" :processing-id="processing.id" />
               <processing-logs :processing-id="processing.id" />
               <edit-processing :processing-id="processing.id" @updated="refresh" />
               <remove-processing :processing="processing" @removed="refresh" />

@@ -39,7 +39,7 @@
                     <v-list-item dense>
                       <v-list-item-content>
                         <div>
-                          <span class="grey--text text--darken-2">Type de traitement :</span> <processing-infos :processing="processing" :no-modal="true" />
+                          <span class="grey--text text--darken-2">Type de traitement :</span> <processing-infos :processing="processing" />
                         </div>
                       </v-list-item-content>
                     </v-list-item>
@@ -111,7 +111,7 @@ export default {
     processings: null
   }),
   computed: {
-    ...mapGetters(['activeAccount'])
+    ...mapGetters('session', ['activeAccount'])
   },
   watch: {
     'activeAccount.key'(newV, oldV) {
