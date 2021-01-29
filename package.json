@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "NODE_ENV=test mocha --exit --bail --timeout 10000 test/",
     "dev-server": "NODE_ENV=development DEBUG=scheduler,upgrade nodemon server",
     "dev-client": "NODE_ENV=development nuxt -p 3039",
     "build": "nuxt build"
@@ -32,6 +32,8 @@
     "eslint-plugin-vue": "^5.2.3",
     "eslint-plugin-vuetify": "^1.0.0-beta.7",
     "http-proxy-middleware": "^0.19.2",
+    "mocha": "^8.2.1",
+    "nock": "^13.0.6",
     "nodemon": "^1.19.3"
   },
   "dependencies": {
@@ -58,6 +60,7 @@
     "http-errors": "^1.8.0",
     "iframe-resizer": "^4.3.1",
     "marked": "^0.8.2",
+    "memoizee": "^0.4.15",
     "moment": "^2.29.1",
     "mongodb": "^3.6.3",
     "node-cron": "^2.0.3",
