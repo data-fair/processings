@@ -1,4 +1,3 @@
-const config = require('config')
 const express = require('express')
 const ajv = require('ajv')()
 const processingschema = require('../../contract/processing')
@@ -10,14 +9,9 @@ const scheduler = require('../utils/scheduler')
 const tasksUtils = require('../utils/tasks')
 const permissions = require('../utils/permissions')
 const cronUtils = require('../utils/cron')
+const session = require('../utils/session')
 const router = express.Router()
 const cryptoRandomString = require('crypto-random-string')
-
-const session = require('@koumoul/sd-express')({
-  publicUrl: config.publicUrl,
-  directoryUrl: config.directoryUrl,
-  cookieDomain: config.sessionDomain
-})
 
 const CronJob = require('cron').CronJob
 

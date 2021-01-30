@@ -53,6 +53,7 @@ app.use(bodyParser.text())
 app.use('/api/v1/session', session.router)
 app.use('/api/v1/processings', require('./routers/processings'))
 app.use('/api/v1/plugins-registry', require('./routers/plugins-registry'))
+app.use('/api/v1/plugins', require('./routers/plugins'))
 
 let httpServer
 exports.run = async () => {

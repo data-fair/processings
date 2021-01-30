@@ -18,6 +18,8 @@ const search = memoize(async (q) => {
       .filter(o => o.package.keywords && o.package.keywords.includes('data-fair-processings-plugin'))
       .map(o => ({ name: o.package.name, version: o.package.version, description: o.package.description, npm: o.package.links.npm }))
   }
+}, {
+  maxAge: 5 * 60 * 1000 // cached for 5 minutes to be polite with npmjs
 })
 
 router.get('/', asyncWrap(async (req, res, next) => {
