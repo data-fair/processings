@@ -4,7 +4,7 @@
       <v-flex text-center xs12 sm10 offset-sm1 md8 offset-md2 lg6 offset-lg3>
         <v-alert :value="true" type="info" outlined>
           <h4 class="subheading font-weight-bold blue-grey--text text--darken-3">
-            Aucune traitement périodique n'est paramétré pour votre compte
+            Aucun traitement périodique n'est paramétré pour votre compte
           </h4>
         </v-alert>
       </v-flex>
