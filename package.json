@@ -59,7 +59,7 @@
     "iframe-resizer": "^4.3.1",
     "marked": "^0.8.2",
     "moment": "^2.29.1",
-    "mongodb": "^3.6.3",
+    "mongodb": "^3.6.4",
     "node-cron": "^2.0.3",
     "nuxt": "^2.14.12",
     "pump": "^3.0.0",
