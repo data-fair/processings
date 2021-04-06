@@ -3,9 +3,6 @@ services:
   sd:
     image: koumoul/simple-directory:2
     network_mode: host
-    ports:
-      - 8080
-      - 1080
     environment:
       - ADMINS=["superadmin@test.com"]
       - PUBLIC_URL=http://localhost:5600/simple-directory
