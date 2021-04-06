@@ -1,26 +1,49 @@
 <template lang="html">
   <div>
-    <v-layout v-if="processing" column style="position:fixed;right:2px;z-index:10">
+    <v-row
+      v-if="processing"
+      column
+      style="position:fixed;right:2px;z-index:10"
+    >
       <!-- <view-resource :resource="issue" :fab="true" type="issues" />
       <clone-resource :resource="issue" :fab="true" type="issues" @created="$router.push({name: 'issues-id-edit', params:{id: $event.id}})"/>
       <remove-resource :resource="issue" :fab="true" type="issues" @removed="$router.push({name: 'issues'})"/> -->
-    </v-layout>
-    <v-container v-if="processing" grid-list-xl fluid>
+    </v-row>
+    <v-container
+      v-if="processing"
+      grid-list-xl
+      fluid
+    >
       <nuxt-link :to="{name: 'embed-processings'}">
         Retour à la liste des traitements
       </nuxt-link>
-      <v-layout wrap>
-        <v-flex xs12 sm6 md7 lg8>
+      <v-row>
+        <v-col
+          cols="12"
+          sm="6"
+          md="7"
+          lg="8"
+        >
           <section-title :text="processing.title" />
           <div v-if="processing.dataset">
             Jeu de données associé : <a :href="datasetUrl(processing.dataset.id)" target="_blank">{{ processing.dataset.title }}</a>
           </div>
           <section-subtitle text="Source des données" />
           <v-form ref="form">
-            <v-jsf v-if="processingSchema" v-model="processing.source.config" :options="{disableAll: true}" :schema="schema" />
+            <v-jsf
+              v-if="processingSchema"
+              v-model="processing.source.config"
+              :options="{disableAll: true}"
+              :schema="schema"
+            />
           </v-form>
-        </v-flex>
-        <v-flex xs12 sm6 md5 lg4>
+        </v-col>
+        <v-col
+          cols="12"
+          sm="6"
+          md="5"
+          lg="4"
+        >
           <v-card>
             <v-card-text class="py-0">
               <v-list>
@@ -88,12 +111,12 @@
               </v-row>
             </v-card-text>
           </v-card>
-        </v-flex>
-      </v-layout>
+        </v-col>
+      </v-row>
       <section-subtitle text="Journal du traitement" />
       <v-card class="py-3">
         <v-simple-table height="400">
-          <template v-slot:default>
+          <template #default>
             <thead>
               <tr>
                 <th>
@@ -126,39 +149,38 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
-import ProcessingInfos from '~/components/processing-infos.vue'
-import ProcessingSchedule from '~/components/processing-schedule.vue'
-import ProcessingKey from '~/components/processing-key.vue'
-import VJsf from '@koumoul/vjsf/lib/VJsf.js'
-import format from '~/assets/format.js'
+  import { mapState } from 'vuex'
+  import ProcessingInfos from '~/components/processing-infos.vue'
+  import ProcessingSchedule from '~/components/processing-schedule.vue'
+  import ProcessingKey from '~/components/processing-key.vue'
+  import VJsf from '@koumoul/vjsf/lib/VJsf.js'
+  import format from '~/assets/format.js'
 
-export default {
-  components: { ProcessingInfos, ProcessingSchedule, ProcessingKey, VJsf },
-  layout: 'embed',
-  middleware: 'admin-required',
-  data: () => ({
-    processing: null,
-    processingSchema: null,
-    logs: []
-  }),
-  computed: {
-    ...mapState('session', ['user']),
-    schema() {
-      const source = this.processingSchema.properties.source.oneOf.find(s => s.properties.type.const === this.processing.source.type)
-      return source && source.properties.config
-    }
-  },
-  async mounted() {
-    this.processingSchema = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings/_schema')
-    this.processing = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings/' + this.$route.params.id)
-    this.logs = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings/' + this.$route.params.id + '/logs')
-  },
-  methods: {
-    datasetUrl(datasetId) {
-      return process.env.datasetsUrlTemplate.replace('{id}', datasetId)
+  export default {
+    components: { ProcessingInfos, ProcessingSchedule, ProcessingKey, VJsf },
+    middleware: 'admin-required',
+    data: () => ({
+      processing: null,
+      processingSchema: null,
+      logs: [],
+    }),
+    computed: {
+      ...mapState('session', ['user']),
+      schema() {
+        const source = this.processingSchema.properties.source.oneOf.find(s => s.properties.type.const === this.processing.source.type)
+        return source && source.properties.config
+      },
     },
-    format
+    async mounted() {
+      this.processingSchema = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings/_schema')
+      this.processing = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings/' + this.$route.params.id)
+      this.logs = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings/' + this.$route.params.id + '/logs')
+    },
+    methods: {
+      datasetUrl(datasetId) {
+        return process.env.datasetsUrlTemplate.replace('{id}', datasetId)
+      },
+      format,
+    },
   }
-}
 </script>

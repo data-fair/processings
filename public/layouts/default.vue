@@ -9,16 +9,16 @@
 </template>
 
 <script>
-import 'iframe-resizer/js/iframeResizer.contentWindow'
-import { mapGetters } from 'vuex'
-import Notifications from '../components/notifications.vue'
-import AppBar from '~/components/layout/app-bar.vue'
-export default {
-  components: { AppBar, Notifications },
-  computed: {
-    ...mapGetters(['embed'])
+  import 'iframe-resizer/js/iframeResizer.contentWindow'
+  import { mapGetters } from 'vuex'
+  import Notifications from '../components/notifications.vue'
+  import AppBar from '~/components/layout/app-bar.vue'
+  export default {
+    components: { AppBar, Notifications },
+    computed: {
+      ...mapGetters(['embed']),
+    },
   }
-}
 
 </script>
 

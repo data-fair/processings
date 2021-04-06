@@ -1,30 +1,54 @@
 <template lang="html">
-  <v-container class="fill-height" grid-list-xl>
-    <v-layout v-if="!processings || !processings.count" align-center>
-      <v-flex text-center xs12 sm10 offset-sm1 md8 offset-md2 lg6 offset-lg3>
-        <v-alert :value="true" type="info" outlined>
+  <v-container class="fill-height">
+    <v-row v-if="!processings || !processings.count" align="center">
+      <v-col
+        class="text-center"
+        cols="12"
+        sm="10"
+        offset-sm="1"
+        md="8"
+        offset-md="2"
+        lg="6"
+        offset-lg="3"
+      >
+        <v-alert
+          :value="true"
+          type="info"
+          outlined
+        >
           <h4 class="subheading font-weight-bold blue-grey--text text--darken-3">
-            Aucune traitement périodique n'est paramétré pour votre compte
+            Aucun traitement périodique n'est paramétré pour votre compte
           </h4>
         </v-alert>
-      </v-flex>
-    </v-layout>
+      </v-col>
+    </v-row>
     <v-col v-else class="fill-height">
       <h3 class="'title grey--text text--darken-3 my-3'">
         {{ processings.count }} traitement(s)
       </h3>
-      <v-layout wrap>
-        <v-flex v-for="processing in processings.results" :key="processing.id" md4 sm6 xs12>
+      <v-row>
+        <v-col
+          v-for="processing in processings.results"
+          :key="processing.id"
+          md="4"
+          sm="6"
+          cols="12"
+        >
           <nuxt-link
             :to="{name: 'embed-processings-id', params:{id: processing.id}}"
             style="text-decoration:none"
           >
             <v-hover>
-              <v-card slot-scope="{ hover }" :class="`elevation-${hover ? 16 : 2}`" class="fill-height" style="cursor:pointer;height:100%;display:flex;flex-direction:column;">
-                <v-card-title class="title px-1">
-                  <v-flex text-center pa-0>
+              <v-card
+                slot-scope="{ hover }"
+                :class="`elevation-${hover ? 16 : 2}`"
+                class="fill-height"
+                style="cursor:pointer;height:100%;display:flex;flex-direction:column;"
+              >
+                <v-card-title class="text-h6 px-1">
+                  <v-col class="text-center pa-0">
                     {{ processing.title | truncate(30) }}
-                  </v-flex>
+                  </v-col>
                 </v-card-title>
                 <v-divider />
                 <v-card-text style="flex: 1;" class="py-0">
@@ -92,48 +116,47 @@
               </v-card>
             </v-hover>
           </nuxt-link>
-        </v-flex>
-      </v-layout>
+        </v-col>
+      </v-row>
     </v-col>
   </v-container>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-import ProcessingInfos from '~/components/processing-infos.vue'
-import format from '~/assets/format.js'
+  import { mapGetters } from 'vuex'
+  import ProcessingInfos from '~/components/processing-infos.vue'
+  import format from '~/assets/format.js'
 
-export default {
-  components: { ProcessingInfos },
-  layout: 'embed',
-  middleware: 'admin-required',
-  data: () => ({
-    processings: null
-  }),
-  computed: {
-    ...mapGetters('session', ['activeAccount'])
-  },
-  watch: {
-    'activeAccount.key'(newV, oldV) {
-      if (newV !== oldV) {
-        this.refresh()
-      }
-    }
-  },
-  mounted() {
-    this.refresh()
-  },
-  methods: {
-    async refresh() {
-      try {
-        this.processings = await this.$axios.$get(`${process.env.publicUrl}/api/v1/processings/${this.activeAccount.type}/${this.activeAccount.id}`)
-      } catch (err) {
-        console.log(err)
-      }
+  export default {
+    components: { ProcessingInfos },
+    middleware: 'admin-required',
+    data: () => ({
+      processings: null,
+    }),
+    computed: {
+      ...mapGetters('session', ['activeAccount']),
     },
-    format
+    watch: {
+      'activeAccount.key'(newV, oldV) {
+        if (newV !== oldV) {
+          this.refresh()
+        }
+      },
+    },
+    mounted() {
+      this.refresh()
+    },
+    methods: {
+      async refresh() {
+        try {
+          this.processings = await this.$axios.$get(`${process.env.publicUrl}/api/v1/processings/${this.activeAccount.type}/${this.activeAccount.id}`)
+        } catch (err) {
+          console.log(err)
+        }
+      },
+      format,
+    },
   }
-}
 </script>
 
 <style lang="css" scoped>

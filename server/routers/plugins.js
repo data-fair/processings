@@ -19,7 +19,6 @@ router.post('/', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req
   const plugin = req.body
   plugin.id = plugin.name.replace('/', '-') + '-' + semver.major(plugin.version)
   const pluginDir = path.join(pluginsDir, plugin.id)
-  if (await fs.exists(pluginDir)) return res.status(409).send(`Plugin ${plugin.id} already exists.`)
   const dir = await tmp.dir({ unsafeCleanup: true })
   try {
     await fs.writeFile(path.join(dir.path, 'plugin.json'), JSON.stringify(plugin, null, 2))
@@ -28,8 +27,8 @@ router.post('/', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req
     await fs.writeFile(path.join(dir.path, 'package.json'), JSON.stringify({
       name: plugin.id,
       dependencies: {
-        [plugin.name]: '^' + plugin.version
-      }
+        [plugin.name]: '^' + plugin.version,
+      },
     }, null, 2))
     await exec('npm install --ignore-scripts', { cwd: dir.path })
     await fs.writeFile(path.join(dir.path, 'index.js'), `module.exports = require('${plugin.name}')`)
@@ -48,7 +47,7 @@ router.get('/', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req,
   }
   res.send({
     count: dirs.length,
-    results
+    results,
   })
 }))
 

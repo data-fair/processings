@@ -5,21 +5,29 @@
     dense
     class="px-0 main-app-bar"
   >
-    <v-spacer />
-    <v-toolbar-title>
-      Traitements de données périodiques
-    </v-toolbar-title>
-    <!-- <v-toolbar-items>
-      <v-btn text :to="{name: 'manager-portals'}">
-        Mes portails
+    <v-toolbar-items>
+      <v-btn text :to="{name: 'processings'}">
+        Mes traitements
       </v-btn>
       <v-btn
         text
-        :to="{name: 'manager-admin'}"
+        :to="{name: 'admin-plugins'}"
+        color="admin"
       >
-        Administration
+        Plugins
       </v-btn>
-    </v-toolbar-items> -->
+      <v-btn
+        text
+        :to="{name: 'admin-processings'}"
+        color="admin"
+      >
+        Traitements
+      </v-btn>
+    </v-toolbar-items>
+    <v-breadcrumbs
+      v-if="breadcrumbs"
+      :items="breadcrumbs"
+    />
     <v-spacer />
     <v-toolbar-items>
       <template v-if="initialized">
@@ -37,7 +45,7 @@
           nudge-left
           max-height="500"
         >
-          <template v-slot:activator="{on}">
+          <template #activator="{on}">
             <v-btn
               text
               class="px-0"
@@ -119,23 +127,24 @@
 </template>
 
 <script>
-import { mapState, mapGetters, mapActions } from 'vuex'
+  import { mapState, mapGetters, mapActions } from 'vuex'
 
-export default {
-  computed: {
-    ...mapState('session', ['user', 'initialized']),
-    ...mapGetters('session', ['activeAccount']),
-    directoryUrl() {
-      return process.env.directoryUrl
-    }
-  },
-  methods: {
-    ...mapActions('session', ['logout', 'login', 'setAdminMode', 'switchOrganization']),
-    reload() {
-      window.location.reload()
-    }
+  export default {
+    computed: {
+      ...mapState(['breadcrumbs']),
+      ...mapState('session', ['user', 'initialized']),
+      ...mapGetters('session', ['activeAccount']),
+      directoryUrl() {
+        return process.env.directoryUrl
+      },
+    },
+    methods: {
+      ...mapActions('session', ['logout', 'login', 'setAdminMode', 'switchOrganization']),
+      reload() {
+        window.location.reload()
+      },
+    },
   }
-}
 </script>
 
 <style lang="css">
