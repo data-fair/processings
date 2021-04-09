@@ -23,7 +23,7 @@
 </script>
 
 <style>
-/* body .v-application {
-  font-family: 'Nunito', sans-serif;
-} */
+.v-list.list-actions .v-list-item .v-list-item__icon {
+  margin-right: 16px;
+}
 </style>

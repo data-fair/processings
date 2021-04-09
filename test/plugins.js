@@ -1,13 +1,13 @@
 
 const assert = require('assert').strict
 
-describe.only('Plugins', () => {
+describe('Plugins', () => {
   it('should install a new plugin then list and remove it', async () => {
     const plugin = {
       name: '@koumoul/data-fair-processings-hello-world',
       version: '0.1.0',
       description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.',
-      npm: 'https://www.npmjs.com/package/%40koumoul%2Fdata-fair-processings-hello-world'
+      npm: 'https://www.npmjs.com/package/%40koumoul%2Fdata-fair-processings-hello-world',
     }
     let res = await global.ax.superadmin.post('/api/v1/plugins', plugin)
     assert.equal(res.data.name, '@koumoul/data-fair-processings-hello-world')

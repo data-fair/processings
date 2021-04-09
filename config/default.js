@@ -11,6 +11,6 @@ module.exports = {
   mongo: {
     host: 'localhost',
     port: 27017,
-    db: 'data-fair-processings-' + (process.env.NODE_ENV || 'development')
-  }
+    db: 'data-fair-processings-' + (process.env.NODE_ENV || 'development'),
+  },
 }

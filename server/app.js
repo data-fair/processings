@@ -12,7 +12,7 @@ const scheduler = require('./utils/scheduler')
 const session = require('@koumoul/sd-express')({
   publicUrl: config.publicUrl,
   directoryUrl: config.directoryUrl,
-  cookieDomain: config.sessionDomain
+  cookieDomain: config.sessionDomain,
 })
 const debug = require('debug')('main')
 
@@ -36,7 +36,7 @@ if (!dataFairIsLocal) {
       if (!req.user || !req.user.adminMode) return res.status(403).send('Super admin only')
       proxyReq.setHeader('cookie', '')
       proxyReq.setHeader('x-apiKey', config.dataFairAPIKey)
-    }
+    },
   }))
 }
 
@@ -52,6 +52,7 @@ app.use(bodyParser.text())
 
 app.use('/api/v1/session', session.router)
 app.use('/api/v1/processings', require('./routers/processings'))
+app.use('/api/v1/runs', require('./routers/runs'))
 app.use('/api/v1/plugins-registry', require('./routers/plugins-registry'))
 app.use('/api/v1/plugins', require('./routers/plugins'))
 

@@ -25,14 +25,14 @@ router.post('/', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req
 
     // create a pseudo npm package with a dependency to the plugin referenced from the registry
     await fs.writeFile(path.join(dir.path, 'package.json'), JSON.stringify({
-      name: plugin.id,
+      name: plugin.id.replace('@', ''),
       dependencies: {
         [plugin.name]: '^' + plugin.version,
       },
     }, null, 2))
     await exec('npm install --ignore-scripts', { cwd: dir.path })
     await fs.writeFile(path.join(dir.path, 'index.js'), `module.exports = require('${plugin.name}')`)
-    await fs.move(dir.path, pluginDir)
+    await fs.move(dir.path, pluginDir, { overwrite: true })
   } finally {
     await dir.cleanup()
   }
@@ -40,10 +40,18 @@ router.post('/', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req
 }))
 
 router.get('/', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, res, next) => {
-  const dirs = await fs.readdir(pluginsDir)
+  const dirs = (await fs.readdir(pluginsDir)).filter(p => !p.endsWith('.json'))
   const results = []
   for (const dir of dirs) {
-    results.push(await fs.readJson(path.join(pluginsDir, dir, 'plugin.json')))
+    const pluginInfo = await fs.readJson(path.join(pluginsDir, dir, 'plugin.json'))
+    const pluginModule = require(path.resolve(pluginsDir, dir))
+    if (pluginModule.pluginConfigSchema) {
+      pluginInfo.pluginConfigSchema = await pluginModule.pluginConfigSchema()
+      if (await fs.exists(path.join(pluginsDir, dir + '-config.json'))) {
+        pluginInfo.config = await fs.readJson(path.join(pluginsDir, dir + '-config.json'))
+      }
+    }
+    results.push(pluginInfo)
   }
   res.send({
     count: dirs.length,
@@ -53,5 +61,20 @@ router.get('/', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req,
 
 router.delete('/:id', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, res, next) => {
   await fs.remove(path.join(pluginsDir, req.params.id))
+  await fs.remove(path.join(pluginsDir, req.params.id + '-config.json'))
   res.status(204).send()
+}))
+
+router.put('/:id/config', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, res, next) => {
+  await fs.writeJson(path.join(pluginsDir, req.params.id + '-config.json'), req.body)
+  res.send(req.body)
+}))
+
+router.get('/:id/processing-config-schema', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, res, next) => {
+  const pluginModule = require(path.resolve(pluginsDir, req.params.id))
+  let pluginConfig = {}
+  if (await fs.exists(path.join(pluginsDir, req.params.id + '-config.json'))) {
+    pluginConfig = await fs.readJson(path.join(pluginsDir, req.params.id + '-config.json'))
+  }
+  return await pluginModule.processingConfigSchema(pluginConfig)
 }))

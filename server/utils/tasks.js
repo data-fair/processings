@@ -28,7 +28,7 @@ exports.initDataset = async (processing) => {
       title: processing.newDatasetTitle,
       isRest: true,
       rest: {},
-      schema: schema
+      schema: schema,
     }
     if (processing.owner) {
       dataset.owner = { type: 'organization', ...processing.owner }
@@ -49,7 +49,7 @@ exports.initDataset = async (processing) => {
         data: formData,
         maxContentLength: Infinity,
         maxBodyLength: Infinity,
-        headers: { ...formData.getHeaders(), 'content-length': await formData.getLength(), 'x-apiKey': config.dataFairAPIKey }
+        headers: { ...formData.getHeaders(), 'content-length': await formData.getLength(), 'x-apiKey': config.dataFairAPIKey },
       })
       result.tmpFile.cleanup()
       return res.data
@@ -59,7 +59,7 @@ exports.initDataset = async (processing) => {
 
 exports.run = async (processing, db) => {
   await db.collection('processings').findOneAndUpdate({ id: processing.id }, {
-    $set: { status: 'running' }
+    $set: { status: 'running' },
   })
 
   let status = 'ok'
@@ -83,7 +83,7 @@ exports.run = async (processing, db) => {
         data: formData,
         maxContentLength: Infinity,
         maxBodyLength: Infinity,
-        headers: { ...formData.getHeaders(), 'content-length': contentLength, 'x-apiKey': config.dataFairAPIKey }
+        headers: { ...formData.getHeaders(), 'content-length': contentLength, 'x-apiKey': config.dataFairAPIKey },
       })
       result.tmpFile.cleanup()
       const elapsed = process.hrtime(startTime)
@@ -99,6 +99,6 @@ exports.run = async (processing, db) => {
   }
   await db.collection('processings').findOneAndUpdate({ id: processing.id }, {
     $set: { 'last-execution': { date: new Date(), status }, status: 'stopped' },
-    $push: { logs: { $each: [{ date: new Date(), message: logMessage, status }], $slice: -10000 } }
+    $push: { logs: { $each: [{ date: new Date(), message: logMessage, status }], $slice: -10000 } },
   })
 }

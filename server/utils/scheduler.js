@@ -1,6 +1,6 @@
 const CronJob = require('cron').CronJob
 const tasksUtils = require('./tasks')
-const cronUtils = require('../utils/cron')
+const scheduling = require('../utils/scheduling')
 const tasks = {}
 const debug = require('debug')('scheduler')
 
@@ -9,7 +9,7 @@ function register(processing, db) {
     debug('Task :', processing.title, 'is triggered manually')
     return
   }
-  const cronStr = cronUtils.fromScheduling(processing.scheduling)
+  const cronStr = scheduling.toCRON(processing.scheduling)
   if (tasks[processing.id]) {
     debug('Task :', processing.title, 'is already registered, canceling it')
     tasks[processing.id].stop()

@@ -28,8 +28,11 @@ exports.connect = async () => {
 exports.init = async () => {
   console.log('Connecting to mongodb ' + `${config.mongo.host}:${config.mongo.port}`)
   const { db, client } = await exports.connect()
-  // processings indexes
-  await ensureIndex(db, 'processings', { id: 1 }, { unique: true })
+
   await ensureIndex(db, 'processings', { title: 'text' }, { name: 'fulltext' })
+  await ensureIndex(db, 'processings', { 'owner.type': 1, 'owner.id': 1 }, { name: 'main' })
+
+  await ensureIndex(db, 'runs', { 'owner.type': 1, 'owner.id': 1, 'processing._id': 1 }, { name: 'main' })
+
   return { db, client }
 }
