@@ -1,21 +1,46 @@
 
 const config = require('config')
-const app = require('./app')
+const mongodb = require('./utils/mongodb')
+let _client
 
-app.run().then(app => {
-  console.log('Web socket and HTTP server listening on http://localhost:%s', config.port)
-}, err => {
-  console.error('Failure in service process', err)
+async function start () {
+  let poolSize = 5
+  let readPreference = 'primary' // better to prevent read before write cases in workers
+  if (config.mode === 'server') {
+    readPreference = 'nearest' // the Web API is not as sensitive to small freshness problems
+  }
+  if (config.mode === 'worker') {
+    poolSize = 1
+  }
+  const { client, db } = await mongodb.init(poolSize, readPreference)
+  _client = client
+  if (config.mode.includes('worker')) {
+    await require('../upgrade')(db)
+    await require('./worker').start({ db })
+  }
+  if (config.mode.includes('server')) {
+    await require('./app').start({ db })
+  }
+}
+
+async function stop () {
+  if (config.mode.includes('server')) await require('./app').stop()
+  if (config.mode.includes('worker')) await require('./worker').stop()
+  if (_client) await _client.close()
+}
+
+start().then(() => {}, err => {
+  console.error('Failure', err)
   process.exit(-1)
 })
 
 process.on('SIGTERM', function onSigterm () {
   console.info('Received SIGTERM signal, shutdown gracefully...')
-  app.stop().then(() => {
+  stop().then(() => {
     console.log('shutting down now')
     process.exit()
   }, err => {
-    console.error('Failure while stopping service', err)
+    console.error('Failure while stopping', err)
     process.exit(-1)
   })
 })

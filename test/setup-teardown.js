@@ -3,6 +3,7 @@ const fs = require('fs-extra')
 const nock = require('nock')
 const axios = require('axios')
 const app = require('../server/app')
+const worker = require('../server/worker')
 const axiosAuth = require('@koumoul/sd-express').axiosAuth
 
 before('global mocks', () => {
@@ -38,7 +39,7 @@ before('init globals', async () => {
     global.ax.builder('dmeadus0@answers.com:passwd').then(ax => { global.ax.dmeadus = ax }),
     global.ax.builder('dmeadus0@answers.com:passwd', 'KWqAGZ4mG').then(ax => { global.ax.dmeadusOrg = ax }),
     global.ax.builder('cdurning2@desdev.cn:passwd').then(ax => { global.ax.cdurning2 = ax }),
-    global.ax.builder('superadmin@test.com:superpasswd:adminMode').then(ax => { global.ax.superadmin = ax })
+    global.ax.builder('superadmin@test.com:superpasswd:adminMode').then(ax => { global.ax.superadmin = ax }),
   ])
 })
 
@@ -47,9 +48,10 @@ before('scratch all', async() => {
   await fs.remove('./data/test')
 })
 
-before('start app', async function () {
+before('start service', async function () {
   try {
-    global.app = await app.run()
+    global.app = await app.start({ db: global.db })
+    global.worker = worker.start({ db: global.db })
   } catch (err) {
     console.error('Failed to run the application', err)
     throw err
@@ -59,14 +61,15 @@ before('start app', async function () {
 beforeEach('scratch data', async () => {
   await Promise.all([
     global.db.collection('processings').deleteMany({}),
-    fs.emptyDir('./data/test')
+    global.db.collection('runs').deleteMany({}),
+    fs.emptyDir('./data/test'),
   ])
 })
 
 after('stop app', async () => {
   await Promise.race([
     new Promise(resolve => setTimeout(resolve, 5000)),
-    app.stop()
+    app.stop(),
   ])
 })
 

@@ -1,4 +1,5 @@
 module.exports = {
+  mode: 'server_worker', // can be server_worker, server or worker
   port: 5600,
   sessionDomain: null,
   publicUrl: 'http://localhost:5600',
@@ -12,5 +13,9 @@ module.exports = {
     host: 'localhost',
     port: 27017,
     db: 'data-fair-processings-' + (process.env.NODE_ENV || 'development'),
+  },
+  worker: {
+    interval: 1000,
+    concurrency: 4,
   },
 }

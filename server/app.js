@@ -7,8 +7,6 @@ const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const proxy = require('http-proxy-middleware')
 const nuxt = require('./nuxt')
-const dbUtils = require('./utils/db')
-const scheduler = require('./utils/scheduler')
 const session = require('@koumoul/sd-express')({
   publicUrl: config.publicUrl,
   directoryUrl: config.directoryUrl,
@@ -57,16 +55,12 @@ app.use('/api/v1/plugins-registry', require('./routers/plugins-registry'))
 app.use('/api/v1/plugins', require('./routers/plugins'))
 
 let httpServer
-exports.run = async () => {
+exports.start = async ({ db }) => {
   const nuxtMiddleware = await nuxt()
   app.use(session.loginCallback)
   app.use(session.decode)
   app.use(nuxtMiddleware)
-  const { client, db } = await dbUtils.init()
   app.set('db', db)
-  await require('../upgrade')(db)
-  app.set('client', client)
-  scheduler.init(db)
   app.use((err, req, res, next) => {
     console.error('Error in HTTP request', err.response ? err.response.data : err)
     res.status(err.status || 500).send(err.message)
@@ -74,7 +68,7 @@ exports.run = async () => {
 
   httpServer = http.createServer(app).listen(config.port)
   await event2promise(httpServer, 'listening')
-  debug('HTTP server is listening', config.port)
+  console.log('HTTP server is listening', config.port)
 }
 
 exports.stop = async () => {

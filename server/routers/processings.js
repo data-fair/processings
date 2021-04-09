@@ -4,15 +4,12 @@ const processingschema = require('../../contract/processing')
 const validate = ajv.compile(processingschema)
 const findUtils = require('../utils/find')
 const asyncWrap = require('../utils/async-wrap')
-const scheduler = require('../utils/scheduler')
 const permissions = require('../utils/permissions')
-const scheduling = require('../utils/scheduling')
+const runs = require('../utils/runs')
 const session = require('../utils/session')
 const router = express.Router()
 const { nanoid } = require('nanoid')
 const cryptoRandomString = require('crypto-random-string')
-
-const CronJob = require('cron').CronJob
 
 module.exports = router
 
@@ -32,6 +29,7 @@ router.get('', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, 
 
 // Create a processing
 router.post('', session.requiredAuth, permissions.isAdmin, asyncWrap(async(req, res, next) => {
+  const db = req.app.get('db')
   req.body._id = nanoid()
   if (req.body.owner && !req.user.adminMode) return res.status(403).send('owner can only be set for superadmin')
   req.body.owner = req.body.owner || req.user.activeAccount
@@ -44,17 +42,19 @@ router.post('', session.requiredAuth, permissions.isAdmin, asyncWrap(async(req, 
   }
   const valid = validate(req.body)
   if (!valid) return res.status(400).send(validate.errors)
-  await req.app.get('db').collection('processings').insertOne(req.body)
-  if (req.body.active) scheduler.update(req.body, req.app.get('db'))
+  await db.collection('processings').insertOne(req.body)
+  await runs.applyProcessing(db, req.body)
   res.status(200).json(req.body)
 }))
 
 // Patch some of the attributes of a processing
 router.patch('/:id', session.requiredAuth, permissions.isAdmin, asyncWrap(async(req, res, next) => {
-  const processing = await req.app.get('db').collection('processings').findOne({ id: req.params.id }, { projection: {} })
+  const db = req.app.get('db')
+  const processing = await db.collection('processings').findOne({ _id: req.params.id }, { projection: {} })
   if (!processing) return res.status(404)
   // Restrict the parts of the processing that can be edited by API
-  const acceptedParts = Object.keys(processingschema.properties).filter(k => !processingschema.properties[k].readOnly)
+  const acceptedParts = Object.keys(processingschema.properties)
+    .filter(k => !processingschema.properties[k].readOnly)
   for (const key in req.body) {
     if (!acceptedParts.includes(key)) return res.status(400).send('Unsupported patch part ' + key)
   }
@@ -77,31 +77,23 @@ router.patch('/:id', session.requiredAuth, permissions.isAdmin, asyncWrap(async(
   const patchedprocessing = Object.assign({}, processing, req.body)
   var valid = validate(JSON.parse(JSON.stringify(patchedprocessing)))
   if (!valid) return res.status(400).send(validate.errors)
-  await req.app.get('db').collection('processings').findOneAndUpdate({ id: req.params.id }, patch)
-  if (patchedprocessing.active) scheduler.update(patchedprocessing, req.app.get('db'))
-  else scheduler.delete(patchedprocessing)
+  await db.collection('processings').findOneAndUpdate({ _id: req.params.id }, patch)
+  await runs.applyProcessing(db, patchedprocessing)
   res.status(200).json(patchedprocessing)
 }))
 
 router.get('/:id', session.requiredAuth, asyncWrap(async(req, res, next) => {
-  const processing = await req.app.get('db').collection('processings').findOne({ id: req.params.id }, { projection: {} })
+  const processing = await req.app.get('db').collection('processings')
+    .findOne({ _id: req.params.id }, { projection: {} })
   if (!processing) return res.sendStatus(404)
   if (!permissions.isOwner(req.user, processing)) return res.sendStatus(403)
   res.status(200).json(processing)
 }))
 
-router.get('/:id/schedule', session.requiredAuth, asyncWrap(async(req, res, next) => {
-  const processing = await req.app.get('db').collection('processings').findOne({ id: req.params.id }, { projection: { scheduling: 1, owner: 1 } })
-  if (!processing) return res.sendStatus(404)
-  if (!permissions.isOwner(req.user, processing)) return res.sendStatus(403)
-  if (!processing.scheduling || processing.scheduling.unit === 'trigger') return res.status(200).json([])
-  const cronStr = scheduling.toCRON(processing.scheduling)
-  const job = new CronJob(cronStr, async function() {})
-  res.status(200).json(job.nextDates(20).map(d => d.toISOString()))
-}))
-
 router.delete('/:id', session.requiredAuth, permissions.isAdmin, asyncWrap(async(req, res, next) => {
-  const processing = await req.app.get('db').collection('processings').findOneAndDelete({ id: req.params.id })
-  if (processing && processing.value) scheduler.delete(processing.value)
+  const db = req.app.get('db')
+  const processing = await db.collection('processings')
+    .findOneAndDelete({ _id: req.params.id })
+  if (processing && processing.value) await runs.deleteProcessing(req.body)
   res.sendStatus(204)
 }))

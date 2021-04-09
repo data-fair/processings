@@ -1,5 +1,6 @@
 
 const assert = require('assert').strict
+const worker = require('../server/worker')
 
 describe.only('Processings', () => {
   let plugin
@@ -12,13 +13,29 @@ describe.only('Processings', () => {
     })).data
   })
 
-  it('should create a new processing', async () => {
+  it('should create a new processing and activate it', async () => {
     const processing = (await global.ax.superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
       plugin: plugin.id,
     })).data
     assert.ok(processing._id)
-    const runs = (await global.ax.superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+    assert.equal(processing.scheduling.type, 'trigger')
+
+    // no run at first
+    let runs = (await global.ax.superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
     assert.equal(runs.count, 0)
+
+    // active but without scheduling = still no run
+    await global.ax.superadmin.patch(`/api/v1/processings/${processing._id}`, { active: true })
+    runs = (await global.ax.superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+    assert.equal(runs.count, 0)
+
+    // active and with scheduling = a scheduled run
+    await global.ax.superadmin.patch(`/api/v1/processings/${processing._id}`, {
+      scheduling: { type: 'monthly', dayOfWeek: '*', dayOfMonth: 1, month: '*', hour: 0, minute: 0 },
+    })
+    runs = (await global.ax.superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+    assert.equal(runs.count, 1)
+    // const run = await worker.hook(processing._id)
   })
 })

@@ -1,4 +1,5 @@
 module.exports = {
+  mode: 'MODE',
   publicUrl: 'PUBLIC_URL',
   port: 'PORT',
   sessionDomain: 'SESSION_DOMAIN',
@@ -8,9 +9,19 @@ module.exports = {
   datasetsUrlTemplate: 'DATASETS_URL_TEMPLATE',
   dataFairAdminMode: {
     __name: 'DATA_FAIR_ADMIN_MODE',
-    __format: 'json'
+    __format: 'json',
   },
   mongo: {
-    host: 'MONGO_HOST'
-  }
+    host: 'MONGO_HOST',
+  },
+  worker: {
+    interval: {
+      __name: 'WORKER_INTERVAL',
+      __format: 'json',
+    },
+    concurrency: {
+      __name: 'WORKER_CONCURRENCY',
+      __format: 'json',
+    },
+  },
 }
