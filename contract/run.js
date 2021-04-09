@@ -22,9 +22,13 @@ module.exports = {
     },
     status: {
       type: 'string',
-      enum: ['triggered', 'scheduled', 'running', 'stopped', 'error'],
+      enum: ['triggered', 'scheduled', 'running', 'stopped', 'error', 'finished'],
     },
     scheduledAt: {
+      type: 'string',
+      format: 'date-time',
+    },
+    startedAt: {
       type: 'string',
       format: 'date-time',
     },
@@ -37,6 +41,12 @@ module.exports = {
           type: {
             type: 'string',
             enum: ['step', 'info', 'debug', 'error'],
+          },
+          msg: {
+            type: 'string',
+          },
+          extra: {
+            type: 'object',
           },
         },
       },

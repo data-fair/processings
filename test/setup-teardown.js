@@ -62,7 +62,6 @@ beforeEach('scratch data', async () => {
   await Promise.all([
     global.db.collection('processings').deleteMany({}),
     global.db.collection('runs').deleteMany({}),
-    fs.emptyDir('./data/test'),
   ])
 })
 

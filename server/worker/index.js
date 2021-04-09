@@ -1,7 +1,7 @@
 const config = require('config')
 const spawn = require('child-process-promise').spawn
 const locks = require('../utils/locks')
-const debug = require('debug')('workers')
+const debug = require('debug')('worker')
 
 // resolve functions that will be filled when we will be asked to stop the workers
 // const stopResolves = {}
@@ -54,15 +54,20 @@ async function iter(db) {
     run = await acquireNext(db)
     if (!run) return
 
-    debug(`run ${run.processing.title} > ${run._id}`)
+    debug(`run "${run.processing.title}" > ${run._id}`)
 
     // Run a task in a dedicated child process for  extra resiliency to fatal memory exceptions
-    const spawnPromise = spawn('node', ['server/worker/task.js', run._id], { env: { ...process.env, sttdio: ['ignore', 'inherit', 'pipe'] } })
+    const spawnPromise = spawn('node', ['server', run._id, run.processing._id], {
+      env: { ...process.env, MODE: 'task' },
+      stdio: ['ignore', 'inherit', 'pipe'],
+    })
     spawnPromise.childProcess.stderr.on('data', data => {
       debug('[spawned task stderr] ' + data)
       stderr += data
     })
     await spawnPromise
+
+    await db.collection('runs').updateOne({ _id: run._id }, { $set: { status: 'finished' } })
 
     if (hooks[run.processing._id]) {
       hooks[run.processing._id].resolve(await db.collection('runs').findOne({ _id: run._id }))
@@ -80,21 +85,19 @@ async function iter(db) {
 
     if (run) {
       console.warn(`failure ${run.processing.title} > ${run._id}`, err)
-      await db.collection('runs').updateOne({ id: run.id }, { $set: { status: 'error' } })
-      run.status = 'error'
+      await db.collection('runs').updateOne({ _id: run._id }, { $set: { status: 'error' } })
       if (hooks[run.processing._id]) hooks[run.processing._id].reject({ run, message: errorMessage.join('\n') })
     } else {
       console.warn('failure in worker', err)
     }
   } finally {
     if (run) {
-      locks.release(db, run._id)
+      locks.release(db, run.processing._id)
     }
   }
 }
 
 async function acquireNext(db) {
-  console.log('aquire ?')
   // Random sort prevents from insisting on the same failed dataset again and again
   const cursor = db.collection('runs')
     .aggregate([{
@@ -109,9 +112,8 @@ async function acquireNext(db) {
       }, { $sample: { size: 100 } }])
   while (await cursor.hasNext()) {
     const run = await cursor.next()
-    console.log('run', run)
     // console.log('resource', resource)
-    const ack = await locks.acquire(db, run._id)
+    const ack = await locks.acquire(db, run.processing._id)
     if (ack) return run
   }
 }

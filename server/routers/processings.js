@@ -97,3 +97,11 @@ router.delete('/:id', session.requiredAuth, permissions.isAdmin, asyncWrap(async
   if (processing && processing.value) await runs.deleteProcessing(req.body)
   res.sendStatus(204)
 }))
+
+// TODO: also accept webhook key
+router.post('/:id/_trigger', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, res, next) => {
+  const db = req.app.get('db')
+  const processing = await db.collection('processings')
+    .findOne({ _id: req.params.id }, { projection: {} })
+  res.send(await runs.createNext(db, processing, true))
+}))

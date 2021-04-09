@@ -25,7 +25,16 @@ module.exports = {
       type: 'string',
       readOnly: true,
     },
+    config: {
+      // this content varies depending on used plugin
+      type: 'object',
+    },
     scheduling,
+    debug: {
+      type: 'boolean',
+      default: false,
+      readOnly: true,
+    },
     'last-execution': {
       title: 'Dernière exécution',
       type: 'object',

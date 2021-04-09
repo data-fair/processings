@@ -7,6 +7,7 @@ const util = require('util')
 const exec = util.promisify(require('child_process').exec)
 const router = module.exports = express.Router()
 const tmp = require('tmp-promise')
+const requireWithoutCache = require('require-without-cache')
 const asyncWrap = require('../utils/async-wrap')
 const permissions = require('../utils/permissions')
 const session = require('../utils/session')
@@ -44,7 +45,7 @@ router.get('/', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req,
   const results = []
   for (const dir of dirs) {
     const pluginInfo = await fs.readJson(path.join(pluginsDir, dir, 'plugin.json'))
-    const pluginModule = require(path.resolve(pluginsDir, dir))
+    const pluginModule = requireWithoutCache(path.resolve(pluginsDir, dir))
     if (pluginModule.pluginConfigSchema) {
       pluginInfo.pluginConfigSchema = await pluginModule.pluginConfigSchema()
       if (await fs.exists(path.join(pluginsDir, dir + '-config.json'))) {

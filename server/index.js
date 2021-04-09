@@ -1,6 +1,6 @@
 
 const config = require('config')
-const mongodb = require('./utils/mongodb')
+const dbUtils = require('./utils/db')
 let _client
 
 async function start () {
@@ -9,10 +9,10 @@ async function start () {
   if (config.mode === 'server') {
     readPreference = 'nearest' // the Web API is not as sensitive to small freshness problems
   }
-  if (config.mode === 'worker') {
-    poolSize = 1
+  if (config.mode === 'worker' || config.mode === 'task') {
+    poolSize = 1 // no need for much concurrency inside worker/tasks
   }
-  const { client, db } = await mongodb.init(poolSize, readPreference)
+  const { client, db } = await dbUtils.init(poolSize, readPreference)
   _client = client
   if (config.mode.includes('worker')) {
     await require('../upgrade')(db)
@@ -20,6 +20,10 @@ async function start () {
   }
   if (config.mode.includes('server')) {
     await require('./app').start({ db })
+  }
+  if (config.mode === 'task') {
+    await require('./worker/task').run({ db })
+    process.exit()
   }
 }
 
