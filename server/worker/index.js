@@ -84,8 +84,8 @@ async function iter(db) {
     }
 
     if (run) {
-      console.warn(`failure ${run.processing.title} > ${run._id}`, err)
-      await db.collection('runs').updateOne({ _id: run._id }, { $set: { status: 'error' } })
+      console.warn(`failure ${run.processing.title} > ${run._id}`, errorMessage.join('\n'))
+      await db.collection('runs').updateOne({ _id: run._id }, { $set: { status: 'error' }, $push: { log: { type: 'debug', msg: errorMessage.join('\n') } } })
       if (hooks[run.processing._id]) hooks[run.processing._id].reject({ run, message: errorMessage.join('\n') })
     } else {
       console.warn('failure in worker', err)

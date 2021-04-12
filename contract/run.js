@@ -40,7 +40,7 @@ module.exports = {
         properties: {
           type: {
             type: 'string',
-            enum: ['step', 'info', 'debug', 'error'],
+            enum: ['step', 'error', 'warning', 'info', 'debug'],
           },
           msg: {
             type: 'string',

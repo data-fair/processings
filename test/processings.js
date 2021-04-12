@@ -2,12 +2,12 @@
 const assert = require('assert').strict
 const worker = require('../server/worker')
 
-describe.only('Processings', () => {
+describe('Processings', () => {
   let plugin
   before('prepare a plugin', async () => {
     plugin = (await global.ax.superadmin.post('/api/v1/plugins', {
       name: '@koumoul/data-fair-processings-hello-world',
-      version: '0.1.0',
+      version: '0.3.0',
       description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.',
       npm: 'https://www.npmjs.com/package/%40koumoul%2Fdata-fair-processings-hello-world',
     })).data
@@ -26,7 +26,14 @@ describe.only('Processings', () => {
     assert.equal(runs.count, 0)
 
     // active but without scheduling = still no run
-    await global.ax.superadmin.patch(`/api/v1/processings/${processing._id}`, { active: true })
+    await global.ax.superadmin.patch(`/api/v1/processings/${processing._id}`, {
+      active: true,
+      config: {
+        dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
+        overwrite: false,
+        message: 'Hello world test processing',
+      },
+    })
     runs = (await global.ax.superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
     assert.equal(runs.count, 0)
 
@@ -42,7 +49,18 @@ describe.only('Processings', () => {
     runs = (await global.ax.superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
     assert.equal(runs.count, 1)
     assert.equal(runs.results[0].status, 'triggered')
-    const run = await worker.hook(processing._id)
-    assert.equal(run.status, 'finished')
+    try {
+      await worker.hook(processing._id)
+      assert.fail()
+    } catch (err) {
+      // nothing, failure is normal we have no api key
+    }
+    const run = (await global.ax.superadmin.get('/api/v1/runs/' + runs.results[0]._id)).data
+    assert.equal(run.status, 'error')
+    assert.equal(run.log[0].type, 'step')
+    assert.equal(run.log[1].type, 'info')
+    assert.equal(run.log[2].type, 'error')
+    assert.equal(run.log[3].type, 'debug')
+    assert.equal(run.log[4].type, 'debug')
   })
 })

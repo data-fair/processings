@@ -17,5 +17,11 @@ router.get('', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, 
     size > 0 ? runs.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
     runs.countDocuments(query),
   ])
-  res.json({ results, count })
+  res.send({ results, count })
+}))
+
+router.get('/:id', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, res, next) => {
+  const run = await req.app.get('db').collection('runs').findOne({ _id: req.params.id })
+  if (!run) return res.status(404).send()
+  res.send(run)
 }))

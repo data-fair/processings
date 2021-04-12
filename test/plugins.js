@@ -5,7 +5,7 @@ describe('Plugins', () => {
   it('should install a new plugin then list and remove it', async () => {
     const plugin = {
       name: '@koumoul/data-fair-processings-hello-world',
-      version: '0.1.0',
+      version: '0.3.0',
       description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.',
       npm: 'https://www.npmjs.com/package/%40koumoul%2Fdata-fair-processings-hello-world',
     }
