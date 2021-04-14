@@ -21,18 +21,22 @@ module.exports = {
           const: '*',
         },
         dayOfMonth: {
-          title: 'Jour',
+          title: 'Jour du mois',
           type: 'integer',
           minimum: 1,
           maximum: 28,
           default: 1,
+          'x-cols': 6,
+          'x-class': 'pr-1',
         },
         hour: {
-          title: 'Heure',
+          title: 'Heure de la journée',
           type: 'integer',
           minimum: 0,
           maximum: 23,
           default: 0,
+          'x-cols': 6,
+          'x-class': 'pl-1',
         },
         minute: {
           type: 'integer',
@@ -51,7 +55,7 @@ module.exports = {
           const: 'weekly',
         },
         dayOfWeek: {
-          title: 'Jour',
+          title: 'Jour de la semaine',
           type: 'string',
           oneOf: [{
             const: 1,
@@ -76,13 +80,17 @@ module.exports = {
             title: 'dimanche',
           }],
           default: 1,
+          'x-cols': 6,
+          'x-class': 'pr-1',
         },
         hour: {
-          title: 'Heure',
+          title: 'Heure de la journée',
           type: 'integer',
           minimum: 0,
           maximum: 23,
           default: 0,
+          'x-cols': 6,
+          'x-class': 'pl-1',
         },
         minute: {
           type: 'integer',
@@ -109,7 +117,7 @@ module.exports = {
           const: '*',
         },
         hour: {
-          title: 'Heure',
+          title: 'Heure de la journée',
           type: 'integer',
           minimum: 0,
           maximum: 23,
@@ -144,7 +152,7 @@ module.exports = {
           const: '*',
         },
         hourStep: {
-          title: 'Nombre d\'heures',
+          title: 'Nombre d\'heures de l\'interval',
           type: 'integer',
           minimum: 1,
           maximum: 12,

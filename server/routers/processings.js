@@ -92,7 +92,7 @@ router.patch('/:id', session.requiredAuth, permissions.isAdmin, asyncWrap(async(
       patch.$set[key] = req.body[key]
     }
   }
-  const patchedprocessing = Object.assign({}, processing, req.body)
+  const patchedprocessing = { ...processing, ...req.body }
   await validateFullProcessing(patchedprocessing)
   await db.collection('processings').updateOne({ _id: req.params.id }, patch)
   await runs.applyProcessing(db, patchedprocessing)
@@ -111,7 +111,7 @@ router.delete('/:id', session.requiredAuth, permissions.isAdmin, asyncWrap(async
   const db = req.app.get('db')
   const processing = await db.collection('processings')
     .findOneAndDelete({ _id: req.params.id })
-  if (processing && processing.value) await runs.deleteProcessing(req.body)
+  if (processing && processing.value) await runs.deleteProcessing(db, req.body)
   res.sendStatus(204)
 }))
 

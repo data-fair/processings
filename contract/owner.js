@@ -1,5 +1,3 @@
-const config = require('config')
-
 exports.owner = {
   type: 'object',
   title: 'Propriétaire',
@@ -23,11 +21,11 @@ exports.owner = {
   },
 }
 
-exports.editableOwner = {
+exports.editableOwner = (config) => ({
   ...exports.owner,
   readOnly: false,
   'x-fromUrl': config.directoryUrl + '/api/organizations?size=1000',
   'x-itemsProp': 'results',
   'x-itemTitle': 'name',
   'x-itemKey': 'id',
-}
+})

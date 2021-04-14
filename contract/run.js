@@ -46,6 +46,10 @@ module.exports = {
             type: 'string',
             enum: ['step', 'error', 'warning', 'info', 'debug'],
           },
+          date: {
+            type: 'string',
+            format: 'date-time',
+          },
           msg: {
             type: 'string',
           },

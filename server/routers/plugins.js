@@ -47,6 +47,7 @@ router.get('/', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req,
   const results = []
   for (const dir of dirs) {
     const pluginInfo = await fs.readJson(path.join(pluginsDir, dir, 'plugin.json'))
+    // TODO: attention à la confidentialité de cette config quand on ouvrira la config de processings aux utilisateurs
     if (await fs.exists(path.join(pluginsDir, dir + '-config.json'))) {
       pluginInfo.config = await fs.readJson(path.join(pluginsDir, dir + '-config.json'))
     }
@@ -56,6 +57,11 @@ router.get('/', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req,
     count: dirs.length,
     results,
   })
+}))
+
+router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
+  const pluginInfo = await fs.readJson(path.join(pluginsDir, req.params.id, 'plugin.json'))
+  res.send(pluginInfo)
 }))
 
 router.delete('/:id', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, res, next) => {

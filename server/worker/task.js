@@ -13,24 +13,24 @@ exports.run = async ({ db }) => {
   const log = {
     step(msg) {
       return db.collection('runs')
-        .updateOne({ _id: run._id }, { $push: { log: { type: 'step', msg } } })
+        .updateOne({ _id: run._id }, { $push: { log: { type: 'step', date: new Date().toISOString(), msg } } })
     },
     error(msg, extra) {
       return db.collection('runs')
-        .updateOne({ _id: run._id }, { $push: { log: { type: 'error', msg, extra } } })
+        .updateOne({ _id: run._id }, { $push: { log: { type: 'error', date: new Date().toISOString(), msg, extra } } })
     },
     warning(msg, extra) {
       return db.collection('runs')
-        .updateOne({ _id: run._id }, { $push: { log: { type: 'warning', msg, extra } } })
+        .updateOne({ _id: run._id }, { $push: { log: { type: 'warning', date: new Date().toISOString(), msg, extra } } })
     },
     info(msg, extra) {
       return db.collection('runs')
-        .updateOne({ _id: run._id }, { $push: { log: { type: 'info', msg, extra } } })
+        .updateOne({ _id: run._id }, { $push: { log: { type: 'info', date: new Date().toISOString(), msg, extra } } })
     },
     debug(msg, extra, force) {
       if (!processing.debug && !force) return
       return db.collection('runs')
-        .updateOne({ _id: run._id }, { $push: { log: { type: 'debug', msg, extra } } })
+        .updateOne({ _id: run._id }, { $push: { log: { type: 'debug', date: new Date().toISOString(), msg, extra } } })
     },
   }
   if (run.status === 'running') {
@@ -47,7 +47,7 @@ exports.run = async ({ db }) => {
   const headers = { 'x-apiKey': config.dataFairAPIKey }
   if (config.dataFairAdminMode) headers['x-account'] = `${processing.owner.type}:${processing.owner.id}`
   const axiosInstance = axios.create({ baseURL: config.dataFairUrl, headers })
-  // customize axios errors for shorter stack traces when a request fails in a test
+  // customize axios errors for shorter stack traces when a request fails
   axiosInstance.interceptors.response.use(response => response, error => {
     if (!error.response) return Promise.reject(error)
     delete error.response.request
@@ -65,6 +65,7 @@ exports.run = async ({ db }) => {
   }
   try {
     await require(pluginDir).run(context)
+    await log.debug('finished')
   } catch (err) {
     if (err.status && err.statusText) {
       await log.error(err.data && typeof err.data === 'string' ? err.data : err.statusText)

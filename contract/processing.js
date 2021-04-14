@@ -4,6 +4,7 @@ const run = JSON.parse(JSON.stringify(require('./run')))
 delete run.properties.log
 delete run.properties.processing
 delete run.properties.owner
+run.readOnly = true
 
 module.exports = {
   type: 'object',
@@ -24,6 +25,7 @@ module.exports = {
       title: 'Actif',
       type: 'boolean',
       default: false,
+      'x-display': 'switch',
     },
     plugin: {
       type: 'string',
@@ -36,7 +38,6 @@ module.exports = {
     scheduling,
     debug: {
       type: 'boolean',
-      default: false,
       readOnly: true,
     },
     lastRun: { ...run, title: 'Dernière exécution' },

@@ -7,7 +7,7 @@
   >
     <v-toolbar-items>
       <v-btn text :to="{name: 'processings'}">
-        Mes traitements
+        Traitements
       </v-btn>
       <v-btn
         text
@@ -15,13 +15,6 @@
         color="admin"
       >
         Plugins
-      </v-btn>
-      <v-btn
-        text
-        :to="{name: 'admin-processings'}"
-        color="admin"
-      >
-        Traitements
       </v-btn>
     </v-toolbar-items>
     <v-breadcrumbs

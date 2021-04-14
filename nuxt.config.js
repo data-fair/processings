@@ -12,6 +12,7 @@ if (process.env.NODE_ENV === 'production') {
 
 module.exports = {
   mode: 'spa',
+  components: true,
   srcDir: 'public/',
   build: {
     transpile: ['@koumoul/vjsf'],
