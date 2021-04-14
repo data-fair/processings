@@ -1,7 +1,7 @@
 exports.owner = {
   type: 'object',
   title: 'Propriétaire',
-  additionalProperties: false,
+  additionalProperties: true,
   readOnly: true,
   required: ['type', 'id'],
   properties: {
