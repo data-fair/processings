@@ -58,6 +58,9 @@
     async mounted() {
       await this.fetchProcessing()
       this.editProcessing = { ...this.processing }
+      Object.keys(processingSchema.properties).forEach(key => {
+        if (processingSchema.properties[key].readOnly) delete this.editProcessing[key]
+      })
       this.plugin = await this.$axios.$get('api/v1/plugins/' + this.processing.plugin)
     },
     methods: {
