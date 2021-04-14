@@ -23,6 +23,7 @@ module.exports = {
     { src: '~plugins/filters' },
     { src: '~plugins/moment' },
     { src: '~plugins/session', ssr: false },
+    { src: '~plugins/breadcrumbs.js', ssr: false },
   ],
   router: {
     base: config.basePath,
