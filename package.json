@@ -68,7 +68,7 @@
     "mongodb": "^3.6.3",
     "nanoid": "^3.1.22",
     "node-cron": "^2.0.3",
-    "nuxt": "^2.14.12",
+    "nuxt": "^2.15.4",
     "pump": "^3.0.0",
     "require-without-cache": "0.0.6",
     "semver": "^7.3.4",

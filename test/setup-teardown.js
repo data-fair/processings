@@ -50,8 +50,8 @@ before('scratch all', async() => {
 
 before('start service', async function () {
   try {
-    global.app = await app.start({ db: global.db })
-    global.worker = worker.start({ db: global.db })
+    await app.start({ db: global.db })
+    worker.start({ db: global.db })
   } catch (err) {
     console.error('Failed to run the application', err)
     throw err
@@ -68,7 +68,10 @@ beforeEach('scratch data', async () => {
 after('stop app', async () => {
   await Promise.race([
     new Promise(resolve => setTimeout(resolve, 5000)),
-    app.stop(),
+    Promise.all([
+      app.stop(),
+      worker.stop(),
+    ]),
   ])
 })
 

@@ -68,7 +68,7 @@ exports.start = async ({ db }) => {
 
   httpServer = http.createServer(app).listen(config.port)
   await event2promise(httpServer, 'listening')
-  console.log('HTTP server is listening', config.port)
+  console.log('HTTP server is listening http://localhost:' + config.port)
 }
 
 exports.stop = async () => {

@@ -16,7 +16,7 @@ async function start () {
   _client = client
   if (config.mode.includes('worker')) {
     await require('../upgrade')(db)
-    await require('./worker').start({ db })
+    require('./worker').start({ db })
   }
   if (config.mode.includes('server')) {
     await require('./app').start({ db })
