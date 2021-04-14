@@ -69,7 +69,7 @@ exports.running = async (db, run) => {
     { returnOriginal: false, projection: { log: 0, processing: 0, owner: 0 } },
   )).value
   await db.collection('processings')
-    .updateOne({ _id: run.processing._id }, { $set: { lastRun, nextRun: null } })
+    .updateOne({ _id: run.processing._id }, { $set: { lastRun }, $unset: { nextRun: '' } })
 }
 
 exports.finish = async (db, run, errorMessage) => {
