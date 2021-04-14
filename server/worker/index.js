@@ -67,7 +67,8 @@ async function iter(db) {
     })
     await spawnPromise
 
-    await db.collection('runs').updateOne({ _id: run._id }, { $set: { status: 'finished' } })
+    await db.collection('runs')
+      .updateOne({ _id: run._id }, { $set: { status: 'finished', finishedAt: new Date().toISOString() } })
 
     if (hooks[run.processing._id]) {
       hooks[run.processing._id].resolve(await db.collection('runs').findOne({ _id: run._id }))
@@ -85,7 +86,8 @@ async function iter(db) {
 
     if (run) {
       console.warn(`failure ${run.processing.title} > ${run._id}`, errorMessage.join('\n'))
-      await db.collection('runs').updateOne({ _id: run._id }, { $set: { status: 'error' }, $push: { log: { type: 'debug', msg: errorMessage.join('\n') } } })
+      await db.collection('runs')
+        .updateOne({ _id: run._id }, { $set: { status: 'error', finishedAt: new Date().toISOString() }, $push: { log: { type: 'debug', msg: errorMessage.join('\n') } } })
       if (hooks[run.processing._id]) hooks[run.processing._id].reject({ run, message: errorMessage.join('\n') })
     } else {
       console.warn('failure in worker', err)

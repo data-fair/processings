@@ -32,6 +32,10 @@ module.exports = {
       type: 'string',
       format: 'date-time',
     },
+    finishedAt: {
+      type: 'string',
+      format: 'date-time',
+    },
     log: {
       type: 'array',
       default: [],
