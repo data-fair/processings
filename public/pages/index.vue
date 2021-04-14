@@ -6,6 +6,9 @@
 
 <script>
   export default {
+    mounted() {
+      this.$store.dispatch('setBreadcrumbs', [])
+    },
   }
 </script>
 

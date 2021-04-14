@@ -11,6 +11,7 @@ export default () => {
     },
     state: {
       embed: false,
+      breadcrumbs: null,
     },
     getters: {
       embed() {
@@ -24,6 +25,13 @@ export default () => {
     mutations: {
       setAny(state, params) {
         Object.assign(state, params)
+      },
+    },
+    actions: {
+      setBreadcrumbs({ commit }, breadcrumbs) {
+        breadcrumbs.forEach(b => { b.exact = true })
+        commit('setAny', { breadcrumbs })
+        if (global.parent) parent.postMessage({ breadcrumbs }, '*')
       },
     },
   })

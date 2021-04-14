@@ -94,6 +94,9 @@
     }),
     watch: {},
     created() {
+      this.$store.dispatch('setBreadcrumbs', [{
+        text: 'traitements',
+      }])
       this.refresh()
       this.fetchInstalledPlugins()
     },

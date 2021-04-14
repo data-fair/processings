@@ -14,6 +14,7 @@
               title="Désinstaller"
               icon
               color="warning"
+              :disabled="loading"
               @click="uninstall(result)"
             >
               <v-icon>mdi-delete</v-icon>
@@ -44,7 +45,7 @@
             title="Installer"
             icon
             color="primary"
-            :disabled="!installedPlugins.results || !!installedPlugins.results.find(r => r.name === result.name && r.version === result.version)"
+            :disabled="loading || !installedPlugins.results || !!installedPlugins.results.find(r => r.name === result.name && r.version === result.version)"
             @click="install(result)"
           >
             <v-icon>mdi-download</v-icon>
@@ -64,10 +65,12 @@
     components: { VJsf },
     middleware: 'superadmin-required',
     data: () => ({
+      loading: false,
       availablePlugins: {},
       installedPlugins: {},
     }),
     created() {
+      this.$store.dispatch('setBreadcrumbs', [{ text: 'plugins' }])
       this.fetchAvailablePlugins()
       this.fetchInstalledPlugins()
     },
@@ -79,15 +82,21 @@
         this.installedPlugins = await this.$axios.$get('/api/v1/plugins')
       },
       async install(plugin) {
+        this.loading = true
         await this.$axios.$post('/api/v1/plugins', plugin)
-        this.fetchInstalledPlugins()
+        await this.fetchInstalledPlugins()
+        this.loading = false
       },
       async uninstall(plugin) {
+        this.loading = true
         await this.$axios.$delete('/api/v1/plugins/' + plugin.id)
-        this.fetchInstalledPlugins()
+        await this.fetchInstalledPlugins()
+        this.loading = false
       },
       async saveConfig(plugin) {
+        this.loading = true
         await this.$axios.$put(`/api/v1/plugins/${plugin.id}/config`, plugin.config)
+        this.loading = false
       },
     },
   }

@@ -63,6 +63,12 @@
     methods: {
       async fetchProcessing() {
         this.processing = await this.$axios.$get('api/v1/processings/' + this.$route.params.id)
+        this.$store.dispatch('setBreadcrumbs', [{
+          text: 'traitements',
+          to: '/processings',
+        }, {
+          text: this.processing.title,
+        }])
       },
       async patch(patch) {
         await this.$axios.$patch('api/v1/processings/' + this.$route.params.id, patch)

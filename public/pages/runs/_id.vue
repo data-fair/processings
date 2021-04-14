@@ -81,6 +81,15 @@
       async refresh() {
         this.loading = true
         this.run = await this.$axios.$get(`api/v1/runs/${this.$route.params.id}`)
+        this.$store.dispatch('setBreadcrumbs', [{
+          text: 'traitements',
+          to: '/processings',
+        }, {
+          text: this.run.processing.title,
+          to: `/processings/${this.run.processing._id}`,
+        }, {
+          text: 'exécution',
+        }])
         this.loading = false
       },
     },

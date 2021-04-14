@@ -15,6 +15,7 @@
   import AppBar from '~/components/layout/app-bar.vue'
   export default {
     components: { AppBar, Notifications },
+    middleware: 'breadcrumbs',
     computed: {
       ...mapGetters(['embed']),
     },
