@@ -23,6 +23,10 @@ exports.applyProcessing = async (db, processing) => {
   await exports.createNext(db, processing)
 }
 
+exports.deleteProcessing = async (db, processing) => {
+  await db.collection('runs').deleteMany({ 'processing._id': processing._id })
+}
+
 exports.createNext = async (db, processing, triggered) => {
   const run = {
     _id: nanoid(),
@@ -51,9 +55,39 @@ exports.createNext = async (db, processing, triggered) => {
   const valid = validate(run)
   if (!valid) throw new Error(JSON.stringify(validate.errors))
   await db.collection('runs').insertOne(run)
+  await db.collection('processings').updateOne(
+    { _id: run.processing._id },
+    { $set: { nextRun: { ...run, log: undefined, processing: undefined, owner: undefined } } },
+  )
   return run
 }
 
-exports.deleteProcessing = async (db, processing) => {
-  await db.collection('runs').deleteMany({ 'processing._id': processing._id })
+exports.running = async (db, run) => {
+  const lastRun = (await db.collection('runs').findOneAndUpdate(
+    { _id: run._id },
+    { $set: { status: 'running', startedAt: new Date().toISOString() } },
+    { returnOriginal: false, projection: { log: 0, processing: 0, owner: 0 } },
+  )).value
+  await db.collection('processings')
+    .updateOne({ _id: run.processing._id }, { $set: { lastRun, nextRun: null } })
+}
+
+exports.finish = async (db, run, errorMessage) => {
+  const query = {
+    $set: {
+      status: 'finished',
+      finishedAt: new Date().toISOString(),
+    },
+  }
+  if (errorMessage) {
+    query.$set.status = 'error'
+    query.$push = { log: { type: 'debug', msg: errorMessage } }
+  }
+  const lastRun = (await db.collection('runs').findOneAndUpdate(
+    { _id: run._id },
+    query,
+    { returnOriginal: false, projection: { log: 0, processing: 0, owner: 0 } },
+  )).value
+  await db.collection('processings')
+    .updateOne({ _id: run.processing._id }, { $set: { lastRun } })
 }

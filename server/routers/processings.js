@@ -94,7 +94,7 @@ router.patch('/:id', session.requiredAuth, permissions.isAdmin, asyncWrap(async(
   }
   const patchedprocessing = Object.assign({}, processing, req.body)
   await validateFullProcessing(patchedprocessing)
-  await db.collection('processings').findOneAndUpdate({ _id: req.params.id }, patch)
+  await db.collection('processings').updateOne({ _id: req.params.id }, patch)
   await runs.applyProcessing(db, patchedprocessing)
   res.status(200).json(patchedprocessing)
 }))

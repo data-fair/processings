@@ -14,7 +14,7 @@ describe('Processings', () => {
   })
 
   it('should create a new processing, activate it and run it', async () => {
-    const processing = (await global.ax.superadmin.post('/api/v1/processings', {
+    let processing = (await global.ax.superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
       plugin: plugin.id,
     })).data
@@ -62,5 +62,9 @@ describe('Processings', () => {
     assert.equal(run.log[2].type, 'error')
     assert.equal(run.log[3].type, 'debug')
     assert.equal(run.log[4].type, 'debug')
+
+    processing = (await global.ax.superadmin.get(`/api/v1/processings/${processing._id}`)).data
+    assert.ok(processing.lastRun)
+    assert.equal(processing.lastRun.status, 'error')
   })
 })

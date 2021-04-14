@@ -1,6 +1,7 @@
 const config = require('config')
 const spawn = require('child-process-promise').spawn
 const locks = require('../utils/locks')
+const runs = require('../utils/runs')
 const debug = require('debug')('worker')
 
 // resolve functions that will be filled when we will be asked to stop the workers
@@ -26,12 +27,14 @@ exports.clear = () => {
 /* eslint no-unmodified-loop-condition: 0 */
 // Run main loop !
 exports.start = async ({ db }) => {
+  // await locks.init(db)
   console.log('start worker')
   while (!stopped) {
     // Maintain max concurrency by checking if there is a free spot in an array of promises
     for (let i = 0; i < config.worker.concurrency; i++) {
       if (currentIters[i]) continue
       currentIters[i] = iter(db)
+      currentIters[i].catch(err => console.error('error in worker iter', err))
       currentIters[i].finally(() => {
         currentIters[i] = null
       })
@@ -48,16 +51,17 @@ exports.stop = async () => {
 }
 
 async function iter(db) {
-  let run
+  let run, processing
   let stderr = ''
   try {
     run = await acquireNext(db)
     if (!run) return
+    processing = await db.collection('processings').findOne({ _id: run.processing._id })
 
-    debug(`run "${run.processing.title}" > ${run._id}`)
+    debug(`run "${processing.title}" > ${run._id}`)
 
     // Run a task in a dedicated child process for  extra resiliency to fatal memory exceptions
-    const spawnPromise = spawn('node', ['server', run._id, run.processing._id], {
+    const spawnPromise = spawn('node', ['server', run._id, processing._id], {
       env: { ...process.env, MODE: 'task' },
       stdio: ['ignore', 'inherit', 'pipe'],
     })
@@ -67,11 +71,10 @@ async function iter(db) {
     })
     await spawnPromise
 
-    await db.collection('runs')
-      .updateOne({ _id: run._id }, { $set: { status: 'finished', finishedAt: new Date().toISOString() } })
+    await runs.finish(db, run)
 
-    if (hooks[run.processing._id]) {
-      hooks[run.processing._id].resolve(await db.collection('runs').findOne({ _id: run._id }))
+    if (hooks[processing._id]) {
+      hooks[processing._id].resolve(await db.collection('runs').findOne({ _id: run._id }))
     }
   } catch (err) {
     // Build back the original error message from the stderr of the child process
@@ -85,16 +88,20 @@ async function iter(db) {
     }
 
     if (run) {
-      console.warn(`failure ${run.processing.title} > ${run._id}`, errorMessage.join('\n'))
-      await db.collection('runs')
-        .updateOne({ _id: run._id }, { $set: { status: 'error', finishedAt: new Date().toISOString() }, $push: { log: { type: 'debug', msg: errorMessage.join('\n') } } })
-      if (hooks[run.processing._id]) hooks[run.processing._id].reject({ run, message: errorMessage.join('\n') })
+      console.warn(`failure ${processing.title} > ${run._id}`, errorMessage.join('\n'))
+
+      await runs.finish(db, run, errorMessage.join('\n'))
+
+      if (hooks[processing._id]) hooks[processing._id].reject({ run, message: errorMessage.join('\n') })
     } else {
       console.warn('failure in worker', err)
     }
   } finally {
     if (run) {
-      locks.release(db, run.processing._id)
+      locks.release(db, processing._id)
+    }
+    if (processing && processing.scheduling.type === 'trigger') {
+      await runs.createNext(db, processing)
     }
   }
 }

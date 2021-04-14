@@ -1,5 +1,9 @@
 const { owner } = require('./owner')
 const scheduling = require('./scheduling')
+const run = JSON.parse(JSON.stringify(require('./run')))
+delete run.properties.log
+delete run.properties.processing
+delete run.properties.owner
 
 module.exports = {
   type: 'object',
@@ -35,23 +39,8 @@ module.exports = {
       default: false,
       readOnly: true,
     },
-    'last-execution': {
-      title: 'Dernière exécution',
-      type: 'object',
-      readOnly: true,
-      properties: {
-        date: {
-          title: 'Date',
-          type: 'string',
-          format: 'date-time',
-        },
-        status: {
-          title: 'Statut',
-          type: 'string',
-          enum: ['ok', 'ko'],
-        },
-      },
-    },
+    lastRun: { ...run, title: 'Dernière exécution' },
+    nextRun: { ...run, title: 'Prochaine exécution' },
     webhookKey: {
       type: 'string',
       title: 'Identifiant du traitement',

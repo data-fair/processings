@@ -3,6 +3,7 @@ const path = require('path')
 const fs = require('fs-extra')
 const tmp = require('tmp-promise')
 const axios = require('axios')
+const runs = require('../utils/runs')
 
 exports.run = async ({ db }) => {
   const [run, processing] = await Promise.all([
@@ -32,13 +33,10 @@ exports.run = async ({ db }) => {
         .updateOne({ _id: run._id }, { $push: { log: { type: 'debug', msg, extra } } })
     },
   }
-
   if (run.status === 'running') {
     log.info('Reprise après interruption.')
   }
-  await db.collection('runs')
-    .updateOne({ _id: run._id }, { $set: { status: 'running', startedAt: new Date().toISOString() } })
-
+  await runs.running(db, run)
   const pluginDir = path.resolve(config.dataDir, 'plugins', processing.plugin)
 
   let pluginConfig = {}
