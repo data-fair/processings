@@ -1,6 +1,7 @@
 const { owner } = require('./owner')
 const scheduling = require('./scheduling')
 const run = JSON.parse(JSON.stringify(require('./run')))
+delete run.required
 delete run.properties.log
 delete run.properties.processing
 delete run.properties.owner
