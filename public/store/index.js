@@ -7,10 +7,10 @@ Vue.use(Vuex)
 export default () => {
   return new Vuex.Store({
     modules: {
-      session: sessionStoreBuilder()
+      session: sessionStoreBuilder(),
     },
     state: {
-      embed: false
+      embed: false,
     },
     getters: {
       embed() {
@@ -19,12 +19,12 @@ export default () => {
         } catch (e) {
           return true
         }
-      }
+      },
     },
     mutations: {
       setAny(state, params) {
         Object.assign(state, params)
-      }
-    }
+      },
+    },
   })
 }

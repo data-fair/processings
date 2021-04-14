@@ -1,12 +1,19 @@
 <template lang="html">
-  <v-menu v-if="processingId" v-model="menu" :max-width="1200" :close-on-content-click="false" top offset-y>
-    <template v-slot:activator="{ on: menu, attrs }">
+  <v-menu
+    v-if="processingId"
+    v-model="menu"
+    :max-width="1200"
+    :close-on-content-click="false"
+    top
+    offset-y
+  >
+    <template #activator="{ on: onMenu, attrs }">
       <v-tooltip bottom>
-        <template v-slot:activator="{ on: tooltip }">
+        <template #activator="{ on: onTooltip }">
           <v-btn
             text
             v-bind="attrs"
-            v-on="{ ...tooltip, ...menu }"
+            v-on="{ ...onTooltip, ...onMenu }"
           >
             <v-icon color="primary">
               mdi-text-subject
@@ -18,7 +25,7 @@
     </template>
     <v-card class="py-3">
       <v-simple-table dense>
-        <template v-slot:default>
+        <template #default>
           <thead>
             <tr>
               <th>
@@ -46,35 +53,35 @@
 </template>
 
 <script>
-import eventBus from '../event-bus'
+  import eventBus from '../event-bus'
 
-export default {
-  props: {
-    processingId: { type: String, required: true }
-  },
-  data() {
-    return {
-      menu: null,
-      logs: []
-    }
-  },
-  watch: {
-    menu(val) {
-      if (val) this.refresh()
-    }
-  },
-  async mounted() {
-    // this.vocabulary = await this.$axios.$get(process.env.publicUrl + '/data-fair/api/v1/vocabulary')
-  },
-  methods: {
-    async refresh() {
-      try {
-        this.logs = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings/' + this.processingId + '/logs')
-      } catch (error) {
-        eventBus.$emit('notification', { error, msg: 'Erreur pendant la récupération du journal du traitement' })
-        this.menu = false
+  export default {
+    props: {
+      processingId: { type: String, required: true },
+    },
+    data() {
+      return {
+        menu: null,
+        logs: [],
       }
-    }
+    },
+    watch: {
+      menu(val) {
+        if (val) this.refresh()
+      },
+    },
+    async mounted() {
+    // this.vocabulary = await this.$axios.$get(process.env.publicUrl + '/data-fair/api/v1/vocabulary')
+    },
+    methods: {
+      async refresh() {
+        try {
+          this.logs = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings/' + this.processingId + '/logs')
+        } catch (error) {
+          eventBus.$emit('notification', { error, msg: 'Erreur pendant la récupération du journal du traitement' })
+          this.menu = false
+        }
+      },
+    },
   }
-}
 </script>

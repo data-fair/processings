@@ -21,7 +21,6 @@ module.exports = {
   plugins: [
     { src: '~plugins/filters' },
     { src: '~plugins/moment' },
-    { src: '~plugins/typography' },
     { src: '~plugins/session', ssr: false },
   ],
   router: {

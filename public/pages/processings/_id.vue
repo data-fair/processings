@@ -2,7 +2,6 @@
   <div>
     <v-row
       v-if="processing"
-      column
       style="position:fixed;right:2px;z-index:10"
     >
       <!-- <view-resource :resource="issue" :fab="true" type="issues" />
@@ -11,7 +10,6 @@
     </v-row>
     <v-container
       v-if="processing"
-      grid-list-xl
       fluid
     >
       <nuxt-link :to="{name: 'embed-processings'}">
@@ -95,9 +93,6 @@
             <v-divider />
             <v-card-text class="px-5 py-0">
               <v-row align="center">
-                <v-col v-if="processing.scheduling && processing.scheduling.unit !== 'trigger'">
-                  <processing-schedule :processing-id="processing.id" />
-                </v-col>
                 <v-col>
                   <v-icon size="18">
                     mdi-plus-circle-outline
@@ -151,13 +146,12 @@
 <script>
   import { mapState } from 'vuex'
   import ProcessingInfos from '~/components/processing-infos.vue'
-  import ProcessingSchedule from '~/components/processing-schedule.vue'
   import ProcessingKey from '~/components/processing-key.vue'
   import VJsf from '@koumoul/vjsf/lib/VJsf.js'
   import format from '~/assets/format.js'
 
   export default {
-    components: { ProcessingInfos, ProcessingSchedule, ProcessingKey, VJsf },
+    components: { ProcessingInfos, ProcessingKey, VJsf },
     middleware: 'admin-required',
     data: () => ({
       processing: null,

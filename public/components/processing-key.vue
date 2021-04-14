@@ -1,12 +1,17 @@
 <template lang="html">
-  <v-menu v-if="processing" v-model="menu" :max-width="1000" :close-on-content-click="false">
-    <template v-slot:activator="{ on: menu, attrs }">
+  <v-menu
+    v-if="processing"
+    v-model="menu"
+    :max-width="1000"
+    :close-on-content-click="false"
+  >
+    <template #activator="{ on: onMenu, attrs }">
       <v-tooltip bottom>
-        <template v-slot:activator="{ on: tooltip }">
+        <template #activator="{ on: onTooltip }">
           <v-btn
             text
             v-bind="attrs"
-            v-on="{ ...tooltip, ...menu }"
+            v-on="{ ...onTooltip, ...onMenu }"
           >
             <v-icon color="primary" small>
               mdi-help
@@ -30,19 +35,19 @@
 </template>
 
 <script>
-export default {
-  props: {
-    processing: { type: Object, required: true }
-  },
-  data() {
-    return {
-      menu: null
-    }
-  },
-  computed: {
-    curl () {
-      return `curl -X POST ${process.env.publicUrl}/api/v1/processings/${this.processing.id}/_run -H 'x-apikey: ${this.processing.webhookKey}'`
-    }
+  export default {
+    props: {
+      processing: { type: Object, required: true },
+    },
+    data() {
+      return {
+        menu: null,
+      }
+    },
+    computed: {
+      curl () {
+        return `curl -X POST ${process.env.publicUrl}/api/v1/processings/${this.processing.id}/_run -H 'x-apikey: ${this.processing.webhookKey}'`
+      },
+    },
   }
-}
 </script>

@@ -99,7 +99,6 @@
                     mdi-play
                   </v-icon>
                 </v-btn>
-                <processing-schedule v-if="processing.scheduling && processing.scheduling.unit !== 'trigger'" :processing-id="processing.id" />
                 <processing-logs :processing-id="processing.id" />
                 <edit-processing :processing-id="processing.id" @updated="refresh" />
                 <remove-processing :processing="processing" @removed="refresh" />
@@ -111,7 +110,7 @@
         </v-row>
       </v-container>
     </v-col>
-    <layout-navigation-right v-if="this.$vuetify.breakpoint.lgAndUp">
+    <layout-navigation-right v-if="$vuetify.breakpoint.lgAndUp">
       <v-list dense class="list-actions">
         <v-menu
           v-model="showCreateMenu"
@@ -175,7 +174,6 @@
   import RemoveProcessing from '~/components/remove-processing.vue'
   import ProcessingInfos from '~/components/processing-infos.vue'
   import ProcessingLogs from '~/components/processing-logs.vue'
-  import ProcessingSchedule from '~/components/processing-schedule.vue'
   import ProcessingKey from '~/components/processing-key.vue'
   import format from '~/assets/format.js'
   import eventBus from '~/event-bus'
@@ -186,7 +184,6 @@
       RemoveProcessing,
       ProcessingInfos,
       ProcessingLogs,
-      ProcessingSchedule,
       ProcessingKey,
     },
     middleware: 'superadmin-required',

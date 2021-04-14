@@ -1,14 +1,20 @@
 <template lang="html">
   <span>
     <span>{{ (sourceType && sourceType.title) || 'Non défini' }}</span>
-    <v-menu v-if="processing" v-model="menu" :max-width="1200" :close-on-content-click="false">
-      <template v-slot:activator="{ on: menu, attrs }">
+    <v-menu
+      v-if="processing"
+      v-model="menu"
+      :max-width="1200"
+      :close-on-content-click="false"
+    >
+      <template #activator="{ on: onMenu, attrs }">
         <v-tooltip bottom>
-          <template v-slot:activator="{ on: tooltip }">
+          <template #activator="{ on: onTooltip }">
             <v-btn
-              text style="height:20px"
+              text
+              style="height:20px"
               v-bind="attrs"
-              v-on="{ ...tooltip, ...menu }"
+              v-on="{ ...onTooltip, ...onMenu }"
             >
               <v-icon color="primary" size="20">
                 mdi-information
@@ -20,7 +26,7 @@
       </template>
       <v-card class="py-3">
         <v-simple-table>
-          <template v-slot:default>
+          <template #default>
             <thead>
               <tr>
                 <th class="text-center" style="width:45%">
@@ -42,7 +48,7 @@
                 </td>
                 <td class="text-center">
                   <v-simple-table>
-                    <template v-slot:default>
+                    <template #default>
                       <tbody>
                         <tr>
                           <td class="text-left">Description</td>
@@ -59,7 +65,12 @@
                         <tr v-if="datasetSchema">
                           <td class="text-left">Concepts</td>
                           <td>
-                            <v-chip v-for="concept in datasetSchema.filter(f => f['x-refersTo']).map(f => conceptLabel(f['x-refersTo']))" :key="concept" color="primary" class="ma-1">
+                            <v-chip
+                              v-for="concept in datasetSchema.filter(f => f['x-refersTo']).map(f => conceptLabel(f['x-refersTo']))"
+                              :key="concept"
+                              color="primary"
+                              class="ma-1"
+                            >
                               {{ concept }}
                             </v-chip>
                           </td>
@@ -85,40 +96,40 @@
 
 <script>
 
-export default {
-  props: {
-    processing: { type: Object, required: true }
-  },
-  data() {
-    return {
-      menu: null,
-      vocabulary: [],
-      processingSchema: null
-    }
-  },
-  computed: {
-    sourceType() {
-      return this.processingSchema && this.processingSchema.properties.source.oneOf.find(s => s.properties.type.const === this.processing.source.type)
+  export default {
+    props: {
+      processing: { type: Object, required: true },
     },
-    datasetSchema() {
-      try {
-        return require('../../sources/' + this.processing.source.type + '/schema.json')
-      } catch (err) {
-        console.log('No schema for processing type')
+    data() {
+      return {
+        menu: null,
+        vocabulary: [],
+        processingSchema: null,
       }
-      return null
-    }
-  },
-  async mounted() {
-    this.vocabulary = await this.$axios.$get(process.env.dataFairUrl + '/api/v1/vocabulary')
-    this.processingSchema = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings/_schema')
-  },
-  methods: {
-    conceptLabel(uri) {
-      const concept = this.vocabulary.find(t => t.identifiers.find(i => i === uri))
-      if (concept) return concept.title
-      return 'Concept inconnu'
-    }
+    },
+    computed: {
+      sourceType() {
+        return this.processingSchema && this.processingSchema.properties.source.oneOf.find(s => s.properties.type.const === this.processing.source.type)
+      },
+      datasetSchema() {
+        try {
+          return require('../../sources/' + this.processing.source.type + '/schema.json')
+        } catch (err) {
+          console.log('No schema for processing type')
+        }
+        return null
+      },
+    },
+    async mounted() {
+      this.vocabulary = await this.$axios.$get(process.env.dataFairUrl + '/api/v1/vocabulary')
+      this.processingSchema = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings/_schema')
+    },
+    methods: {
+      conceptLabel(uri) {
+        const concept = this.vocabulary.find(t => t.identifiers.find(i => i === uri))
+        if (concept) return concept.title
+        return 'Concept inconnu'
+      },
+    },
   }
-}
 </script>
