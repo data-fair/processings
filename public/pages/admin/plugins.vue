@@ -1,5 +1,5 @@
 <template lang="html">
-  <v-container>
+  <v-container data-iframe-height>
     <v-list>
       <v-subheader>Plugins Installés</v-subheader>
       <v-progress-linear v-if="!installedPlugins.results" indeterminate />

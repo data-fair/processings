@@ -1,5 +1,5 @@
 <template lang="html">
-  <v-container v-if="processing">
+  <v-container v-if="processing" data-iframe-height>
     <v-row>
       <v-col :style="$vuetify.breakpoint.lgAndUp ? 'padding-right:256px;' : ''">
         <h2 class="text-h6">
