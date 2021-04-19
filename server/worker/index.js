@@ -100,7 +100,7 @@ async function iter(db) {
     if (run) {
       locks.release(db, processing._id)
     }
-    if (processing && processing.scheduling.type === 'trigger') {
+    if (processing && processing.scheduling.type !== 'trigger') {
       await runs.createNext(db, processing)
     }
   }
