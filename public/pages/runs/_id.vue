@@ -1,7 +1,7 @@
 <template>
   <v-container v-if="run" data-iframe-height>
     <v-row>
-      <v-col :style="$vuetify.breakpoint.lgAndUp ? 'padding-right:256px;' : ''">
+      <v-col>
         <h2 class="text-h6">
           Exécution du traitement {{ run.processing.title }}
           <v-btn icon @click="refresh">
@@ -37,7 +37,7 @@
                 >
                   <span :class="'text-body-2 ' + {error: 'error--text', warning: 'warning--text', info: ''}[log.type]">{{ log.msg }}</span>
                   <v-spacer />
-                  <span class="text-caption">{{ log.date | moment('lll') }}</span>
+                  <span class="text-caption pl-2" style="white-space: nowrap;">{{ log.date | moment('lll') }}</span>
                 </v-list-item>
               </v-list>
             </v-expansion-panel-content>
