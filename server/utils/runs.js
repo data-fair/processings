@@ -1,3 +1,6 @@
+const config = require('config')
+const path = require('path')
+const fs = require('fs-extra')
 const CronJob = require('cron').CronJob
 const { nanoid } = require('nanoid')
 const ajv = require('ajv')()
@@ -25,6 +28,7 @@ exports.applyProcessing = async (db, processing) => {
 
 exports.deleteProcessing = async (db, processing) => {
   await db.collection('runs').deleteMany({ 'processing._id': processing._id })
+  await fs.remove(path.resolve(config.dataDir, 'processings', processing._id))
 }
 
 exports.createNext = async (db, processing, triggered) => {
