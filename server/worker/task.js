@@ -1,7 +1,6 @@
 const config = require('config')
 const path = require('path')
 const fs = require('fs-extra')
-const tmp = require('tmp-promise')
 const axios = require('axios')
 const runs = require('../utils/runs')
 
@@ -55,16 +54,21 @@ exports.run = async ({ db }) => {
     return Promise.reject(error.response)
   })
 
+  const dir = path.resolve(config.dataDir, 'processings', processing._id)
+
   const context = {
     pluginConfig,
     processingConfig: processing.config || {},
     processingId: processing._id,
-    tmpDir: await tmp.dir({ unsafeCleanup: true }),
+    dir,
     log,
     axios: axiosInstance,
   }
   try {
-    await require(pluginDir).run(context)
+    const pluginModule = require(pluginDir)
+    if (!pluginModule.preserveDir) await fs.emptyDir(dir)
+    await pluginModule.run(context)
+    if (!pluginModule.preserveDir) await fs.emptyDir(dir)
     await log.debug('finished')
   } catch (err) {
     if (err.status && err.statusText) {
