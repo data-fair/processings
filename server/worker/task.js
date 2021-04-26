@@ -74,9 +74,7 @@ exports.run = async ({ db }) => {
   }
   try {
     const pluginModule = require(pluginDir)
-    if (!pluginModule.preserveDir) await fs.emptyDir(dir)
     await pluginModule.run(context)
-    if (!pluginModule.preserveDir) await fs.emptyDir(dir)
     await tmpDir.cleanup()
     await log.info('terminé')
   } catch (err) {
