@@ -46,12 +46,26 @@ exports.run = async ({ db }) => {
 
   const headers = { 'x-apiKey': config.dataFairAPIKey }
   if (config.dataFairAdminMode) headers['x-account'] = `${processing.owner.type}:${processing.owner.id}`
-  const axiosInstance = axios.create({ baseURL: config.dataFairUrl, headers })
+  const axiosInstance = axios.create()
+  // apply default base url and send api key when relevant
+  axiosInstance.interceptors.request.use(cfg => {
+    if (!/^https?:\/\//i.test(cfg.url)) {
+      if (cfg.url.startsWith('/')) cfg.url = config.dataFairUrl + cfg.url
+      else cfg.url = config.dataFairUrl + '/' + cfg.url
+    }
+    if (cfg.url.startsWith(config.dataFairUrl)) {
+      cfg.headers['x-apiKey'] = config.dataFairAPIKey
+    }
+    return cfg
+  }, error => Promise.reject(error))
   // customize axios errors for shorter stack traces when a request fails
   axiosInstance.interceptors.response.use(response => response, error => {
     if (!error.response) return Promise.reject(error)
     delete error.response.request
+    delete error.response.headers
     error.response.config = { method: error.response.config.method, url: error.response.config.url, data: error.response.config.data }
+    if (error.response.config.data && error.response.config.data._writableState) delete error.response.config.data
+    if (error.response.data && error.response.data._readableState) delete error.response.data
     return Promise.reject(error.response)
   })
 
