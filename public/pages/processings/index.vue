@@ -137,11 +137,6 @@
       async refresh() {
         try {
           this.processings = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings', { params: { size: 1000, showAll: this.showAll } })
-          this.processings.results.forEach(async processing => {
-            if (processing.dataset && processing.dataset.id) {
-              processing.dataset = await this.$axios.$get(process.env.localDataFairUrl + '/api/v1/datasets/' + processing.dataset.id)
-            }
-          })
         } catch (error) {
           eventBus.$emit('notification', { error, msg: 'Erreur pendant la récupération de la liste des traitements' })
         }

@@ -27,7 +27,7 @@ exports.clear = () => {
 /* eslint no-unmodified-loop-condition: 0 */
 // Run main loop !
 exports.start = async ({ db }) => {
-  // await locks.init(db)
+  await locks.init(db)
   console.log('start worker')
   while (!stopped) {
     // Maintain max concurrency by checking if there is a free spot in an array of promises

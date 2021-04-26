@@ -57,10 +57,14 @@
       vjsfOptions() {
         if (!this.processing) return
         return {
-          context: { owner: this.processing.owner },
+          context: {
+            owner: this.processing.owner,
+            ownerFilter: process.env.dataFairAdminMode ? `owner=${this.processing.owner.type}:${encodeURIComponent(this.processing.owner.id)}` : '',
+            dataFairUrl: process.env.dataFairUrl,
+          },
           disableAll: !this.user.adminMode,
           locale: 'fr',
-          rootDisplay: 'expansion-panels',
+          // rootDisplay: 'expansion-panels',
           // rootDisplay: 'tabs',
           expansionPanelsProps: {
             value: 0,

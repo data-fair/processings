@@ -55,21 +55,26 @@ exports.run = async ({ db }) => {
   })
 
   const dir = path.resolve(config.dataDir, 'processings', processing._id)
-
+  const processingConfig = processing.config || {}
   const context = {
     pluginConfig,
-    processingConfig: processing.config || {},
+    processingConfig,
     processingId: processing._id,
     dir,
     log,
     axios: axiosInstance,
+    async patchConfig(patch) {
+      await log.debug('patch config', patch)
+      Object.assign(processingConfig, patch)
+      db.collection('processings').updateOne({ _id: processing._id }, { $set: { config: processingConfig } })
+    },
   }
   try {
     const pluginModule = require(pluginDir)
     if (!pluginModule.preserveDir) await fs.emptyDir(dir)
     await pluginModule.run(context)
     if (!pluginModule.preserveDir) await fs.emptyDir(dir)
-    await log.debug('finished')
+    await log.info('terminé')
   } catch (err) {
     if (err.status && err.statusText) {
       await log.error(err.data && typeof err.data === 'string' ? err.data : err.statusText)

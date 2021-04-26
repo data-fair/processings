@@ -72,7 +72,7 @@ module.exports = {
     publicUrl: config.publicUrl,
     directoryUrl: config.directoryUrl,
     dataFairUrl: config.dataFairUrl,
-    localDataFairUrl: config.localDataFairUrl,
+    dataFairAdminMode: config.dataFairAdminMode,
     datasetsUrlTemplate: config.datasetsUrlTemplate,
   },
   head: {
