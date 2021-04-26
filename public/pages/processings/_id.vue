@@ -10,7 +10,7 @@
             v-if="processingSchema"
             v-model="editProcessing"
             :schema="processingSchema"
-            :options="{deleteReadOnly: true}"
+            :options="vjsfOptions"
             @change="patch"
           />
         </v-form>
@@ -40,7 +40,7 @@
 
   export default {
     components: { VJsf },
-    middleware: 'superadmin-required',
+    middleware: 'admin-required',
     data: () => ({
       processing: null,
       editProcessing: null,
@@ -51,8 +51,29 @@
       processingSchema() {
         if (!this.plugin) return
         const schema = JSON.parse(JSON.stringify(processingSchema))
-        schema.properties.config = { ...this.plugin.processingConfigSchema, title: 'Plugin ' + this.plugin.name }
+        schema.properties.config = { ...this.plugin.processingConfigSchema, title: 'Plugin ' + this.plugin.name, 'x-options': { deleteReadOnly: false } }
         return schema
+      },
+      vjsfOptions() {
+        if (!this.processing) return
+        return {
+          context: { owner: this.processing.owner },
+          disableAll: !this.user.adminMode,
+          locale: 'fr',
+          rootDisplay: 'expansion-panels',
+          // rootDisplay: 'tabs',
+          expansionPanelsProps: {
+            value: 0,
+            hover: true,
+          },
+          dialogProps: {
+            maxWidth: 500,
+            overlayOpacity: 0, // better when inside an iframe
+          },
+          arrayItemCardProps: { outlined: true, tile: true },
+          dialogCardProps: { outlined: true },
+          deleteReadOnly: true,
+        }
       },
     },
     async mounted() {
