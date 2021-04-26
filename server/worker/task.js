@@ -53,9 +53,7 @@ exports.run = async ({ db }) => {
       if (cfg.url.startsWith('/')) cfg.url = config.dataFairUrl + cfg.url
       else cfg.url = config.dataFairUrl + '/' + cfg.url
     }
-    if (cfg.url.startsWith(config.dataFairUrl)) {
-      cfg.headers['x-apiKey'] = config.dataFairAPIKey
-    }
+    if (cfg.url.startsWith(config.dataFairUrl)) Object.assign(cfg.headers, headers)
     return cfg
   }, error => Promise.reject(error))
   // customize axios errors for shorter stack traces when a request fails
