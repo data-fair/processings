@@ -109,9 +109,10 @@ router.get('/:id', session.requiredAuth, asyncWrap(async(req, res, next) => {
 
 router.delete('/:id', session.requiredAuth, permissions.isAdmin, asyncWrap(async(req, res, next) => {
   const db = req.app.get('db')
-  const processing = await db.collection('processings')
-    .findOneAndDelete({ _id: req.params.id })
-  if (processing && processing.value) await runs.deleteProcessing(db, req.body)
+  const processing = (await db.collection('processings')
+    .findOneAndDelete({ _id: req.params.id })).value
+  if (!processing) return res.status(404).send()
+  if (processing && processing.value) await runs.deleteProcessing(db, processing)
   res.sendStatus(204)
 }))
 
