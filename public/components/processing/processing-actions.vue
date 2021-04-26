@@ -11,21 +11,27 @@
       </v-list-item-content>
     </v-list-item>
 
-    <v-list-item :disabled="!user.adminMode" @click="showDeleteDialog = true">
-      <v-list-item-icon>
-        <v-icon color="warning">
-          mdi-delete
-        </v-icon>
-      </v-list-item-icon>
-      <v-list-item-content>
-        <v-list-item-title>Supprimer</v-list-item-title>
-      </v-list-item-content>
-    </v-list-item>
-
-    <v-dialog
-      v-model="showDeleteDialog"
+    <v-menu
+      v-model="showDeleteMenu"
+      :close-on-content-click="false"
       max-width="500"
     >
+      <template #activator="{on, attrs}">
+        <v-list-item
+          :disabled="!user.adminMode"
+          v-bind="attrs"
+          v-on="on"
+        >
+          <v-list-item-icon>
+            <v-icon color="warning">
+              mdi-delete
+            </v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>Supprimer</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </template>
       <v-card outlined>
         <v-card-title primary-title>
           Suppression du jeu de données
@@ -35,7 +41,7 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn text @click="showDeleteDialog = false">
+          <v-btn text @click="showDeleteMenu = false">
             Non
           </v-btn>
           <v-btn
@@ -46,7 +52,22 @@
           </v-btn>
         </v-card-actions>
       </v-card>
-    </v-dialog>
+    </v-menu>
+
+    <v-list-item
+      v-if="processing.config && processing.config.dataset && processing.config.dataset.id"
+      :href="`${dataFairUrl}/dataset/${processing.config.dataset.id}`"
+      target="_blank"
+    >
+      <v-list-item-icon>
+        <v-icon color="primary">
+          mdi-open-in-new
+        </v-icon>
+      </v-list-item-icon>
+      <v-list-item-content>
+        <v-list-item-title>Voir le jeu de données</v-list-item-title>
+      </v-list-item-content>
+    </v-list-item>
   </v-list>
 </template>
 
@@ -55,14 +76,17 @@
   export default {
     props: ['processing'],
     data: () => ({
-      showDeleteDialog: false,
+      showDeleteMenu: false,
     }),
     computed: {
       ...mapState('session', ['user']),
+      dataFairUrl() {
+        return process.env.dataFairUrl
+      },
     },
     methods: {
       async confirmRemove() {
-        this.showDeleteDialog = false
+        this.showDeleteMenu = false
         await this.$axios.$delete(`api/v1/processings/${this.processing._id}`)
         this.$router.push('/processings')
       },
