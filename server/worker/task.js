@@ -2,6 +2,7 @@ const config = require('config')
 const path = require('path')
 const fs = require('fs-extra')
 const axios = require('axios')
+const tmp = require('tmp-promise')
 const runs = require('../utils/runs')
 
 exports.run = async ({ db }) => {
@@ -55,12 +56,14 @@ exports.run = async ({ db }) => {
   })
 
   const dir = path.resolve(config.dataDir, 'processings', processing._id)
+  const tmpDir = await tmp.dir({ unsafeCleanup: true })
   const processingConfig = processing.config || {}
   const context = {
     pluginConfig,
     processingConfig,
     processingId: processing._id,
     dir,
+    tmpDir: tmpDir.path,
     log,
     axios: axiosInstance,
     async patchConfig(patch) {
@@ -74,6 +77,7 @@ exports.run = async ({ db }) => {
     if (!pluginModule.preserveDir) await fs.emptyDir(dir)
     await pluginModule.run(context)
     if (!pluginModule.preserveDir) await fs.emptyDir(dir)
+    await tmpDir.cleanup()
     await log.info('terminé')
   } catch (err) {
     if (err.status && err.statusText) {
@@ -83,6 +87,7 @@ exports.run = async ({ db }) => {
       await log.error(err.message)
       await log.debug(err.stack)
     }
+    await tmpDir.cleanup()
     process.exit(-1)
   }
 }
