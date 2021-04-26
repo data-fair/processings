@@ -12,7 +12,7 @@
               sm="6"
               cols="12"
             >
-              <processing-card :processing="processing" />
+              <processing-card :processing="processing" :show-owner="showAll" />
             </v-col>
           </v-row>
         </v-container>
@@ -73,6 +73,24 @@
               </v-card-actions>
             </v-card>
           </v-menu>
+          <v-card
+            v-if="user.adminMode"
+            color="admin"
+            dark
+            flat
+            class="mt-2"
+          >
+            <v-card-text class="pa-1">
+              <v-switch
+                v-model="showAll"
+                label="voir tous les traitements"
+                hide-details
+                dense
+                class="mt-0"
+                @change="refresh"
+              />
+            </v-card-text>
+          </v-card>
         </v-list>
       </layout-navigation-right>
     </v-row>
@@ -80,18 +98,23 @@
 </template>
 
 <script>
+  import { mapState } from 'vuex'
   import format from '~/assets/format.js'
   import eventBus from '~/event-bus'
 
   export default {
     components: {},
-    middleware: 'superadmin-required',
+    middleware: 'admin-required',
     data: () => ({
       processings: null,
       installedPlugins: {},
       showCreateMenu: false,
       newProcessing: {},
+      showAll: false,
     }),
+    computed: {
+      ...mapState('session', ['user']),
+    },
     watch: {},
     created() {
       this.$store.dispatch('setBreadcrumbs', [{
@@ -109,7 +132,7 @@
       },
       async refresh() {
         try {
-          this.processings = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings', { params: { size: 1000 } })
+          this.processings = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings', { params: { size: 1000, showAll: this.showAll } })
           this.processings.results.forEach(async processing => {
             if (processing.dataset && processing.dataset.id) {
               processing.dataset = await this.$axios.$get(process.env.localDataFairUrl + '/api/v1/datasets/' + processing.dataset.id)

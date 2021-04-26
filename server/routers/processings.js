@@ -33,7 +33,7 @@ const validateFullProcessing = async (processing) => {
 }
 
 // Get the list of processings
-router.get('', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, res, next) => {
+router.get('', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const sort = findUtils.sort(req.query.sort)
   const [skip, size] = findUtils.pagination(req.query)
   const query = findUtils.query(req)
@@ -103,7 +103,7 @@ router.get('/:id', session.requiredAuth, asyncWrap(async(req, res, next) => {
   const processing = await req.app.get('db').collection('processings')
     .findOne({ _id: req.params.id }, { projection: {} })
   if (!processing) return res.sendStatus(404)
-  if (!permissions.isOwner(req.user, processing)) return res.sendStatus(403)
+  if (!permissions.isOwner(req.user, processing)) return res.status(403).send()
   res.status(200).json(processing)
 }))
 

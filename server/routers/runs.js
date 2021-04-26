@@ -7,7 +7,7 @@ const router = express.Router()
 
 module.exports = router
 
-router.get('', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, res, next) => {
+router.get('', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const sort = findUtils.sort(req.query.sort)
   const [skip, size] = findUtils.pagination(req.query)
   const query = findUtils.query(req, { processing: 'processing._id' })
@@ -20,8 +20,9 @@ router.get('', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, 
   res.send({ results, count })
 }))
 
-router.get('/:id', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, res, next) => {
+router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const run = await req.app.get('db').collection('runs').findOne({ _id: req.params.id })
   if (!run) return res.status(404).send()
+  if (!permissions.isOwner(req.user, run)) return res.status(403).send()
   res.send(run)
 }))

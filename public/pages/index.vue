@@ -1,7 +1,5 @@
 <template lang="html">
-  <p>
-    Data Fair - Traitements périodiques
-  </p>
+  <p />
 </template>
 
 <script>
