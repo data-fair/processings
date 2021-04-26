@@ -1,6 +1,6 @@
 <template>
   <v-list dense class="list-actions">
-    <v-list-item :disabled="!processing.active" @click="run()">
+    <v-list-item :disabled="!processing.active || !user.adminMode" @click="run()">
       <v-list-item-icon>
         <v-icon color="primary">
           mdi-play
@@ -11,7 +11,7 @@
       </v-list-item-content>
     </v-list-item>
 
-    <v-list-item @click="showDeleteDialog = true">
+    <v-list-item :disabled="!user.adminMode" @click="showDeleteDialog = true">
       <v-list-item-icon>
         <v-icon color="warning">
           mdi-delete
@@ -51,11 +51,15 @@
 </template>
 
 <script>
+  import { mapState } from 'vuex'
   export default {
     props: ['processing'],
     data: () => ({
       showDeleteDialog: false,
     }),
+    computed: {
+      ...mapState('session', ['user']),
+    },
     methods: {
       async confirmRemove() {
         this.showDeleteDialog = false

@@ -59,9 +59,10 @@ exports.createNext = async (db, processing, triggered) => {
   const valid = validate(run)
   if (!valid) throw new Error(JSON.stringify(validate.errors))
   await db.collection('runs').insertOne(run)
+  const { log, processing: _processing, owner, ...nextRun } = run
   await db.collection('processings').updateOne(
     { _id: run.processing._id },
-    { $set: { nextRun: { ...run, log: undefined, processing: undefined, owner: undefined } } },
+    { $set: { nextRun } },
   )
   return run
 }

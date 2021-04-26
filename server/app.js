@@ -20,6 +20,8 @@ debug('Public host', publicHost)
 // Second express application for proxying requests based on host
 const app = express()
 
+app.set('json spaces', 2)
+
 // re-expose remote data-fair using local api-key
 const dataFairUrl = new URL(config.dataFairUrl)
 const dataFairIsLocal = new URL(config.publicUrl).origin === dataFairUrl.origin

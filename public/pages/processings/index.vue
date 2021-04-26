@@ -26,7 +26,11 @@
             max-width="500px"
           >
             <template #activator="{ on, attrs }">
-              <v-list-item v-bind="attrs" v-on="on">
+              <v-list-item
+                v-bind="attrs"
+                :disabled="!user.adminMode"
+                v-on="on"
+              >
                 <v-list-item-icon>
                   <v-icon color="primary">
                     mdi-plus-circle
@@ -121,7 +125,7 @@
         text: 'traitements',
       }])
       this.refresh()
-      this.fetchInstalledPlugins()
+      if (this.user.adminMode) this.fetchInstalledPlugins()
     },
     methods: {
       async fetchInstalledPlugins() {
