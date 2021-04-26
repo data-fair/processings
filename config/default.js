@@ -18,4 +18,8 @@ module.exports = {
     interval: 1000,
     concurrency: 4,
   },
+  locks: {
+    // in seconds
+    ttl: 60,
+  },
 }
