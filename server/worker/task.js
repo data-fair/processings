@@ -45,7 +45,7 @@ exports.run = async ({ db }) => {
   }
 
   const headers = { 'x-apiKey': config.dataFairAPIKey }
-  if (config.dataFairAdminMode) headers['x-account'] = `${processing.owner.type}:${processing.owner.id}`
+  if (config.dataFairAdminMode) headers['x-account'] = JSON.stringify(processing.owner)
   const axiosInstance = axios.create()
   // apply default base url and send api key when relevant
   axiosInstance.interceptors.request.use(cfg => {
