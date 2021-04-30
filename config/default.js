@@ -6,7 +6,6 @@ module.exports = {
   dataDir: '/data',
   directoryUrl: 'http://localhost:5600/simple-directory',
   dataFairUrl: 'http://localhost:5600/data-fair',
-  datasetsUrlTemplate: 'http://localhost:5600/data-fair/dataset/{id}/description',
   dataFairAPIKey: null,
   dataFairAdminMode: false,
   mongo: {

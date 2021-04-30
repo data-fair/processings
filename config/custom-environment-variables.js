@@ -6,13 +6,13 @@ module.exports = {
   directoryUrl: 'DIRECTORY_URL',
   dataFairUrl: 'DATA_FAIR_URL',
   dataFairAPIKey: 'DATA_FAIR_API_KEY',
-  datasetsUrlTemplate: 'DATASETS_URL_TEMPLATE',
   dataFairAdminMode: {
     __name: 'DATA_FAIR_ADMIN_MODE',
     __format: 'json',
   },
   mongo: {
     host: 'MONGO_HOST',
+    db: 'MONGO_DB',
   },
   worker: {
     interval: {

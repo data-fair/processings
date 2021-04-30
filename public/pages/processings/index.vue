@@ -131,9 +131,6 @@
       async fetchInstalledPlugins() {
         this.installedPlugins = await this.$axios.$get('/api/v1/plugins')
       },
-      datasetUrl(datasetId) {
-        return process.env.datasetsUrlTemplate.replace('{id}', datasetId)
-      },
       async refresh() {
         try {
           this.processings = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings', { params: { size: 1000, showAll: this.showAll } })
