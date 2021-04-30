@@ -3,135 +3,173 @@ module.exports = {
   type: 'object',
   oneOf: [
     {
-      title: 'Toutes les # secondes',
+      title: 'Déclenchement manuel',
       properties: {
-        unit: {
-          const: 'seconds'
+        type: {
+          const: 'trigger',
         },
-        interval: {
-          title: 'Intervalle',
-          type: 'integer',
-          'x-class': 'xs4',
-          default: 10
-        },
-        offset: {
-          type: 'object',
-          'x-class': 'xs4',
-          properties: {
-            seconds: {
-              title: 'Secondes de décallage',
-              type: 'integer',
-              'x-class': 'xs6',
-              default: 0
-            }
-          }
-        }
-      }
+      },
     },
     {
-      title: 'Toutes les # minutes',
+      title: 'Mensuel',
       properties: {
-        unit: {
-          const: 'minutes'
+        type: {
+          const: 'monthly',
         },
-        interval: {
-          title: 'Intervalle',
+        dayOfWeek: {
+          type: 'string',
+          const: '*',
+        },
+        dayOfMonth: {
+          title: 'Jour du mois',
           type: 'integer',
-          'x-class': 'xs4',
-          default: 15
+          minimum: 1,
+          maximum: 28,
+          default: 1,
+          'x-cols': 6,
+          'x-class': 'pr-1',
         },
-        offset: {
-          type: 'object',
-          'x-class': 'xs8',
-          properties: {
-            minutes: {
-              title: 'Minutes de décallage',
-              type: 'integer',
-              'x-class': 'xs6',
-              default: 0
-            },
-            seconds: {
-              title: 'Secondes de décallage',
-              type: 'integer',
-              'x-class': 'xs6',
-              default: 0
-            }
-          }
-        }
-      }
+        hour: {
+          title: 'Heure de la journée',
+          type: 'integer',
+          minimum: 0,
+          maximum: 23,
+          default: 0,
+          'x-cols': 6,
+          'x-class': 'pl-1',
+        },
+        minute: {
+          type: 'integer',
+          const: 0,
+        },
+        month: {
+          type: 'string',
+          const: '*',
+        },
+      },
+    },
+    {
+      title: 'Hebdomadaire',
+      properties: {
+        type: {
+          const: 'weekly',
+        },
+        dayOfWeek: {
+          title: 'Jour de la semaine',
+          type: 'string',
+          oneOf: [{
+            const: 1,
+            title: 'lundi',
+          }, {
+            const: 2,
+            title: 'mardi',
+          }, {
+            const: 3,
+            title: 'mercredi',
+          }, {
+            const: 4,
+            title: 'jeudi',
+          }, {
+            const: 5,
+            title: 'vendredi',
+          }, {
+            const: 6,
+            title: 'samedi',
+          }, {
+            const: 0,
+            title: 'dimanche',
+          }],
+          default: 1,
+          'x-cols': 6,
+          'x-class': 'pr-1',
+        },
+        hour: {
+          title: 'Heure de la journée',
+          type: 'integer',
+          minimum: 0,
+          maximum: 23,
+          default: 0,
+          'x-cols': 6,
+          'x-class': 'pl-1',
+        },
+        minute: {
+          type: 'integer',
+          const: 0,
+        },
+        dayOfMonth: {
+          type: 'string',
+          const: '*',
+        },
+        month: {
+          type: 'string',
+          const: '*',
+        },
+      },
+    },
+    {
+      title: 'Journalier',
+      properties: {
+        type: {
+          const: 'daily',
+        },
+        dayOfWeek: {
+          type: 'string',
+          const: '*',
+        },
+        hour: {
+          title: 'Heure de la journée',
+          type: 'integer',
+          minimum: 0,
+          maximum: 23,
+          default: 0,
+        },
+        minute: {
+          type: 'integer',
+          const: 0,
+        },
+        dayOfMonth: {
+          type: 'string',
+          const: '*',
+        },
+        month: {
+          type: 'string',
+          const: '*',
+        },
+      },
     },
     {
       title: 'Toutes les # heures',
       properties: {
-        unit: {
-          const: 'hours'
+        type: {
+          const: 'hours',
         },
-        interval: {
-          title: 'Intervalle',
+        dayOfWeek: {
+          type: 'string',
+          const: '*',
+        },
+        hour: {
           type: 'integer',
-          'x-class': 'xs4',
-          default: 3
+          const: '*',
         },
-        offset: {
-          title: 'Décalage',
-          type: 'object',
-          'x-class': 'xs8',
-          properties: {
-            hours: {
-              title: 'Heures de décallage',
-              type: 'integer',
-              'x-class': 'xs6',
-              default: 0
-            },
-            minutes: {
-              title: 'Minutes de décallage',
-              type: 'integer',
-              'x-class': 'xs6',
-              default: 0
-            }
-          }
-        }
-      }
-    },
-    {
-      title: 'Toutes les # jours',
-      properties: {
-        unit: {
-          const: 'days'
-        },
-        interval: {
-          title: 'Intervalle',
+        hourStep: {
+          title: 'Nombre d\'heures de l\'interval',
           type: 'integer',
-          'x-class': 'xs4',
-          default: 2
+          minimum: 1,
+          maximum: 12,
         },
-        offset: {
-          type: 'object',
-          'x-class': 'xs8',
-          properties: {
-            days: {
-              title: 'Jours de décallage',
-              type: 'integer',
-              'x-class': 'xs6',
-              default: 0
-            },
-            hours: {
-              title: 'Heures de décallage',
-              type: 'integer',
-              'x-class': 'xs6',
-              default: 0
-            }
-          }
-        }
-      }
+        minute: {
+          type: 'integer',
+          const: 0,
+        },
+        dayOfMonth: {
+          type: 'string',
+          const: '*',
+        },
+        month: {
+          type: 'string',
+          const: '*',
+        },
+      },
     },
-    {
-      title: 'Déclenchement manuel',
-      properties: {
-        unit: {
-          const: 'trigger'
-        }
-      }
-    }
-  ]
+  ],
 }

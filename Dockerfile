@@ -19,11 +19,11 @@ ADD sources sources
 ADD nuxt.config.js .
 ADD nodemon.json .
 ADD public public
+ADD contract contract
 RUN npm run build
 
 # Adding server files
 ADD server server
-ADD contract contract
 ADD upgrade upgrade
 
 ADD README.md .

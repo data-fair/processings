@@ -13,7 +13,7 @@ exports.run = async function(config) {
       currentStopSequence: v.currentStopSequence,
       currentStatus: v.currentStatus,
       routeId: v.trip.routeId,
-      dateTime: new Date(v.timestamp * 1000).toISOString()
+      dateTime: new Date(v.timestamp * 1000).toISOString(),
     }, v.position)
   })
   return { bulkLines }

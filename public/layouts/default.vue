@@ -9,21 +9,27 @@
 </template>
 
 <script>
-import 'iframe-resizer/js/iframeResizer.contentWindow'
-import { mapGetters } from 'vuex'
-import Notifications from '../components/notifications.vue'
-import AppBar from '~/components/layout/app-bar.vue'
-export default {
-  components: { AppBar, Notifications },
-  computed: {
-    ...mapGetters(['embed'])
+  import 'iframe-resizer/js/iframeResizer.contentWindow'
+  import { mapGetters } from 'vuex'
+  import Notifications from '../components/notifications.vue'
+  import AppBar from '~/components/layout/app-bar.vue'
+
+  global.iFrameResizer = {
+    heightCalculationMethod: 'taggedElement',
   }
-}
+
+  export default {
+    components: { AppBar, Notifications },
+    middleware: 'breadcrumbs',
+    computed: {
+      ...mapGetters(['embed']),
+    },
+  }
 
 </script>
 
 <style>
-/* body .v-application {
-  font-family: 'Nunito', sans-serif;
-} */
+.v-list.list-actions .v-list-item .v-list-item__icon {
+  margin-right: 16px;
+}
 </style>

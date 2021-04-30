@@ -11,13 +11,14 @@ async function ensureIndex(db, collection, key, options) {
   }
 }
 
-exports.connect = async () => {
+exports.connect = async (poolSize = 5, readPreference = 'primary') => {
   let client
-  const url = `mongodb://${config.mongo.host}:${config.mongo.port}/${config.mongo.db}`
   const opts = {
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
+    poolSize,
   }
+  const url = `mongodb://${config.mongo.host}:${config.mongo.port}/${config.mongo.db}?readPreference=${readPreference}`
   try {
     client = await MongoClient.connect(url, opts)
   } catch (err) {
@@ -30,11 +31,14 @@ exports.connect = async () => {
   return { db, client }
 }
 
-exports.init = async () => {
+exports.init = async (poolSize, readPreference) => {
   console.log('Connecting to mongodb ' + `${config.mongo.host}:${config.mongo.port}`)
-  const { db, client } = await exports.connect()
-  // processings indexes
-  await ensureIndex(db, 'processings', { id: 1 }, { unique: true })
+  const { db, client } = await exports.connect(poolSize, readPreference)
+
   await ensureIndex(db, 'processings', { title: 'text' }, { name: 'fulltext' })
+  await ensureIndex(db, 'processings', { 'owner.type': 1, 'owner.id': 1 }, { name: 'main' })
+
+  await ensureIndex(db, 'runs', { 'owner.type': 1, 'owner.id': 1, 'processing._id': 1 }, { name: 'main' })
+
   return { db, client }
 }

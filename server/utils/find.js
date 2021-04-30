@@ -1,16 +1,23 @@
+const createError = require('http-errors')
+
 // Util functions shared accross the main find (GET on collection) endpoints
 
-exports.query = (reqQuery, fieldsMap = {}) => {
+exports.query = (req, fieldsMap = {}) => {
   const query = {}
-  if (!reqQuery) return query
 
-  if (reqQuery.q) {
-    query.$text = {
-      $search: reqQuery.q
-    }
+  if (req.query.q) query.$text = { $search: req.query.q }
+
+  const showAll = req.query.showAll === 'true'
+  if (showAll && !req.user.adminMode) {
+    throw createError(400, 'Only super admins can override permissions filter with showAll parameter')
   }
-  Object.keys(fieldsMap).filter(name => reqQuery[name] !== undefined).forEach(name => {
-    query[fieldsMap[name]] = { $in: reqQuery[name].split(',') }
+  if (!showAll) {
+    query['owner.type'] = req.user.activeAccount.type
+    query['owner.id'] = req.user.activeAccount.id
+  }
+
+  Object.keys(fieldsMap).filter(name => req.query[name] !== undefined).forEach(name => {
+    query[fieldsMap[name]] = { $in: req.query[name].split(',') }
   })
   return query
 }
@@ -21,7 +28,7 @@ exports.sort = (sortStr) => {
   Object.assign(sort, ...sortStr.split(',').map(s => {
     const toks = s.split(':')
     return {
-      [toks[0]]: Number(toks[1])
+      [toks[0]]: Number(toks[1]),
     }
   }))
   return sort

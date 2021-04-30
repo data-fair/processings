@@ -1,8 +1,16 @@
 <template>
-  <v-menu v-model="menu" width="500" :close-on-click="false" :close-on-content-click="false">
-    <template v-slot:activator="{ on }">
+  <v-menu
+    v-model="menu"
+    width="500"
+    :close-on-click="false"
+    :close-on-content-click="false"
+  >
+    <template #activator="{ on }">
       <v-btn
-        icon color="warning" text v-on="on"
+        icon
+        color="warning"
+        text
+        v-on="on"
         @click="open"
       >
         <v-icon>mdi-delete</v-icon>
@@ -10,7 +18,7 @@
     </template>
 
     <v-card>
-      <v-card-title class="title">
+      <v-card-title class="text-h6">
         Suppression d'un élément
       </v-card-title>
 
@@ -43,30 +51,30 @@
 </template>
 
 <script>
-import eventBus from '../event-bus'
+  import eventBus from '../event-bus'
 
-export default {
-  props: {
-    processing: { type: Object, default: null }
-  },
-  data: () => ({
-    menu: false
-  }),
-  methods: {
-    open (e) {
-      this.menu = true
-      e.stopPropagation()
+  export default {
+    props: {
+      processing: { type: Object, default: null },
     },
-    async confirm () {
-      try {
-        await this.$axios.$delete(process.env.publicUrl + '/api/v1/processings/' + this.processing.id)
-        this.$emit('removed', { id: this.processing.id })
-      } catch (error) {
-        eventBus.$emit('notification', { error, msg: 'Erreur pendant la suppression du traitement' })
-      } finally {
-        this.menu = false
-      }
-    }
+    data: () => ({
+      menu: false,
+    }),
+    methods: {
+      open (e) {
+        this.menu = true
+        e.stopPropagation()
+      },
+      async confirm () {
+        try {
+          await this.$axios.$delete(process.env.publicUrl + '/api/v1/processings/' + this.processing.id)
+          this.$emit('removed', { id: this.processing.id })
+        } catch (error) {
+          eventBus.$emit('notification', { error, msg: 'Erreur pendant la suppression du traitement' })
+        } finally {
+          this.menu = false
+        }
+      },
+    },
   }
-}
 </script>

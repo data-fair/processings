@@ -1,5 +1,10 @@
 <template>
-  <v-navigation-drawer stateless fixed value="true" style="padding-top: 20px;">
+  <v-navigation-drawer
+    stateless
+    fixed
+    value="true"
+    style="padding-top: 20px;"
+  >
     <v-list>
       <v-list-item :to="{name: 'index'}" exact>
         <v-list-item-action>
@@ -9,7 +14,11 @@
       </v-list-item>
 
       <template v-if="!embed">
-        <v-list-item v-if="!user" color="primary" @click="setAdminMode">
+        <v-list-item
+          v-if="!user"
+          color="primary"
+          @click="setAdminMode"
+        >
           <v-list-item-title>
             Connexion
           </v-list-item-title>
@@ -23,7 +32,7 @@
         </v-list-item>
         <v-list-item v-if="user">
           <v-menu offset-y left>
-            <template v-slot:activator="{on}">
+            <template #activator="{}">
               <v-select
                 :items="[{text: 'Compte personnel', value: null}].concat(user.organizations.map(o => ({text: o.name, value: o.id})))"
                 label="Compte actif"
@@ -48,17 +57,17 @@
 </template>
 
 <script>
-import { mapState, mapGetters, mapActions } from 'vuex'
-export default {
-  computed: {
-    ...mapState('session', ['user']),
-    ...mapState(['embed']),
-    ...mapGetters('session', ['activeAccount'])
-  },
-  methods: {
-    ...mapActions('session', ['switchOrganization', 'logout', 'setAdminMode'])
+  import { mapState, mapGetters, mapActions } from 'vuex'
+  export default {
+    computed: {
+      ...mapState('session', ['user']),
+      ...mapState(['embed']),
+      ...mapGetters('session', ['activeAccount']),
+    },
+    methods: {
+      ...mapActions('session', ['switchOrganization', 'logout', 'setAdminMode']),
+    },
   }
-}
 
 </script>
 

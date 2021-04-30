@@ -2,20 +2,24 @@ version: '3'
 services:
   sd:
     image: koumoul/simple-directory:2
-    ports:
-      - 5700:8080
-      - 1080:1080
+    network_mode: host
     environment:
       - ADMINS=["superadmin@test.com"]
       - PUBLIC_URL=http://localhost:5600/simple-directory
       - MAILDEV_ACTIVE=true
-      - STORAGE_TYPE=mongo
+      - STORAGE_TYPE=file
+      - NO_UI=${NO_UI}
+      - AUTHRATELIMIT_ATTEMPTS=200
+    volumes:
+      - ./test/resources/users.json:/webapp/data/users.json
+      - ./test/resources/organizations.json:/webapp/data/organizations.json
 
   data-fair:
     image: koumoul/data-fair:master
     restart: on-failure:10
     network_mode: host
     environment:
+      - PORT=8081
       - DEBUG=files
       - MONGO_URL=mongodb://localhost:27017/data-fair
       - OPENAPI_VIEWER_URL=http://localhost:5600/openapi-viewer/

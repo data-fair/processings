@@ -7,10 +7,11 @@ Vue.use(Vuex)
 export default () => {
   return new Vuex.Store({
     modules: {
-      session: sessionStoreBuilder()
+      session: sessionStoreBuilder(),
     },
     state: {
-      embed: false
+      embed: false,
+      breadcrumbs: null,
     },
     getters: {
       embed() {
@@ -19,12 +20,19 @@ export default () => {
         } catch (e) {
           return true
         }
-      }
+      },
     },
     mutations: {
       setAny(state, params) {
         Object.assign(state, params)
-      }
-    }
+      },
+    },
+    actions: {
+      setBreadcrumbs({ commit }, breadcrumbs) {
+        breadcrumbs.forEach(b => { b.exact = true })
+        commit('setAny', { breadcrumbs })
+        if (global.parent) parent.postMessage({ breadcrumbs }, '*')
+      },
+    },
   })
 }
