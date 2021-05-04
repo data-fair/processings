@@ -34,7 +34,7 @@
       </template>
       <v-card outlined>
         <v-card-title primary-title>
-          Suppression du jeu de données
+          Suppression du traitement
         </v-card-title>
         <v-card-text>
           Voulez vous vraiment supprimer le traitement "{{ processing.title }}" et tout son historique ? La suppression est définitive et les données ne pourront pas être récupérées.

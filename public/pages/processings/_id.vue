@@ -99,6 +99,7 @@
         }])
       },
       async patch(patch) {
+        if (!this.$refs.form.validate()) return
         await this.$axios.$patch('api/v1/processings/' + this.$route.params.id, patch)
         await this.fetchProcessing()
       },

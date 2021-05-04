@@ -5,7 +5,7 @@ const express = require('express')
 const { nanoid } = require('nanoid')
 const cryptoRandomString = require('crypto-random-string')
 const createError = require('http-errors')
-const ajv = require('ajv')()
+const ajv = require('ajv')({ allErrors: false })
 const processingSchema = require('../../contract/processing')
 const findUtils = require('../utils/find')
 const asyncWrap = require('../utils/async-wrap')
@@ -24,12 +24,12 @@ const validateFullProcessing = async (processing) => {
     : processingSchema
   const validate = ajv.compile(schema)
   const valid = validate(processing)
-  if (!valid) throw createError(400, validate.errors)
+  if (!valid) throw createError(400, JSON.stringify(validate.errors))
   if (!processing.config) return
   const pluginInfo = await fs.readJson(path.join(pluginsDir, processing.plugin, 'plugin.json'))
   const configValidate = ajv.compile(pluginInfo.processingConfigSchema)
   const configValid = configValidate(processing.config)
-  if (!configValid) throw createError(400, configValidate.errors)
+  if (!configValid) throw createError(400, JSON.stringify(configValidate.errors))
 }
 
 // Get the list of processings

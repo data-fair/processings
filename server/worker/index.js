@@ -57,6 +57,7 @@ async function iter(db) {
     run = await acquireNext(db)
     if (!run) return
     processing = await db.collection('processings').findOne({ _id: run.processing._id })
+    if (!processing) return
 
     debug(`run "${processing.title}" > ${run._id}`)
 
@@ -98,7 +99,7 @@ async function iter(db) {
     }
   } finally {
     if (run) {
-      locks.release(db, processing._id)
+      locks.release(db, run.processing._id)
     }
     if (processing && processing.scheduling.type !== 'trigger') {
       await runs.createNext(db, processing)
