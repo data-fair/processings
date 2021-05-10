@@ -1,16 +1,32 @@
-FROM koumoul/webapp-base:1.10.2
+FROM koumoul/webapp-base:1.12.2
 MAINTAINER "contact@koumoul.com"
 
 RUN apk add --no-cache --update python make g++ unzip
 
-ARG VERSION
-ENV VERSION=$VERSION
-ENV DEBUG nuxt-build-cache
 ENV NODE_ENV production
 WORKDIR /webapp
+
+# cf https://github.com/appropriate/docker-postgis/pull/97/commits/9fbb21cf5866be05459a6a7794c329b40bdb1b37
+RUN apk add --no-cache --virtual .build-deps cmake linux-headers boost-dev gmp gmp-dev mpfr-dev && \
+    apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/main libressl3.0-libcrypto && \
+    apk add --no-cache --virtual .gdal-build-deps --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing gdal-dev && \
+    apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing gdal proj && \
+    curl -L https://github.com/CGAL/cgal/releases/download/releases%2FCGAL-4.12/CGAL-4.12.tar.xz -o cgal.tar.xz && \
+    tar -xf cgal.tar.xz && \
+    rm cgal.tar.xz && \
+    cd CGAL-4.12 && \
+    cmake . && \
+    make && \
+    make install && \
+    cd .. && \
+    rm -rf CGAL-4.12 && \
+    apk del .build-deps .gdal-build-deps
+RUN test -f /usr/lib/libproj.so.15
+RUN ln -s /usr/lib/libproj.so.15 /usr/lib/libproj.so
+
 ADD package.json .
 ADD package-lock.json .
-RUN npm install --production
+RUN npm install --production && node-prune
 
 ADD config config
 ADD sources sources
