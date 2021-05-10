@@ -69,6 +69,7 @@ exports.run = async ({ db }) => {
   })
 
   const dir = path.resolve(config.dataDir, 'processings', processing._id)
+  await fs.ensureDir(dir)
   const tmpDir = await tmp.dir({ unsafeCleanup: true })
   const processingConfig = processing.config || {}
   const context = {
@@ -85,12 +86,16 @@ exports.run = async ({ db }) => {
       db.collection('processings').updateOne({ _id: processing._id }, { $set: { config: processingConfig } })
     },
   }
+  const cwd = process.cwd()
   try {
     const pluginModule = require(pluginDir)
+    process.chdir(dir)
     await pluginModule.run(context)
+    process.chdir(cwd)
     await tmpDir.cleanup()
     await log.info('terminé')
   } catch (err) {
+    process.chdir(cwd)
     if (err.status && err.statusText) {
       await log.error(err.data && typeof err.data === 'string' ? err.data : err.statusText)
       await log.debug('axios error', err, true)
