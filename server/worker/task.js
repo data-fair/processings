@@ -33,6 +33,7 @@ exports.run = async ({ db }) => {
         .updateOne({ _id: run._id }, { $push: { log: { type: 'debug', date: new Date().toISOString(), msg, extra } } })
     },
   }
+  log.warn = log.warning
   if (run.status === 'running') {
     log.info('Reprise après interruption.')
   }

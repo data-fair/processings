@@ -1,5 +1,7 @@
 const config = require('config')
 const spawn = require('child-process-promise').spawn
+const path = require('path')
+const fs = require('fs-extra')
 const locks = require('../utils/locks')
 const runs = require('../utils/runs')
 const debug = require('debug')('worker')
@@ -62,9 +64,12 @@ async function iter(db) {
     debug(`run "${processing.title}" > ${run._id}`)
 
     // Run a task in a dedicated child process for  extra resiliency to fatal memory exceptions
+    const dir = path.resolve(config.dataDir, 'processings', processing._id)
+    await fs.ensureDir(dir)
     const spawnPromise = spawn('node', ['server', run._id, processing._id], {
       env: { ...process.env, MODE: 'task' },
       stdio: ['ignore', 'inherit', 'pipe'],
+      cwd: dir,
     })
     spawnPromise.childProcess.stderr.on('data', data => {
       debug('[spawned task stderr] ' + data)
