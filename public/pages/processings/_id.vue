@@ -40,7 +40,7 @@
 
   export default {
     components: { VJsf },
-    middleware: 'admin-required',
+    middleware: 'contrib-required',
     data: () => ({
       processing: null,
       editProcessing: null,

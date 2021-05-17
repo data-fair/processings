@@ -108,7 +108,7 @@
 
   export default {
     components: {},
-    middleware: 'admin-required',
+    middleware: 'contrib-required',
     data: () => ({
       processings: null,
       installedPlugins: {},

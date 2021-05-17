@@ -50,7 +50,7 @@
 
 <script>
   export default {
-    middleware: 'admin-required',
+    middleware: 'contrib-required',
     data() {
       return { loading: false, run: null }
     },

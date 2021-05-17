@@ -14,3 +14,7 @@ exports.isAdmin = (req, res, next) => {
 exports.isOwner = (user, resource) => {
   return (user.adminMode || exports.getOwnerRole(resource.owner, user) === 'admin')
 }
+
+exports.isContrib = (user, resource) => {
+  return (user.adminMode || exports.getOwnerRole(resource.owner, user) === 'admin' || exports.getOwnerRole(resource.owner, user) === 'contrib')
+}

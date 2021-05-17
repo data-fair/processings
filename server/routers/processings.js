@@ -103,7 +103,7 @@ router.get('/:id', session.requiredAuth, asyncWrap(async(req, res, next) => {
   const processing = await req.app.get('db').collection('processings')
     .findOne({ _id: req.params.id }, { projection: {} })
   if (!processing) return res.sendStatus(404)
-  if (!permissions.isOwner(req.user, processing)) return res.status(403).send()
+  if (!permissions.isContrib(req.user, processing)) return res.status(403).send()
   res.status(200).json(processing)
 }))
 
