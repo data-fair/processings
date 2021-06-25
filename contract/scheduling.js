@@ -58,28 +58,28 @@ module.exports = {
           title: 'Jour de la semaine',
           type: 'string',
           oneOf: [{
-            const: 1,
+            const: '1',
             title: 'lundi',
           }, {
-            const: 2,
+            const: '2',
             title: 'mardi',
           }, {
-            const: 3,
+            const: '3',
             title: 'mercredi',
           }, {
-            const: 4,
+            const: '4',
             title: 'jeudi',
           }, {
-            const: 5,
+            const: '5',
             title: 'vendredi',
           }, {
-            const: 6,
+            const: '6',
             title: 'samedi',
           }, {
-            const: 0,
+            const: '0',
             title: 'dimanche',
           }],
-          default: 1,
+          default: '1',
           'x-cols': 6,
           'x-class': 'pr-1',
         },
