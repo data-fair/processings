@@ -57,7 +57,15 @@ async function iter(db) {
     run = await acquireNext(db)
     if (!run) return
     processing = await db.collection('processings').findOne({ _id: run.processing._id })
-    if (!processing) return
+    if (!processing) {
+      console.error('found a run without associated processing, weird')
+      await db.collection('runs').deleteOne({ _id: run._id })
+      return
+    }
+    if (!processing.active) {
+      await runs.finish(db, run, 'le traitement a été désactivé')
+      return
+    }
 
     debug(`run "${processing.title}" > ${run._id}`)
 

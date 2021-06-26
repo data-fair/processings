@@ -35,7 +35,7 @@ exports.run = async ({ db }) => {
   }
   log.warn = log.warning
   if (run.status === 'running') {
-    log.info('Reprise après interruption.')
+    log.step('Reprise après interruption.')
   }
   await runs.running(db, run)
   const pluginDir = path.resolve(config.dataDir, 'plugins', processing.plugin)
