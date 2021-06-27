@@ -47,7 +47,10 @@ exports.run = async ({ db }) => {
 
   const headers = { 'x-apiKey': config.dataFairAPIKey }
   if (config.dataFairAdminMode) headers['x-account'] = JSON.stringify(processing.owner)
-  const axiosInstance = axios.create()
+  const axiosInstance = axios.create({
+    // this is necessary to prevent excessive memory usage during large file uploads, see https://github.com/axios/axios/issues/1045
+    maxRedirects: 0,
+  })
   // apply default base url and send api key when relevant
   axiosInstance.interceptors.request.use(cfg => {
     if (!/^https?:\/\//i.test(cfg.url)) {
