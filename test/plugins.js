@@ -6,6 +6,7 @@ describe('Plugins', () => {
     const plugin = {
       name: '@koumoul/data-fair-processings-hello-world',
       version: '0.3.0',
+      distTag: 'latest',
       description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.',
       npm: 'https://www.npmjs.com/package/%40koumoul%2Fdata-fair-processings-hello-world',
     }

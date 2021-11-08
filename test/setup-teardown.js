@@ -10,7 +10,8 @@ before('global mocks', () => {
   // fake remote service
   nock('http://registry.npmjs.com')
     .persist()
-    .get('/-/v1/search?text=%22data-fair-processings-plugin%22%20hello%20world&size=250').reply(200, require('./resources/npm-response'))
+    .get('/-/v1/search?text=keywords:data-fair-processings-plugin%20hello%20world&size=250').reply(200, require('./resources/npm-search'))
+    .get('/@koumoul/data-fair-processings-hello-world').reply(200, require('./resources/npm-details.json'))
 })
 
 before('init globals', async () => {

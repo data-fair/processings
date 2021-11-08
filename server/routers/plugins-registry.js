@@ -22,7 +22,7 @@ const search = memoize(async (q) => {
     }
   }
   return {
-    count: res.data.total,
+    count: results.length,
     results,
   }
 }, {
