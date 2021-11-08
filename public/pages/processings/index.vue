@@ -57,7 +57,7 @@
                     label="Plugin"
                     :loading="!installedPlugins.results"
                     :items="installedPlugins.results"
-                    item-text="name"
+                    :item-text="item => item.name + ' - ' + item.version"
                     item-value="id"
                   />
                 </v-form>
