@@ -9,14 +9,21 @@ const search = memoize(async (q) => {
   const res = await axios.get('http://registry.npmjs.com/-/v1/search', {
     params: {
       size: 250,
-      text: `"data-fair-processings-plugin" ${q || ''}`,
+      text: `keywords:data-fair-processings-plugin ${q || ''}`,
     },
   })
+  const results = []
+  for (const o of res.data.objects) {
+    if (!o.package.keywords || !o.package.keywords.includes('data-fair-processings-plugin')) continue
+    const details = (await axios.get('http://registry.npmjs.com/' + o.package.name)).data
+    const plugin = { name: o.package.name, description: o.package.description, npm: o.package.links.npm }
+    for (const distTag in details['dist-tags']) {
+      results.push({ ...plugin, version: details['dist-tags'][distTag], distTag })
+    }
+  }
   return {
     count: res.data.total,
-    results: res.data.objects
-      .filter(o => o.package.keywords && o.package.keywords.includes('data-fair-processings-plugin'))
-      .map(o => ({ name: o.package.name, version: o.package.version, description: o.package.description, npm: o.package.links.npm })),
+    results,
   }
 }, {
   maxAge: 5 * 60 * 1000, // cached for 5 minutes to be polite with npmjs

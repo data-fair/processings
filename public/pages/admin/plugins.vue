@@ -37,7 +37,12 @@
       <v-progress-linear v-if="!availablePlugins.results" indeterminate />
       <v-list-item v-for="result in availablePlugins.results" :key="'available-' + result.name">
         <v-list-item-content>
-          <v-list-item-title>{{ result.name }} ({{ result.version }})</v-list-item-title>
+          <v-list-item-title v-if="result.distTag === 'latest'">
+            {{ result.name }} ({{ result.version }})
+          </v-list-item-title>
+          <v-list-item-title v-else>
+            {{ result.name }} ({{ result.distTag }} - {{ result.version }})
+          </v-list-item-title>
           <v-list-item-subtitle>{{ result.description }}</v-list-item-subtitle>
         </v-list-item-content>
         <v-list-item-action>

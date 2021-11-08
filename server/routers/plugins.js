@@ -20,6 +20,7 @@ fs.ensureDirSync(pluginsDir)
 router.post('/', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, res, next) => {
   const plugin = req.body
   plugin.id = plugin.name.replace('/', '-') + '-' + semver.major(plugin.version)
+  if (plugin.distTag !== 'latest') plugin.id += '-' + plugin.distTag
   const pluginDir = path.join(pluginsDir, plugin.id)
   const dir = await tmp.dir({ unsafeCleanup: true })
   try {
