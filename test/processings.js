@@ -45,6 +45,7 @@ describe('Processings', () => {
     assert.equal(runs.count, 1)
     assert.equal(runs.results[0].status, 'scheduled')
 
+    await global.ax.superadmin.patch(`/api/v1/processings/${processing._id}`, { scheduling: { type: 'trigger' } })
     await global.ax.superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
     runs = (await global.ax.superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
     assert.equal(runs.count, 1)

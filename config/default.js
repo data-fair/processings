@@ -13,6 +13,15 @@ module.exports = {
     port: 27017,
     db: 'data-fair-processings-' + (process.env.NODE_ENV || 'development'),
   },
+  mails: {
+    // transport is a full configuration object for createTransport of nodemailer
+    // cf https://nodemailer.com/smtp/
+    transport: {
+      port: 1025,
+      ignoreTLS: true,
+      default: 'localhost',
+    },
+  },
   worker: {
     interval: 1000,
     concurrency: 4,
