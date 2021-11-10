@@ -1,5 +1,6 @@
 
 const config = require('config')
+const nodemailer = require('nodemailer')
 const dbUtils = require('./utils/db')
 let _client
 
@@ -22,7 +23,8 @@ async function start () {
     await require('./app').start({ db })
   }
   if (config.mode === 'task') {
-    await require('./worker/task').run({ db })
+    const mailTransport = nodemailer.createTransport(config.mails.transport)
+    await require('./worker/task').run({ db, mailTransport })
     process.exit()
   }
 }

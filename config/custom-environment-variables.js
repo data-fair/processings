@@ -14,6 +14,12 @@ module.exports = {
     host: 'MONGO_HOST',
     db: 'MONGO_DB',
   },
+  mails: {
+    transport: {
+      __name: 'MAILS_TRANSPORT',
+      __format: 'json',
+    },
+  },
   worker: {
     interval: {
       __name: 'WORKER_INTERVAL',

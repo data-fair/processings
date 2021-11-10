@@ -5,7 +5,7 @@ const axios = require('axios')
 const tmp = require('tmp-promise')
 const runs = require('../utils/runs')
 
-exports.run = async ({ db }) => {
+exports.run = async ({ db, mailTransport }) => {
   const [run, processing] = await Promise.all([
     db.collection('runs').findOne({ _id: process.argv[2] }),
     db.collection('processings').findOne({ _id: process.argv[3] }),
@@ -87,6 +87,9 @@ exports.run = async ({ db }) => {
       await log.debug('patch config', patch)
       Object.assign(processingConfig, patch)
       db.collection('processings').updateOne({ _id: processing._id }, { $set: { config: processingConfig } })
+    },
+    async sendMail(data) {
+      return mailTransport.sendMail(data)
     },
   }
   const cwd = process.cwd()
