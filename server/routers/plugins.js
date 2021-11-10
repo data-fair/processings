@@ -17,7 +17,7 @@ const pluginsDir = path.join(config.dataDir, 'plugins')
 fs.ensureDirSync(pluginsDir)
 
 // prepare the plugin in a subdirectory
-router.post('/', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, res, next) => {
+router.post('/', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {
   const plugin = req.body
   plugin.id = plugin.name.replace('/', '-') + '-' + semver.major(plugin.version)
   if (plugin.distTag !== 'latest') plugin.id += '-' + plugin.distTag
@@ -43,7 +43,7 @@ router.post('/', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req
   res.send(plugin)
 }))
 
-router.get('/', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, res, next) => {
+router.get('/', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {
   const dirs = (await fs.readdir(pluginsDir)).filter(p => !p.endsWith('.json'))
   const results = []
   for (const dir of dirs) {
@@ -65,13 +65,13 @@ router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   res.send(pluginInfo)
 }))
 
-router.delete('/:id', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, res, next) => {
+router.delete('/:id', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {
   await fs.remove(path.join(pluginsDir, req.params.id))
   await fs.remove(path.join(pluginsDir, req.params.id + '-config.json'))
   res.status(204).send()
 }))
 
-router.put('/:id/config', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, res, next) => {
+router.put('/:id/config', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {
   const { pluginConfigSchema } = await fs.readJson(path.join(pluginsDir, req.params.id, 'plugin.json'))
   const validate = ajv.compile(pluginConfigSchema)
   const valid = validate(req.body)

@@ -1,6 +1,6 @@
 <template>
   <v-list dense class="list-actions">
-    <v-list-item :disabled="!processing.active || !user.adminMode" @click="run()">
+    <v-list-item :disabled="!processing.active || !canContrib || (processing.scheduling.type !== 'trigger' && !user.adminMode)" @click="run()">
       <v-list-item-icon>
         <v-icon color="primary">
           mdi-play
@@ -72,7 +72,7 @@
 </template>
 
 <script>
-  import { mapState } from 'vuex'
+  import { mapState, mapGetters } from 'vuex'
   export default {
     props: ['processing'],
     data: () => ({
@@ -80,6 +80,7 @@
     }),
     computed: {
       ...mapState('session', ['user']),
+      ...mapGetters(['canContrib']),
       dataFairUrl() {
         return process.env.dataFairUrl
       },

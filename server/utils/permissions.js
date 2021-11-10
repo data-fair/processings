@@ -5,16 +5,20 @@ exports.getOwnerRole = (owner, user) => {
   return user.activeAccount.role
 }
 
-exports.isAdmin = (req, res, next) => {
+exports.isSuperAdmin = (req, res, next) => {
   if (!req.user) return res.status(401).send()
   if (!req.user.adminMode) return res.status(403).send()
   next()
 }
 
-exports.isOwner = (user, resource) => {
+exports.isAdmin = (user, resource) => {
   return (user.adminMode || exports.getOwnerRole(resource.owner, user) === 'admin')
 }
 
 exports.isContrib = (user, resource) => {
   return (user.adminMode || exports.getOwnerRole(resource.owner, user) === 'admin' || exports.getOwnerRole(resource.owner, user) === 'contrib')
+}
+
+exports.isMember = (user, resource) => {
+  return (user.adminMode || !!exports.getOwnerRole(resource.owner, user))
 }

@@ -47,7 +47,7 @@ router.get('', session.requiredAuth, asyncWrap(async (req, res, next) => {
 }))
 
 // Create a processing
-router.post('', session.requiredAuth, permissions.isAdmin, asyncWrap(async(req, res, next) => {
+router.post('', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async(req, res, next) => {
   const db = req.app.get('db')
   req.body._id = nanoid()
   if (req.body.owner && !req.user.adminMode) return res.status(403).send('owner can only be set for superadmin')
@@ -66,7 +66,7 @@ router.post('', session.requiredAuth, permissions.isAdmin, asyncWrap(async(req, 
 }))
 
 // Patch some of the attributes of a processing
-router.patch('/:id', session.requiredAuth, permissions.isAdmin, asyncWrap(async(req, res, next) => {
+router.patch('/:id', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async(req, res, next) => {
   const db = req.app.get('db')
   const processing = await db.collection('processings').findOne({ _id: req.params.id }, { projection: {} })
   if (!processing) return res.status(404)
@@ -107,7 +107,7 @@ router.get('/:id', session.requiredAuth, asyncWrap(async(req, res, next) => {
   res.status(200).json(processing)
 }))
 
-router.delete('/:id', session.requiredAuth, permissions.isAdmin, asyncWrap(async(req, res, next) => {
+router.delete('/:id', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async(req, res, next) => {
   const db = req.app.get('db')
   const processing = (await db.collection('processings')
     .findOneAndDelete({ _id: req.params.id })).value
@@ -117,10 +117,12 @@ router.delete('/:id', session.requiredAuth, permissions.isAdmin, asyncWrap(async
 }))
 
 // TODO: also accept webhook key
-router.post('/:id/_trigger', session.requiredAuth, permissions.isAdmin, asyncWrap(async (req, res, next) => {
+router.post('/:id/_trigger', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const db = req.app.get('db')
   const processing = await db.collection('processings')
     .findOne({ _id: req.params.id }, { projection: {} })
+  if (!permissions.isContrib(req.user, processing)) return res.status(403).send('Vous devez être contributeur pour déclencher un traitement')
+  if (!req.user.admin && processing.scheduling.type !== 'trigger') return res.status(400).send('Le traitement n\'est pas en mode de déclenchement manuel')
   if (!processing.active) return res.status(409).send('Le traitement n\'est pas actif')
   res.send(await runs.createNext(db, processing, true))
 }))
