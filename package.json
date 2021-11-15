@@ -40,8 +40,8 @@
   },
   "dependencies": {
     "@koumoul/nuxt-config-inject": "^0.4.10",
-    "@koumoul/sd-express": "^0.21.0",
-    "@koumoul/sd-vue": "^0.20.3",
+    "@koumoul/sd-express": "1.1.1",
+    "@koumoul/sd-vue": "1.3.0",
     "@koumoul/vjsf": "^1.25.0-beta.11",
     "@nuxtjs/axios": "^5.12.5",
     "@nuxtjs/vuetify": "^1.11.3",

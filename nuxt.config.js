@@ -1,4 +1,6 @@
 const URL = require('url').URL
+const fr = require('vuetify/es5/locale/fr').default
+const en = require('vuetify/es5/locale/en').default
 let config = { ...require('config') }
 config.basePath = new URL(config.publicUrl + '/').pathname
 const dataFairIsLocal = new URL(config.publicUrl).origin === new URL(config.dataFairUrl).origin
@@ -7,16 +9,17 @@ config.localDataFairUrl = dataFairIsLocal ? config.dataFairUrl : config.publicUr
 if (process.env.NODE_ENV === 'production') {
   const nuxtConfigInject = require('@koumoul/nuxt-config-inject')
   if (process.argv.slice(-1)[0] === 'build') config = nuxtConfigInject.prepare(config)
-  else nuxtConfigInject.replace(config)
+  else nuxtConfigInject.replace(config, ['nuxt-dist/**/*', 'public/static/**/*'])
 }
 
 module.exports = {
-  mode: 'spa',
+  ssr: false,
   components: true,
   srcDir: 'public/',
+  buildDir: 'nuxt-dist',
   build: {
-    transpile: ['@koumoul/vjsf'],
-    publicPath: config.publicUrl + '/_nuxt/',
+    publicPath: config.basePath + '/_nuxt/',
+    transpile: ['@koumoul'],
   },
   loading: { color: '#1e88e5' }, // Customize the progress bar color
   plugins: [
@@ -31,7 +34,6 @@ module.exports = {
   modules: ['@nuxtjs/axios', 'cookie-universal-nuxt'],
   axios: {
     browserBaseURL: config.basePath,
-    baseURL: config.publicUrl,
   },
   buildModules: ['@nuxtjs/vuetify'],
   vuetify: {
@@ -39,6 +41,10 @@ module.exports = {
       font: {
         family: 'Nunito',
       },
+    },
+    lang: {
+      locales: { fr, en },
+      current: config.i18n.defaultLocale,
     },
     icons: {
       iconfont: 'mdi',
@@ -69,7 +75,8 @@ module.exports = {
     },
   },
   env: {
-    publicUrl: config.publicUrl,
+    mainPublicUrl: config.publicUrl,
+    basePath: config.basePath,
     directoryUrl: config.directoryUrl,
     dataFairUrl: config.dataFairUrl,
     dataFairAdminMode: config.dataFairAdminMode,

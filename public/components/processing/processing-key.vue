@@ -35,6 +35,7 @@
 </template>
 
 <script>
+  import { mapState } from 'vuex'
   export default {
     props: {
       processing: { type: Object, required: true },
@@ -45,8 +46,9 @@
       }
     },
     computed: {
+      ...mapState(['env']),
       curl () {
-        return `curl -X POST ${process.env.publicUrl}/api/v1/processings/${this.processing.id}/_run -H 'x-apikey: ${this.processing.webhookKey}'`
+        return `curl -X POST ${this.env.publicUrl}/api/v1/processings/${this.processing.id}/_run -H 'x-apikey: ${this.processing.webhookKey}'`
       },
     },
   }

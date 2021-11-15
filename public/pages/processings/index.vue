@@ -133,18 +133,18 @@
       },
       async refresh() {
         try {
-          this.processings = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings', { params: { size: 1000, showAll: this.showAll } })
+          this.processings = await this.$axios.$get('api/v1/processings', { params: { size: 1000, showAll: this.showAll } })
         } catch (error) {
           eventBus.$emit('notification', { error, msg: 'Erreur pendant la récupération de la liste des traitements' })
         }
       },
       async createProcessing(processing) {
-        const newProcessing = await this.$axios.$post(process.env.publicUrl + '/api/v1/processings', processing)
+        const newProcessing = await this.$axios.$post('api/v1/processings', processing)
         this.$router.push(`/processings/${newProcessing._id}`)
       },
       async run(processing) {
         try {
-          await this.$axios.$post(process.env.publicUrl + '/api/v1/processings/' + processing.id + '/_run')
+          await this.$axios.$post('api/v1/processings/' + processing.id + '/_run')
           this.refresh()
         } catch (error) {
           eventBus.$emit('notification', { error, msg: 'Erreur pendant le changement de statut du traitement' })

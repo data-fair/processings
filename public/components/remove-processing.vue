@@ -67,7 +67,7 @@
       },
       async confirm () {
         try {
-          await this.$axios.$delete(process.env.publicUrl + '/api/v1/processings/' + this.processing.id)
+          await this.$axios.$delete('api/v1/processings/' + this.processing.id)
           this.$emit('removed', { id: this.processing.id })
         } catch (error) {
           eventBus.$emit('notification', { error, msg: 'Erreur pendant la suppression du traitement' })

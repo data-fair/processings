@@ -8,9 +8,7 @@ const cookieParser = require('cookie-parser')
 const proxy = require('http-proxy-middleware')
 const nuxt = require('./nuxt')
 const session = require('@koumoul/sd-express')({
-  publicUrl: config.publicUrl,
   directoryUrl: config.directoryUrl,
-  cookieDomain: config.sessionDomain,
 })
 const debug = require('debug')('main')
 
@@ -50,7 +48,6 @@ app.use(cookieParser())
 app.use(bodyParser.json())
 app.use(bodyParser.text())
 
-app.use('/api/v1/session', session.router)
 app.use('/api/v1/processings', require('./routers/processings'))
 app.use('/api/v1/runs', require('./routers/runs'))
 app.use('/api/v1/plugins-registry', require('./routers/plugins-registry'))
@@ -59,8 +56,7 @@ app.use('/api/v1/plugins', require('./routers/plugins'))
 let httpServer
 exports.start = async ({ db }) => {
   const nuxtMiddleware = await nuxt()
-  app.use(session.loginCallback)
-  app.use(session.decode)
+  app.use(session.auth)
   app.use(nuxtMiddleware)
   app.set('db', db)
   app.use((err, req, res, next) => {

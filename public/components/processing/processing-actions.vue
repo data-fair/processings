@@ -56,7 +56,7 @@
 
     <v-list-item
       v-if="processing.config && processing.config.dataset && processing.config.dataset.id"
-      :href="`${dataFairUrl}/dataset/${processing.config.dataset.id}`"
+      :href="`${env.dataFairUrl}/dataset/${processing.config.dataset.id}`"
       target="_blank"
     >
       <v-list-item-icon>
@@ -79,11 +79,9 @@
       showDeleteMenu: false,
     }),
     computed: {
+      ...mapState(['env']),
       ...mapState('session', ['user']),
       ...mapGetters(['canContrib']),
-      dataFairUrl() {
-        return process.env.dataFairUrl
-      },
     },
     methods: {
       async confirmRemove() {

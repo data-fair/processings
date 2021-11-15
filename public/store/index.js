@@ -12,6 +12,7 @@ export default () => {
     state: {
       embed: false,
       breadcrumbs: null,
+      env: null,
     },
     getters: {
       embed() {

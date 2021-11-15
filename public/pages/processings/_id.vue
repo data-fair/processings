@@ -47,6 +47,7 @@
       plugin: null,
     }),
     computed: {
+      ...mapState(['env']),
       ...mapState('session', ['user']),
       processingSchema() {
         if (!this.plugin) return
@@ -59,8 +60,8 @@
         return {
           context: {
             owner: this.processing.owner,
-            ownerFilter: process.env.dataFairAdminMode ? `owner=${this.processing.owner.type}:${encodeURIComponent(this.processing.owner.id)}` : '',
-            dataFairUrl: process.env.dataFairUrl,
+            ownerFilter: this.env.dataFairAdminMode ? `owner=${this.processing.owner.type}:${encodeURIComponent(this.processing.owner.id)}` : '',
+            dataFairUrl: this.env.dataFairUrl,
           },
           disableAll: !this.user.adminMode,
           locale: 'fr',

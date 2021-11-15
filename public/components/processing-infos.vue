@@ -95,7 +95,7 @@
 </template>
 
 <script>
-
+  import { mapState } from 'vuex'
   export default {
     props: {
       processing: { type: Object, required: true },
@@ -108,6 +108,7 @@
       }
     },
     computed: {
+      ...mapState(['env']),
       sourceType() {
         return this.processingSchema && this.processingSchema.properties.source.oneOf.find(s => s.properties.type.const === this.processing.source.type)
       },
@@ -121,8 +122,8 @@
       },
     },
     async mounted() {
-      this.vocabulary = await this.$axios.$get(process.env.dataFairUrl + '/api/v1/vocabulary')
-      this.processingSchema = await this.$axios.$get(process.env.publicUrl + '/api/v1/processings/_schema')
+      this.vocabulary = await this.$axios.$get(this.env.dataFairUrl + '/api/v1/vocabulary')
+      this.processingSchema = await this.$axios.$get('api/v1/processings/_schema')
     },
     methods: {
       conceptLabel(uri) {

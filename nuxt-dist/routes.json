@@ -1,0 +1,32 @@
+[
+  {
+    "name": "processings",
+    "path": "/processings",
+    "component": "/home/alban/data-fair/processings/public/pages/processings/index.vue",
+    "chunkName": "pages/processings/index"
+  },
+  {
+    "name": "admin-plugins",
+    "path": "/admin/plugins",
+    "component": "/home/alban/data-fair/processings/public/pages/admin/plugins.vue",
+    "chunkName": "pages/admin/plugins"
+  },
+  {
+    "name": "processings-id",
+    "path": "/processings/:id",
+    "component": "/home/alban/data-fair/processings/public/pages/processings/_id.vue",
+    "chunkName": "pages/processings/_id"
+  },
+  {
+    "name": "runs-id",
+    "path": "/runs/:id?",
+    "component": "/home/alban/data-fair/processings/public/pages/runs/_id.vue",
+    "chunkName": "pages/runs/_id"
+  },
+  {
+    "name": "index",
+    "path": "/",
+    "component": "/home/alban/data-fair/processings/public/pages/index.vue",
+    "chunkName": "pages/index"
+  }
+]

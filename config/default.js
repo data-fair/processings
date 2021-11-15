@@ -32,4 +32,8 @@ module.exports = {
     // in seconds
     ttl: 60,
   },
+  i18n: {
+    locales: 'fr,en',
+    defaultLocale: 'fr',
+  },
 }

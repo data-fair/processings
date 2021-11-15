@@ -122,7 +122,7 @@ router.post('/:id/_trigger', session.requiredAuth, asyncWrap(async (req, res, ne
   const processing = await db.collection('processings')
     .findOne({ _id: req.params.id }, { projection: {} })
   if (!permissions.isContrib(req.user, processing)) return res.status(403).send('Vous devez être contributeur pour déclencher un traitement')
-  if (!req.user.admin && processing.scheduling.type !== 'trigger') return res.status(400).send('Le traitement n\'est pas en mode de déclenchement manuel')
+  if (!req.user.adminMode && processing.scheduling.type !== 'trigger') return res.status(400).send('Le traitement n\'est pas en mode de déclenchement manuel')
   if (!processing.active) return res.status(409).send('Le traitement n\'est pas actif')
   res.send(await runs.createNext(db, processing, true))
 }))

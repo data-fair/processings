@@ -1,0 +1,38 @@
+{
+  "Navigation": {
+    "description": "Auto imported from components/navigation.vue"
+  },
+  "Notifications": {
+    "description": "Auto imported from components/notifications.vue"
+  },
+  "ProcessingInfos": {
+    "description": "Auto imported from components/processing-infos.vue"
+  },
+  "RemoveProcessing": {
+    "description": "Auto imported from components/remove-processing.vue"
+  },
+  "LayoutAppBar": {
+    "description": "Auto imported from components/layout/app-bar.vue"
+  },
+  "LayoutNavigationRight": {
+    "description": "Auto imported from components/layout/layout-navigation-right.vue"
+  },
+  "OwnerShort": {
+    "description": "Auto imported from components/owner/owner-short.vue"
+  },
+  "RunListItem": {
+    "description": "Auto imported from components/run/run-list-item.vue"
+  },
+  "ProcessingActions": {
+    "description": "Auto imported from components/processing/processing-actions.vue"
+  },
+  "ProcessingCard": {
+    "description": "Auto imported from components/processing/processing-card.vue"
+  },
+  "ProcessingKey": {
+    "description": "Auto imported from components/processing/processing-key.vue"
+  },
+  "ProcessingRuns": {
+    "description": "Auto imported from components/processing/processing-runs.vue"
+  }
+}
