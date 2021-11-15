@@ -74,6 +74,8 @@ module.exports = {
     dataFairUrl: config.dataFairUrl,
     dataFairAdminMode: config.dataFairAdminMode,
     datasetsUrlTemplate: config.datasetsUrlTemplate,
+    adminRole: config.adminRole,
+    contribRole: config.contribRole,
   },
   head: {
     title: 'Data Fair Processings',
