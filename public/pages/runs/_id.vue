@@ -1,13 +1,26 @@
 <template>
   <v-container v-if="run" data-iframe-height>
+    <v-row class="ma-0">
+      <h2 class="text-h6">
+        Exécution du traitement {{ run.processing.title }}
+        <v-btn icon @click="refresh">
+          <v-icon>mdi-refresh</v-icon>
+        </v-btn>
+      </h2>
+      <v-spacer />
+      <v-btn
+        v-if="runBackLink"
+        text
+        :to="`/processings/${run.processing._id}`"
+      >
+        <v-icon style="transform: scale(-1, 1)">
+          mdi-share
+        </v-icon>
+        revenir
+      </v-btn>
+    </v-row>
     <v-row>
       <v-col>
-        <h2 class="text-h6">
-          Exécution du traitement {{ run.processing.title }}
-          <v-btn icon @click="refresh">
-            <v-icon>mdi-refresh</v-icon>
-          </v-btn>
-        </h2>
         <run-list-item :run="run" />
 
         <v-expansion-panels
@@ -49,12 +62,15 @@
 </template>
 
 <script>
+  import { mapState } from 'vuex'
+
   export default {
     middleware: 'contrib-required',
     data() {
       return { loading: false, run: null }
     },
     computed: {
+      ...mapState(['runBackLink']),
       steps() {
         if (!this.run) return
         const steps = []

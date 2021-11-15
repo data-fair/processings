@@ -82,6 +82,9 @@
       },
     },
     async mounted() {
+      if (this.$route.query['back-link'] === 'true') {
+        this.$store.commit('setAny', { runBackLink: true })
+      }
       await this.fetchProcessing()
       this.editProcessing = { ...this.processing }
       Object.keys(processingSchema.properties).forEach(key => {

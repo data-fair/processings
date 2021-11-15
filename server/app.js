@@ -7,9 +7,7 @@ const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const proxy = require('http-proxy-middleware')
 const nuxt = require('./nuxt')
-const session = require('@koumoul/sd-express')({
-  directoryUrl: config.directoryUrl,
-})
+const session = require('./utils/session')
 const debug = require('debug')('main')
 
 const publicHost = new URL(config.publicUrl).host

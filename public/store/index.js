@@ -13,6 +13,7 @@ export default () => {
       embed: false,
       breadcrumbs: null,
       env: null,
+      runBackLink: false,
     },
     getters: {
       embed() {
