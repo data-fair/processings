@@ -23,7 +23,7 @@
       <layout-navigation-right v-if="$vuetify.breakpoint.lgAndUp">
         <processing-actions :processing="processing" @triggered="$refs.runs.refresh()" />
       </layout-navigation-right>
-      <layout-actions-button v-else>
+      <layout-actions-button v-else class="pt-2">
         <template #actions>
           <processing-actions :processing="processing" @triggered="$refs.runs.refresh()" />
         </template>
