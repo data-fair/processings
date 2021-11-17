@@ -5,6 +5,7 @@ const { URL } = require('url')
 const event2promise = require('event-to-promise')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
+const proxy = require('http-proxy-middleware')
 const nuxt = require('./nuxt')
 const session = require('./utils/session')
 const debug = require('debug')('main')
@@ -36,7 +37,6 @@ if (!dataFairIsLocal) {
 }
 
 if (process.env.NODE_ENV === 'development') {
-  const proxy = require('http-proxy-middleware')
   // Create a mono-domain environment with other services in dev
   app.use('/simple-directory', proxy({ target: 'http://localhost:8080', pathRewrite: { '^/simple-directory': '' } }))
   app.use('/data-fair', proxy({ target: 'http://localhost:8081', pathRewrite: { '^/data-fair': '' }, ws: true }))
