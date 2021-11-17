@@ -21,7 +21,6 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - run: npm i
     - run: npm run lint
-    - run: npm run build
     # run tests with deps in docker-compose
     - run: NO_UI=true docker-compose up -d
     - name: Wait for containers
