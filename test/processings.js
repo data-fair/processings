@@ -6,10 +6,10 @@ describe('Processings', () => {
   let plugin
   before('prepare a plugin', async () => {
     plugin = (await global.ax.superadmin.post('/api/v1/plugins', {
-      name: '@koumoul/data-fair-processings-hello-world',
-      version: '0.3.0',
+      name: '@data-fair/processing-hello-world',
+      version: '0.8.0',
       description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.',
-      npm: 'https://www.npmjs.com/package/%40koumoul%2Fdata-fair-processings-hello-world',
+      npm: 'https://www.npmjs.com/package/%40data-fair%2Fprocessing-hello-world',
     })).data
   })
 
@@ -29,6 +29,7 @@ describe('Processings', () => {
     await global.ax.superadmin.patch(`/api/v1/processings/${processing._id}`, {
       active: true,
       config: {
+        datasetMode: 'create',
         dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
         overwrite: false,
         message: 'Hello world test processing',
@@ -59,10 +60,7 @@ describe('Processings', () => {
     const run = (await global.ax.superadmin.get('/api/v1/runs/' + runs.results[0]._id)).data
     assert.equal(run.status, 'error')
     assert.equal(run.log[0].type, 'step')
-    assert.equal(run.log[1].type, 'info')
-    assert.equal(run.log[2].type, 'error')
-    assert.equal(run.log[3].type, 'debug')
-    assert.equal(run.log[4].type, 'debug')
+    assert.equal(run.log[1].type, 'error')
 
     processing = (await global.ax.superadmin.get(`/api/v1/processings/${processing._id}`)).data
     assert.ok(processing.lastRun)
