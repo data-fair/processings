@@ -1,8 +1,9 @@
-FROM node:16.13.0-alpine
+FROM node:16.13.0-alpine3.13
 MAINTAINER "contact@koumoul.com"
 
 # allow for using native modules and unpacking various archive formats
 RUN apk add --no-cache --update python3 make g++ unzip p7zip curl git
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Install node-prune to reduce size of node_modules
 RUN curl -sfL https://install.goreleaser.com/github.com/tj/node-prune.sh | sh -s -- -b /usr/local/bin
@@ -12,7 +13,6 @@ WORKDIR /webapp
 
 # install gdal mostly for using ogr2ogr
 # cf https://github.com/appropriate/docker-postgis/pull/97/commits/9fbb21cf5866be05459a6a7794c329b40bdb1b37
-ENV CMAKE_BUILD_TYPE TRUE
 RUN apk add --no-cache --virtual .build-deps cmake linux-headers boost-dev gmp gmp-dev mpfr-dev && \
     apk add --no-cache libressl3.1-libcrypto && \
     apk add --no-cache --virtual .gdal-build-deps --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing gdal-dev && \
@@ -21,7 +21,7 @@ RUN apk add --no-cache --virtual .build-deps cmake linux-headers boost-dev gmp g
     tar -xf cgal.tar.xz && \
     rm cgal.tar.xz && \
     cd CGAL-4.12 && \
-    cmake . && \
+    cmake -D CMAKE_BUILD_TYPE=Release . && \
     make && \
     make install && \
     cd .. && \

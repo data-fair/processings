@@ -3,3 +3,4 @@ node_modules/
 .nuxt
 config/local-*
 /nuxt-dist
+/dist
