@@ -74,7 +74,7 @@
       steps() {
         if (!this.run) return
         const steps = []
-        let lastStep = {}
+        let lastStep
         for (const log of this.run.log) {
           if (log.type === 'debug') continue
           if (log.type === 'step') {
