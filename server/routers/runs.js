@@ -10,6 +10,8 @@ module.exports = router
 router.get('', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const sort = findUtils.sort(req.query.sort)
   const [skip, size] = findUtils.pagination(req.query)
+  // implicit showAll on runs if we are looking at a processing in adminMode
+  if (req.user.adminMode) req.query.showAll = 'true'
   const query = findUtils.query(req, { processing: 'processing._id' })
   const project = { log: 0 }
   const runs = req.app.get('db').collection('runs')
