@@ -43,8 +43,11 @@ exports.run = async ({ db, mailTransport }) => {
   const pluginDir = path.resolve(config.dataDir, 'plugins', processing.plugin)
 
   let pluginConfig = {}
-  if (await fs.exists(pluginDir + '-config.json')) {
+  if (await fs.pathExists(pluginDir + '-config.json')) {
     pluginConfig = await fs.readJson(pluginDir + '-config.json')
+  }
+  if (!await fs.pathExists(pluginDir + '/index.js')) {
+    throw new Error('fichier source manquant : ' + pluginDir + '/index.js')
   }
 
   const headers = { 'x-apiKey': config.dataFairAPIKey }
@@ -96,7 +99,7 @@ exports.run = async ({ db, mailTransport }) => {
   }
   const cwd = process.cwd()
   try {
-    pluginModule = require(pluginDir)
+    pluginModule = require(pluginDir + '/index.js')
     process.chdir(dir)
     await pluginModule.run(context)
     process.chdir(cwd)
