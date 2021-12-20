@@ -1,13 +1,15 @@
 const config = require('config')
 const spawn = require('child-process-promise').spawn
+const kill = require('tree-kill')
 const locks = require('../utils/locks')
 const runs = require('../utils/runs')
 const debug = require('debug')('worker')
+const debugLoop = require('debug')('worker-loop')
 
 // resolve functions that will be filled when we will be asked to stop the workers
 // const stopResolves = {}
 let stopped = false
-const currentIters = []
+const promisePool = []
 
 // Hooks for testing
 const hooks = {}
@@ -17,9 +19,11 @@ exports.hook = (key) => new Promise((resolve, reject) => {
 // clear also for testing
 exports.clear = () => {
   for (let i = 0; i < config.worker.concurrency; i++) {
-    if (currentIters[i]) {
-      currentIters[i].catch(() => {})
-      delete currentIters[i]
+    for (let i = 0; i < config.worker.concurrency; i++) {
+      if (promisePool[i]) {
+        promisePool[i].catch(() => {})
+        delete promisePool[i]
+      }
     }
   }
 }
@@ -29,16 +33,56 @@ exports.clear = () => {
 exports.start = async ({ db }) => {
   await locks.init(db)
   console.log('start worker')
+
+  // initialize empty promise pool
+  for (let i = 0; i < config.worker.concurrency; i++) {
+    promisePool[i] = null
+  }
+  let lastActivity = new Date().getTime()
+
+  // non-blocking secondary kill loop
+  killLoop(db)
+
   while (!stopped) {
-    // Maintain max concurrency by checking if there is a free spot in an array of promises
-    for (let i = 0; i < config.worker.concurrency; i++) {
-      if (currentIters[i]) continue
-      currentIters[i] = iter(db)
-      currentIters[i].catch(err => console.error('error in worker iter', err))
-      currentIters[i].finally(() => {
-        currentIters[i] = null
-      })
+    const now = new Date().getTime()
+    if ((now - lastActivity) > config.worker.inactivityDelay) {
+      // inactive polling interval
+      debugLoop('the worker is inactive wait extra delay', config.worker.inactiveInterval)
+      await new Promise(resolve => setTimeout(resolve, config.worker.inactiveInterval))
+    } else {
+      // base polling interval
+      await new Promise(resolve => setTimeout(resolve, config.worker.interval))
     }
+
+    // wait for an available spot in the promise pool
+    if (!promisePool.includes(null)) {
+      debugLoop('pool is full, wait for a free spot')
+      await Promise.any(promisePool)
+    }
+    const freeSlot = promisePool.findIndex(p => !p)
+    debugLoop('free slot', freeSlot)
+
+    const run = await acquireNext(db)
+
+    if (!run) {
+      continue
+    } else {
+      debugLoop('work on run', run._id, run.title)
+      lastActivity = new Date().getTime()
+    }
+
+    if (stopped) continue
+
+    promisePool[freeSlot] = iter(db, run)
+    promisePool[freeSlot].catch(err => console.error('error in worker iter', err))
+    // always empty the slot after the promise is finished
+    promisePool[freeSlot].finally(() => {
+      promisePool[freeSlot] = null
+      // we release the slot right away, but we do not release the lock on the resource
+      // this is to prevent working very fast on the same resource in series
+      debugLoop('release resource after delay', config.worker.releaseInterval)
+      setTimeout(() => locks.release(db, run.processing._id), config.worker.releaseInterval)
+    })
 
     await new Promise(resolve => setTimeout(resolve, config.worker.interval))
   }
@@ -47,15 +91,47 @@ exports.start = async ({ db }) => {
 // Stop and wait for all workers to finish their current task
 exports.stop = async () => {
   stopped = true
-  await Promise.all(currentIters.filter(p => !!p))
+  await Promise.all(promisePool.filter(p => !!p))
+  if (config.worker.releaseInterval) {
+    await new Promise(resolve => setTimeout(resolve, config.worker.releaseInterval))
+  }
 }
 
-async function iter(db) {
-  let run, processing
+// a secondary loop to handle killing tasks
+const pids = {}
+async function killLoop(db) {
+  while (!stopped) {
+    await new Promise(resolve => setTimeout(resolve, config.worker.killInterval))
+    try {
+      const runs = await db.collection('runs').find({ status: 'kill' }).toArray()
+      for (const run of runs) {
+        killRun(db, run).catch(err => console.error('error while killing task', err))
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+}
+
+async function killRun(db, run) {
+  if (!pids[run._id]) {
+    console.warn('missing pid for run to kill', run._id)
+    return
+  }
+  // SIGTERM then wait 10s then SIGKILL
+  debugLoop('send SIGTERM', run._id, pids[run._id])
+  kill(pids[run._id])
+  await new Promise(resolve => setTimeout(resolve, config.worker.killInterval))
+  if (pids[run._id]) {
+    debugLoop('send SIGKILL', run._id, pids[run._id])
+    kill(pids[run._id], 'SIGKILL')
+  }
+}
+
+async function iter(db, run) {
+  let processing
   let stderr = ''
   try {
-    run = await acquireNext(db)
-    if (!run) return
     processing = await db.collection('processings').findOne({ _id: run.processing._id })
     if (!processing) {
       console.error('found a run without associated processing, weird')
@@ -78,6 +154,7 @@ async function iter(db) {
       debug('[spawned task stderr] ' + data)
       stderr += data
     })
+    pids[run._id] = spawnPromise.childProcess.pid
     await spawnPromise
 
     await runs.finish(db, run)
@@ -97,16 +174,22 @@ async function iter(db) {
     }
 
     if (run) {
-      console.warn(`failure ${processing.title} > ${run._id}`, errorMessage.join('\n'))
-
-      await runs.finish(db, run, errorMessage.join('\n'))
-
-      if (hooks[processing._id]) hooks[processing._id].reject({ run, message: errorMessage.join('\n') })
+      // case of interruption by a SIGTERM
+      if (err.code === 143) {
+        run.status = 'killed'
+        await runs.finish(db, run)
+        if (hooks[processing._id]) hooks[processing._id].resolve({ run, message: 'interrupted' })
+      } else {
+        console.warn(`failure ${processing.title} > ${run._id}`, errorMessage.join('\n'))
+        await runs.finish(db, run, errorMessage.join('\n'))
+        if (hooks[processing._id]) hooks[processing._id].reject({ run, message: errorMessage.join('\n') })
+      }
     } else {
       console.warn('failure in worker', err)
     }
   } finally {
     if (run) {
+      delete pids[run._id]
       locks.release(db, run.processing._id)
     }
     if (processing && processing.scheduling.type !== 'trigger') {

@@ -11,13 +11,10 @@ async function ensureIndex(db, collection, key, options) {
   }
 }
 
-exports.connect = async (poolSize = 5, readPreference = 'primary') => {
+exports.connect = async (maxPoolSize = 5, readPreference = 'primary') => {
   let client
-  const opts = {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    poolSize,
-  }
+  // const opts = { maxPoolSize }
+  const opts = {}
   const url = `mongodb://${config.mongo.host}:${config.mongo.port}/${config.mongo.db}?readPreference=${readPreference}`
   try {
     client = await MongoClient.connect(url, opts)

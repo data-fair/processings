@@ -5,6 +5,8 @@ const axios = require('axios')
 const tmp = require('tmp-promise')
 const runs = require('../utils/runs')
 
+let pluginModule, stopped
+
 exports.run = async ({ db, mailTransport }) => {
   const [run, processing] = await Promise.all([
     db.collection('runs').findOne({ _id: process.argv[2] }),
@@ -94,22 +96,37 @@ exports.run = async ({ db, mailTransport }) => {
   }
   const cwd = process.cwd()
   try {
-    const pluginModule = require(pluginDir)
+    pluginModule = require(pluginDir)
     process.chdir(dir)
     await pluginModule.run(context)
     process.chdir(cwd)
     await tmpDir.cleanup()
-    await log.info('terminé')
+    if (stopped) {
+      await log.error('interrompu')
+      process.exit(143)
+    } else {
+      await log.info('terminé')
+      process.exit()
+    }
   } catch (err) {
     process.chdir(cwd)
     if (err.status && err.statusText) {
-      await log.error(err.data && typeof err.data === 'string' ? err.data : err.statusText)
+      const message = err.data && typeof err.data === 'string' ? err.data : err.statusText
+      console.error(message)
+      await log.error(message)
       await log.debug('axios error', err, true)
     } else {
+      console.error(err.message)
       await log.error(err.message)
       await log.debug(err.stack)
     }
     await tmpDir.cleanup()
     process.exit(-1)
   }
+}
+
+exports.stop = async () => {
+  stopped = true
+  if (pluginModule && pluginModule.stop) await pluginModule.stop()
+  process.exit(143)
 }

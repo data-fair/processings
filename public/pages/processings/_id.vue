@@ -52,7 +52,11 @@
       processingSchema() {
         if (!this.plugin) return
         const schema = JSON.parse(JSON.stringify(processingSchema))
-        schema.properties.config = { ...this.plugin.processingConfigSchema, title: 'Plugin ' + this.plugin.name, 'x-options': { deleteReadOnly: false } }
+        schema.properties.config = {
+          ...this.plugin.processingConfigSchema,
+          title: 'Plugin ' + this.plugin.name,
+          'x-options': { deleteReadOnly: false },
+        }
         return schema
       },
       vjsfOptions() {

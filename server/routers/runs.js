@@ -28,3 +28,12 @@ router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   if (!permissions.isContrib(req.user, run)) return res.status(403).send()
   res.send(run)
 }))
+
+router.post('/:id/_kill', session.requiredAuth, asyncWrap(async (req, res, next) => {
+  const run = await req.app.get('db').collection('runs').findOne({ _id: req.params.id })
+  if (!run) return res.status(404).send()
+  if (!permissions.isContrib(req.user, run)) return res.status(403).send()
+  await req.app.get('db').collection('runs').updateOne({ _id: run._id }, { $set: { status: 'kill' } })
+  run.status = 'kill'
+  res.send(run)
+}))

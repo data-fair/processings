@@ -22,7 +22,7 @@ module.exports = {
     },
     status: {
       type: 'string',
-      enum: ['triggered', 'scheduled', 'running', 'stopped', 'error', 'finished'],
+      enum: ['triggered', 'scheduled', 'running', 'error', 'finished', 'kill', 'killed'],
     },
     scheduledAt: {
       type: 'string',

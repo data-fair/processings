@@ -32,21 +32,22 @@ async function start () {
 async function stop () {
   if (config.mode.includes('server')) await require('./app').stop()
   if (config.mode.includes('worker')) await require('./worker').stop()
+  if (config.mode === 'task') await require('./worker/task').stop()
   if (_client) await _client.close()
 }
 
 start().then(() => {}, err => {
   console.error('Failure', err)
-  process.exit(-1)
+  process.exit(1)
 })
 
 process.on('SIGTERM', function onSigterm () {
   console.info('Received SIGTERM signal, shutdown gracefully...')
   stop().then(() => {
     console.log('shutting down now')
-    process.exit()
+    process.exit(143)
   }, err => {
     console.error('Failure while stopping', err)
-    process.exit(-1)
+    process.exit(1)
   })
 })

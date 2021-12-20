@@ -71,7 +71,7 @@ exports.running = async (db, run) => {
   const lastRun = (await db.collection('runs').findOneAndUpdate(
     { _id: run._id },
     { $set: { status: 'running', startedAt: new Date().toISOString() } },
-    { returnOriginal: false, projection: { log: 0, processing: 0, owner: 0 } },
+    { returnDocument: 'after', projection: { log: 0, processing: 0, owner: 0 } },
   )).value
   await db.collection('processings')
     .updateOne({ _id: run.processing._id }, { $set: { lastRun }, $unset: { nextRun: '' } })
@@ -84,14 +84,15 @@ exports.finish = async (db, run, errorMessage) => {
       finishedAt: new Date().toISOString(),
     },
   }
-  if (errorMessage) {
+  if (run.status === 'killed') query.$set.status = 'killed'
+  else if (errorMessage) {
     query.$set.status = 'error'
     query.$push = { log: { type: 'debug', msg: errorMessage } }
   }
   const lastRun = (await db.collection('runs').findOneAndUpdate(
     { _id: run._id },
     query,
-    { returnOriginal: false, projection: { log: 0, processing: 0, owner: 0 } },
+    { returnDocument: 'after', projection: { log: 0, processing: 0, owner: 0 } },
   )).value
   await db.collection('processings')
     .updateOne({ _id: run.processing._id }, { $set: { lastRun } })

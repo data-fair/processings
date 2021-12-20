@@ -7,7 +7,7 @@ describe('Processings', () => {
   before('prepare a plugin', async () => {
     plugin = (await global.ax.superadmin.post('/api/v1/plugins', {
       name: '@data-fair/processing-hello-world',
-      version: '0.8.0',
+      version: '0.9.4',
       description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.',
       npm: 'https://www.npmjs.com/package/%40data-fair%2Fprocessing-hello-world',
     })).data
@@ -65,5 +65,62 @@ describe('Processings', () => {
     processing = (await global.ax.superadmin.get(`/api/v1/processings/${processing._id}`)).data
     assert.ok(processing.lastRun)
     assert.equal(processing.lastRun.status, 'error')
+  })
+
+  it('should kill a long run with SIGTERM', async () => {
+    const processing = (await global.ax.superadmin.post('/api/v1/processings', {
+      title: 'Hello processing',
+      plugin: plugin.id,
+      active: true,
+      config: {
+        datasetMode: 'create',
+        dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
+        message: 'Hello world test processing long',
+        delay: 4,
+      },
+    })).data
+
+    await global.ax.superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
+    const runs = (await global.ax.superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+    assert.equal(runs.count, 1)
+    let run = runs.results[0]
+    assert.equal(run.status, 'triggered')
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    await global.ax.superadmin.post(`/api/v1/runs/${run._id}/_kill`)
+    run = (await global.ax.superadmin.get(`/api/v1/runs/${run._id}`)).data
+    assert.equal(run.status, 'kill')
+    await worker.hook(processing._id)
+    run = (await global.ax.superadmin.get(`/api/v1/runs/${run._id}`)).data
+    assert.equal(run.status, 'killed')
+    assert.equal(run.log.length, 4)
+  })
+
+  it('should kill a long run with SIGKILL', async () => {
+    const processing = (await global.ax.superadmin.post('/api/v1/processings', {
+      title: 'Hello processing',
+      plugin: plugin.id,
+      active: true,
+      config: {
+        datasetMode: 'create',
+        dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
+        message: 'Hello world test processing long',
+        delay: 4,
+        ignoreStop: true,
+      },
+    })).data
+
+    await global.ax.superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
+    const runs = (await global.ax.superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+    assert.equal(runs.count, 1)
+    let run = runs.results[0]
+    assert.equal(run.status, 'triggered')
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    await global.ax.superadmin.post(`/api/v1/runs/${run._id}/_kill`)
+    run = (await global.ax.superadmin.get(`/api/v1/runs/${run._id}`)).data
+    assert.equal(run.status, 'kill')
+    await worker.hook(processing._id)
+    run = (await global.ax.superadmin.get(`/api/v1/runs/${run._id}`)).data
+    assert.equal(run.status, 'killed')
+    assert.equal(run.log.length, 2)
   })
 })

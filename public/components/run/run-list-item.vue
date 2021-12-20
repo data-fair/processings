@@ -52,12 +52,56 @@
         <v-list-item-title>déclenchée manuellement {{ run.createdAt | moment('from') }}</v-list-item-title>
       </v-list-item-content>
     </template>
+
+    <template v-if="run.status === 'kill'">
+      <v-list-item-avatar>
+        <v-icon color="warning">
+          mdi-stop
+        </v-icon>
+      </v-list-item-avatar>
+      <v-list-item-content>
+        <v-list-item-title>interruption demandée</v-list-item-title>
+      </v-list-item-content>
+    </template>
+
+    <template v-if="run.status === 'killed'">
+      <v-list-item-avatar>
+        <v-icon color="warning">
+          mdi-stop
+        </v-icon>
+      </v-list-item-avatar>
+      <v-list-item-content>
+        <v-list-item-title>interrompue manuellement {{ run.finishedAt | moment('from') }}</v-list-item-title>
+      </v-list-item-content>
+    </template>
+
+    <template v-if="!run.finishedAt && run.status !== 'kill'">
+      <v-list-item-action>
+        <v-btn
+          fab
+          color="warning"
+          x-small
+          title="interrompre"
+          @click="kill"
+        >
+          <v-icon>mdi-stop</v-icon>
+        </v-btn>
+      </v-list-item-action>
+    </template>
   </v-list-item>
 </template>
 
 <script>
   export default {
     props: ['run', 'link'],
+    methods: {
+      async kill(e) {
+        e.preventDefault()
+        await this.$axios.$post(`api/v1/runs/${this.run._id}/_kill`)
+        // eslint-disable-next-line vue/no-mutating-props
+        this.run.status = 'kill'
+      },
+    },
   }
 </script>
 
