@@ -70,7 +70,7 @@ exports.createNext = async (db, processing, triggered) => {
 exports.running = async (db, run) => {
   const lastRun = (await db.collection('runs').findOneAndUpdate(
     { _id: run._id },
-    { $set: { status: 'running', startedAt: new Date().toISOString() } },
+    { $set: { status: 'running', startedAt: new Date().toISOString() }, $unset: { finishedAt: '' } },
     { returnDocument: 'after', projection: { log: 0, processing: 0, owner: 0 } },
   )).value
   await db.collection('processings')
