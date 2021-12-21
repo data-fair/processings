@@ -118,12 +118,14 @@ async function killRun(db, run) {
     console.warn('missing pid for run to kill', run._id)
     return
   }
-  // SIGTERM then wait 10s then SIGKILL
+  // send SIGTERM for graceful stopping of the tasks
   debugLoop('send SIGTERM', run._id, pids[run._id])
   kill(pids[run._id])
-  await new Promise(resolve => setTimeout(resolve, config.worker.killInterval))
+  // grace period before sending SIGKILL
+  // this is more than the internal grace period of the task, so it should never be used
+  await new Promise(resolve => setTimeout(resolve, config.worker.gracePeriod * 1.2))
   if (pids[run._id]) {
-    debugLoop('send SIGKILL', run._id, pids[run._id])
+    console.warn('send SIGKILL for forceful interruption of a task that did not stop properly', run.processing._id, run._id, pids[run._id])
     kill(pids[run._id], 'SIGKILL')
   }
 }

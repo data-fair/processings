@@ -7,7 +7,7 @@ describe('Processings', () => {
   before('prepare a plugin', async () => {
     plugin = (await global.ax.superadmin.post('/api/v1/plugins', {
       name: '@data-fair/processing-hello-world',
-      version: '0.9.4',
+      version: '0.9.5',
       description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.',
       npm: 'https://www.npmjs.com/package/%40data-fair%2Fprocessing-hello-world',
     })).data
@@ -95,7 +95,8 @@ describe('Processings', () => {
     assert.equal(run.log.length, 4)
   })
 
-  it('should kill a long run with SIGKILL', async () => {
+  it('should kill a long run with SIGTERM and wait for grace period', async function () {
+    this.timeout(30000)
     const processing = (await global.ax.superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
       plugin: plugin.id,
@@ -104,7 +105,7 @@ describe('Processings', () => {
         datasetMode: 'create',
         dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
         message: 'Hello world test processing long',
-        delay: 4,
+        delay: 10000,
         ignoreStop: true,
       },
     })).data

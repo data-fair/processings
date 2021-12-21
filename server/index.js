@@ -2,7 +2,7 @@
 const config = require('config')
 const nodemailer = require('nodemailer')
 const dbUtils = require('./utils/db')
-let _client
+let _client, _stopped
 
 async function start () {
   let poolSize = 5
@@ -24,12 +24,15 @@ async function start () {
   }
   if (config.mode === 'task') {
     const mailTransport = nodemailer.createTransport(config.mails.transport)
-    await require('./worker/task').run({ db, mailTransport })
+    const err = await require('./worker/task').run({ db, mailTransport })
+    if (err) process.exit(-1)
+    if (_stopped) process.exit(143)
     process.exit()
   }
 }
 
 async function stop () {
+  _stopped = true
   if (config.mode.includes('server')) await require('./app').stop()
   if (config.mode.includes('worker')) await require('./worker').stop()
   if (config.mode === 'task') await require('./worker/task').stop()

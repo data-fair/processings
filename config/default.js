@@ -38,6 +38,7 @@ module.exports = {
     // interval of the secondary loop that manages killing tasks
     killInterval: 10000,
     concurrency: 4,
+    gracePeriod: 20000,
   },
   locks: {
     // in seconds

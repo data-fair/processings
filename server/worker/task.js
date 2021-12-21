@@ -5,7 +5,7 @@ const axios = require('axios')
 const tmp = require('tmp-promise')
 const runs = require('../utils/runs')
 
-let pluginModule, stopped
+let pluginModule, _stopped
 
 exports.run = async ({ db, mailTransport }) => {
   const [run, processing] = await Promise.all([
@@ -104,13 +104,8 @@ exports.run = async ({ db, mailTransport }) => {
     await pluginModule.run(context)
     process.chdir(cwd)
     await tmpDir.cleanup()
-    if (stopped) {
-      await log.error('interrompu')
-      process.exit(143)
-    } else {
-      await log.info('terminé')
-      process.exit()
-    }
+    if (_stopped) await log.error('interrompu')
+    else await log.info('terminé')
   } catch (err) {
     process.chdir(cwd)
     if (err.status && err.statusText) {
@@ -124,12 +119,13 @@ exports.run = async ({ db, mailTransport }) => {
       await log.debug(err.stack)
     }
     await tmpDir.cleanup()
-    process.exit(-1)
+    return err
   }
 }
 
 exports.stop = async () => {
-  stopped = true
+  _stopped = true
   if (pluginModule && pluginModule.stop) await pluginModule.stop()
-  process.exit(143)
+  // grace period of 20s, either run() finishes in the interval or we shutdown
+  await new Promise(resolve => setTimeout(resolve, config.worker.gracePeriod))
 }
