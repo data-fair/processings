@@ -4,6 +4,7 @@ const fs = require('fs-extra')
 const axios = require('axios')
 const tmp = require('tmp-promise')
 const runs = require('../utils/runs')
+const { registerInterceptor: registerDNSCacheInterceptor } = require('esm')(module)('axios-cached-dns-resolve')
 
 let pluginModule, _stopped
 
@@ -56,6 +57,8 @@ exports.run = async ({ db, mailTransport }) => {
     // this is necessary to prevent excessive memory usage during large file uploads, see https://github.com/axios/axios/issues/1045
     maxRedirects: 0,
   })
+  // better dns lookup than nodejs default
+  registerDNSCacheInterceptor(axiosInstance)
   // apply default base url and send api key when relevant
   axiosInstance.interceptors.request.use(cfg => {
     if (!/^https?:\/\//i.test(cfg.url)) {
