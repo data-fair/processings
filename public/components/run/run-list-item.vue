@@ -9,7 +9,7 @@
         />
       </v-list-item-avatar>
       <v-list-item-content>
-        <v-list-item-title>démarrée {{ run.startedAt | moment('from') }}</v-list-item-title>
+        <v-list-item-title>démarrée {{ run.startedAt | fromNow }}</v-list-item-title>
       </v-list-item-content>
     </template>
 
@@ -20,7 +20,7 @@
         </v-icon>
       </v-list-item-avatar>
       <v-list-item-content>
-        <v-list-item-title>terminée {{ run.finishedAt | moment('from') }}</v-list-item-title>
+        <v-list-item-title>terminée {{ run.finishedAt | fromNow }}</v-list-item-title>
       </v-list-item-content>
     </template>
 
@@ -31,7 +31,7 @@
         </v-icon>
       </v-list-item-avatar>
       <v-list-item-content>
-        <v-list-item-title>en échec {{ run.finishedAt | moment('from') }}</v-list-item-title>
+        <v-list-item-title>en échec {{ run.finishedAt | fromNow }}</v-list-item-title>
       </v-list-item-content>
     </template>
 
@@ -40,7 +40,7 @@
         <v-icon>mdi-clock</v-icon>
       </v-list-item-avatar>
       <v-list-item-content>
-        <v-list-item-title>planifiée {{ run.scheduledAt | moment('from') }}</v-list-item-title>
+        <v-list-item-title>planifiée {{ run.scheduledAt | fromNow }}</v-list-item-title>
       </v-list-item-content>
     </template>
 
@@ -49,7 +49,7 @@
         <v-icon>mdi-play-circle</v-icon>
       </v-list-item-avatar>
       <v-list-item-content>
-        <v-list-item-title>déclenchée manuellement {{ run.createdAt | moment('from') }}</v-list-item-title>
+        <v-list-item-title>déclenchée manuellement {{ run.createdAt | fromNow }}</v-list-item-title>
       </v-list-item-content>
     </template>
 
@@ -71,7 +71,7 @@
         </v-icon>
       </v-list-item-avatar>
       <v-list-item-content>
-        <v-list-item-title>interrompue manuellement {{ run.finishedAt | moment('from') }}</v-list-item-title>
+        <v-list-item-title>interrompue manuellement {{ run.finishedAt | fromNow }}</v-list-item-title>
       </v-list-item-content>
     </template>
 

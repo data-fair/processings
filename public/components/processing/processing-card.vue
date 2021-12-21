@@ -30,7 +30,7 @@
                   size="24"
                 />
               </v-list-item-avatar>
-              <span>Exécution en cours depuis {{ processing.lastRun.startedAt | moment('from') }}</span>
+              <span>Exécution en cours depuis {{ processing.lastRun.startedAt | fromNow }}</span>
             </v-list-item>
 
             <v-list-item v-if="processing.lastRun.status === 'finished'">
@@ -39,7 +39,7 @@
                   mdi-check-circle
                 </v-icon>
               </v-list-item-avatar>
-              <span>Dernière exécution terminée {{ processing.lastRun.finishedAt | moment('from') }}</span>
+              <span>Dernière exécution terminée {{ processing.lastRun.finishedAt | fromNow }}</span>
             </v-list-item>
 
             <v-list-item v-if="processing.lastRun.status === 'error'">
@@ -48,7 +48,7 @@
                   mdi-alert
                 </v-icon>
               </v-list-item-avatar>
-              <span>Dernière exécution en échec {{ processing.lastRun.finishedAt | moment('from') }}</span>
+              <span>Dernière exécution en échec {{ processing.lastRun.finishedAt | fromNow }}</span>
             </v-list-item>
           </template>
           <v-list-item v-else>
@@ -61,14 +61,14 @@
               <v-list-item-avatar>
                 <v-icon>mdi-clock</v-icon>
               </v-list-item-avatar>
-              <span>Prochaine exécution planifiée {{ processing.nextRun.scheduledAt | moment('from') }}</span>
+              <span>Prochaine exécution planifiée {{ processing.nextRun.scheduledAt | fromNow(true) }}</span>
             </v-list-item>
 
             <v-list-item v-if="processing.nextRun.status === 'triggered'">
               <v-list-item-avatar>
                 <v-icon>mdi-play-circle</v-icon>
               </v-list-item-avatar>
-              <span>Prochaine exécution déclenchée manuellement le {{ processing.nextRun.createdAt | moment('from') }}</span>
+              <span>Prochaine exécution déclenchée manuellement le {{ processing.nextRun.createdAt | fromNow }}</span>
             </v-list-item>
           </template>
         </v-list>

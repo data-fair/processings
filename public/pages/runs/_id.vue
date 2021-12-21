@@ -50,7 +50,7 @@
                 >
                   <span :class="'text-body-2 ' + {error: 'error--text', warning: 'warning--text', info: ''}[log.type]">{{ log.msg }}</span>
                   <v-spacer />
-                  <span class="text-caption pl-2" style="white-space: nowrap;">{{ log.date | moment('lll') }}</span>
+                  <span class="text-caption pl-2" style="white-space: nowrap;">{{ log.date | date('lll') }}</span>
                 </v-list-item>
               </v-list>
             </v-expansion-panel-content>

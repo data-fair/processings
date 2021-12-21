@@ -24,7 +24,7 @@ module.exports = {
   loading: { color: '#1e88e5' }, // Customize the progress bar color
   plugins: [
     { src: '~plugins/filters' },
-    { src: '~plugins/moment' },
+    { src: '~plugins/dayjs' },
     { src: '~plugins/session', ssr: false },
     { src: '~plugins/breadcrumbs.js', ssr: false },
   ],
