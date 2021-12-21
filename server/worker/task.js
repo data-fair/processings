@@ -1,10 +1,14 @@
 const config = require('config')
 const path = require('path')
 const fs = require('fs-extra')
+const http = require('http')
+const https = require('https')
 const axios = require('axios')
 const tmp = require('tmp-promise')
+const CacheableLookup = require('cacheable-lookup')
 const runs = require('../utils/runs')
-const { registerInterceptor: registerDNSCacheInterceptor } = require('esm')(module)('axios-cached-dns-resolve')
+
+const cacheableLookup = new CacheableLookup()
 
 let pluginModule, _stopped
 
@@ -53,12 +57,22 @@ exports.run = async ({ db, mailTransport }) => {
 
   const headers = { 'x-apiKey': config.dataFairAPIKey }
   if (config.dataFairAdminMode) headers['x-account'] = JSON.stringify(processing.owner)
+
+  // one socket per host, better to prevent spamming data-fair with connections
+  // anyway processing should be implemented sequentially
+  // also use better DNS lookup thant nodejs default
+  const agentOpts = { keepAlive: true, maxSockets: 1 }
+  const httpAgent = new http.Agent(agentOpts)
+  const httpsAgent = new https.Agent(agentOpts)
+  cacheableLookup.install(httpAgent)
+  cacheableLookup.install(httpsAgent)
+
   const axiosInstance = axios.create({
     // this is necessary to prevent excessive memory usage during large file uploads, see https://github.com/axios/axios/issues/1045
     maxRedirects: 0,
+    httpAgent,
+    httpsAgent,
   })
-  // better dns lookup than nodejs default
-  registerDNSCacheInterceptor(axiosInstance)
   // apply default base url and send api key when relevant
   axiosInstance.interceptors.request.use(cfg => {
     if (!/^https?:\/\//i.test(cfg.url)) {
