@@ -115,7 +115,12 @@ async function killLoop(db) {
 
 async function killRun(db, run) {
   if (!pids[run._id]) {
-    console.warn('missing pid for run to kill', run._id)
+    const ack = await locks.acquire(db, run.processing._id)
+    if (ack) {
+      console.warn('the run should be killed, it is not locked by another worker and we have no running PID, mark it as already killed', run._id)
+      run.status = 'killed'
+      await runs.finish(db, run)
+    }
     return
   }
   // send SIGTERM for graceful stopping of the tasks

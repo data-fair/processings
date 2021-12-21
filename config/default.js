@@ -26,7 +26,7 @@ module.exports = {
   },
   worker: {
     // base interval for polling the database for new resources to work on
-    interval: 500,
+    interval: 1000,
     // additional interval when the worker is inactive (no resource found recently)
     // prevent polling too frequently during slow activity periods
     inactiveInterval: 4000,
