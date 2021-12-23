@@ -58,10 +58,8 @@ exports.run = async ({ db, mailTransport }) => {
   const headers = { 'x-apiKey': config.dataFairAPIKey }
   if (config.dataFairAdminMode) headers['x-account'] = JSON.stringify(processing.owner)
 
-  // one socket per host, better to prevent spamming data-fair with connections
-  // anyway processing should be implemented sequentially
-  // also use better DNS lookup thant nodejs default
-  const agentOpts = { keepAlive: true, maxSockets: 1 }
+  // use better DNS lookup thant nodejs default and try to reduce number of socket openings
+  const agentOpts = { keepAlive: true }
   const httpAgent = new http.Agent(agentOpts)
   const httpsAgent = new https.Agent(agentOpts)
   cacheableLookup.install(httpAgent)
