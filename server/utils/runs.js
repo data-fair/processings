@@ -108,7 +108,7 @@ exports.finish = async (db, run, errorMessage) => {
   if (lastRun.status === 'finished') {
     notifications.send({
       ...notif,
-      topic: { key: `processings:processing-finish-ok:${run.processing.id}` },
+      topic: { key: `processings:processing-finish-ok:${run.processing._id}` },
       title: `Le traitement ${run.processing.title} a terminé avec succès`
     })
     const errorLogs = lastRun.log.find(l => l.type === 'error')
@@ -120,7 +120,7 @@ exports.finish = async (db, run, errorMessage) => {
       htmlBody += '</ul>'
       notifications.send({
         ...notif,
-        topic: { key: `processings:processing-log-error:${run.processing.id}` },
+        topic: { key: `processings:processing-log-error:${run.processing._id}` },
         title: `Le traitement ${run.processing.title} a terminé correctement mais son journal contient des erreurs`,
         body: errorLogs.map(l => l.msg).join(' - '),
         htmlBody
@@ -130,7 +130,7 @@ exports.finish = async (db, run, errorMessage) => {
   if (lastRun.status === 'error') {
     notifications.send({
       ...notif,
-      topic: { key: `processings:processing-finish-error:${run.processing.id}` },
+      topic: { key: `processings:processing-finish-error:${run.processing._id}` },
       title: `Le traitement ${run.processing.title} a terminé en échec`,
       body: errorMessage
     })

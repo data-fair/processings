@@ -143,11 +143,11 @@ export default {
     notifUrl () {
       if (!this.env.notifyUrl) return null
       const topics = [
-        { key: `processings:processing-finish-ok:${this.processing.id}`, title: `Le traitement ${this.processing.title} a terminé avec succès` },
-        { key: `processings:processing-finish-error:${this.processing.id}`, title: `Le traitement ${this.processing.title} a terminé en échec` },
-        { key: `processings:processing-log-error:${this.processing.id}`, title: `Le traitement ${this.processing.title} a terminé correctement mais son journal contient des erreurs` }
+        { key: `processings:processing-finish-ok:${this.processing._id}`, title: `Le traitement ${this.processing.title} a terminé avec succès` },
+        { key: `processings:processing-finish-error:${this.processing._id}`, title: `Le traitement ${this.processing.title} a terminé en échec` },
+        { key: `processings:processing-log-error:${this.processing._id}`, title: `Le traitement ${this.processing.title} a terminé correctement mais son journal contient des erreurs` }
       ]
-      const urlTemplate = `${this.env.publicUrl}/processings/${this.processing.id}`
+      const urlTemplate = `${this.env.publicUrl}/processings/${this.processing._id}`
       return `${this.env.notifyUrl}/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false`
     }
   },
