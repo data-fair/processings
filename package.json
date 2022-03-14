@@ -93,7 +93,7 @@
     "http-proxy-middleware": "^1.0.6",
     "memoizee": "^0.4.15",
     "mongodb": "^4.2.2",
-    "nanoid": "^3.1.22",
+    "nanoid": "^3.1.31",
     "node-cron": "^2.0.3",
     "nodemailer": "^6.7.0",
     "nodemon": "^1.19.3",
