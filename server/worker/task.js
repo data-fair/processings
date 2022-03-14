@@ -130,6 +130,7 @@ exports.run = async ({ db, mailTransport }) => {
       await log.debug('axios error', err, true)
     } else {
       console.error(err.message)
+      console.log(err)
       await log.error(err.message)
       await log.debug(err.stack)
     }
