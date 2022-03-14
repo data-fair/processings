@@ -4,49 +4,35 @@ on:
   push:
     branches: [ '*' ]
     tags: [ 'v*.*.*' ]
-  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [16.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
     steps:
-    - run: echo $GITHUB_REF
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - run: npm i
-    - run: npm run lint
-    # run tests with deps in docker-compose
-    - run: NO_UI=true docker-compose up -d
-    - name: Wait for containers
-      uses: jakejarvis/wait-action@master
-      with:
-        time: '15s'
-    - run: docker ps
-    - run: npm test
-    - run: docker-compose stop
-    # - run: npm run coveralls
+        - name: Checkout git repository
+      uses: actions/checkout@v2
     
-    - name: Docker meta
+    # no need to work on a cache here, it is not faster than pulling
+    # instead work on moving to some images hosted on ghcr.io, it is the fastest
+    - name: Run test dependencies
+      run: |
+        NO_UI=true docker-compose --profile test up -d
+        docker ps
+    
+    - name: Prepare docker image tags
       id: docker_meta
       uses: crazy-max/ghaction-docker-meta@v1
       with:
-        images:
-          ghcr.io/${{ github.repository }} 
+        images: ghcr.io/${{ github.repository }} 
         tag-semver: |
             {{version}}
             {{major}}.{{minor}}
             {{major}}
     
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v1
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
+      with:
+        driver-opts: network=host
 
     - name: Login to Github container registry
       uses: docker/login-action@v1
@@ -55,6 +41,11 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     
+    - name: Prepare BUILD.json
+      run: |
+        echo '{"version": "${{github.ref_name}}", "repository": "${{github.server_url}}/${{github.repository}}", "commit": "${{github.sha}}"}' > BUILD.json
+        cat BUILD.json
+
     - name: Build and push docker images
       id: docker_build
       uses: docker/build-push-action@v2
@@ -63,6 +54,13 @@ jobs:
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.docker_meta.outputs.tags }}
         labels: ${{ steps.docker_meta.outputs.labels }}
+        allow: network.host
+        network: host
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Stop test dependencies
+      run: docker-compose stop
 
     - name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}

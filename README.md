@@ -7,7 +7,7 @@ Periodically import / export data between Data Fair and other services.
 Run service and dependencies in dev mode:
 
 ```
-docker-compose up -d
+npm run dev-deps
 npm run dev-server
 npm run dev-client
 ```

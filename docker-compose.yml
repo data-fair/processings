@@ -1,6 +1,9 @@
 version: '3'
 services:
   sd:
+    profiles:
+      - dev
+      - test
     image: koumoul/simple-directory:master
     network_mode: host
     environment:
@@ -15,6 +18,8 @@ services:
       - ./test/resources/organizations.json:/webapp/data/organizations.json
 
   data-fair:
+    profiles:
+      - dev
     image: koumoul/data-fair:master
     restart: on-failure:10
     network_mode: host
@@ -30,6 +35,8 @@ services:
       - EXTRA_ADMIN_NAV_ITEMS=[{"id":"processings","iframe":"http://localhost:5600/","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
 
   elasticsearch:
+    profiles:
+      - dev
     image: koumoul/data-fair-elasticsearch:latest
     ports:
       - 9200:9200
@@ -37,6 +44,22 @@ services:
       - discovery.type=single-node
 
   mongo:
+    profiles:
+      - dev
+      - test
     image: mongo:4.1
     ports:
       - 27017:27017
+
+  notify:
+    profiles:
+      - dev
+    image: ghcr.io/data-fair/notify:master
+    network_mode: host
+    environment:
+      - PORT=8088
+      - PUBLIC_URL=http://localhost:5600/notify
+      - WS_PUBLIC_URL=ws://localhost:5600/notify
+      - DIRECTORY_URL=http://localhost:5600/simple-directory
+      - SECRET_NOTIFICATIONS=secret-notifications
+      - SECRET_SENDMAILS=secret-sendmails
