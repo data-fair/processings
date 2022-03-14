@@ -1,3 +1,4 @@
+const EventEmitter = require('events')
 const config = require('config')
 const express = require('express')
 const http = require('http')
@@ -11,6 +12,9 @@ const debug = require('debug')('main')
 
 const publicHost = new URL(config.publicUrl).host
 debug('Public host', publicHost)
+
+// a global event emitter for testing
+global.events = new EventEmitter()
 
 // Second express application for proxying requests based on host
 const app = express()

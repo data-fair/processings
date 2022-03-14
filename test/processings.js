@@ -1,5 +1,6 @@
 
 const assert = require('assert').strict
+const event2promise = require('event-to-promise')
 const worker = require('../server/worker')
 
 describe('Processings', () => {
@@ -51,12 +52,12 @@ describe('Processings', () => {
     runs = (await global.ax.superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
     assert.equal(runs.count, 1)
     assert.equal(runs.results[0].status, 'triggered')
-    try {
-      await worker.hook(processing._id)
-      assert.fail()
-    } catch (err) {
-      // nothing, failure is normal we have no api key
-    }
+
+    // nothing, failure is normal we have no api key
+    const notif = await event2promise(global.events, 'notification')
+    assert.equal(notif.topic.key, `processings:processing-finish-error:${processing._id}`)
+    await assert.rejects(worker.hook(processing._id), () => true)
+
     const run = (await global.ax.superadmin.get('/api/v1/runs/' + runs.results[0]._id)).data
     assert.equal(run.status, 'error')
     assert.equal(run.log[0].type, 'step')
