@@ -111,7 +111,7 @@ exports.finish = async (db, run, errorMessage) => {
       topic: { key: `processings:processing-finish-ok:${run.processing._id}` },
       title: `Le traitement ${run.processing.title} a terminé avec succès`
     })
-    const errorLogs = lastRun.log.find(l => l.type === 'error')
+    const errorLogs = lastRun.log.filter(l => l.type === 'error')
     if (errorLogs.length) {
       let htmlBody = '<ul>'
       for (const errorLog of errorLogs) {
