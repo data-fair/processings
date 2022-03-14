@@ -99,6 +99,7 @@ exports.finish = async (db, run, errorMessage) => {
   // manage post run notification
   const sender = { ...run.owner }
   delete sender.role
+  delete sender.department
   const notif = {
     sender,
     urlParams: { id: run.processing._id },
