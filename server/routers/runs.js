@@ -17,7 +17,7 @@ router.get('', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const runs = req.app.get('db').collection('runs')
   const [results, count] = await Promise.all([
     size > 0 ? runs.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
-    runs.countDocuments(query),
+    runs.countDocuments(query)
   ])
   res.send({ results, count })
 }))

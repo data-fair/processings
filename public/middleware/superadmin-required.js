@@ -5,7 +5,7 @@ export default async function ({ store, error }) {
   } else if (!store.state.session.user.adminMode) {
     return error({
       message: 'Vous n\'avez pas la permission d\'accéder à cette page, il faut avoir activé le mode super-administration.',
-      statusCode: 403,
+      statusCode: 403
     })
   }
 }

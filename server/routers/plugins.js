@@ -28,8 +28,8 @@ router.post('/', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async
     await fs.writeFile(path.join(dir.path, 'package.json'), JSON.stringify({
       name: plugin.id.replace('@', ''),
       dependencies: {
-        [plugin.name]: '^' + plugin.version,
-      },
+        [plugin.name]: '^' + plugin.version
+      }
     }, null, 2))
     await exec('npm install --only=prod', { cwd: dir.path })
     await fs.writeFile(path.join(dir.path, 'index.js'), `module.exports = require('${plugin.name}')`)
@@ -49,14 +49,15 @@ router.get('/', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async 
   for (const dir of dirs) {
     const pluginInfo = await fs.readJson(path.join(pluginsDir, dir, 'plugin.json'))
     // TODO: attention à la confidentialité de cette config quand on ouvrira la config de processings aux utilisateurs
-    if (await fs.exists(path.join(pluginsDir, dir + '-config.json'))) {
+    // par example le login/mdp du user ftp pour ademe-rge est ici
+    if (await fs.pathExists(path.join(pluginsDir, dir + '-config.json'))) {
       pluginInfo.config = await fs.readJson(path.join(pluginsDir, dir + '-config.json'))
     }
     results.push(pluginInfo)
   }
   res.send({
     count: dirs.length,
-    results,
+    results
   })
 }))
 

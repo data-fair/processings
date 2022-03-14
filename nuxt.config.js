@@ -6,48 +6,24 @@ config.basePath = new URL(config.publicUrl + '/').pathname
 const dataFairIsLocal = new URL(config.publicUrl).origin === new URL(config.dataFairUrl).origin
 config.localDataFairUrl = dataFairIsLocal ? config.dataFairUrl : config.publicUrl + '/data-fair-proxy'
 
+const isBuilding = process.argv.slice(-1)[0] === 'build'
+
 if (process.env.NODE_ENV === 'production') {
   const nuxtConfigInject = require('@koumoul/nuxt-config-inject')
-  if (process.argv.slice(-1)[0] === 'build') config = nuxtConfigInject.prepare(config)
+  if (isBuilding) config = nuxtConfigInject.prepare(config)
   else nuxtConfigInject.replace(config, ['nuxt-dist/**/*', 'public/static/**/*'])
 }
 
-module.exports = {
-  ssr: false,
-  components: true,
-  srcDir: 'public/',
-  buildDir: 'nuxt-dist',
-  build: {
-    publicPath: config.basePath + '/_nuxt/',
-    transpile: ['@koumoul'],
-  },
-  loading: { color: '#1e88e5' }, // Customize the progress bar color
-  plugins: [
-    { src: '~plugins/filters' },
-    { src: '~plugins/dayjs' },
-    { src: '~plugins/session', ssr: false },
-    { src: '~plugins/breadcrumbs.js', ssr: false },
-  ],
-  router: {
-    base: config.basePath,
-  },
-  modules: ['@nuxtjs/axios', 'cookie-universal-nuxt'],
-  axios: {
-    browserBaseURL: config.basePath,
-  },
-  buildModules: ['@nuxtjs/vuetify'],
-  vuetify: {
-    defaultAssets: {
-      font: {
-        family: 'Nunito',
-      },
-    },
+let vuetifyOptions = {}
+
+if (process.env.NODE_ENV !== 'production' || isBuilding) {
+  vuetifyOptions = {
+    customVariables: ['~assets/variables.scss'],
+    treeShake: true,
+    defaultAssets: false,
     lang: {
       locales: { fr, en },
-      current: config.i18n.defaultLocale,
-    },
-    icons: {
-      iconfont: 'mdi',
+      current: config.i18n.defaultLocale
     },
     theme: {
       themes: {
@@ -59,7 +35,7 @@ module.exports = {
           info: '#2196F3', // blue.base
           success: '#4CAF50', // green.base
           warning: '#E91E63', // pink.base
-          admin: '#E53935', // red.darken1
+          admin: '#E53935' // red.darken1
         },
         dark: {
           primary: '#2196F3', // blue.base
@@ -69,11 +45,48 @@ module.exports = {
           info: '#2196F3', // blue.base
           success: '#00E676', // green.accent3
           warning: '#E91E63', // pink.base
-          admin: '#E53935', // red.darken1
-        },
-      },
-    },
+          admin: '#E53935' // red.darken1
+        }
+      }
+    }
+  }
+}
+
+module.exports = {
+  telemetry: false,
+  ssr: false,
+  components: true,
+  srcDir: 'public/',
+  buildDir: 'nuxt-dist',
+  build: {
+    publicPath: config.basePath + '/_nuxt/',
+    transpile: ['@koumoul']
   },
+  loading: { color: '#1e88e5' }, // Customize the progress bar color
+  plugins: [
+    { src: '~plugins/filters' },
+    { src: '~plugins/dayjs' },
+    { src: '~plugins/session', ssr: false },
+    { src: '~plugins/breadcrumbs.js', ssr: false }
+  ],
+  router: {
+    base: config.basePath
+  },
+  modules: ['@nuxtjs/axios', 'cookie-universal-nuxt'],
+  axios: {
+    browserBaseURL: config.basePath
+  },
+  buildModules: [
+    'nuxt-webpack-optimisations',
+    '@nuxtjs/vuetify',
+    ['@nuxtjs/google-fonts', { download: true, display: 'swap', families: { Nunito: [100, 300, 400, 500, 700, 900] } }]
+  ],
+  webpackOptimisations: {
+    // hard source is the riskiest, if you have issues don't enable it
+    hardSourcePlugin: process.env.NODE_ENV === 'development',
+    parallelPlugin: process.env.NODE_ENV === 'development'
+  },
+  vuetify: vuetifyOptions,
   env: {
     mainPublicUrl: config.publicUrl,
     basePath: config.basePath,
@@ -82,7 +95,7 @@ module.exports = {
     dataFairAdminMode: config.dataFairAdminMode,
     datasetsUrlTemplate: config.datasetsUrlTemplate,
     adminRole: config.adminRole,
-    contribRole: config.contribRole,
+    contribRole: config.contribRole
   },
   head: {
     title: 'Data Fair Processings',
@@ -91,7 +104,10 @@ module.exports = {
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { hid: 'application', name: 'application-name', content: 'data-fair-processings' },
       { hid: 'description', name: 'description', content: 'Periodically import / export data between Data Fair and other services.' },
-      { hid: 'robots', name: 'robots', content: 'noindex' },
-    ],
+      { hid: 'robots', name: 'robots', content: 'noindex' }
+    ]
   },
+  css: [
+    '@mdi/font/css/materialdesignicons.min.css'
+  ]
 }

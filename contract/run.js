@@ -13,28 +13,28 @@ module.exports = {
       required: ['_id', 'title'],
       properties: {
         _id: { type: 'string' },
-        title: { type: 'string' },
-      },
+        title: { type: 'string' }
+      }
     },
     createdAt: {
       type: 'string',
-      format: 'date-time',
+      format: 'date-time'
     },
     status: {
       type: 'string',
-      enum: ['triggered', 'scheduled', 'running', 'error', 'finished', 'kill', 'killed'],
+      enum: ['triggered', 'scheduled', 'running', 'error', 'finished', 'kill', 'killed']
     },
     scheduledAt: {
       type: 'string',
-      format: 'date-time',
+      format: 'date-time'
     },
     startedAt: {
       type: 'string',
-      format: 'date-time',
+      format: 'date-time'
     },
     finishedAt: {
       type: 'string',
-      format: 'date-time',
+      format: 'date-time'
     },
     log: {
       type: 'array',
@@ -44,20 +44,20 @@ module.exports = {
         properties: {
           type: {
             type: 'string',
-            enum: ['step', 'error', 'warning', 'info', 'debug'],
+            enum: ['step', 'error', 'warning', 'info', 'debug']
           },
           date: {
             type: 'string',
-            format: 'date-time',
+            format: 'date-time'
           },
           msg: {
-            type: 'string',
+            type: 'string'
           },
           extra: {
-            type: 'object',
-          },
-        },
-      },
-    },
-  },
+            type: 'object'
+          }
+        }
+      }
+    }
+  }
 }

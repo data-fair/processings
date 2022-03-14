@@ -36,7 +36,10 @@
 
       <v-card-actions>
         <v-spacer />
-        <v-btn text @click.native="menu = false">
+        <v-btn
+          text
+          @click.native="menu = false"
+        >
           Annuler
         </v-btn>
         <v-btn
@@ -51,30 +54,30 @@
 </template>
 
 <script>
-  import eventBus from '../event-bus'
+import eventBus from '../event-bus'
 
-  export default {
-    props: {
-      processing: { type: Object, default: null },
+export default {
+  props: {
+    processing: { type: Object, default: null }
+  },
+  data: () => ({
+    menu: false
+  }),
+  methods: {
+    open (e) {
+      this.menu = true
+      e.stopPropagation()
     },
-    data: () => ({
-      menu: false,
-    }),
-    methods: {
-      open (e) {
-        this.menu = true
-        e.stopPropagation()
-      },
-      async confirm () {
-        try {
-          await this.$axios.$delete('api/v1/processings/' + this.processing.id)
-          this.$emit('removed', { id: this.processing.id })
-        } catch (error) {
-          eventBus.$emit('notification', { error, msg: 'Erreur pendant la suppression du traitement' })
-        } finally {
-          this.menu = false
-        }
-      },
-    },
+    async confirm () {
+      try {
+        await this.$axios.$delete('api/v1/processings/' + this.processing.id)
+        this.$emit('removed', { id: this.processing.id })
+      } catch (error) {
+        eventBus.$emit('notification', { error, msg: 'Erreur pendant la suppression du traitement' })
+      } finally {
+        this.menu = false
+      }
+    }
   }
+}
 </script>

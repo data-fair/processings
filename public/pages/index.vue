@@ -3,11 +3,11 @@
 </template>
 
 <script>
-  export default {
-    mounted() {
-      this.$store.dispatch('setBreadcrumbs', [])
-    },
+export default {
+  mounted () {
+    this.$store.dispatch('setBreadcrumbs', [])
   }
+}
 </script>
 
 <style lang="css" scoped>

@@ -6,7 +6,10 @@
     style="padding-top: 20px;"
   >
     <v-list>
-      <v-list-item :to="{name: 'index'}" exact>
+      <v-list-item
+        :to="{name: 'index'}"
+        exact
+      >
         <v-list-item-action>
           <v-icon>mdi-home</v-icon>
         </v-list-item-action>
@@ -23,7 +26,10 @@
             Connexion
           </v-list-item-title>
         </v-list-item>
-        <v-list-item v-else @click="logout">
+        <v-list-item
+          v-else
+          @click="logout"
+        >
           <v-list-item>
             <v-list-item-title>
               Se déconnecter
@@ -31,7 +37,10 @@
           </v-list-item>
         </v-list-item>
         <v-list-item v-if="user">
-          <v-menu offset-y left>
+          <v-menu
+            offset-y
+            left
+          >
             <template #activator="{}">
               <v-select
                 :items="[{text: 'Compte personnel', value: null}].concat(user.organizations.map(o => ({text: o.name, value: o.id})))"
@@ -57,17 +66,17 @@
 </template>
 
 <script>
-  import { mapState, mapGetters, mapActions } from 'vuex'
-  export default {
-    computed: {
-      ...mapState('session', ['user']),
-      ...mapState(['embed']),
-      ...mapGetters('session', ['activeAccount']),
-    },
-    methods: {
-      ...mapActions('session', ['switchOrganization', 'logout', 'setAdminMode']),
-    },
+import { mapState, mapGetters, mapActions } from 'vuex'
+export default {
+  computed: {
+    ...mapState('session', ['user']),
+    ...mapState(['embed']),
+    ...mapGetters('session', ['activeAccount'])
+  },
+  methods: {
+    ...mapActions('session', ['switchOrganization', 'logout', 'setAdminMode'])
   }
+}
 
 </script>
 

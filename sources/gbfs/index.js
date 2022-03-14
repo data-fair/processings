@@ -4,7 +4,7 @@
 // de vélos en libre-service (VLS) Vélocéo de Vannes
 const axios = require('axios')
 
-exports.run = async function(config) {
+exports.run = async function (config) {
   const infos = await axios.get(config.infosUrl)
   const status = await axios.get(config.statusUrl)
   const stations = Object.assign({}, ...infos.data.data.stations.map(s => ({ [s.station_id]: s })))

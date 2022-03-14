@@ -4,3 +4,6 @@ node_modules/
 config/local-*
 /nuxt-dist
 /dist
+
+public/assets/css/
+public/assets/fonts/

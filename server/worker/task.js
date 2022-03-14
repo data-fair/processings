@@ -15,30 +15,30 @@ let pluginModule, _stopped
 exports.run = async ({ db, mailTransport }) => {
   const [run, processing] = await Promise.all([
     db.collection('runs').findOne({ _id: process.argv[2] }),
-    db.collection('processings').findOne({ _id: process.argv[3] }),
+    db.collection('processings').findOne({ _id: process.argv[3] })
   ])
   const log = {
-    step(msg) {
+    step (msg) {
       return db.collection('runs')
         .updateOne({ _id: run._id }, { $push: { log: { type: 'step', date: new Date().toISOString(), msg } } })
     },
-    error(msg, extra) {
+    error (msg, extra) {
       return db.collection('runs')
         .updateOne({ _id: run._id }, { $push: { log: { type: 'error', date: new Date().toISOString(), msg, extra } } })
     },
-    warning(msg, extra) {
+    warning (msg, extra) {
       return db.collection('runs')
         .updateOne({ _id: run._id }, { $push: { log: { type: 'warning', date: new Date().toISOString(), msg, extra } } })
     },
-    info(msg, extra) {
+    info (msg, extra) {
       return db.collection('runs')
         .updateOne({ _id: run._id }, { $push: { log: { type: 'info', date: new Date().toISOString(), msg, extra } } })
     },
-    debug(msg, extra, force) {
+    debug (msg, extra, force) {
       if (!processing.debug && !force) return
       return db.collection('runs')
         .updateOne({ _id: run._id }, { $push: { log: { type: 'debug', date: new Date().toISOString(), msg, extra } } })
-    },
+    }
   }
   log.warn = log.warning
   if (run.status === 'running') {
@@ -69,7 +69,7 @@ exports.run = async ({ db, mailTransport }) => {
     // this is necessary to prevent excessive memory usage during large file uploads, see https://github.com/axios/axios/issues/1045
     maxRedirects: 0,
     httpAgent,
-    httpsAgent,
+    httpsAgent
   })
   // apply default base url and send api key when relevant
   axiosInstance.interceptors.request.use(cfg => {
@@ -103,14 +103,14 @@ exports.run = async ({ db, mailTransport }) => {
     tmpDir: tmpDir.path,
     log,
     axios: axiosInstance,
-    async patchConfig(patch) {
+    async patchConfig (patch) {
       await log.debug('patch config', patch)
       Object.assign(processingConfig, patch)
       db.collection('processings').updateOne({ _id: processing._id }, { $set: { config: processingConfig } })
     },
-    async sendMail(data) {
+    async sendMail (data) {
       return mailTransport.sendMail(data)
-    },
+    }
   }
   const cwd = process.cwd()
   try {

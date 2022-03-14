@@ -8,12 +8,12 @@ export default ({ store, app, env, route, $vuetify }) => {
       ...env,
       // reconstruct this env var that we used to have but lost when implementing multi-domain exposition
       publicUrl,
-      dataFairUrl: dataFairUrl.href,
-    },
+      dataFairUrl: dataFairUrl.href
+    }
   })
   store.dispatch('session/init', {
     cookies: app.$cookies,
-    directoryUrl: env.directoryUrl,
+    directoryUrl: env.directoryUrl
   })
   if (!store.getters.embed) {
     store.dispatch('session/loop', app.$cookies)

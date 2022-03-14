@@ -41,13 +41,13 @@ router.get('', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const processings = req.app.get('db').collection('processings')
   const [results, count] = await Promise.all([
     size > 0 ? processings.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
-    processings.countDocuments(query),
+    processings.countDocuments(query)
   ])
   res.json({ results, count })
 }))
 
 // Create a processing
-router.post('', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async(req, res, next) => {
+router.post('', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {
   const db = req.app.get('db')
   req.body._id = nanoid()
   if (req.body.owner && !req.user.adminMode) return res.status(403).send('owner can only be set for superadmin')
@@ -57,7 +57,7 @@ router.post('', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async(
   req.body.created = req.body.updated = {
     id: req.user.id,
     name: req.user.name,
-    date: new Date().toISOString(),
+    date: new Date().toISOString()
   }
   await validateFullProcessing(req.body)
   await db.collection('processings').insertOne(req.body)
@@ -66,7 +66,7 @@ router.post('', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async(
 }))
 
 // Patch some of the attributes of a processing
-router.patch('/:id', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async(req, res, next) => {
+router.patch('/:id', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {
   const db = req.app.get('db')
   const processing = await db.collection('processings').findOne({ _id: req.params.id }, { projection: {} })
   if (!processing) return res.status(404)
@@ -79,7 +79,7 @@ router.patch('/:id', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(a
   req.body.updated = {
     id: req.user.id,
     name: req.user.name,
-    date: new Date().toISOString(),
+    date: new Date().toISOString()
   }
   const patch = {}
   for (const key in req.body) {
@@ -99,7 +99,7 @@ router.patch('/:id', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(a
   res.status(200).json(patchedprocessing)
 }))
 
-router.get('/:id', session.requiredAuth, asyncWrap(async(req, res, next) => {
+router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const processing = await req.app.get('db').collection('processings')
     .findOne({ _id: req.params.id }, { projection: {} })
   if (!processing) return res.sendStatus(404)
@@ -107,7 +107,7 @@ router.get('/:id', session.requiredAuth, asyncWrap(async(req, res, next) => {
   res.status(200).json(processing)
 }))
 
-router.delete('/:id', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async(req, res, next) => {
+router.delete('/:id', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {
   const db = req.app.get('db')
   const processing = (await db.collection('processings')
     .findOneAndDelete({ _id: req.params.id })).value

@@ -13,7 +13,7 @@ module.exports = {
   mongo: {
     host: 'localhost',
     port: 27017,
-    db: 'data-fair-processings-' + (process.env.NODE_ENV || 'development'),
+    db: 'data-fair-processings-' + (process.env.NODE_ENV || 'development')
   },
   mails: {
     // transport is a full configuration object for createTransport of nodemailer
@@ -21,8 +21,8 @@ module.exports = {
     transport: {
       port: 1025,
       ignoreTLS: true,
-      default: 'localhost',
-    },
+      default: 'localhost'
+    }
   },
   worker: {
     // base interval for polling the database for new resources to work on
@@ -38,14 +38,15 @@ module.exports = {
     // interval of the secondary loop that manages killing tasks
     killInterval: 10000,
     concurrency: 4,
-    gracePeriod: 20000,
+    gracePeriod: 20000
   },
   locks: {
     // in seconds
-    ttl: 60,
+    ttl: 60
   },
   i18n: {
     locales: 'fr,en',
-    defaultLocale: 'fr',
+    defaultLocale: 'fr'
   },
+  proxyNuxt: false
 }

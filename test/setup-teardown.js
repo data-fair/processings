@@ -40,11 +40,11 @@ before('init globals', async () => {
     global.ax.builder('dmeadus0@answers.com:passwd').then(ax => { global.ax.dmeadus = ax }),
     global.ax.builder('dmeadus0@answers.com:passwd', 'KWqAGZ4mG').then(ax => { global.ax.dmeadusOrg = ax }),
     global.ax.builder('cdurning2@desdev.cn:passwd').then(ax => { global.ax.cdurning2 = ax }),
-    global.ax.builder('superadmin@test.com:superpasswd:adminMode').then(ax => { global.ax.superadmin = ax }),
+    global.ax.builder('superadmin@test.com:superpasswd:adminMode').then(ax => { global.ax.superadmin = ax })
   ])
 })
 
-before('scratch all', async() => {
+before('scratch all', async () => {
   await global.db.dropDatabase()
   await fs.remove('./data/test')
 })
@@ -62,7 +62,7 @@ before('start service', async function () {
 beforeEach('scratch data', async () => {
   await Promise.all([
     global.db.collection('processings').deleteMany({}),
-    global.db.collection('runs').deleteMany({}),
+    global.db.collection('runs').deleteMany({})
   ])
 })
 
@@ -71,8 +71,8 @@ after('stop app', async () => {
     new Promise(resolve => setTimeout(resolve, 5000)),
     Promise.all([
       app.stop(),
-      worker.stop(),
-    ]),
+      worker.stop()
+    ])
   ])
 })
 

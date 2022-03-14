@@ -9,8 +9,8 @@ const search = memoize(async (q) => {
   const res = await axios.get('http://registry.npmjs.com/-/v1/search', {
     params: {
       size: 250,
-      text: `keywords:data-fair-processings-plugin ${q || ''}`,
-    },
+      text: `keywords:data-fair-processings-plugin ${q || ''}`
+    }
   })
   const results = []
   for (const o of res.data.objects) {
@@ -23,10 +23,10 @@ const search = memoize(async (q) => {
   }
   return {
     count: results.length,
-    results,
+    results
   }
 }, {
-  maxAge: 5 * 60 * 1000, // cached for 5 minutes to be polite with npmjs
+  maxAge: 5 * 60 * 1000 // cached for 5 minutes to be polite with npmjs
 })
 
 router.get('/', asyncWrap(async (req, res, next) => {

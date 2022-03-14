@@ -92,17 +92,17 @@
 </template>
 
 <script>
-  export default {
-    props: ['run', 'link'],
-    methods: {
-      async kill(e) {
-        e.preventDefault()
-        await this.$axios.$post(`api/v1/runs/${this.run._id}/_kill`)
-        // eslint-disable-next-line vue/no-mutating-props
-        this.run.status = 'kill'
-      },
-    },
+export default {
+  props: ['run', 'link'],
+  methods: {
+    async kill (e) {
+      e.preventDefault()
+      await this.$axios.$post(`api/v1/runs/${this.run._id}/_kill`)
+      // eslint-disable-next-line vue/no-mutating-props
+      this.run.status = 'kill'
+    }
   }
+}
 </script>
 
 <style lang="css" scoped>

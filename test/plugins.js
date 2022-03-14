@@ -8,7 +8,7 @@ describe('Plugins', () => {
       version: '0.3.0',
       distTag: 'latest',
       description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.',
-      npm: 'https://www.npmjs.com/package/%40koumoul%2Fdata-fair-processings-hello-world',
+      npm: 'https://www.npmjs.com/package/%40koumoul%2Fdata-fair-processings-hello-world'
     }
     let res = await global.ax.superadmin.post('/api/v1/plugins', plugin)
     assert.equal(res.data.name, '@koumoul/data-fair-processings-hello-world')

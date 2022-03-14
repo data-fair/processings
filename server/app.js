@@ -6,7 +6,6 @@ const event2promise = require('event-to-promise')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const proxy = require('http-proxy-middleware')
-const nuxt = require('./nuxt')
 const session = require('./utils/session')
 const debug = require('debug')('main')
 
@@ -32,7 +31,7 @@ if (!dataFairIsLocal) {
       if (!req.user || !req.user.adminMode) return res.status(403).send('Super admin only')
       proxyReq.setHeader('cookie', '')
       proxyReq.setHeader('x-apiKey', config.dataFairAPIKey)
-    },
+    }
   }))
 }
 
@@ -53,9 +52,9 @@ app.use('/api/v1/plugins', require('./routers/plugins'))
 
 let httpServer
 exports.start = async ({ db }) => {
-  const nuxtMiddleware = await nuxt()
+  const nuxt = await require('./nuxt')()
   app.use(session.auth)
-  app.use(nuxtMiddleware)
+  app.use(nuxt.render)
   app.set('db', db)
   app.use((err, req, res, next) => {
     console.error('Error in HTTP request', err.response ? err.response.data : err)

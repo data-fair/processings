@@ -6,19 +6,19 @@ module.exports = {
       title: 'Déclenchement manuel',
       properties: {
         type: {
-          const: 'trigger',
-        },
-      },
+          const: 'trigger'
+        }
+      }
     },
     {
       title: 'Mensuel',
       properties: {
         type: {
-          const: 'monthly',
+          const: 'monthly'
         },
         dayOfWeek: {
           type: 'string',
-          const: '*',
+          const: '*'
         },
         dayOfMonth: {
           title: 'Jour du mois',
@@ -27,7 +27,7 @@ module.exports = {
           maximum: 28,
           default: 1,
           'x-cols': 6,
-          'x-class': 'pr-1',
+          'x-class': 'pr-1'
         },
         hour: {
           title: 'Heure de la journée',
@@ -36,52 +36,52 @@ module.exports = {
           maximum: 23,
           default: 0,
           'x-cols': 6,
-          'x-class': 'pl-1',
+          'x-class': 'pl-1'
         },
         minute: {
           type: 'integer',
-          const: 0,
+          const: 0
         },
         month: {
           type: 'string',
-          const: '*',
-        },
-      },
+          const: '*'
+        }
+      }
     },
     {
       title: 'Hebdomadaire',
       properties: {
         type: {
-          const: 'weekly',
+          const: 'weekly'
         },
         dayOfWeek: {
           title: 'Jour de la semaine',
           type: 'string',
           oneOf: [{
             const: '1',
-            title: 'lundi',
+            title: 'lundi'
           }, {
             const: '2',
-            title: 'mardi',
+            title: 'mardi'
           }, {
             const: '3',
-            title: 'mercredi',
+            title: 'mercredi'
           }, {
             const: '4',
-            title: 'jeudi',
+            title: 'jeudi'
           }, {
             const: '5',
-            title: 'vendredi',
+            title: 'vendredi'
           }, {
             const: '6',
-            title: 'samedi',
+            title: 'samedi'
           }, {
             const: '0',
-            title: 'dimanche',
+            title: 'dimanche'
           }],
           default: '1',
           'x-cols': 6,
-          'x-class': 'pr-1',
+          'x-class': 'pr-1'
         },
         hour: {
           title: 'Heure de la journée',
@@ -90,86 +90,86 @@ module.exports = {
           maximum: 23,
           default: 0,
           'x-cols': 6,
-          'x-class': 'pl-1',
+          'x-class': 'pl-1'
         },
         minute: {
           type: 'integer',
-          const: 0,
+          const: 0
         },
         dayOfMonth: {
           type: 'string',
-          const: '*',
+          const: '*'
         },
         month: {
           type: 'string',
-          const: '*',
-        },
-      },
+          const: '*'
+        }
+      }
     },
     {
       title: 'Journalier',
       properties: {
         type: {
-          const: 'daily',
+          const: 'daily'
         },
         dayOfWeek: {
           type: 'string',
-          const: '*',
+          const: '*'
         },
         hour: {
           title: 'Heure de la journée',
           type: 'integer',
           minimum: 0,
           maximum: 23,
-          default: 0,
+          default: 0
         },
         minute: {
           type: 'integer',
-          const: 0,
+          const: 0
         },
         dayOfMonth: {
           type: 'string',
-          const: '*',
+          const: '*'
         },
         month: {
           type: 'string',
-          const: '*',
-        },
-      },
+          const: '*'
+        }
+      }
     },
     {
       title: 'Toutes les # heures',
       properties: {
         type: {
-          const: 'hours',
+          const: 'hours'
         },
         dayOfWeek: {
           type: 'string',
-          const: '*',
+          const: '*'
         },
         hour: {
           type: 'integer',
-          const: '*',
+          const: '*'
         },
         hourStep: {
           title: 'Nombre d\'heures de l\'interval',
           type: 'integer',
           minimum: 1,
-          maximum: 12,
+          maximum: 12
         },
         minute: {
           type: 'integer',
-          const: 0,
+          const: 0
         },
         dayOfMonth: {
           type: 'string',
-          const: '*',
+          const: '*'
         },
         month: {
           type: 'string',
-          const: '*',
-        },
-      },
-    },
-  ],
+          const: '*'
+        }
+      }
+    }
+  ]
 }

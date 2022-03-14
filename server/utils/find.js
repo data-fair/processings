@@ -28,7 +28,7 @@ exports.sort = (sortStr) => {
   Object.assign(sort, ...sortStr.split(',').map(s => {
     const toks = s.split(':')
     return {
-      [toks[0]]: Number(toks[1]),
+      [toks[0]]: Number(toks[1])
     }
   }))
   return sort

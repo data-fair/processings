@@ -8,17 +8,17 @@ exports.owner = {
     type: {
       type: 'string',
       enum: ['user', 'organization'],
-      description: 'If the owner is a user or an organization',
+      description: 'If the owner is a user or an organization'
     },
     id: {
       type: 'string',
-      description: 'The unique id of the organization',
+      description: 'The unique id of the organization'
     },
     name: {
       type: 'string',
-      description: 'The display name of the organization',
-    },
-  },
+      description: 'The display name of the organization'
+    }
+  }
 }
 
 exports.editableOwner = (config) => ({
@@ -27,5 +27,5 @@ exports.editableOwner = (config) => ({
   'x-fromUrl': config.directoryUrl + '/api/organizations?size=1000',
   'x-itemsProp': 'results',
   'x-itemTitle': 'name',
-  'x-itemKey': 'id',
+  'x-itemKey': 'id'
 })

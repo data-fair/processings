@@ -99,7 +99,7 @@ exports.stop = async () => {
 
 // a secondary loop to handle killing tasks
 const pids = {}
-async function killLoop(db) {
+async function killLoop (db) {
   while (!stopped) {
     await new Promise(resolve => setTimeout(resolve, config.worker.killInterval))
     try {
@@ -113,7 +113,7 @@ async function killLoop(db) {
   }
 }
 
-async function killRun(db, run) {
+async function killRun (db, run) {
   if (!pids[run._id]) {
     const ack = await locks.acquire(db, run.processing._id)
     if (ack) {
@@ -135,7 +135,7 @@ async function killRun(db, run) {
   }
 }
 
-async function iter(db, run) {
+async function iter (db, run) {
   let processing
   let stderr = ''
   try {
@@ -155,7 +155,7 @@ async function iter(db, run) {
     // Run a task in a dedicated child process for  extra resiliency to fatal memory exceptions
     const spawnPromise = spawn('node', ['server', run._id, processing._id], {
       env: { ...process.env, MODE: 'task' },
-      stdio: ['ignore', 'inherit', 'pipe'],
+      stdio: ['ignore', 'inherit', 'pipe']
     })
     spawnPromise.childProcess.stderr.on('data', data => {
       debug('[spawned task stderr] ' + data)
@@ -205,19 +205,19 @@ async function iter(db, run) {
   }
 }
 
-async function acquireNext(db) {
+async function acquireNext (db) {
   // Random sort prevents from insisting on the same failed dataset again and again
   const cursor = db.collection('runs')
     .aggregate([{
-       $match: {
-       $or: [
-            { status: 'triggered' },
-            { status: 'scheduled', scheduledAt: { $lte: new Date().toISOString() } },
-            // we also fetch running tasks to check if lock was released (meaning task was brutally interrupted)
-            { status: 'running' },
-          ],
-        },
-      }, { $sample: { size: 100 } }])
+      $match: {
+        $or: [
+          { status: 'triggered' },
+          { status: 'scheduled', scheduledAt: { $lte: new Date().toISOString() } },
+          // we also fetch running tasks to check if lock was released (meaning task was brutally interrupted)
+          { status: 'running' }
+        ]
+      }
+    }, { $sample: { size: 100 } }])
   while (await cursor.hasNext()) {
     const run = await cursor.next()
     // console.log('resource', resource)

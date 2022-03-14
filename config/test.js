@@ -6,6 +6,6 @@ module.exports = {
     interval: 100,
     concurrency: 1,
     killInterval: 2000,
-    gracePeriod: 3000,
-  },
+    gracePeriod: 3000
+  }
 }

@@ -3,7 +3,7 @@
 const config = require('config')
 const { MongoClient } = require('mongodb')
 
-async function ensureIndex(db, collection, key, options) {
+async function ensureIndex (db, collection, key, options) {
   try {
     await db.collection(collection).createIndex(key, options || {})
   } catch (error) {

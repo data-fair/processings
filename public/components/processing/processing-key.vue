@@ -13,7 +13,10 @@
             v-bind="attrs"
             v-on="{ ...onTooltip, ...onMenu }"
           >
-            <v-icon color="primary" small>
+            <v-icon
+              color="primary"
+              small
+            >
               mdi-help
             </v-icon>
           </v-btn>
@@ -35,21 +38,21 @@
 </template>
 
 <script>
-  import { mapState } from 'vuex'
-  export default {
-    props: {
-      processing: { type: Object, required: true },
-    },
-    data() {
-      return {
-        menu: null,
-      }
-    },
-    computed: {
-      ...mapState(['env']),
-      curl () {
-        return `curl -X POST ${this.env.publicUrl}/api/v1/processings/${this.processing.id}/_run -H 'x-apikey: ${this.processing.webhookKey}'`
-      },
-    },
+import { mapState } from 'vuex'
+export default {
+  props: {
+    processing: { type: Object, required: true }
+  },
+  data () {
+    return {
+      menu: null
+    }
+  },
+  computed: {
+    ...mapState(['env']),
+    curl () {
+      return `curl -X POST ${this.env.publicUrl}/api/v1/processings/${this.processing.id}/_run -H 'x-apikey: ${this.processing.webhookKey}'`
+    }
   }
+}
 </script>

@@ -15,38 +15,38 @@ module.exports = {
     _id: {
       type: 'string',
       title: 'Identifiant du traitement',
-      readOnly: true,
+      readOnly: true
     },
     owner,
     title: {
       type: 'string',
-      title: 'Titre',
+      title: 'Titre'
     },
     active: {
       title: 'Actif',
       type: 'boolean',
       default: false,
-      'x-display': 'switch',
+      'x-display': 'switch'
     },
     plugin: {
       type: 'string',
-      readOnly: true,
+      readOnly: true
     },
     config: {
       // this content varies depending on used plugin
-      type: 'object',
+      type: 'object'
     },
     scheduling,
     debug: {
       type: 'boolean',
-      readOnly: true,
+      readOnly: true
     },
     lastRun: { ...run, title: 'Dernière exécution' },
     nextRun: { ...run, title: 'Prochaine exécution' },
     webhookKey: {
       type: 'string',
       title: 'Identifiant du traitement',
-      readOnly: true,
+      readOnly: true
     },
     created: {
       type: 'object',
@@ -56,18 +56,18 @@ module.exports = {
       properties: {
         id: {
           type: 'string',
-          description: 'Id of the user that created this processing',
+          description: 'Id of the user that created this processing'
         },
         name: {
           type: 'string',
-          description: 'Name of the user that created this processing',
+          description: 'Name of the user that created this processing'
         },
         date: {
           type: 'string',
           description: 'Creation date of this processing',
-          format: 'date-time',
-        },
-      },
+          format: 'date-time'
+        }
+      }
     },
     updated: {
       type: 'object',
@@ -77,18 +77,18 @@ module.exports = {
       properties: {
         id: {
           type: 'string',
-          description: 'Id of the user that last updated this processing',
+          description: 'Id of the user that last updated this processing'
         },
         name: {
           type: 'string',
-          description: 'Name of the user that last updated this processing',
+          description: 'Name of the user that last updated this processing'
         },
         date: {
           type: 'string',
           description: 'Date of the last update for this processing',
-          format: 'date-time',
-        },
-      },
-    },
-  },
+          format: 'date-time'
+        }
+      }
+    }
+  }
 }

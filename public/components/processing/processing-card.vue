@@ -6,14 +6,23 @@
     @mouseenter="hover = true"
     @mouseleave="hover = false"
   >
-    <nuxt-link :to="`/processings/${processing._id}`" style="text-decoration:none">
+    <nuxt-link
+      :to="`/processings/${processing._id}`"
+      style="text-decoration:none"
+    >
       <v-card-title>
-        <span class="font-weight-bold" style="white-space: nowrap;overflow: hidden;text-overflow: ellipsis;">
+        <span
+          class="font-weight-bold"
+          style="white-space: nowrap;overflow: hidden;text-overflow: ellipsis;"
+        >
           {{ processing.title || processing._id }}
         </span>
       </v-card-title>
       <v-divider />
-      <v-card-text style="min-height: 96px;" class="pa-0">
+      <v-card-text
+        style="min-height: 96px;"
+        class="pa-0"
+      >
         <v-list dense>
           <v-list-item>
             <v-list-item-avatar>
@@ -75,22 +84,25 @@
       </v-card-text>
     </nuxt-link>
     <v-card-actions class="pl-3">
-      <owner-short v-if="showOwner" :owner="processing.owner" />
+      <owner-short
+        v-if="showOwner"
+        :owner="processing.owner"
+      />
       <v-spacer />
     </v-card-actions>
   </v-card>
 </template>
 
 <script>
-  const marked = require('marked/lib/marked')
+const marked = require('marked/lib/marked')
 
-  export default {
-    props: ['processing', 'showOwner'],
-    data: () => ({
-      marked,
-      hover: false,
-    }),
-  }
+export default {
+  props: ['processing', 'showOwner'],
+  data: () => ({
+    marked,
+    hover: false
+  })
+}
 </script>
 
 <style lang="css" scoped>

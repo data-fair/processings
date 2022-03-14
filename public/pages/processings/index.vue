@@ -1,5 +1,8 @@
 <template>
-  <v-container data-iframe-height style="min-height:500px;">
+  <v-container
+    data-iframe-height
+    style="min-height:500px;"
+  >
     <v-row>
       <v-col :style="$vuetify.breakpoint.lgAndUp ? 'padding-right:256px;' : ''">
         <v-container>
@@ -12,13 +15,19 @@
               sm="6"
               cols="12"
             >
-              <processing-card :processing="processing" :show-owner="showAll" />
+              <processing-card
+                :processing="processing"
+                :show-owner="showAll"
+              />
             </v-col>
           </v-row>
         </v-container>
       </v-col>
       <layout-navigation-right v-if="$vuetify.breakpoint.lgAndUp">
-        <v-list dense class="list-actions">
+        <v-list
+          dense
+          class="list-actions"
+        >
           <v-menu
             v-model="showCreateMenu"
             :close-on-content-click="false"
@@ -64,7 +73,10 @@
               </v-card-text>
               <v-card-actions>
                 <v-spacer />
-                <v-btn text @click="showCreateMenu = false">
+                <v-btn
+                  text
+                  @click="showCreateMenu = false"
+                >
                   Annuler
                 </v-btn>
                 <v-btn
@@ -102,55 +114,55 @@
 </template>
 
 <script>
-  import { mapState } from 'vuex'
-  import format from '~/assets/format.js'
-  import eventBus from '~/event-bus'
+import { mapState } from 'vuex'
+import format from '~/assets/format.js'
+import eventBus from '~/event-bus'
 
-  export default {
-    components: {},
-    middleware: 'contrib-required',
-    data: () => ({
-      processings: null,
-      installedPlugins: {},
-      showCreateMenu: false,
-      newProcessing: {},
-      showAll: false,
-    }),
-    computed: {
-      ...mapState('session', ['user']),
+export default {
+  components: {},
+  middleware: 'contrib-required',
+  data: () => ({
+    processings: null,
+    installedPlugins: {},
+    showCreateMenu: false,
+    newProcessing: {},
+    showAll: false
+  }),
+  computed: {
+    ...mapState('session', ['user'])
+  },
+  watch: {},
+  created () {
+    this.$store.dispatch('setBreadcrumbs', [{
+      text: 'traitements'
+    }])
+    this.refresh()
+    if (this.user.adminMode) this.fetchInstalledPlugins()
+  },
+  methods: {
+    async fetchInstalledPlugins () {
+      this.installedPlugins = await this.$axios.$get('/api/v1/plugins')
     },
-    watch: {},
-    created() {
-      this.$store.dispatch('setBreadcrumbs', [{
-        text: 'traitements',
-      }])
-      this.refresh()
-      if (this.user.adminMode) this.fetchInstalledPlugins()
+    async refresh () {
+      try {
+        this.processings = await this.$axios.$get('api/v1/processings', { params: { size: 1000, showAll: this.showAll } })
+      } catch (error) {
+        eventBus.$emit('notification', { error, msg: 'Erreur pendant la récupération de la liste des traitements' })
+      }
     },
-    methods: {
-      async fetchInstalledPlugins() {
-        this.installedPlugins = await this.$axios.$get('/api/v1/plugins')
-      },
-      async refresh() {
-        try {
-          this.processings = await this.$axios.$get('api/v1/processings', { params: { size: 1000, showAll: this.showAll } })
-        } catch (error) {
-          eventBus.$emit('notification', { error, msg: 'Erreur pendant la récupération de la liste des traitements' })
-        }
-      },
-      async createProcessing(processing) {
-        const newProcessing = await this.$axios.$post('api/v1/processings', processing)
-        this.$router.push(`/processings/${newProcessing._id}`)
-      },
-      async run(processing) {
-        try {
-          await this.$axios.$post('api/v1/processings/' + processing.id + '/_run')
-          this.refresh()
-        } catch (error) {
-          eventBus.$emit('notification', { error, msg: 'Erreur pendant le changement de statut du traitement' })
-        }
-      },
-      format,
+    async createProcessing (processing) {
+      const newProcessing = await this.$axios.$post('api/v1/processings', processing)
+      this.$router.push(`/processings/${newProcessing._id}`)
     },
+    async run (processing) {
+      try {
+        await this.$axios.$post('api/v1/processings/' + processing.id + '/_run')
+        this.refresh()
+      } catch (error) {
+        eventBus.$emit('notification', { error, msg: 'Erreur pendant le changement de statut du traitement' })
+      }
+    },
+    format
   }
+}
 </script>

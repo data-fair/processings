@@ -8,26 +8,26 @@ module.exports = {
   dataFairAPIKey: 'DATA_FAIR_API_KEY',
   dataFairAdminMode: {
     __name: 'DATA_FAIR_ADMIN_MODE',
-    __format: 'json',
+    __format: 'json'
   },
   mongo: {
     host: 'MONGO_HOST',
-    db: 'MONGO_DB',
+    db: 'MONGO_DB'
   },
   mails: {
     transport: {
       __name: 'MAILS_TRANSPORT',
-      __format: 'json',
-    },
+      __format: 'json'
+    }
   },
   worker: {
     interval: {
       __name: 'WORKER_INTERVAL',
-      __format: 'json',
+      __format: 'json'
     },
     concurrency: {
       __name: 'WORKER_CONCURRENCY',
-      __format: 'json',
-    },
-  },
+      __format: 'json'
+    }
+  }
 }

@@ -37,11 +37,11 @@ exports.createNext = async (db, processing, triggered) => {
     owner: processing.owner,
     processing: {
       _id: processing._id,
-      title: processing.title,
+      title: processing.title
     },
     createdAt: new Date().toISOString(),
     status: triggered ? 'triggered' : 'scheduled',
-    log: [],
+    log: []
   }
 
   // cancel one that might have been scheduled previously
@@ -62,7 +62,7 @@ exports.createNext = async (db, processing, triggered) => {
   const { log, processing: _processing, owner, ...nextRun } = run
   await db.collection('processings').updateOne(
     { _id: run.processing._id },
-    { $set: { nextRun } },
+    { $set: { nextRun } }
   )
   return run
 }
@@ -71,7 +71,7 @@ exports.running = async (db, run) => {
   const lastRun = (await db.collection('runs').findOneAndUpdate(
     { _id: run._id },
     { $set: { status: 'running', startedAt: new Date().toISOString() }, $unset: { finishedAt: '' } },
-    { returnDocument: 'after', projection: { log: 0, processing: 0, owner: 0 } },
+    { returnDocument: 'after', projection: { log: 0, processing: 0, owner: 0 } }
   )).value
   await db.collection('processings')
     .updateOne({ _id: run.processing._id }, { $set: { lastRun }, $unset: { nextRun: '' } })
@@ -81,8 +81,8 @@ exports.finish = async (db, run, errorMessage) => {
   const query = {
     $set: {
       status: 'finished',
-      finishedAt: new Date().toISOString(),
-    },
+      finishedAt: new Date().toISOString()
+    }
   }
   if (run.status === 'killed') query.$set.status = 'killed'
   else if (errorMessage) {
@@ -92,7 +92,7 @@ exports.finish = async (db, run, errorMessage) => {
   const lastRun = (await db.collection('runs').findOneAndUpdate(
     { _id: run._id },
     query,
-    { returnDocument: 'after', projection: { log: 0, processing: 0, owner: 0 } },
+    { returnDocument: 'after', projection: { log: 0, processing: 0, owner: 0 } }
   )).value
   await db.collection('processings')
     .updateOne({ _id: run.processing._id }, { $set: { lastRun } })

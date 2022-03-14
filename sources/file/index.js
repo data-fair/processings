@@ -4,7 +4,7 @@ const fs = require('fs')
 const pump = require('util').promisify(require('pump'))
 const { file } = require('tmp-promise')
 
-exports.run = async function(config) {
+exports.run = async function (config) {
   const res = await axios.get(config.url, { responseType: 'stream' })
   const tmpFile = await file()
   await pump(res.data, fs.createWriteStream(tmpFile.path))

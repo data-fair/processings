@@ -6,7 +6,10 @@
     class="px-0 main-app-bar"
   >
     <v-toolbar-items>
-      <v-btn text :to="{name: 'processings'}">
+      <v-btn
+        text
+        :to="{name: 'processings'}"
+      >
         Traitements
       </v-btn>
       <v-btn
@@ -120,24 +123,24 @@
 </template>
 
 <script>
-  import { mapState, mapGetters, mapActions } from 'vuex'
+import { mapState, mapGetters, mapActions } from 'vuex'
 
-  export default {
-    computed: {
-      ...mapState(['breadcrumbs']),
-      ...mapState('session', ['user', 'initialized']),
-      ...mapGetters('session', ['activeAccount']),
-      directoryUrl() {
-        return process.env.directoryUrl
-      },
-    },
-    methods: {
-      ...mapActions('session', ['logout', 'login', 'setAdminMode', 'switchOrganization']),
-      reload() {
-        window.location.reload()
-      },
-    },
+export default {
+  computed: {
+    ...mapState(['breadcrumbs']),
+    ...mapState('session', ['user', 'initialized']),
+    ...mapGetters('session', ['activeAccount']),
+    directoryUrl () {
+      return process.env.directoryUrl
+    }
+  },
+  methods: {
+    ...mapActions('session', ['logout', 'login', 'setAdminMode', 'switchOrganization']),
+    reload () {
+      window.location.reload()
+    }
   }
+}
 </script>
 
 <style lang="css">

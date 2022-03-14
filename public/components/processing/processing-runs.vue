@@ -1,9 +1,15 @@
 <template>
-  <v-card tile :loading="loading">
+  <v-card
+    tile
+    :loading="loading"
+  >
     <v-card-title>
       Exécutions
       <v-spacer />
-      <v-btn icon @click="refresh">
+      <v-btn
+        icon
+        @click="refresh"
+      >
         <v-icon>mdi-refresh</v-icon>
       </v-btn>
     </v-card-title>
@@ -23,22 +29,22 @@
 </template>
 
 <script>
-  export default {
-    props: ['processing'],
-    data() {
-      return { loading: false, runs: null }
-    },
-    async mounted() {
-      await this.refresh()
-    },
-    methods: {
-      async refresh() {
-        this.loading = true
-        this.runs = await this.$axios.$get('api/v1/runs', { params: { processing: this.processing._id, size: 1000, sort: 'createdAt:-1' } })
-        this.loading = false
-      },
-    },
+export default {
+  props: ['processing'],
+  data () {
+    return { loading: false, runs: null }
+  },
+  async mounted () {
+    await this.refresh()
+  },
+  methods: {
+    async refresh () {
+      this.loading = true
+      this.runs = await this.$axios.$get('api/v1/runs', { params: { processing: this.processing._id, size: 1000, sort: 'createdAt:-1' } })
+      this.loading = false
+    }
   }
+}
 </script>
 
 <style lang="css" scoped>

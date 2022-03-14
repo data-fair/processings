@@ -9,22 +9,22 @@
 </template>
 
 <script>
-  import 'iframe-resizer/js/iframeResizer.contentWindow'
-  import { mapGetters } from 'vuex'
-  import Notifications from '../components/notifications.vue'
-  import AppBar from '~/components/layout/app-bar.vue'
+import 'iframe-resizer/js/iframeResizer.contentWindow'
+import { mapGetters } from 'vuex'
+import Notifications from '../components/notifications.vue'
+import AppBar from '~/components/layout/app-bar.vue'
 
-  global.iFrameResizer = {
-    heightCalculationMethod: 'taggedElement',
-  }
+global.iFrameResizer = {
+  heightCalculationMethod: 'taggedElement'
+}
 
-  export default {
-    components: { AppBar, Notifications },
-    middleware: 'breadcrumbs',
-    computed: {
-      ...mapGetters(['embed']),
-    },
+export default {
+  components: { AppBar, Notifications },
+  middleware: 'breadcrumbs',
+  computed: {
+    ...mapGetters(['embed'])
   }
+}
 
 </script>
 

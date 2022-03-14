@@ -16,7 +16,10 @@
               v-bind="attrs"
               v-on="{ ...onTooltip, ...onMenu }"
             >
-              <v-icon color="primary" size="20">
+              <v-icon
+                color="primary"
+                size="20"
+              >
                 mdi-information
               </v-icon>
             </v-btn>
@@ -29,11 +32,17 @@
           <template #default>
             <thead>
               <tr>
-                <th class="text-center" style="width:45%">
+                <th
+                  class="text-center"
+                  style="width:45%"
+                >
                   Entrée
                 </th>
                 <th style="width:10%" />
-                <th class="text-center" style="width:45%">
+                <th
+                  class="text-center"
+                  style="width:45%"
+                >
                   Données interopérables
                 </th>
               </tr>
@@ -42,7 +51,10 @@
               <tr>
                 <td class="text-center">{{ sourceType.description }}</td>
                 <td class="text-center">
-                  <v-icon x-large color="primary">
+                  <v-icon
+                    x-large
+                    color="primary"
+                  >
                     mdi-arrow-right
                   </v-icon>
                 </td>
@@ -95,42 +107,42 @@
 </template>
 
 <script>
-  import { mapState } from 'vuex'
-  export default {
-    props: {
-      processing: { type: Object, required: true },
+import { mapState } from 'vuex'
+export default {
+  props: {
+    processing: { type: Object, required: true }
+  },
+  data () {
+    return {
+      menu: null,
+      vocabulary: [],
+      processingSchema: null
+    }
+  },
+  computed: {
+    ...mapState(['env']),
+    sourceType () {
+      return this.processingSchema && this.processingSchema.properties.source.oneOf.find(s => s.properties.type.const === this.processing.source.type)
     },
-    data() {
-      return {
-        menu: null,
-        vocabulary: [],
-        processingSchema: null,
+    datasetSchema () {
+      try {
+        return require('../../sources/' + this.processing.source.type + '/schema.json')
+      } catch (err) {
+        console.log('No schema for processing type')
       }
-    },
-    computed: {
-      ...mapState(['env']),
-      sourceType() {
-        return this.processingSchema && this.processingSchema.properties.source.oneOf.find(s => s.properties.type.const === this.processing.source.type)
-      },
-      datasetSchema() {
-        try {
-          return require('../../sources/' + this.processing.source.type + '/schema.json')
-        } catch (err) {
-          console.log('No schema for processing type')
-        }
-        return null
-      },
-    },
-    async mounted() {
-      this.vocabulary = await this.$axios.$get(this.env.dataFairUrl + '/api/v1/vocabulary')
-      this.processingSchema = await this.$axios.$get('api/v1/processings/_schema')
-    },
-    methods: {
-      conceptLabel(uri) {
-        const concept = this.vocabulary.find(t => t.identifiers.find(i => i === uri))
-        if (concept) return concept.title
-        return 'Concept inconnu'
-      },
-    },
+      return null
+    }
+  },
+  async mounted () {
+    this.vocabulary = await this.$axios.$get(this.env.dataFairUrl + '/api/v1/vocabulary')
+    this.processingSchema = await this.$axios.$get('api/v1/processings/_schema')
+  },
+  methods: {
+    conceptLabel (uri) {
+      const concept = this.vocabulary.find(t => t.identifiers.find(i => i === uri))
+      if (concept) return concept.title
+      return 'Concept inconnu'
+    }
   }
+}
 </script>

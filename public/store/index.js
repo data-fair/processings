@@ -7,23 +7,23 @@ Vue.use(Vuex)
 export default () => {
   return new Vuex.Store({
     modules: {
-      session: sessionStoreBuilder(),
+      session: sessionStoreBuilder()
     },
     state: {
       embed: false,
       breadcrumbs: null,
       env: null,
-      runBackLink: false,
+      runBackLink: false
     },
     getters: {
-      embed() {
+      embed () {
         try {
           return window.self !== window.top
         } catch (e) {
           return true
         }
       },
-      canContrib(state, getters) {
+      canContrib (state, getters) {
         const activeAccount = getters['session/activeAccount']
         if (!activeAccount) return false
         if (activeAccount.adminMode) return true
@@ -31,26 +31,26 @@ export default () => {
         const role = state.session.user.organization.role
         return role === process.env.adminRole || role === process.env.contribRole
       },
-      canAdmin(state, getters) {
+      canAdmin (state, getters) {
         const activeAccount = getters['session/activeAccount']
         if (!activeAccount) return false
         if (activeAccount.adminMode) return true
         if (activeAccount.type === 'user') return true
         const role = state.session.user.organization.role
         return role === process.env.adminRole
-      },
+      }
     },
     mutations: {
-      setAny(state, params) {
+      setAny (state, params) {
         Object.assign(state, params)
-      },
+      }
     },
     actions: {
-      setBreadcrumbs({ commit }, breadcrumbs) {
+      setBreadcrumbs ({ commit }, breadcrumbs) {
         breadcrumbs.forEach(b => { b.exact = true })
         commit('setAny', { breadcrumbs })
         if (global.parent) parent.postMessage({ breadcrumbs }, '*')
-      },
-    },
+      }
+    }
   })
 }

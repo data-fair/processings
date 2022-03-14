@@ -1,6 +1,12 @@
 <template>
-  <v-list dense class="list-actions">
-    <v-list-item :disabled="!processing.active || !canContrib || (processing.scheduling.type !== 'trigger' && !user.adminMode)" @click="run()">
+  <v-list
+    dense
+    class="list-actions"
+  >
+    <v-list-item
+      :disabled="!processing.active || !canContrib || (processing.scheduling.type !== 'trigger' && !user.adminMode)"
+      @click="run()"
+    >
       <v-list-item-icon>
         <v-icon color="primary">
           mdi-play
@@ -41,7 +47,10 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn text @click="showDeleteMenu = false">
+          <v-btn
+            text
+            @click="showDeleteMenu = false"
+          >
             Non
           </v-btn>
           <v-btn
@@ -72,29 +81,29 @@
 </template>
 
 <script>
-  import { mapState, mapGetters } from 'vuex'
-  export default {
-    props: ['processing'],
-    data: () => ({
-      showDeleteMenu: false,
-    }),
-    computed: {
-      ...mapState(['env']),
-      ...mapState('session', ['user']),
-      ...mapGetters(['canContrib']),
+import { mapState, mapGetters } from 'vuex'
+export default {
+  props: ['processing'],
+  data: () => ({
+    showDeleteMenu: false
+  }),
+  computed: {
+    ...mapState(['env']),
+    ...mapState('session', ['user']),
+    ...mapGetters(['canContrib'])
+  },
+  methods: {
+    async confirmRemove () {
+      this.showDeleteMenu = false
+      await this.$axios.$delete(`api/v1/processings/${this.processing._id}`)
+      this.$router.push('/processings')
     },
-    methods: {
-      async confirmRemove() {
-        this.showDeleteMenu = false
-        await this.$axios.$delete(`api/v1/processings/${this.processing._id}`)
-        this.$router.push('/processings')
-      },
-      async run() {
-        await this.$axios.$post(`api/v1/processings/${this.processing._id}/_trigger`)
-        this.$emit('triggered')
-      },
-    },
+    async run () {
+      await this.$axios.$post(`api/v1/processings/${this.processing._id}/_trigger`)
+      this.$emit('triggered')
+    }
   }
+}
 </script>
 
 <style lang="css" scoped>

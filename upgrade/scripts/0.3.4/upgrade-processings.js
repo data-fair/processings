@@ -9,8 +9,8 @@ exports.exec = async (db, debug) => {
     debug('Upgrade processing', processing.id)
     const update = {
       $set: {
-        webhookKey: cryptoRandomString({ length: 16, type: 'url-safe' }),
-      },
+        webhookKey: cryptoRandomString({ length: 16, type: 'url-safe' })
+      }
     }
     await db.collection('processings').updateOne({ id: processing.id }, update)
   }

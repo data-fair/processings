@@ -1,7 +1,7 @@
 const GtfsRealtimeBindings = require('gtfs-realtime-bindings')
 const axios = require('axios')
 
-exports.run = async function(config) {
+exports.run = async function (config) {
   const result = await axios.get(config.url, { responseType: 'arraybuffer' })
   const feed = GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(result.data)
   // console.log(feed.entity)
@@ -13,7 +13,7 @@ exports.run = async function(config) {
       currentStopSequence: v.currentStopSequence,
       currentStatus: v.currentStatus,
       routeId: v.trip.routeId,
-      dateTime: new Date(v.timestamp * 1000).toISOString(),
+      dateTime: new Date(v.timestamp * 1000).toISOString()
     }, v.position)
   })
   return { bulkLines }
