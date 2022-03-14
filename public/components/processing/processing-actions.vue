@@ -78,9 +78,12 @@
       </v-list-item-content>
     </v-list-item>
 
-    <v-dialog
-      v-model="showNotifDialog"
+    <v-menu
+      v-if="notifUrl"
+      v-model="showNotifMenu"
       max-width="500"
+      min-width="500"
+      :close-on-content-click="false"
     >
       <template #activator="{attrs, on}">
         <v-list-item
@@ -110,13 +113,13 @@
           <v-spacer />
           <v-btn
             color="primary"
-            @click="showNotifDialog = false"
+            @click="showNotifMenu = false"
           >
             ok
           </v-btn>
         </v-card-actions>
       </v-card>
-    </v-dialog>
+    </v-menu>
   </v-list>
 </template>
 
@@ -131,13 +134,14 @@ export default {
   props: ['processing'],
   data: () => ({
     showDeleteMenu: false,
-    showNotifDialog: false
+    showNotifMenu: false
   }),
   computed: {
     ...mapState(['env']),
     ...mapState('session', ['user']),
     ...mapGetters(['canContrib']),
     notifUrl () {
+      if (!this.env.notifyUrl) return null
       const topics = [
         { key: `processings:processing-finish-ok:${this.processing.id}`, title: `Le traitement ${this.processing.title} a terminé avec succès` },
         { key: `processings:processing-finish-error:${this.processing.id}`, title: `Le traitement ${this.processing.title} a terminé en échec` },
