@@ -78,10 +78,6 @@ exports.start = async ({ db }) => {
     // always empty the slot after the promise is finished
     promisePool[freeSlot].finally(() => {
       promisePool[freeSlot] = null
-      // we release the slot right away, but we do not release the lock on the resource
-      // this is to prevent working very fast on the same resource in series
-      debugLoop('release resource after delay', config.worker.releaseInterval)
-      setTimeout(() => locks.release(db, run.processing._id), config.worker.releaseInterval)
     })
 
     await new Promise(resolve => setTimeout(resolve, config.worker.interval))
@@ -92,9 +88,6 @@ exports.start = async ({ db }) => {
 exports.stop = async () => {
   stopped = true
   await Promise.all(promisePool.filter(p => !!p))
-  if (config.worker.releaseInterval) {
-    await new Promise(resolve => setTimeout(resolve, config.worker.releaseInterval))
-  }
 }
 
 // a secondary loop to handle killing tasks
