@@ -4,7 +4,7 @@ services:
     profiles:
       - dev
       - test
-    image: koumoul/simple-directory:master
+    image: ghcr.io/data-fair/simple-directory:master
     network_mode: host
     environment:
       - ADMINS=["superadmin@test.com"]
@@ -20,7 +20,7 @@ services:
   data-fair:
     profiles:
       - dev
-    image: koumoul/data-fair:master
+    image: ghcr.io/data-fair/data-fair:master
     restart: on-failure:10
     network_mode: host
     environment:
@@ -37,7 +37,7 @@ services:
   elasticsearch:
     profiles:
       - dev
-    image: koumoul/data-fair-elasticsearch:latest
+    image: ghcr.io/data-fair/elasticsearch:7.17.1
     ports:
       - 9200:9200
     environment:
