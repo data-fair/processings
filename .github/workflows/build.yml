@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-        - name: Checkout git repository
+    - name: Checkout git repository
       uses: actions/checkout@v2
     
     # no need to work on a cache here, it is not faster than pulling
