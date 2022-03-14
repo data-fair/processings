@@ -10,6 +10,8 @@ module.exports = {
     __name: 'DATA_FAIR_ADMIN_MODE',
     __format: 'json'
   },
+  notifyUrl: 'NOTIFY_URL',
+  privateNotifyUrl: 'PRIVATE_NOTIFY_URL',
   mongo: {
     host: 'MONGO_HOST',
     db: 'MONGO_DB'
@@ -19,6 +21,9 @@ module.exports = {
       __name: 'MAILS_TRANSPORT',
       __format: 'json'
     }
+  },
+  secretKeys: {
+    notifications: 'SECRET_NOTIFICATIONS'
   },
   worker: {
     interval: {

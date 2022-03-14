@@ -1,7 +1,7 @@
 const express = require('express')
 const router = module.exports = express.Router()
 const memoize = require('memoizee')
-const axios = require('axios')
+const axios = require('../utils/axios')
 const asyncWrap = require('../utils/async-wrap')
 
 const search = memoize(async (q) => {

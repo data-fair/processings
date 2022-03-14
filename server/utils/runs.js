@@ -7,6 +7,7 @@ const ajv = require('ajv')()
 const runSchema = require('../../contract/run')
 const validate = ajv.compile(runSchema)
 const schedulingUtils = require('./scheduling')
+const notifications = require('./notifications')
 
 exports.applyProcessing = async (db, processing) => {
   // if processing is deactivated, cancel pending runs
@@ -92,8 +93,50 @@ exports.finish = async (db, run, errorMessage) => {
   const lastRun = (await db.collection('runs').findOneAndUpdate(
     { _id: run._id },
     query,
-    { returnDocument: 'after', projection: { log: 0, processing: 0, owner: 0 } }
+    { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
   )).value
+
+  // manage post run notification
+  const sender = { ...run.owner }
+  delete sender.role
+  const notif = {
+    sender,
+    urlParams: { id: run.processing._id },
+    visibility: 'private'
+  }
+  if (lastRun.status === 'finished') {
+    notifications.send({
+      ...notif,
+      topic: { key: `processings:processing-finish-ok:${run.processing.id}` },
+      title: `Le traitement ${run.processing.title} a terminé avec succès`
+    })
+    const errorLogs = lastRun.log.find(l => l.type === 'error')
+    if (errorLogs.length) {
+      let htmlBody = '<ul>'
+      for (const errorLog of errorLogs) {
+        htmlBody += `<li>${errorLog.msg}</li>`
+      }
+      htmlBody += '</ul>'
+      notifications.send({
+        ...notif,
+        topic: { key: `processings:processing-log-error:${run.processing.id}` },
+        title: `Le traitement ${run.processing.title} a terminé correctement mais son journal contient des erreurs`,
+        body: errorLogs.map(l => l.msg).join(' - '),
+        htmlBody
+      })
+    }
+  }
+  if (lastRun.status === 'error') {
+    notifications.send({
+      ...notif,
+      topic: { key: `processings:processing-finish-error:${run.processing.id}` },
+      title: `Le traitement ${run.processing.title} a terminé en échec`,
+      body: errorMessage
+    })
+  }
+
+  // store the newly closed run as processing.lastRun for convenient access
+  delete lastRun.log
   await db.collection('processings')
     .updateOne({ _id: run.processing._id }, { $set: { lastRun } })
 }

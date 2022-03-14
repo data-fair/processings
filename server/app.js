@@ -5,7 +5,7 @@ const { URL } = require('url')
 const event2promise = require('event-to-promise')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
-const proxy = require('http-proxy-middleware')
+const { createProxyMiddleware } = require('http-proxy-middleware')
 const session = require('./utils/session')
 const debug = require('debug')('main')
 
@@ -21,7 +21,7 @@ app.set('json spaces', 2)
 const dataFairUrl = new URL(config.dataFairUrl)
 const dataFairIsLocal = new URL(config.publicUrl).origin === dataFairUrl.origin
 if (!dataFairIsLocal) {
-  app.use('/data-fair-proxy', session.auth, proxy({
+  app.use('/data-fair-proxy', session.auth, createProxyMiddleware({
     target: dataFairUrl.origin,
     pathRewrite: { '^/data-fair-proxy': dataFairUrl.pathname },
     secure: false,
@@ -37,8 +37,9 @@ if (!dataFairIsLocal) {
 
 if (process.env.NODE_ENV === 'development') {
   // Create a mono-domain environment with other services in dev
-  app.use('/simple-directory', proxy({ target: 'http://localhost:8080', pathRewrite: { '^/simple-directory': '' } }))
-  app.use('/data-fair', proxy({ target: 'http://localhost:8081', pathRewrite: { '^/data-fair': '' }, ws: true }))
+  app.use('/simple-directory', createProxyMiddleware({ target: 'http://localhost:8080', pathRewrite: { '^/simple-directory': '' } }))
+  app.use('/data-fair', createProxyMiddleware({ target: 'http://localhost:8081', pathRewrite: { '^/data-fair': '' }, ws: true }))
+  app.use('/notify', createProxyMiddleware({ target: 'http://localhost:8088', pathRewrite: { '^/notify': '' }, ws: true }))
 }
 
 app.use(cookieParser())

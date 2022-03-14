@@ -3,7 +3,7 @@ const config = require('config')
 module.exports = async () => {
   if (config.proxyNuxt) {
     // in dev mode the nuxt dev server is already running, we re-expose it
-    return { render: require('http-proxy-middleware').createProxyMiddleware({ target: 'http://localhost:3000' }) }
+    return { render: require('http-proxy-middleware').createProxyMiddleware({ target: 'http://localhost:3039' }) }
   } else if (process.env.NODE_ENV === 'test') {
     // no UI during tests
     return { render: (req, res, next) => next() }

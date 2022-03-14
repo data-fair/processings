@@ -77,20 +77,75 @@
         <v-list-item-title>Voir le jeu de données</v-list-item-title>
       </v-list-item-content>
     </v-list-item>
+
+    <v-dialog
+      v-model="showNotifDialog"
+      max-width="500"
+    >
+      <template #activator="{attrs, on}">
+        <v-list-item
+          v-bind="attrs"
+          v-on="on"
+        >
+          <v-list-item-icon>
+            <v-icon color="primary">
+              mdi-bell
+            </v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>Notifications</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </template>
+      <v-card outlined>
+        <v-card-title
+          primary-title
+        >
+          Notifications
+        </v-card-title>
+        <v-card-text class="py-0 px-3">
+          <v-iframe :src="notifUrl" />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            color="primary"
+            @click="showNotifDialog = false"
+          >
+            ok
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-list>
 </template>
 
 <script>
+
 import { mapState, mapGetters } from 'vuex'
+import 'iframe-resizer/js/iframeResizer'
+import VIframe from '@koumoul/v-iframe'
+
 export default {
+  components: { VIframe },
   props: ['processing'],
   data: () => ({
-    showDeleteMenu: false
+    showDeleteMenu: false,
+    showNotifDialog: false
   }),
   computed: {
     ...mapState(['env']),
     ...mapState('session', ['user']),
-    ...mapGetters(['canContrib'])
+    ...mapGetters(['canContrib']),
+    notifUrl () {
+      const topics = [
+        { key: `processings:processing-finish-ok:${this.processing.id}`, title: `Le traitement ${this.processing.title} a terminé avec succès` },
+        { key: `processings:processing-finish-error:${this.processing.id}`, title: `Le traitement ${this.processing.title} a terminé en échec` },
+        { key: `processings:processing-log-error:${this.processing.id}`, title: `Le traitement ${this.processing.title} a terminé correctement mais son journal contient des erreurs` }
+      ]
+      const urlTemplate = `${this.env.publicUrl}/processings/${this.processing.id}`
+      return `${this.env.notifyUrl}/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false`
+    }
   },
   methods: {
     async confirmRemove () {

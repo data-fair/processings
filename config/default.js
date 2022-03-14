@@ -8,6 +8,8 @@ module.exports = {
   dataFairUrl: 'http://localhost:5600/data-fair',
   dataFairAPIKey: null,
   dataFairAdminMode: false,
+  notifyUrl: null,
+  privateNotifyUrl: null,
   adminRole: 'admin',
   contribRole: 'contrib',
   mongo: {
@@ -23,6 +25,10 @@ module.exports = {
       ignoreTLS: true,
       default: 'localhost'
     }
+  },
+  // secrets that can be used to configure global webhooks
+  secretKeys: {
+    notifications: null
   },
   worker: {
     // base interval for polling the database for new resources to work on

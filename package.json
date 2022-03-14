@@ -46,6 +46,7 @@
   "homepage": "https://github.com/data-fair/processings#readme",
   "devDependencies": {
     "@koumoul/sd-vue": "1.3.0",
+    "@koumoul/v-iframe": "^0.10.0",
     "@koumoul/vjsf": "^1.25.0-beta.11",
     "@mdi/font": "^6.5.95",
     "@nuxtjs/google-fonts": "^1.3.0",
@@ -89,7 +90,7 @@
     "fs-extra": "^8.1.0",
     "gtfs-realtime-bindings": "0.0.5",
     "http-errors": "^1.8.0",
-    "http-proxy-middleware": "^0.19.2",
+    "http-proxy-middleware": "^1.0.6",
     "memoizee": "^0.4.15",
     "mongodb": "^4.2.2",
     "nanoid": "^3.1.22",
