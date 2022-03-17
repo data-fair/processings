@@ -4,7 +4,7 @@ export default ({ store, app, env, route, $vuetify }) => {
   const currentHost = new URL(publicUrl).host
   const dataFairUrl = new URL(env.dataFairUrl)
   dataFairUrl.host = currentHost
-  const notifyUrl = new URL(env.notifyUrl).host
+  const notifyUrl = new URL(env.notifyUrl)
   notifyUrl.host = currentHost
   store.commit('setAny', {
     env: {
