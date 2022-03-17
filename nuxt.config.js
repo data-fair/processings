@@ -95,7 +95,6 @@ module.exports = {
     dataFairUrl: config.dataFairUrl,
     dataFairAdminMode: config.dataFairAdminMode,
     notifyUrl: config.notifyUrl,
-    notifyWSUrl: config.notifyWSUrl,
     datasetsUrlTemplate: config.datasetsUrlTemplate,
     adminRole: config.adminRole,
     contribRole: config.contribRole

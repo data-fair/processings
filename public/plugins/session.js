@@ -1,14 +1,18 @@
 export default ({ store, app, env, route, $vuetify }) => {
   let publicUrl = window.location.origin + env.basePath
   if (publicUrl.endsWith('/')) publicUrl = publicUrl.substr(0, publicUrl.length - 1)
+  const currentHost = new URL(publicUrl).host
   const dataFairUrl = new URL(env.dataFairUrl)
-  dataFairUrl.host = new URL(publicUrl).host
+  dataFairUrl.host = currentHost
+  const notifyUrl = new URL(env.notifyUrl).host
+  notifyUrl.host = currentHost
   store.commit('setAny', {
     env: {
       ...env,
       // reconstruct this env var that we used to have but lost when implementing multi-domain exposition
       publicUrl,
-      dataFairUrl: dataFairUrl.href
+      dataFairUrl: dataFairUrl.href,
+      notifyUrl: notifyUrl.href
     }
   })
   store.dispatch('session/init', {
