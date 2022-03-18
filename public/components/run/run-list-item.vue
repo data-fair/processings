@@ -40,7 +40,7 @@
         <v-icon>mdi-clock</v-icon>
       </v-list-item-avatar>
       <v-list-item-content>
-        <v-list-item-title>planifiée {{ run.scheduledAt | fromNow }}</v-list-item-title>
+        <v-list-item-title>planifiée {{ run.scheduledAt | fromNow(true) }}</v-list-item-title>
       </v-list-item-content>
     </template>
 
