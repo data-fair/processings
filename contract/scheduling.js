@@ -155,11 +155,17 @@ module.exports = {
           title: 'Nombre d\'heures de l\'interval',
           type: 'integer',
           minimum: 1,
-          maximum: 12
+          maximum: 12,
+          'x-cols': 6,
+          'x-class': 'pl-1'
         },
         minute: {
+          title: 'Minute',
           type: 'integer',
-          const: 0
+          minimum: 0,
+          maximum: 59,
+          'x-cols': 6,
+          'x-class': 'pl-1'
         },
         dayOfMonth: {
           type: 'string',
