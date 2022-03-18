@@ -148,7 +148,7 @@ module.exports = {
           const: '*'
         },
         hour: {
-          type: 'integer',
+          type: 'string',
           const: '*'
         },
         hourStep: {
