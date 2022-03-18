@@ -77,7 +77,7 @@
               <v-list-item-avatar>
                 <v-icon>mdi-play-circle</v-icon>
               </v-list-item-avatar>
-              <span>Prochaine exécution déclenchée manuellement le {{ processing.nextRun.createdAt | fromNow }}</span>
+              <span>Prochaine exécution déclenchée manuellement {{ processing.nextRun.createdAt | fromNow }}</span>
             </v-list-item>
           </template>
         </v-list>
