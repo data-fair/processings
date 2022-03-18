@@ -3,7 +3,7 @@ const axios = require('./axios')
 const debug = require('debug')('notifications')
 
 exports.send = async (notification) => {
-  global.events.emit('notification', notification)
+  if (global.events) global.events.emit('notification', notification)
   debug('send notification', notification)
   if (!config.notifyUrl) {
     debug('no notifyUrl in config')
