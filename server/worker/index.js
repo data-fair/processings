@@ -111,6 +111,7 @@ async function killRun (db, run) {
     const ack = await locks.acquire(db, run.processing._id)
     if (ack) {
       console.warn('the run should be killed, it is not locked by another worker and we have no running PID, mark it as already killed', run._id)
+      debug('mark as already killed', run)
       run.status = 'killed'
       await runs.finish(db, run)
     }
@@ -215,6 +216,7 @@ async function acquireNext (db) {
     const run = await cursor.next()
     // console.log('resource', resource)
     const ack = await locks.acquire(db, run.processing._id)
+    debug('acquire lock for run ?', run, ack)
     if (ack) return run
   }
 }
