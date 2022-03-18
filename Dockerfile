@@ -57,6 +57,7 @@ RUN npm run build && \
 # Adding server files
 ADD server server
 ADD upgrade upgrade
+ADD scripts scripts
 
 # Check quality
 ADD .gitignore .gitignore
@@ -81,6 +82,7 @@ COPY --from=builder /webapp/nuxt-dist /webapp/nuxt-dist
 ADD nuxt.config.js nuxt.config.js
 ADD server server
 ADD upgrade upgrade
+ADD scripts scripts
 ADD config config
 ADD contract contract
 
