@@ -60,7 +60,8 @@ module.exports = {
   srcDir: 'public/',
   buildDir: 'nuxt-dist',
   build: {
-    publicPath: config.basePath + '/_nuxt/',
+    // always the same url to fetch static resource, even in multi-domain mode
+    publicPath: config.publicUrl + '/_nuxt/',
     transpile: ['@koumoul']
   },
   loading: { color: '#1e88e5' }, // Customize the progress bar color
