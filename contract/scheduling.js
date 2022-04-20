@@ -156,6 +156,7 @@ module.exports = {
           type: 'integer',
           minimum: 1,
           maximum: 12,
+          default: 1,
           'x-cols': 6,
           'x-class': 'pl-1'
         },
@@ -164,6 +165,7 @@ module.exports = {
           type: 'integer',
           minimum: 0,
           maximum: 59,
+          default: 0,
           'x-cols': 6,
           'x-class': 'pl-1'
         },
