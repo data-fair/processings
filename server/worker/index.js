@@ -186,7 +186,7 @@ async function iter (db, run) {
         if (hooks[processing._id]) hooks[processing._id].reject({ run, message: errorMessage.join('\n') })
       }
     } else {
-      console.warn('failure in worker', err)
+      console.error('failure in worker', err)
     }
   } finally {
     if (run) {
@@ -194,7 +194,11 @@ async function iter (db, run) {
       locks.release(db, run.processing._id)
     }
     if (processing && processing.scheduling.type !== 'trigger') {
-      await runs.createNext(db, processing)
+      try {
+        await runs.createNext(db, processing)
+      } catch (err) {
+        console.error('failure while creating next run', err)
+      }
     }
   }
 }
