@@ -34,5 +34,9 @@ module.exports = {
       __name: 'WORKER_CONCURRENCY',
       __format: 'json'
     }
+  },
+  i18n: {
+    locales: 'I18N_LOCALES',
+    defaultLocale: 'I18N_DEFAULT_LOCALE'
   }
 }

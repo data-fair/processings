@@ -62,7 +62,7 @@ module.exports = {
   build: {
     // always the same url to fetch static resource, even in multi-domain mode
     publicPath: config.publicUrl + '/_nuxt/',
-    transpile: ['@koumoul']
+    transpile: ['@koumoul', '@data-fair']
   },
   loading: { color: '#1e88e5' }, // Customize the progress bar color
   plugins: [
@@ -74,7 +74,20 @@ module.exports = {
   router: {
     base: config.basePath
   },
-  modules: ['@nuxtjs/axios', 'cookie-universal-nuxt'],
+  modules: ['@nuxtjs/axios', 'cookie-universal-nuxt', ['@nuxtjs/i18n', {
+    seo: false,
+    locales: ['fr', 'en'],
+    defaultLocale: config.i18n.defaultLocale,
+    vueI18nLoader: true,
+    strategy: 'no_prefix',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_lang'
+    },
+    vueI18n: {
+      fallbackLocale: config.i18n.defaultLocale
+    }
+  }]],
   axios: {
     browserBaseURL: config.basePath
   },
