@@ -9,7 +9,7 @@
       <template v-for="result in installedPlugins.results">
         <v-list-item :key="'installed-' + result.id">
           <v-list-item-content>
-            <v-list-item-title>{{ result.name }} ({{ result.version }})</v-list-item-title>
+            <v-list-item-title>{{ result.fullName }}</v-list-item-title>
             <v-list-item-subtitle>{{ result.description }}</v-list-item-subtitle>
           </v-list-item-content>
           <v-list-item-action>

@@ -66,7 +66,7 @@ export default {
       const schema = JSON.parse(JSON.stringify(processingSchema))
       schema.properties.config = {
         ...this.plugin.processingConfigSchema,
-        title: 'Plugin ' + this.plugin.name,
+        title: 'Plugin ' + this.plugin.fullName,
         'x-options': { deleteReadOnly: false }
       }
       return schema

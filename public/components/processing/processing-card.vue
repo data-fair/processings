@@ -28,7 +28,7 @@
             <v-list-item-avatar>
               <v-icon>mdi-power-plug</v-icon>
             </v-list-item-avatar>
-            <span>{{ processing.plugin }}</span>
+            <span>{{ plugin ? plugin.fullName : processing.plugin }}</span>
           </v-list-item>
           <template v-if="processing.lastRun">
             <v-list-item v-if="processing.lastRun.status === 'running'">
@@ -97,7 +97,7 @@
 const marked = require('marked/lib/marked')
 
 export default {
-  props: ['processing', 'showOwner'],
+  props: ['processing', 'showOwner', 'plugin'],
   data: () => ({
     marked,
     hover: false

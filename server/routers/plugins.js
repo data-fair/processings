@@ -16,6 +16,11 @@ const router = module.exports = express.Router()
 const pluginsDir = path.join(config.dataDir, 'plugins')
 fs.ensureDirSync(pluginsDir)
 
+const preparePluginInfo = (pluginInfo) => {
+  const version = pluginInfo.distTag === 'latest' ? pluginInfo.version : `${pluginInfo.distTag} - ${pluginInfo.version}`
+  return { ...pluginInfo, fullName: `${pluginInfo.name.replace('@data-fair/processing-', '')} (${version})` }
+}
+
 // prepare the plugin in a subdirectory
 router.post('/', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {
   const plugin = req.body
@@ -53,7 +58,7 @@ router.get('/', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async 
     if (await fs.pathExists(path.join(pluginsDir, dir + '-config.json'))) {
       pluginInfo.config = await fs.readJson(path.join(pluginsDir, dir + '-config.json'))
     }
-    results.push(pluginInfo)
+    results.push(preparePluginInfo(pluginInfo))
   }
   res.send({
     count: dirs.length,
@@ -63,7 +68,7 @@ router.get('/', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async 
 
 router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const pluginInfo = await fs.readJson(path.join(pluginsDir, req.params.id, 'plugin.json'))
-  res.send(pluginInfo)
+  res.send(preparePluginInfo(pluginInfo))
 }))
 
 router.delete('/:id', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {

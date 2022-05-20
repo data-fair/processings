@@ -18,6 +18,7 @@
               <processing-card
                 :processing="processing"
                 :show-owner="showAll"
+                :plugin="installedPlugins.results && installedPlugins.results.find(p => p.id === processing.plugin)"
               />
             </v-col>
           </v-row>
