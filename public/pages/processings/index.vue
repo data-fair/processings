@@ -37,8 +37,8 @@
           >
             <template #activator="{ on, attrs }">
               <v-list-item
+                v-if="user.adminMode"
                 v-bind="attrs"
-                :disabled="!user.adminMode"
                 v-on="on"
               >
                 <v-list-item-icon>
