@@ -1,5 +1,6 @@
 exports.getOwnerRole = (owner, user) => {
   if (!user) return null
+  if (user.activeAccount.department) return null
   if (user.activeAccount.type !== owner.type || user.activeAccount.id !== owner.id) return null
   if (user.activeAccount.type === 'user') return 'admin'
   return user.activeAccount.role
