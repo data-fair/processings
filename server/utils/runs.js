@@ -8,6 +8,7 @@ const runSchema = require('../../contract/run')
 const validate = ajv.compile(runSchema)
 const schedulingUtils = require('./scheduling')
 const notifications = require('./notifications')
+const prometheus = require('./prometheus')
 
 exports.applyProcessing = async (db, processing) => {
   // if processing is deactivated, cancel pending runs
@@ -95,6 +96,9 @@ exports.finish = async (db, run, errorMessage) => {
     query,
     { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
   )).value
+  prometheus.runs
+    .labels(({ status: query.$set.status }))
+    .observe((new Date(lastRun.finishedAt).getTime() - new Date(lastRun.startedAt).getTime()) / 1000)
 
   // manage post run notification
   const sender = { ...run.owner }

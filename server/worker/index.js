@@ -3,6 +3,7 @@ const spawn = require('child-process-promise').spawn
 const kill = require('tree-kill')
 const locks = require('../utils/locks')
 const runs = require('../utils/runs')
+const prometheus = require('../utils/prometheus')
 const debug = require('debug')('worker')
 const debugLoop = require('debug')('worker-loop')
 
@@ -74,7 +75,10 @@ exports.start = async ({ db }) => {
     if (stopped) continue
 
     promisePool[freeSlot] = iter(db, run)
-    promisePool[freeSlot].catch(err => console.error('error in worker iter', err))
+    promisePool[freeSlot].catch(err => {
+      prometheus.internalError.inc({ errorCode: 'worker-iter' })
+      console.error('(worker-iter) error in worker iter', err)
+    })
     // always empty the slot after the promise is finished
     promisePool[freeSlot].finally(() => {
       promisePool[freeSlot] = null
@@ -98,10 +102,14 @@ async function killLoop (db) {
     try {
       const runs = await db.collection('runs').find({ status: 'kill' }).toArray()
       for (const run of runs) {
-        killRun(db, run).catch(err => console.error('error while killing task', err))
+        killRun(db, run).catch(err => {
+          prometheus.internalError.inc({ errorCode: 'task-kill' })
+          console.error('(task-kill) error while killing task', err)
+        })
       }
     } catch (err) {
-      console.error(err)
+      prometheus.internalError.inc({ errorCode: 'loop-kill' })
+      console.error('(loop-kill) error while killing task loop', err)
     }
   }
 }
@@ -135,7 +143,8 @@ async function iter (db, run) {
   try {
     processing = await db.collection('processings').findOne({ _id: run.processing._id })
     if (!processing) {
-      console.error('found a run without associated processing, weird')
+      prometheus.internalError.inc({ errorCode: 'missing-processing' })
+      console.error('(missing-processing) found a run without associated processing, weird')
       await db.collection('runs').deleteOne({ _id: run._id })
       return
     }
@@ -186,7 +195,8 @@ async function iter (db, run) {
         if (hooks[processing._id]) hooks[processing._id].reject({ run, message: errorMessage.join('\n') })
       }
     } else {
-      console.error('failure in worker', err)
+      prometheus.internalError.inc({ errorCode: 'worker' })
+      console.error('(worker) failure in worker', err)
     }
   } finally {
     if (run) {
@@ -197,7 +207,8 @@ async function iter (db, run) {
       try {
         await runs.createNext(db, processing)
       } catch (err) {
-        console.error('failure while creating next run', err)
+        prometheus.internalError.inc({ errorCode: 'next-run' })
+        console.error('(next-run) failure while creating next run', err)
       }
     }
   }

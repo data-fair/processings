@@ -8,6 +8,7 @@ const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const { createProxyMiddleware } = require('http-proxy-middleware')
 const session = require('./utils/session')
+const prometheus = require('./utils/prometheus')
 const debug = require('debug')('main')
 
 const publicHost = new URL(config.publicUrl).host
@@ -62,9 +63,15 @@ exports.start = async ({ db }) => {
   app.use(nuxt.render)
   app.set('db', db)
   app.use((err, req, res, next) => {
-    console.error('Error in HTTP request', err.response ? err.response.data : err)
-    res.status(err.status || 500).send(err.message)
+    const status = err.statusCode || err.status || 500
+    if (status === 500) {
+      console.error('(http) Error in express route', err)
+      prometheus.internalError.inc({ errorCode: 'http' })
+    }
+    res.status(status).send(err.message)
   })
+
+  if (config.prometheus.active) await prometheus.start(db)
 
   httpServer = http.createServer(app).listen(config.port)
   await event2promise(httpServer, 'listening')
@@ -76,4 +83,5 @@ exports.stop = async () => {
     httpServer.close()
     await event2promise(httpServer, 'close')
   }
+  if (config.prometheus.active) await prometheus.stop()
 }

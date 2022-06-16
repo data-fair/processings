@@ -99,6 +99,7 @@
     "nodemailer": "^6.7.0",
     "nodemon": "^1.19.3",
     "nuxt-start": "^2.15.8",
+    "prom-client": "^14.0.1",
     "pump": "^3.0.0",
     "require-without-cache": "0.0.6",
     "semver": "^7.3.4",

@@ -51,5 +51,9 @@ module.exports = {
     locales: 'fr,en',
     defaultLocale: 'fr'
   },
-  proxyNuxt: false
+  proxyNuxt: false,
+  prometheus: {
+    active: true,
+    port: 9090
+  }
 }

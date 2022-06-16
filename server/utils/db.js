@@ -2,12 +2,14 @@
 
 const config = require('config')
 const { MongoClient } = require('mongodb')
+const prometheus = require('./prometheus')
 
 async function ensureIndex (db, collection, key, options) {
   try {
     await db.collection(collection).createIndex(key, options || {})
   } catch (error) {
-    console.error('Init mongodb index creation failure for', collection, key, error)
+    prometheus.internalError.inc({ errorCode: 'mongo-index' })
+    console.error('(mongo-index) Init mongodb index creation failure for', collection, key, error)
   }
 }
 
