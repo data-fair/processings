@@ -45,5 +45,11 @@ module.exports = {
       __format: 'json'
     },
     port: 'PROMETHEUS_PORT'
+  },
+  defaultLimits: {
+    processingsSeconds: {
+      __name: 'DEFAULT_LIMITS_PROCESSINGS_SECONDS',
+      __format: 'json'
+    }
   }
 }

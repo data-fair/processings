@@ -4,7 +4,7 @@ const config = require('config')
 const { MongoClient } = require('mongodb')
 const prometheus = require('./prometheus')
 
-async function ensureIndex (db, collection, key, options) {
+exports.ensureIndex = async (db, collection, key, options) => {
   try {
     await db.collection(collection).createIndex(key, options || {})
   } catch (error) {
@@ -34,10 +34,10 @@ exports.init = async (poolSize, readPreference) => {
   console.log('Connecting to mongodb ' + `${config.mongo.host}:${config.mongo.port}`)
   const { db, client } = await exports.connect(poolSize, readPreference)
 
-  await ensureIndex(db, 'processings', { title: 'text' }, { name: 'fulltext' })
-  await ensureIndex(db, 'processings', { 'owner.type': 1, 'owner.id': 1 }, { name: 'main' })
+  await exports.ensureIndex(db, 'processings', { title: 'text' }, { name: 'fulltext' })
+  await exports.ensureIndex(db, 'processings', { 'owner.type': 1, 'owner.id': 1 }, { name: 'main' })
 
-  await ensureIndex(db, 'runs', { 'owner.type': 1, 'owner.id': 1, 'processing._id': 1 }, { name: 'main' })
+  await exports.ensureIndex(db, 'runs', { 'owner.type': 1, 'owner.id': 1, 'processing._id': 1 }, { name: 'main' })
 
   return { db, client }
 }

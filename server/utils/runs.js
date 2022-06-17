@@ -91,11 +91,18 @@ exports.finish = async (db, run, errorMessage) => {
     query.$set.status = 'error'
     query.$push = { log: { type: 'debug', msg: errorMessage } }
   }
-  const lastRun = (await db.collection('runs').findOneAndUpdate(
+  let lastRun = (await db.collection('runs').findOneAndUpdate(
     { _id: run._id },
     query,
     { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
   )).value
+  if (!lastRun.startedAt) {
+    lastRun = (await db.collection('runs').findOneAndUpdate(
+      { _id: run._id },
+      { $set: { startedAt: lastRun.finishedAt } },
+      { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
+    )).value
+  }
   prometheus.runs
     .labels(({ status: query.$set.status }))
     .observe((new Date(lastRun.finishedAt).getTime() - new Date(lastRun.startedAt).getTime()) / 1000)

@@ -94,6 +94,11 @@ describe('Processings', () => {
     run = (await global.ax.superadmin.get(`/api/v1/runs/${run._id}`)).data
     assert.equal(run.status, 'killed')
     assert.equal(run.log.length, 4)
+
+    // limits were updated
+    const limits = (await global.ax.superadmin.get('/api/v1/limits/user/superadmin')).data
+    assert.equal(limits.processings_seconds.consumption, 1)
+    assert.equal(limits.processings_seconds.limit, -1)
   })
 
   it('should kill a long run with SIGTERM and wait for grace period', async function () {
@@ -124,5 +129,43 @@ describe('Processings', () => {
     run = (await global.ax.superadmin.get(`/api/v1/runs/${run._id}`)).data
     assert.equal(run.status, 'killed')
     assert.equal(run.log.length, 2)
+  })
+
+  it('should fail a run if processings_seconds limit is execeeded', async function () {
+    this.timeout(30000)
+
+    await global.ax.superadmin.post('/api/v1/limits/user/superadmin', {
+      processings_seconds: { limit: 1 },
+      lastUpdate: new Date().toISOString()
+    })
+
+    const processing = (await global.ax.superadmin.post('/api/v1/processings', {
+      title: 'Hello processing',
+      plugin: plugin.id,
+      active: true,
+      config: {
+        datasetMode: 'create',
+        dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
+        message: 'Hello world test processing long',
+        delay: 1,
+        ignoreStop: true
+      }
+    })).data
+
+    await global.ax.superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
+    await assert.rejects(worker.hook(processing._id), (err) => {
+      assert.equal(err.message, 'Cette clé d\'API est inconnue.')
+      return true
+    })
+    let limits = (await global.ax.superadmin.get('/api/v1/limits/user/superadmin')).data
+    assert.equal(limits.processings_seconds.consumption, 1)
+
+    await global.ax.superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
+    await assert.rejects(worker.hook(processing._id), (err) => {
+      assert.equal(err.message, 'le temps de traitement autorisé est épuisé')
+      return true
+    })
+    limits = (await global.ax.superadmin.get('/api/v1/limits/user/superadmin')).data
+    assert.equal(limits.processings_seconds.consumption, 1)
   })
 })

@@ -55,5 +55,10 @@ module.exports = {
   prometheus: {
     active: true,
     port: 9090
+  },
+  defaultLimits: {
+    // Maximum time spent running processings
+    // -1 for unlimited storage
+    processingsSeconds: -1
   }
 }

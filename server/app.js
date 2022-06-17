@@ -9,6 +9,7 @@ const cookieParser = require('cookie-parser')
 const { createProxyMiddleware } = require('http-proxy-middleware')
 const session = require('./utils/session')
 const prometheus = require('./utils/prometheus')
+const limits = require('./utils/limits')
 const debug = require('debug')('main')
 
 const publicHost = new URL(config.publicUrl).host
@@ -55,6 +56,7 @@ app.use('/api/v1/processings', require('./routers/processings'))
 app.use('/api/v1/runs', require('./routers/runs'))
 app.use('/api/v1/plugins-registry', require('./routers/plugins-registry'))
 app.use('/api/v1/plugins', require('./routers/plugins'))
+app.use('/api/v1/limits', limits.router)
 
 let httpServer
 exports.start = async ({ db }) => {
@@ -70,6 +72,8 @@ exports.start = async ({ db }) => {
     }
     res.status(status).send(err.message)
   })
+
+  await limits.init(db)
 
   httpServer = http.createServer(app).listen(config.port)
   await event2promise(httpServer, 'listening')

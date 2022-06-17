@@ -4,6 +4,7 @@ const kill = require('tree-kill')
 const locks = require('../utils/locks')
 const runs = require('../utils/runs')
 const prometheus = require('../utils/prometheus')
+const limits = require('../utils/limits')
 const debug = require('debug')('worker')
 const debugLoop = require('debug')('worker-loop')
 
@@ -140,6 +141,7 @@ async function killRun (db, run) {
 async function iter (db, run) {
   let processing
   let stderr = ''
+  const start = new Date().getTime()
   try {
     processing = await db.collection('processings').findOne({ _id: run.processing._id })
     if (!processing) {
@@ -155,6 +157,11 @@ async function iter (db, run) {
 
     debug(`run "${processing.title}" > ${run._id}`)
 
+    const remaining = await limits.remaining(db, processing.owner)
+    if (remaining.processingsSeconds === 0) {
+      throw new Error('le temps de traitement autorisé est épuisé')
+    }
+
     // Run a task in a dedicated child process for  extra resiliency to fatal memory exceptions
     const spawnPromise = spawn('node', ['server', run._id, processing._id], {
       env: { ...process.env, MODE: 'task' },
@@ -168,7 +175,6 @@ async function iter (db, run) {
     await spawnPromise
 
     await runs.finish(db, run)
-
     if (hooks[processing._id]) {
       hooks[processing._id].resolve(await db.collection('runs').findOne({ _id: run._id }))
     }
@@ -202,6 +208,7 @@ async function iter (db, run) {
     if (run) {
       delete pids[run._id]
       locks.release(db, run.processing._id)
+      await limits.incrementConsumption(db, processing.owner, 'processings_seconds', Math.round((new Date().getTime() - start) / 1000))
     }
     if (processing && processing.scheduling.type !== 'trigger') {
       try {
