@@ -28,7 +28,8 @@ module.exports = {
   },
   // secrets that can be used to configure global webhooks
   secretKeys: {
-    notifications: null
+    notifications: null,
+    limits: null
   },
   worker: {
     // base interval for polling the database for new resources to work on
