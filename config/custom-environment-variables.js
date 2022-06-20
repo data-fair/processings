@@ -23,7 +23,8 @@ module.exports = {
     }
   },
   secretKeys: {
-    notifications: 'SECRET_NOTIFICATIONS'
+    notifications: 'SECRET_NOTIFICATIONS',
+    limits: 'SECRET_LIMITS'
   },
   worker: {
     interval: {
