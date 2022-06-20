@@ -158,7 +158,8 @@ describe('Processings', () => {
       return true
     })
     let limits = (await global.ax.superadmin.get('/api/v1/limits/user/superadmin')).data
-    assert.ok(limits.processings_seconds.consumption >= 1)
+    const consumption = limits.processings_seconds.consumption
+    assert.ok(consumption >= 1)
 
     await global.ax.superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
     await assert.rejects(worker.hook(processing._id), (err) => {
@@ -166,6 +167,6 @@ describe('Processings', () => {
       return true
     })
     limits = (await global.ax.superadmin.get('/api/v1/limits/user/superadmin')).data
-    assert.equal(limits.processings_seconds.consumption, 1)
+    assert.equal(limits.processings_seconds.consumption, consumption)
   })
 })
