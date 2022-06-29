@@ -4,6 +4,7 @@ const moment = require('moment')
 const ajv = require('ajv')()
 const asyncWrap = require('./async-wrap')
 const dbUtils = require('./db')
+const session = require('./session')
 
 const limitTypeSchema = { limit: { type: 'number' }, consumption: { type: 'number' } }
 const schema = {
@@ -81,6 +82,7 @@ exports.setConsumption = async (db, consumer, type, value) => {
 }
 
 const router = exports.router = express.Router()
+router.use(session.auth)
 
 const isSuperAdmin = (req, res, next) => {
   if (req.user && req.user.adminMode) return next()

@@ -208,7 +208,6 @@ async function iter (db, run) {
     if (run) {
       delete pids[run._id]
       locks.release(db, run.processing._id)
-      await limits.incrementConsumption(db, processing.owner, 'processings_seconds', Math.round((new Date().getTime() - start) / 1000))
     }
     if (processing && processing.scheduling.type !== 'trigger') {
       try {

@@ -9,6 +9,7 @@ const validate = ajv.compile(runSchema)
 const schedulingUtils = require('./scheduling')
 const notifications = require('./notifications')
 const prometheus = require('./prometheus')
+const limits = require('./limits')
 
 exports.applyProcessing = async (db, processing) => {
   // if processing is deactivated, cancel pending runs
@@ -103,9 +104,9 @@ exports.finish = async (db, run, errorMessage) => {
       { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
     )).value
   }
-  prometheus.runs
-    .labels(({ status: query.$set.status }))
-    .observe((new Date(lastRun.finishedAt).getTime() - new Date(lastRun.startedAt).getTime()) / 1000)
+  const duration = (new Date(lastRun.finishedAt).getTime() - new Date(lastRun.startedAt).getTime()) / 1000
+  prometheus.runs.labels(({ status: query.$set.status })).observe(duration)
+  await limits.incrementConsumption(db, run.owner, 'processings_seconds', Math.round(duration))
 
   // manage post run notification
   const sender = { ...run.owner }
