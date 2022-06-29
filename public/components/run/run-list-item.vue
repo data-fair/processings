@@ -21,6 +21,7 @@
       </v-list-item-avatar>
       <v-list-item-content>
         <v-list-item-title>terminée {{ run.finishedAt | fromNow }}</v-list-item-title>
+        <v-list-item-subtitle>durée : {{ [run.startedAt, run.finishedAt] | from }}</v-list-item-subtitle>
       </v-list-item-content>
     </template>
 
@@ -32,6 +33,7 @@
       </v-list-item-avatar>
       <v-list-item-content>
         <v-list-item-title>en échec {{ run.finishedAt | fromNow }}</v-list-item-title>
+        <v-list-item-subtitle>durée : {{ [run.startedAt, run.finishedAt] | from }}</v-list-item-subtitle>
       </v-list-item-content>
     </template>
 
@@ -72,6 +74,7 @@
       </v-list-item-avatar>
       <v-list-item-content>
         <v-list-item-title>interrompue manuellement {{ run.finishedAt | fromNow }}</v-list-item-title>
+        <v-list-item-subtitle>durée : {{ [run.startedAt, run.finishedAt] | from }}</v-list-item-subtitle>
       </v-list-item-content>
     </template>
 

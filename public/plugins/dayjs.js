@@ -4,8 +4,10 @@ import 'dayjs/locale/fr'
 // import 'dayjs/locale/en'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import duration from 'dayjs/plugin/duration'
 dayjs.extend(localizedFormat)
 dayjs.extend(relativeTime)
+dayjs.extend(duration)
 
 Vue.prototype.$dayjs = dayjs
 
@@ -22,7 +24,11 @@ Vue.filter('fromNow', (value, acceptFuture = false) => {
     const now = dayjs()
     date = date > now ? now : date
   }
-  return date.fromNow()
+  return date.locale('fr').fromNow()
+})
+
+Vue.filter('from', ([start, end]) => {
+  return dayjs(start).locale('fr').from(dayjs(end), true)
 })
 
 export default async ({ app }) => {
