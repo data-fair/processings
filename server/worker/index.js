@@ -141,7 +141,6 @@ async function killRun (db, run) {
 async function iter (db, run) {
   let processing
   let stderr = ''
-  const start = new Date().getTime()
   try {
     processing = await db.collection('processings').findOne({ _id: run.processing._id })
     if (!processing) {
