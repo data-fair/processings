@@ -151,6 +151,7 @@ async function iter (db, run) {
     }
     if (!processing.active) {
       await runs.finish(db, run, 'le traitement a été désactivé', 'error')
+      if (hooks[processing._id]) hooks[processing._id].reject({ run, message: 'le traitement a été désactivé' })
       return
     }
 
@@ -159,6 +160,7 @@ async function iter (db, run) {
     const remaining = await limits.remaining(db, processing.owner)
     if (remaining.processingsSeconds === 0) {
       await runs.finish(db, run, 'le temps de traitement autorisé est épuisé', 'error')
+      if (hooks[processing._id]) hooks[processing._id].reject({ run, message: 'le temps de traitement autorisé est épuisé' })
       return
     }
 
