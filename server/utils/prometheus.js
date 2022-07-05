@@ -36,7 +36,7 @@ exports.runs = new client.Histogram({
   name: 'df_processings_runs',
   help: 'Number and duration in seconds of processing runs',
   buckets: [0.1, 1, 10, 60, 600],
-  labelNames: ['status'],
+  labelNames: ['status', 'owner'],
   registers: [localRegister]
 })
 

@@ -105,7 +105,7 @@ exports.finish = async (db, run, errorMessage, errorLogType = 'debug') => {
     )).value
   }
   const duration = (new Date(lastRun.finishedAt).getTime() - new Date(lastRun.startedAt).getTime()) / 1000
-  prometheus.runs.labels(({ status: query.$set.status })).observe(duration)
+  prometheus.runs.labels(({ status: query.$set.status, owner: run.owner.name })).observe(duration)
   await limits.incrementConsumption(db, run.owner, 'processings_seconds', Math.round(duration))
 
   // manage post run notification
