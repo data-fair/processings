@@ -60,7 +60,13 @@
                   :key="log.date"
                   style="min-height: 26px;"
                 >
-                  <span :class="'text-body-2 ' + {error: 'error--text', warning: 'warning--text', info: ''}[log.type]">{{ log.msg }}</span>
+                  <span :class="'text-body-2 ' + {error: 'error--text', warning: 'warning--text', info: ''}[log.type]">
+                    <template v-if="log.type === 'error' && log.msg.status">
+                      <template v-if="typeof log.msg.data === 'string'">{{ log.msg.data }}</template>
+                      <template v-else>{{ log.msg.statusText || 'Erreur HTTP' }} - {{ log.msg.status }}</template>
+                    </template>
+                    <template v-else>{{ log.msg }}</template>
+                  </span>
                   <v-spacer />
                   <span
                     class="text-caption pl-2"
