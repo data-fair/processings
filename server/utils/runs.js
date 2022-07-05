@@ -80,7 +80,7 @@ exports.running = async (db, run) => {
     .updateOne({ _id: run.processing._id }, { $set: { lastRun }, $unset: { nextRun: '' } })
 }
 
-exports.finish = async (db, run, errorMessage) => {
+exports.finish = async (db, run, errorMessage, errorLogType = 'debug') => {
   const query = {
     $set: {
       status: 'finished',
@@ -90,7 +90,7 @@ exports.finish = async (db, run, errorMessage) => {
   if (run.status === 'killed') query.$set.status = 'killed'
   else if (errorMessage) {
     query.$set.status = 'error'
-    query.$push = { log: { type: 'debug', msg: errorMessage } }
+    query.$push = { log: { type: errorLogType, msg: errorMessage, date: new Date().toISOString() } }
   }
   let lastRun = (await db.collection('runs').findOneAndUpdate(
     { _id: run._id },

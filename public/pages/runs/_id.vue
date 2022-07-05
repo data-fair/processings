@@ -28,8 +28,12 @@
     <v-row>
       <v-col>
         <run-list-item :run="run" />
-
+        <run-logs-list
+          v-if="steps.length === 1 && !steps.msg"
+          :logs="steps[0].children"
+        />
         <v-expansion-panels
+          v-else
           accordion
           multiple
           :value="[steps.length - 1]"
@@ -51,29 +55,7 @@
               </span>
             </v-expansion-panel-header>
             <v-expansion-panel-content v-if="step.children.length">
-              <v-list
-                dense
-                class="py-0"
-              >
-                <v-list-item
-                  v-for="log in step.children"
-                  :key="log.date"
-                  style="min-height: 26px;"
-                >
-                  <span :class="'text-body-2 ' + {error: 'error--text', warning: 'warning--text', info: ''}[log.type]">
-                    <template v-if="log.type === 'error' && log.msg.status">
-                      <template v-if="typeof log.msg.data === 'string'">{{ log.msg.data }}</template>
-                      <template v-else>{{ log.msg.statusText || 'Erreur HTTP' }} - {{ log.msg.status }}</template>
-                    </template>
-                    <template v-else>{{ log.msg }}</template>
-                  </span>
-                  <v-spacer />
-                  <span
-                    class="text-caption pl-2"
-                    style="white-space: nowrap;"
-                  >{{ log.date | date('lll') }}</span>
-                </v-list-item>
-              </v-list>
+              <run-logs-list :logs="step.children" />
             </v-expansion-panel-content>
           </v-expansion-panel>
         </v-expansion-panels>

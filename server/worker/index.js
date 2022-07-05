@@ -150,7 +150,7 @@ async function iter (db, run) {
       return
     }
     if (!processing.active) {
-      await runs.finish(db, run, 'le traitement a été désactivé')
+      await runs.finish(db, run, 'le traitement a été désactivé', 'error')
       return
     }
 
@@ -158,7 +158,8 @@ async function iter (db, run) {
 
     const remaining = await limits.remaining(db, processing.owner)
     if (remaining.processingsSeconds === 0) {
-      throw new Error('le temps de traitement autorisé est épuisé')
+      await runs.finish(db, run, 'le temps de traitement autorisé est épuisé', 'error')
+      return
     }
 
     // Run a task in a dedicated child process for  extra resiliency to fatal memory exceptions
