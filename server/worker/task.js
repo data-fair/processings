@@ -55,7 +55,10 @@ exports.run = async ({ db, mailTransport }) => {
     throw new Error('fichier source manquant : ' + pluginDir + '/index.js')
   }
 
-  const headers = { 'x-apiKey': config.dataFairAPIKey }
+  const headers = {
+    'x-apiKey': config.dataFairAPIKey,
+    referer: config.publicUrl
+  }
   if (config.dataFairAdminMode) headers['x-account'] = JSON.stringify(processing.owner)
   headers['x-processing'] = { _id: processing._id, title: processing.title }
 
