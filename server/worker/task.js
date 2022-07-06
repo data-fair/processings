@@ -57,6 +57,7 @@ exports.run = async ({ db, mailTransport }) => {
 
   const headers = { 'x-apiKey': config.dataFairAPIKey }
   if (config.dataFairAdminMode) headers['x-account'] = JSON.stringify(processing.owner)
+  headers['x-processing'] = {_id: processing._id, title: processing.title}
 
   // use better DNS lookup thant nodejs default and try to reduce number of socket openings
   const agentOpts = { keepAlive: true }
