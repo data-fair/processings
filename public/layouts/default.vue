@@ -20,7 +20,6 @@ global.iFrameResizer = {
 
 export default {
   components: { AppBar, Notifications },
-  middleware: 'breadcrumbs',
   computed: {
     ...mapGetters(['embed'])
   }
