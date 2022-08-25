@@ -20,7 +20,7 @@
         </v-icon>
       </v-list-item-avatar>
       <v-list-item-content>
-        <v-list-item-title>terminée {{ run.finishedAt | fromNow }}</v-list-item-title>
+        <v-list-item-title>terminée - {{ run.finishedAt | date }}</v-list-item-title>
         <v-list-item-subtitle>durée : {{ [run.startedAt, run.finishedAt] | from }}</v-list-item-subtitle>
       </v-list-item-content>
     </template>
@@ -32,7 +32,7 @@
         </v-icon>
       </v-list-item-avatar>
       <v-list-item-content>
-        <v-list-item-title>en échec {{ run.finishedAt | fromNow }}</v-list-item-title>
+        <v-list-item-title>en échec - {{ run.finishedAt | date }}</v-list-item-title>
         <v-list-item-subtitle>durée : {{ [run.startedAt, run.finishedAt] | from }}</v-list-item-subtitle>
       </v-list-item-content>
     </template>
@@ -42,7 +42,7 @@
         <v-icon>mdi-clock</v-icon>
       </v-list-item-avatar>
       <v-list-item-content>
-        <v-list-item-title>planifiée {{ run.scheduledAt | fromNow(true) }}</v-list-item-title>
+        <v-list-item-title>planifiée - {{ run.scheduledAt | date }}</v-list-item-title>
       </v-list-item-content>
     </template>
 
@@ -73,7 +73,7 @@
         </v-icon>
       </v-list-item-avatar>
       <v-list-item-content>
-        <v-list-item-title>interrompue manuellement {{ run.finishedAt | fromNow }}</v-list-item-title>
+        <v-list-item-title>interrompue manuellement - {{ run.finishedAt | date }}</v-list-item-title>
         <v-list-item-subtitle>durée : {{ [run.startedAt, run.finishedAt] | from }}</v-list-item-subtitle>
       </v-list-item-content>
     </template>
