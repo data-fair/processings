@@ -1,3 +1,4 @@
+const EventEmitter = require('node:events')
 const config = require('config')
 const path = require('path')
 const fs = require('fs-extra')
@@ -6,6 +7,7 @@ const https = require('https')
 const axios = require('axios')
 const tmp = require('tmp-promise')
 const CacheableLookup = require('cacheable-lookup')
+const WebSocket = require('ws')
 const runs = require('../utils/runs')
 
 const cacheableLookup = new CacheableLookup()
@@ -95,6 +97,74 @@ exports.run = async ({ db, mailTransport }) => {
     return Promise.reject(error.response)
   })
 
+  const ws = new EventEmitter()
+  ws._channels = []
+  ws._connect = async () => {
+    return new Promise((resolve, reject) => {
+      const wsUrl = config.dataFairUrl.replace('http://', 'ws://').replace('https://', 'wss://') + '/'
+      log.debug(`connect Web Socket to ${wsUrl}`)
+      ws._ws = new WebSocket(wsUrl)
+      ws._ws.on('error', err => {
+        log.debug('WS encountered an error', err.message)
+        ws._reconnect()
+        reject(err)
+      })
+      ws._ws.once('open', () => {
+        log.debug('WS is opened')
+        resolve(ws._ws)
+      })
+      ws._ws.on('message', (message) => {
+        message = JSON.parse(message.toString())
+        log.debug('received message', message)
+        ws.emit('message', message)
+      })
+    })
+  }
+  ws._reconnect = async () => {
+    log.debug('reconnect')
+    ws._ws.terminate()
+    await ws._connect()
+    for (const channel of ws._channels) {
+      await ws.subscribe(channel, true)
+    }
+  }
+  ws.subscribe = async (channel, force = false, timeout = 2000) => {
+    if (ws._channels.includes(channel) && !force) return
+    if (!ws._ws) await ws._connect()
+    return new Promise((resolve, reject) => {
+      const _timeout = setTimeout(() => reject(new Error('timeout')), timeout)
+      log.debug('subscribe to channel', channel)
+      ws._ws.send(JSON.stringify({ type: 'subscribe', channel, apiKey: config.dataFairAPIKey }))
+      ws.once('message', (message) => {
+        if (message.channel && message.channel !== channel) return
+        clearTimeout(_timeout)
+        log.debug('received response to subscription', message)
+        if (message.type === 'error') return reject(new Error(message))
+        else if (message.type === 'subscribe-confirm') return resolve()
+        else return reject(new Error('expected a subscription confirmation, got ' + JSON.stringify(message)))
+      })
+      if (ws._channels.includes(channel)) ws._channels.push(channel)
+    })
+  }
+  ws.waitFor = async (channel, filter, timeout = 300000) => {
+    await ws.subscribe(channel)
+    return new Promise((resolve, reject) => {
+      const _timeout = setTimeout(() => reject(new Error('timeout')), timeout)
+      const messageCb = (message) => {
+        if (message.channel === channel && (!filter || filter(message.data))) {
+          clearTimeout(_timeout)
+          ws.off('message', messageCb)
+          resolve(message.data)
+        }
+      }
+      ws.on('message', messageCb)
+    })
+  }
+  ws.waitForJournal = async (datasetId, eventType, timeout = 300000) => {
+    log.info(`attend l'évènement du journal ${datasetId} / ${eventType}`)
+    return ws.waitFor(`datasets/${datasetId}/journal`, (e) => e.type === eventType, timeout)
+  }
+
   const dir = path.resolve(config.dataDir, 'processings', processing._id)
   await fs.ensureDir(dir)
   const tmpDir = await tmp.dir({ unsafeCleanup: true })
@@ -107,6 +177,7 @@ exports.run = async ({ db, mailTransport }) => {
     tmpDir: tmpDir.path,
     log,
     axios: axiosInstance,
+    ws,
     async patchConfig (patch) {
       await log.debug('patch config', patch)
       Object.assign(processingConfig, patch)
