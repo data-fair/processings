@@ -134,12 +134,14 @@ exports.run = async ({ db, mailTransport }) => {
     return new Promise((resolve, reject) => {
       const _timeout = setTimeout(() => reject(new Error('timeout')), timeout)
       log.debug('subscribe to channel', channel)
-      ws._ws.send(JSON.stringify({ type: 'subscribe', channel, apiKey: config.dataFairAPIKey }))
+      const subscribeMessage = { type: 'subscribe', channel, apiKey: config.dataFairAPIKey }
+      if (config.dataFairAdminMode) subscribeMessage.account = JSON.stringify(processing.owner)
+      ws._ws.send(JSON.stringify())
       ws.once('message', (message) => {
         if (message.channel && message.channel !== channel) return
         clearTimeout(_timeout)
         log.debug('received response to subscription', message)
-        if (message.type === 'error') return reject(new Error(message))
+        if (message.type === 'error') return reject(new Error(`${message.status} - ${message.data}`))
         else if (message.type === 'subscribe-confirm') return resolve()
         else return reject(new Error('expected a subscription confirmation, got ' + JSON.stringify(message)))
       })

@@ -112,6 +112,7 @@ exports.finish = async (db, run, errorMessage, errorLogType = 'debug') => {
   const sender = { ...run.owner }
   delete sender.role
   delete sender.department
+  delete sender.dflt
   const notif = {
     sender,
     urlParams: { id: run.processing._id },
