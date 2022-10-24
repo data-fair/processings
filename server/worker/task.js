@@ -136,7 +136,7 @@ exports.run = async ({ db, mailTransport }) => {
       log.debug('subscribe to channel', channel)
       const subscribeMessage = { type: 'subscribe', channel, apiKey: config.dataFairAPIKey }
       if (config.dataFairAdminMode) subscribeMessage.account = JSON.stringify(processing.owner)
-      ws._ws.send(JSON.stringify())
+      ws._ws.send(JSON.stringify(subscribeMessage))
       ws.once('message', (message) => {
         if (message.channel && message.channel !== channel) return
         clearTimeout(_timeout)
