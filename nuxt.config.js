@@ -69,6 +69,7 @@ module.exports = {
     { src: '~plugins/filters' },
     { src: '~plugins/dayjs' },
     { src: '~plugins/session', ssr: false },
+    { src: '~plugins/ws', ssr: false },
     { src: '~plugins/v-iframe.js', ssr: false }
   ],
   router: {

@@ -14,48 +14,50 @@ const cacheableLookup = new CacheableLookup()
 
 let pluginModule, _stopped
 
-exports.run = async ({ db, mailTransport }) => {
+exports.run = async ({ db, mailTransport, wsPublish }) => {
   const [run, processing] = await Promise.all([
     db.collection('runs').findOne({ _id: process.argv[2] }),
     db.collection('processings').findOne({ _id: process.argv[3] })
   ])
+
+  const pushLog = async (log) => {
+    await db.collection('runs').updateOne({ _id: run._id }, { $push: { log } })
+    await wsPublish(`processings/${processing._id}/run-log`, { _id: run._id, log })
+  }
+
   const log = {
-    step (msg) {
-      return db.collection('runs')
-        .updateOne({ _id: run._id }, { $push: { log: { type: 'step', date: new Date().toISOString(), msg } } })
+    async step (msg) {
+      return pushLog({ type: 'step', date: new Date().toISOString(), msg })
     },
-    error (msg, extra) {
-      return db.collection('runs')
-        .updateOne({ _id: run._id }, { $push: { log: { type: 'error', date: new Date().toISOString(), msg, extra } } })
+    async error (msg, extra) {
+      return pushLog({ type: 'error', date: new Date().toISOString(), msg, extra })
     },
-    warning (msg, extra) {
-      return db.collection('runs')
-        .updateOne({ _id: run._id }, { $push: { log: { type: 'warning', date: new Date().toISOString(), msg, extra } } })
+    async warning (msg, extra) {
+      return pushLog({ type: 'warning', date: new Date().toISOString(), msg, extra })
     },
-    info (msg, extra) {
-      return db.collection('runs')
-        .updateOne({ _id: run._id }, { $push: { log: { type: 'info', date: new Date().toISOString(), msg, extra } } })
+    async info (msg, extra) {
+      return pushLog({ type: 'info', date: new Date().toISOString(), msg, extra })
     },
-    debug (msg, extra, force) {
+    async debug (msg, extra, force) {
       if (!processing.debug && !force) return
-      return db.collection('runs')
-        .updateOne({ _id: run._id }, { $push: { log: { type: 'debug', date: new Date().toISOString(), msg, extra } } })
+      return pushLog({ type: 'debug', date: new Date().toISOString(), msg, extra })
     },
-    task (msg) {
-      return db.collection('runs')
-        .updateOne({ _id: run._id }, { $push: { log: { type: 'task', date: new Date().toISOString(), msg } } })
+    async task (msg) {
+      return pushLog({ type: 'task', date: new Date().toISOString(), msg })
     },
-    progress (msg, progress, total) {
-      return db.collection('runs')
+    async progress (msg, progress, total) {
+      const progressDate = new Date().toISOString()
+      await db.collection('runs')
         .updateOne({ _id: run._id, log: { $elemMatch: { type: 'task', msg } } },
-          { $set: { 'log.$.progress': progress, 'log.$.total': total, 'log.$.progressDate': new Date().toISOString() } })
+          { $set: { 'log.$.progress': progress, 'log.$.total': total, 'log.$.progressDate': progressDate } })
+      await wsPublish(`processings/${processing._id}/run-log`, { _id: run._id, log: { type: 'task', msg, progressDate, progress, total } })
     }
   }
   log.warn = log.warning
   if (run.status === 'running') {
     await log.step('Reprise après interruption.')
   }
-  await runs.running(db, run)
+  await runs.running(db, wsPublish, run)
   const pluginDir = path.resolve(config.dataDir, 'plugins', processing.plugin)
 
   let pluginConfig = {}

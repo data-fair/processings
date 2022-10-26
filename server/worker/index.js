@@ -32,7 +32,7 @@ exports.clear = () => {
 
 /* eslint no-unmodified-loop-condition: 0 */
 // Run main loop !
-exports.start = async ({ db }) => {
+exports.start = async ({ db, wsPublish }) => {
   await locks.init(db)
   console.log('start worker')
 
@@ -43,7 +43,7 @@ exports.start = async ({ db }) => {
   let lastActivity = new Date().getTime()
 
   // non-blocking secondary kill loop
-  killLoop(db)
+  killLoop(db, wsPublish)
 
   while (!stopped) {
     const now = new Date().getTime()
@@ -75,7 +75,7 @@ exports.start = async ({ db }) => {
 
     if (stopped) continue
 
-    promisePool[freeSlot] = iter(db, run)
+    promisePool[freeSlot] = iter(db, wsPublish, run)
     promisePool[freeSlot].catch(err => {
       prometheus.internalError.inc({ errorCode: 'worker-iter' })
       console.error('(worker-iter) error in worker iter', err)
@@ -97,13 +97,13 @@ exports.stop = async () => {
 
 // a secondary loop to handle killing tasks
 const pids = {}
-async function killLoop (db) {
+async function killLoop (db, wsPublish) {
   while (!stopped) {
     await new Promise(resolve => setTimeout(resolve, config.worker.killInterval))
     try {
       const runs = await db.collection('runs').find({ status: 'kill' }).toArray()
       for (const run of runs) {
-        killRun(db, run).catch(err => {
+        killRun(db, wsPublish, run).catch(err => {
           prometheus.internalError.inc({ errorCode: 'task-kill' })
           console.error('(task-kill) error while killing task', err)
         })
@@ -115,14 +115,14 @@ async function killLoop (db) {
   }
 }
 
-async function killRun (db, run) {
+async function killRun (db, wsPublish, run) {
   if (!pids[run._id]) {
     const ack = await locks.acquire(db, run.processing._id)
     if (ack) {
       console.warn('the run should be killed, it is not locked by another worker and we have no running PID, mark it as already killed', run._id)
       debug('mark as already killed', run)
       run.status = 'killed'
-      await runs.finish(db, run)
+      await runs.finish(db, wsPublish, run)
     }
     return
   }
@@ -138,7 +138,7 @@ async function killRun (db, run) {
   }
 }
 
-async function iter (db, run) {
+async function iter (db, wsPublish, run) {
   let processing
   let stderr = ''
   try {
@@ -150,7 +150,7 @@ async function iter (db, run) {
       return
     }
     if (!processing.active) {
-      await runs.finish(db, run, 'le traitement a été désactivé', 'error')
+      await runs.finish(db, wsPublish, run, 'le traitement a été désactivé', 'error')
       if (hooks[processing._id]) hooks[processing._id].reject({ run, message: 'le traitement a été désactivé' })
       return
     }
@@ -159,7 +159,7 @@ async function iter (db, run) {
 
     const remaining = await limits.remaining(db, processing.owner)
     if (remaining.processingsSeconds === 0) {
-      await runs.finish(db, run, 'le temps de traitement autorisé est épuisé', 'error')
+      await runs.finish(db, wsPublish, run, 'le temps de traitement autorisé est épuisé', 'error')
       if (hooks[processing._id]) hooks[processing._id].reject({ run, message: 'le temps de traitement autorisé est épuisé' })
       return
     }
@@ -176,7 +176,7 @@ async function iter (db, run) {
     pids[run._id] = spawnPromise.childProcess.pid
     await spawnPromise
 
-    await runs.finish(db, run)
+    await runs.finish(db, wsPublish, run)
     if (hooks[processing._id]) {
       hooks[processing._id].resolve(await db.collection('runs').findOne({ _id: run._id }))
     }
@@ -195,11 +195,11 @@ async function iter (db, run) {
       // case of interruption by a SIGTERM
       if (err.code === 143) {
         run.status = 'killed'
-        await runs.finish(db, run)
+        await runs.finish(db, wsPublish, run)
         if (hooks[processing._id]) hooks[processing._id].resolve({ run, message: 'interrupted' })
       } else {
         console.warn(`failure ${processing.title} > ${run._id}`, errorMessage.join('\n'))
-        await runs.finish(db, run, errorMessage.join('\n'))
+        await runs.finish(db, wsPublish, run, errorMessage.join('\n'))
         if (hooks[processing._id]) hooks[processing._id].reject({ run, message: errorMessage.join('\n') })
       }
     } else {

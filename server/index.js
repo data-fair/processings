@@ -3,6 +3,8 @@ const config = require('config')
 const nodemailer = require('nodemailer')
 const dbUtils = require('./utils/db')
 const prometheus = require('./utils/prometheus')
+const wsUtils = require('./utils/ws')
+
 let _client, _stopped
 
 async function start () {
@@ -15,10 +17,11 @@ async function start () {
     poolSize = 1 // no need for much concurrency inside worker/tasks
   }
   const { client, db } = await dbUtils.init(poolSize, readPreference)
+  const wsPublish = await wsUtils.initPublisher(db)
   _client = client
   if (config.mode === 'task') {
     const mailTransport = nodemailer.createTransport(config.mails.transport)
-    const err = await require('./worker/task').run({ db, mailTransport })
+    const err = await require('./worker/task').run({ db, mailTransport, wsPublish })
     if (err) process.exit(-1)
     if (_stopped) process.exit(143)
     process.exit()
@@ -28,10 +31,10 @@ async function start () {
 
   if (config.mode.includes('worker')) {
     await require('../upgrade')(db)
-    require('./worker').start({ db })
+    require('./worker').start({ db, wsPublish })
   }
   if (config.mode.includes('server')) {
-    await require('./app').start({ db })
+    await require('./app').start({ db, wsPublish })
   }
 }
 

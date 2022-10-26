@@ -66,6 +66,7 @@
 
 <script>
 import { mapState } from 'vuex'
+import eventBus from '~/event-bus'
 
 export default {
   middleware: 'contrib-required',
@@ -74,6 +75,12 @@ export default {
   },
   computed: {
     ...mapState(['runBackLink']),
+    wsLogChannel () {
+      return `processings/${this.run.processing._id}/run-log`
+    },
+    wsPatchChannel () {
+      return `processings/${this.run.processing._id}/run-patch`
+    },
     steps () {
       if (!this.run) return
       const steps = []
@@ -97,10 +104,22 @@ export default {
   async mounted () {
     await this.refresh()
   },
+  destroyed () {
+    eventBus.$emit('unsubscribe', this.wsLogChannel)
+    eventBus.$emit('unsubscribe', this.wsPatchChannel)
+    eventBus.$off(this.onRunPatch)
+    eventBus.$off(this.onRunLog)
+  },
   methods: {
     async refresh () {
       this.loading = true
       this.run = await this.$axios.$get(`api/v1/runs/${this.$route.params.id}`)
+
+      eventBus.$emit('subscribe', this.wsPatchChannel)
+      eventBus.$on(this.wsPatchChannel, this.onRunPatch)
+      eventBus.$emit('subscribe', this.wsLogChannel)
+      eventBus.$on(this.wsLogChannel, this.onRunLog)
+
       this.$store.dispatch('setBreadcrumbs', [{
         text: 'traitements',
         to: '/processings'
@@ -111,6 +130,25 @@ export default {
         text: 'exécution'
       }])
       this.loading = false
+    },
+    onRunPatch (runPatch) {
+      if (!this.run || this.run._id !== runPatch._id) return
+      for (const key of Object.keys(runPatch.patch)) {
+        this.$set(this.run, key, runPatch.patch[key])
+      }
+    },
+    onRunLog (runLog) {
+      if (!this.run || this.run._id !== runLog._id) return
+      if (runLog.log.type === 'task') {
+        const matchingTask = this.run.log.find(l => l.type === 'task' && l.msg === runLog.log.msg)
+        if (matchingTask) {
+          for (const key of Object.keys(runLog.log)) {
+            this.$set(matchingTask, key, runLog.log[key])
+          }
+          return
+        }
+      }
+      this.run.log.push(runLog.log)
     }
   }
 }

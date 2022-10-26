@@ -6,7 +6,7 @@
   "scripts": {
     "test": "NODE_ENV=test mocha --exit --bail --timeout 10000 test/",
     "test-deps": "docker-compose --profile test up -d",
-    "dev-server": "NODE_ENV=development DEBUG=scheduler,upgrade,worker nodemon server",
+    "dev-server": "NODE_ENV=development DEBUG=scheduler,upgrade nodemon server",
     "dev-client": "NODE_ENV=development nuxt -p 3039",
     "dev-deps": "docker-compose --profile dev up -d",
     "build": "nuxt build",
@@ -66,6 +66,7 @@
     "nock": "^13.0.6",
     "nuxt": "^2.15.8",
     "nuxt-webpack-optimisations": "^2.2.0",
+    "reconnecting-websocket": "^4.4.0",
     "vue-truncate-filter": "^1.1.7"
   },
   "dependencies": {

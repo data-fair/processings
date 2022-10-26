@@ -29,15 +29,40 @@
 </template>
 
 <script>
+import eventBus from '~/event-bus'
+
 export default {
   props: ['processing'],
   data () {
     return { loading: false, runs: null }
   },
+  computed: {
+    wsChannel () {
+      return `processings/${this.processing._id}/run-patch`
+    }
+  },
   async mounted () {
+    eventBus.$emit('subscribe', this.wsChannel)
+    eventBus.$on(this.wsChannel, this.onRunPatch)
     await this.refresh()
   },
+  destroyed () {
+    eventBus.$emit('unsubscribe', this.wsChannel)
+    eventBus.$off(this.onRunPatch)
+  },
   methods: {
+    onRunPatch (runPatch) {
+      console.log('message from', this.wsChannel, runPatch)
+      if (!this.runs) return
+      const matchingRun = this.runs.results.find(run => run._id === runPatch._id)
+      if (!matchingRun) {
+        console.log('received info from WS about an unknown run, refresh list')
+        return this.refresh()
+      }
+      for (const key of Object.keys(runPatch.patch)) {
+        this.$set(matchingRun, key, runPatch.patch[key])
+      }
+    },
     async refresh () {
       this.loading = true
       this.runs = await this.$axios.$get('api/v1/runs', { params: { processing: this.processing._id, size: 1000, sort: 'createdAt:-1' } })

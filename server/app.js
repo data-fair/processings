@@ -10,6 +10,7 @@ const { createProxyMiddleware } = require('http-proxy-middleware')
 const session = require('./utils/session')
 const prometheus = require('./utils/prometheus')
 const limits = require('./utils/limits')
+const wsUtils = require('./utils/ws')
 const debug = require('debug')('main')
 
 const publicHost = new URL(config.publicUrl).host
@@ -58,12 +59,13 @@ app.use('/api/v1/plugins-registry', require('./routers/plugins-registry'))
 app.use('/api/v1/plugins', require('./routers/plugins'))
 app.use('/api/v1/limits', limits.router)
 
-let httpServer
+let server, wss
 exports.start = async ({ db }) => {
   const nuxt = await require('./nuxt')()
   app.use(session.auth)
   app.use(nuxt.render)
   app.set('db', db)
+
   app.use((err, req, res, next) => {
     const status = err.statusCode || err.status || 500
     if (status === 500) {
@@ -75,14 +77,23 @@ exports.start = async ({ db }) => {
 
   await limits.init(db)
 
-  httpServer = http.createServer(app).listen(config.port)
-  await event2promise(httpServer, 'listening')
+  const WebSocket = require('ws')
+  server = http.createServer(app)
+
+  wss = new WebSocket.Server({ server })
+  await wsUtils.initServer(wss, db, session)
+
+  server.listen(config.port)
+  await event2promise(server, 'listening')
   console.log('HTTP server is listening http://localhost:' + config.port)
 }
 
 exports.stop = async () => {
-  if (httpServer) {
-    httpServer.close()
-    await event2promise(httpServer, 'close')
+  if (server) {
+    wss.close()
+    wsUtils.stop(wss)
+    await event2promise(wss, 'close')
+    server.close()
+    await event2promise(server, 'close')
   }
 }

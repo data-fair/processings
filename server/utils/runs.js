@@ -70,17 +70,19 @@ exports.createNext = async (db, processing, triggered) => {
   return run
 }
 
-exports.running = async (db, run) => {
+exports.running = async (db, wsPublish, run) => {
+  const patch = { status: 'running', startedAt: new Date().toISOString() }
   const lastRun = (await db.collection('runs').findOneAndUpdate(
     { _id: run._id },
-    { $set: { status: 'running', startedAt: new Date().toISOString() }, $unset: { finishedAt: '' } },
+    { $set: patch, $unset: { finishedAt: '' } },
     { returnDocument: 'after', projection: { log: 0, processing: 0, owner: 0 } }
   )).value
+  await wsPublish(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch })
   await db.collection('processings')
     .updateOne({ _id: run.processing._id }, { $set: { lastRun }, $unset: { nextRun: '' } })
 }
 
-exports.finish = async (db, run, errorMessage, errorLogType = 'debug') => {
+exports.finish = async (db, wsPublish, run, errorMessage, errorLogType = 'debug') => {
   const query = {
     $set: {
       status: 'finished',
@@ -104,6 +106,7 @@ exports.finish = async (db, run, errorMessage, errorLogType = 'debug') => {
       { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
     )).value
   }
+  await wsPublish(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch: query.$set })
   const duration = (new Date(lastRun.finishedAt).getTime() - new Date(lastRun.startedAt).getTime()) / 1000
   prometheus.runs.labels(({ status: query.$set.status, owner: run.owner.name })).observe(duration)
   await limits.incrementConsumption(db, run.owner, 'processings_seconds', Math.round(duration))
