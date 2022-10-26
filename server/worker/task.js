@@ -174,8 +174,10 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
     })
   }
   ws.waitForJournal = async (datasetId, eventType, timeout = 300000) => {
-    log.info(`attend l'évènement du journal ${datasetId} / ${eventType}`)
-    return ws.waitFor(`datasets/${datasetId}/journal`, (e) => e.type === eventType, timeout)
+    await log.info(`attend l'évènement "${eventType}" sur le jeu de données "${datasetId}"`)
+    const event = await ws.waitFor(`datasets/${datasetId}/journal`, (e) => e.type === eventType || e.type === 'error', timeout)
+    if (event.type === 'error') throw new Error(event.data)
+    return event
   }
 
   const dir = path.resolve(config.dataDir, 'processings', processing._id)
