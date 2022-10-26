@@ -5,13 +5,6 @@
   >
     <v-card-title>
       Exécutions
-      <v-spacer />
-      <v-btn
-        icon
-        @click="refresh"
-      >
-        <v-icon>mdi-refresh</v-icon>
-      </v-btn>
     </v-card-title>
     <v-list class="py-0">
       <template v-if="runs">

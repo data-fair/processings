@@ -6,12 +6,6 @@
     <v-row class="ma-0">
       <h2 class="text-h6">
         Exécution du traitement {{ run.processing.title }}
-        <v-btn
-          icon
-          @click="refresh"
-        >
-          <v-icon>mdi-refresh</v-icon>
-        </v-btn>
       </h2>
       <v-spacer />
       <v-btn
