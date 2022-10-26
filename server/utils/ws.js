@@ -50,17 +50,11 @@ exports.initServer = async (wss, db, session) => {
             return ws.send(JSON.stringify({ type: 'error', data: '"channel" is required' }))
           }
           if (message.type === 'subscribe') {
-            /* TODO: check permission
-
-              const [type, id, subject] = message.channel.split('/')
-              const resource = await db.collection(type).findOne({ id })
-              if (!resource) return ws.send(JSON.stringify({ type: 'error', status: 404, data: `Ressource ${type}/${id} inconnue.` }))
-              let user = req.user
-              if (message.apiKey) user = await readApiKey(db, message.apiKey, type, message.account)
-              if (!permissions.can(type, resource, `realtime-${subject}`, user)) {
-                return ws.send(JSON.stringify({ type: 'error', status: 403, data: 'Permission manquante.' }))
-              }
-            } */
+            const [type, _id] = message.channel.split('/')
+            const resource = await db.collection(type).findOne({ _id })
+            if (!permissions.isContrib(req.user, resource)) {
+              return ws.send(JSON.stringify({ type: 'error', status: 403, data: 'Permission manquante.' }))
+            }
 
             subscribers[message.channel] = subscribers[message.channel] || {}
             subscribers[message.channel][clientId] = 1
@@ -133,7 +127,7 @@ exports.initPublisher = async (db) => {
   const mongoChannel = await channel(db)
   await mongoChannel.insertOne({ type: 'init' })
   return (channel, data) => {
-    console.log(channel, data)
+    // console.log(channel, data)
     mongoChannel.insertOne({ type: 'message', channel, data })
   }
 }
