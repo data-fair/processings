@@ -40,6 +40,15 @@ exports.run = async ({ db, mailTransport }) => {
       if (!processing.debug && !force) return
       return db.collection('runs')
         .updateOne({ _id: run._id }, { $push: { log: { type: 'debug', date: new Date().toISOString(), msg, extra } } })
+    },
+    task (msg) {
+      return db.collection('runs')
+        .updateOne({ _id: run._id }, { $push: { log: { type: 'task', date: new Date().toISOString(), msg } } })
+    },
+    progress (msg, progress, total) {
+      return db.collection('runs')
+        .updateOne({ _id: run._id, log: { $elemMatch: { type: 'task', msg } } },
+          { $set: { 'log.$.progress': progress, 'log.$.total': total, 'log.$.progressDate': new Date().toISOString() } })
     }
   }
   log.warn = log.warning
