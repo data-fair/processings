@@ -52,7 +52,7 @@ before('scratch all', async () => {
 before('start service', async function () {
   try {
     await app.start({ db: global.db })
-    worker.start({ db: global.db }).catch(err => console.error('error in worker', err))
+    worker.start({ db: global.db, wsPublish: () => {} }).catch(err => console.error('error in worker', err))
   } catch (err) {
     console.error('Failed to run the application', err)
     throw err
