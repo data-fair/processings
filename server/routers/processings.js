@@ -51,8 +51,8 @@ router.post('', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const db = req.app.get('db')
   req.body._id = nanoid()
   if (req.body.owner && !req.user.adminMode) return res.status(403).send('owner can only be set for superadmin')
-  console.log(req.user.activeAccountRole)
   req.body.owner = req.body.owner || req.user.activeAccount
+  if (!permissions.isAdmin(req.user, req.body)) return res.status(403).send()
   req.body.scheduling = req.body.scheduling || { type: 'trigger' }
   req.body.webhookKey = cryptoRandomString({ length: 16, type: 'url-safe' })
   req.body.created = req.body.updated = {
@@ -60,6 +60,18 @@ router.post('', session.requiredAuth, asyncWrap(async (req, res, next) => {
     name: req.user.name,
     date: new Date().toISOString()
   }
+
+  const access = await fs.pathExists(path.join(pluginsDir, req.body.plugin + '-access.json')) ? await fs.readJson(path.join(pluginsDir, req.body.plugin + '-access.json')) : { public: false, privateAccess: [] }
+  if (req.user.adminMode) {
+    // ok for super admins
+  } else if (access && access.public) {
+    // ok, this plugin is public
+  } else if (access && access.privateAccess && access.privateAccess.find(p => p.type === req.body.owner.type && p.id === req.body.id)) {
+    // ok, private access is granted
+  } else {
+    return res.status(403).send()
+  }
+
   await validateFullProcessing(req.body)
   await db.collection('processings').insertOne(req.body)
   await runs.applyProcessing(db, req.body)
