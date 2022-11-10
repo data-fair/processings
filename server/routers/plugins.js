@@ -48,20 +48,33 @@ router.post('/', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async
   res.send(plugin)
 }))
 
-router.get('/', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {
+router.get('/', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const dirs = (await fs.readdir(pluginsDir)).filter(p => !p.endsWith('.json'))
   const results = []
   for (const dir of dirs) {
     const pluginInfo = await fs.readJson(path.join(pluginsDir, dir, 'plugin.json'))
-    // TODO: attention à la confidentialité de cette config quand on ouvrira la config de processings aux utilisateurs
-    // par example le login/mdp du user ftp pour ademe-rge est ici
-    if (await fs.pathExists(path.join(pluginsDir, dir + '-config.json'))) {
-      pluginInfo.config = await fs.readJson(path.join(pluginsDir, dir + '-config.json'))
+    const access = await fs.pathExists(path.join(pluginsDir, dir + '-access.json')) ? await fs.readJson(path.join(pluginsDir, dir + '-access.json')) : { public: false, privateAccess: [] }
+    if (req.user.adminMode) {
+      if (await fs.pathExists(path.join(pluginsDir, dir + '-config.json'))) {
+        pluginInfo.config = await fs.readJson(path.join(pluginsDir, dir + '-config.json'))
+      }
+      pluginInfo.access = access
+    }
+    if (req.query.privateAccess) {
+      const [type, id] = req.query.privateAccess.split(':')
+      if (!req.user.adminMode && (type !== req.user.activeAccount.type || id !== req.user.activeAccount.id)) {
+        return res.status(403).send('privateAccess does not match current account')
+      }
+      if (!access.public && !access.privateAccess.find(p => p.type === type && p.id === id)) {
+        continue
+      }
+    } else if (!req.user.adminMode) {
+      return res.status(400).send('privateAccess filter is required')
     }
     results.push(preparePluginInfo(pluginInfo))
   }
   res.send({
-    count: dirs.length,
+    count: results.length,
     results
   })
 }))
@@ -83,5 +96,10 @@ router.put('/:id/config', session.requiredAuth, permissions.isSuperAdmin, asyncW
   const valid = validate(req.body)
   if (!valid) return res.status(400).send(validate.errors)
   await fs.writeJson(path.join(pluginsDir, req.params.id + '-config.json'), req.body)
+  res.send(req.body)
+}))
+
+router.put('/:id/access', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {
+  await fs.writeJson(path.join(pluginsDir, req.params.id + '-access.json'), req.body)
   res.send(req.body)
 }))

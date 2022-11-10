@@ -11,6 +11,12 @@
           <v-list-item-content>
             <v-list-item-title>{{ result.fullName }}</v-list-item-title>
             <v-list-item-subtitle>{{ result.description }}</v-list-item-subtitle>
+            <v-list-item-subtitle>
+              <private-access
+                :patch="result.access"
+                @change="saveAccess(result)"
+              />
+            </v-list-item-subtitle>
           </v-list-item-content>
           <v-list-item-action>
             <v-btn
@@ -46,7 +52,7 @@
       />
       <v-list-item
         v-for="result in availablePlugins.results"
-        :key="'available-' + result.name"
+        :key="'available-' + result.name + '-' + result.version"
       >
         <v-list-item-content>
           <v-list-item-title v-if="result.distTag === 'latest'">
@@ -113,6 +119,11 @@ export default {
     async saveConfig (plugin) {
       this.loading = true
       await this.$axios.$put(`/api/v1/plugins/${plugin.id}/config`, plugin.config)
+      this.loading = false
+    },
+    async saveAccess (plugin) {
+      this.loading = true
+      await this.$axios.$put(`/api/v1/plugins/${plugin.id}/access`, plugin.access)
       this.loading = false
     }
   }
