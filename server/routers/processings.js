@@ -47,10 +47,11 @@ router.get('', session.requiredAuth, asyncWrap(async (req, res, next) => {
 }))
 
 // Create a processing
-router.post('', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {
+router.post('', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const db = req.app.get('db')
   req.body._id = nanoid()
   if (req.body.owner && !req.user.adminMode) return res.status(403).send('owner can only be set for superadmin')
+  console.log(req.user.activeAccountRole)
   req.body.owner = req.body.owner || req.user.activeAccount
   req.body.scheduling = req.body.scheduling || { type: 'trigger' }
   req.body.webhookKey = cryptoRandomString({ length: 16, type: 'url-safe' })
@@ -66,10 +67,11 @@ router.post('', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async 
 }))
 
 // Patch some of the attributes of a processing
-router.patch('/:id', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {
+router.patch('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const db = req.app.get('db')
   const processing = await db.collection('processings').findOne({ _id: req.params.id }, { projection: {} })
-  if (!processing) return res.status(404)
+  if (!processing) return res.status(404).send()
+  if (!permissions.isAdmin(req.user, processing)) return res.status(403).send()
   // Restrict the parts of the processing that can be edited by API
   const acceptedParts = Object.keys(processingSchema.properties)
     .filter(k => !processingSchema.properties[k].readOnly)
@@ -102,16 +104,17 @@ router.patch('/:id', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(a
 router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const processing = await req.app.get('db').collection('processings')
     .findOne({ _id: req.params.id }, { projection: {} })
-  if (!processing) return res.sendStatus(404)
+  if (!processing) return res.status(404).send()
   if (!permissions.isContrib(req.user, processing)) return res.status(403).send()
   res.status(200).json(processing)
 }))
 
-router.delete('/:id', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {
+router.delete('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const db = req.app.get('db')
   const processing = (await db.collection('processings')
     .findOneAndDelete({ _id: req.params.id })).value
   if (!processing) return res.status(404).send()
+  if (!permissions.isAdmin(req.user, processing)) return res.status(403).send()
   if (processing && processing.value) await runs.deleteProcessing(db, processing)
   res.sendStatus(204)
 }))

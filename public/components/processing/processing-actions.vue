@@ -4,7 +4,7 @@
     class="list-actions"
   >
     <v-list-item
-      :disabled="!processing.active || !canContrib || (processing.scheduling.type !== 'trigger' && !user.adminMode)"
+      :disabled="!processing.active || !canAdmin"
       @click="run()"
     >
       <v-list-item-icon>
@@ -24,7 +24,6 @@
     >
       <template #activator="{on, attrs}">
         <v-list-item
-          :disabled="!user.adminMode"
           v-bind="attrs"
           v-on="on"
         >
@@ -139,7 +138,7 @@ export default {
   computed: {
     ...mapState(['env']),
     ...mapState('session', ['user']),
-    ...mapGetters(['canContrib']),
+    ...mapGetters(['canAdmin']),
     notifUrl () {
       if (!this.env.notifyUrl) return null
       const topics = [

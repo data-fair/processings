@@ -37,7 +37,6 @@
           >
             <template #activator="{ on, attrs }">
               <v-list-item
-                v-if="user.adminMode"
                 v-bind="attrs"
                 v-on="on"
               >
@@ -115,7 +114,7 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
+import { mapState, mapGetters } from 'vuex'
 import format from '~/assets/format.js'
 import eventBus from '~/event-bus'
 
@@ -130,7 +129,8 @@ export default {
     showAll: false
   }),
   computed: {
-    ...mapState('session', ['user'])
+    ...mapState('session', ['user']),
+    ...mapGetters('session', ['activeAccount'])
   },
   watch: {},
   created () {
@@ -138,11 +138,11 @@ export default {
       text: 'traitements'
     }])
     this.refresh()
-    if (this.user.adminMode) this.fetchInstalledPlugins()
+    this.fetchInstalledPlugins()
   },
   methods: {
     async fetchInstalledPlugins () {
-      this.installedPlugins = await this.$axios.$get('/api/v1/plugins')
+      this.installedPlugins = await this.$axios.$get('/api/v1/plugins', { params: { privateAccess: `${this.activeAccount.type}:${this.activeAccount.id}` } })
     },
     async refresh () {
       try {

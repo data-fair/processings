@@ -87,6 +87,7 @@ router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
 router.delete('/:id', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {
   await fs.remove(path.join(pluginsDir, req.params.id))
   await fs.remove(path.join(pluginsDir, req.params.id + '-config.json'))
+  await fs.remove(path.join(pluginsDir, req.params.id + '-access.json'))
   res.status(204).send()
 }))
 

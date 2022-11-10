@@ -45,7 +45,7 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
+import { mapState, mapGetters } from 'vuex'
 import VJsf from '@koumoul/vjsf/lib/VJsf.js'
 
 const processingSchema = require('~/../contract/processing')
@@ -61,6 +61,7 @@ export default {
   computed: {
     ...mapState(['env']),
     ...mapState('session', ['user']),
+    ...mapGetters(['canAdmin']),
     processingSchema () {
       if (!this.plugin) return
       const schema = JSON.parse(JSON.stringify(processingSchema))
@@ -79,7 +80,7 @@ export default {
           ownerFilter: this.env.dataFairAdminMode ? `owner=${this.processing.owner.type}:${encodeURIComponent(this.processing.owner.id)}` : '',
           dataFairUrl: this.env.dataFairUrl
         },
-        disableAll: !this.user.adminMode,
+        disableAll: !this.canAdmin,
         locale: 'fr',
         // rootDisplay: 'expansion-panels',
         // rootDisplay: 'tabs',
