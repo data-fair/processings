@@ -123,10 +123,10 @@ router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
 
 router.delete('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const db = req.app.get('db')
-  const processing = (await db.collection('processings')
-    .findOneAndDelete({ _id: req.params.id })).value
+  const processing = await db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (!permissions.isAdmin(req.user, processing)) return res.status(403).send()
+  await db.collection('processings').deleteOne({ _id: req.params.id })
   if (processing && processing.value) await runs.deleteProcessing(db, processing)
   res.sendStatus(204)
 }))

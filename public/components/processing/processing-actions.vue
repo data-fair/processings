@@ -4,7 +4,8 @@
     class="list-actions"
   >
     <v-list-item
-      :disabled="!processing.active || !canAdmin"
+      v-if="canAdmin"
+      :disabled="!processing.active"
       @click="run()"
     >
       <v-list-item-icon>
@@ -18,6 +19,7 @@
     </v-list-item>
 
     <v-menu
+      v-if="canAdmin"
       v-model="showDeleteMenu"
       :close-on-content-click="false"
       max-width="500"
