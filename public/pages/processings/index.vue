@@ -30,6 +30,7 @@
           class="list-actions"
         >
           <v-menu
+            v-if="canAdmin"
             v-model="showCreateMenu"
             :close-on-content-click="false"
             min-width="500px"
@@ -130,7 +131,8 @@ export default {
   }),
   computed: {
     ...mapState('session', ['user']),
-    ...mapGetters('session', ['activeAccount'])
+    ...mapGetters('session', ['activeAccount']),
+    ...mapGetters(['canAdmin'])
   },
   watch: {},
   created () {

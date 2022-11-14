@@ -66,7 +66,7 @@ router.post('', session.requiredAuth, asyncWrap(async (req, res, next) => {
     // ok for super admins
   } else if (access && access.public) {
     // ok, this plugin is public
-  } else if (access && access.privateAccess && access.privateAccess.find(p => p.type === req.body.owner.type && p.id === req.body.id)) {
+  } else if (access && access.privateAccess && access.privateAccess.find(p => p.type === req.body.owner.type && p.id === req.body.owner.id)) {
     // ok, private access is granted
   } else {
     return res.status(403).send()
