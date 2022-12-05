@@ -15,7 +15,15 @@
             :schema="processingSchema"
             :options="vjsfOptions"
             @change="patch"
-          />
+          >
+            <template #custom-time-zone="{value, disabled, on}">
+              <time-zone-select
+                :value="value"
+                :disabled="disabled"
+                v-on="on"
+              />
+            </template>
+          </v-jsf>
         </v-form>
         <processing-runs
           ref="runs"

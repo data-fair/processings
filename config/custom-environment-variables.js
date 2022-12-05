@@ -52,5 +52,6 @@ module.exports = {
       __name: 'DEFAULT_LIMITS_PROCESSINGS_SECONDS',
       __format: 'json'
     }
-  }
+  },
+  defaultTimeZone: 'DEFAULT_TIME_ZONE'
 }

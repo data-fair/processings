@@ -112,7 +112,8 @@ module.exports = {
     notifyUrl: config.notifyUrl,
     datasetsUrlTemplate: config.datasetsUrlTemplate,
     adminRole: config.adminRole,
-    contribRole: config.contribRole
+    contribRole: config.contribRole,
+    defaultTimeZone: config.defaultTimeZone
   },
   head: {
     title: 'Data Fair Processings',

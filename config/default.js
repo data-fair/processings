@@ -61,5 +61,6 @@ module.exports = {
     // Maximum time spent running processings
     // -1 for unlimited storage
     processingsSeconds: -1
-  }
+  },
+  defaultTimeZone: 'Europe/Paris'
 }

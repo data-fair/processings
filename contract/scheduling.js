@@ -25,9 +25,7 @@ module.exports = {
           type: 'integer',
           minimum: 1,
           maximum: 28,
-          default: 1,
-          'x-cols': 6,
-          'x-class': 'pr-1'
+          default: 1
         },
         hour: {
           title: 'Heure de la journée',
@@ -36,7 +34,7 @@ module.exports = {
           maximum: 23,
           default: 0,
           'x-cols': 6,
-          'x-class': 'pl-1'
+          'x-class': 'pr-1'
         },
         minute: {
           type: 'integer',
@@ -45,6 +43,11 @@ module.exports = {
         month: {
           type: 'string',
           const: '*'
+        },
+        timeZone: {
+          type: 'string',
+          'x-cols': 6,
+          'x-display': 'custom-time-zone'
         }
       }
     },
@@ -103,6 +106,11 @@ module.exports = {
         month: {
           type: 'string',
           const: '*'
+        },
+        timeZone: {
+          type: 'string',
+          'x-cols': 6,
+          'x-display': 'custom-time-zone'
         }
       }
     },
@@ -134,6 +142,11 @@ module.exports = {
         month: {
           type: 'string',
           const: '*'
+        },
+        timeZone: {
+          type: 'string',
+          'x-cols': 6,
+          'x-display': 'custom-time-zone'
         }
       }
     },

@@ -55,8 +55,10 @@ exports.createNext = async (db, processing, triggered) => {
     await db.collection('runs')
       .deleteMany({ 'processing._id': processing._id, status: 'scheduled' })
     const cron = schedulingUtils.toCRON(processing.scheduling)
-    const job = new CronJob(cron, () => {})
-    run.scheduledAt = job.nextDates().toISOString()
+    const timeZone = processing.scheduling.timeZone || config.defaultTimeZone
+    const job = new CronJob(cron, () => {}, () => {}, false, timeZone)
+    const nextDate = job.nextDates()
+    run.scheduledAt = nextDate.toISOString()
   }
 
   const valid = validate(run)
