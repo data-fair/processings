@@ -1,8 +1,11 @@
 <template>
-  <div>
+  <v-row class="ma-0">
     <v-checkbox
       v-model="patch.public"
       :label="$t('public')"
+      hide-details
+      class="ml-2 mb-2 mr-4"
+      dense
       @change="$emit('change')"
     />
     <v-autocomplete
@@ -19,9 +22,11 @@
       :label="$t('privateAccess')"
       :placeholder="$t('searchName')"
       return-object
+      style="max-width:400px;"
+      hide-details
       @change="onChange"
     />
-  </div>
+  </v-row>
 </template>
 
 <i18n lang="yaml">

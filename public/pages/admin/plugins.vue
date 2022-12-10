@@ -1,50 +1,59 @@
 <template lang="html">
   <v-container data-iframe-height>
-    <v-list>
-      <v-subheader>Plugins Installés</v-subheader>
-      <v-progress-linear
-        v-if="!installedPlugins.results"
-        indeterminate
-      />
-      <template v-for="result in installedPlugins.results">
-        <v-list-item :key="'installed-' + result.id">
-          <v-list-item-content>
-            <v-list-item-title>{{ result.fullName }}</v-list-item-title>
-            <v-list-item-subtitle>{{ result.description }}</v-list-item-subtitle>
-            <v-list-item-subtitle>
-              <private-access
-                :patch="result.access"
-                @change="saveAccess(result)"
-              />
-            </v-list-item-subtitle>
-          </v-list-item-content>
-          <v-list-item-action>
-            <v-btn
-              title="Désinstaller"
-              icon
-              color="warning"
-              :disabled="loading"
-              @click="uninstall(result)"
-            >
-              <v-icon>mdi-delete</v-icon>
-            </v-btn>
-          </v-list-item-action>
-        </v-list-item>
-        <v-card
-          v-if="result.pluginConfigSchema"
-          :key="'config-' + result.id"
+    <v-subheader>Plugins Installés</v-subheader>
+    <v-progress-linear
+      v-if="!installedPlugins.results"
+      indeterminate
+    />
+    <template v-for="result in installedPlugins.results">
+      <v-card
+        v-if="result.pluginConfigSchema"
+        :key="'installed-' + result.id"
+        class="my-1"
+        outlined
+        tile
+      >
+        <v-toolbar
+          dense
+          flat
         >
-          <v-card-text>
-            <v-form :ref="'form-' + result.id">
-              <v-jsf
-                v-model="result.config"
-                :schema="result.pluginConfigSchema"
-                @change="saveConfig(result)"
-              />
-            </v-form>
-          </v-card-text>
-        </v-card>
-      </template>
+          <v-toolbar-title>
+            {{ result.fullName }}
+          </v-toolbar-title>
+          <v-spacer />
+          <v-btn
+            title="Désinstaller"
+            icon
+            color="warning"
+            :disabled="loading"
+            @click="uninstall(result)"
+          >
+            <v-icon>mdi-delete</v-icon>
+          </v-btn>
+        </v-toolbar>
+
+        <v-card-text class="pt-0 pb-2">
+          <p class="mb-0">
+            {{ result.description }}
+          </p>
+          <private-access
+            :patch="result.access"
+            @change="saveAccess(result)"
+          />
+          <v-form
+            v-if="result.pluginConfigSchema && result.pluginConfigSchema.properties && Object.keys(result.pluginConfigSchema.properties).length"
+            :ref="'form-' + result.id"
+          >
+            <v-jsf
+              v-model="result.config"
+              :schema="result.pluginConfigSchema"
+              @change="saveConfig(result)"
+            />
+          </v-form>
+        </v-card-text>
+      </v-card>
+    </template>
+    <v-list>
       <v-subheader>Plugins disponibles</v-subheader>
       <v-progress-linear
         v-if="!availablePlugins.results"
