@@ -1,11 +1,24 @@
 <template lang="html">
   <v-container data-iframe-height>
+    <v-text-field
+      v-model="search"
+      placeholder="rechercher"
+      outlined
+      dense
+      hide-details
+      clearable
+      style="max-width:400px;"
+      append-icon="mdi-magnify"
+    />
     <v-subheader>Plugins Installés</v-subheader>
     <v-progress-linear
       v-if="!installedPlugins.results"
       indeterminate
     />
-    <template v-for="result in installedPlugins.results">
+    <template
+      v-for="result in filteredInstalledPlugins"
+      v-else
+    >
       <v-card
         v-if="result.pluginConfigSchema"
         :key="'installed-' + result.id"
@@ -60,7 +73,8 @@
         indeterminate
       />
       <v-list-item
-        v-for="result in availablePlugins.results"
+        v-for="result in filteredAvailablePlugins"
+        v-else
         :key="'available-' + result.name + '-' + result.version"
       >
         <v-list-item-content>
@@ -99,8 +113,21 @@ export default {
   data: () => ({
     loading: false,
     availablePlugins: {},
-    installedPlugins: {}
+    installedPlugins: {},
+    search: ''
   }),
+  computed: {
+    filteredAvailablePlugins () {
+      if (!this.availablePlugins.results) return
+      if (!this.search) return this.availablePlugins.results
+      return this.availablePlugins.results.filter(r => r.name.includes(this.search) || (r.description && r.description.includes(this.search)))
+    },
+    filteredInstalledPlugins () {
+      if (!this.installedPlugins.results) return
+      if (!this.search) return this.installedPlugins.results
+      return this.installedPlugins.results.filter(r => r.name.includes(this.search) || (r.description && r.description.includes(this.search)))
+    }
+  },
   created () {
     this.$store.dispatch('setBreadcrumbs', [{ text: 'plugins' }])
     this.fetchAvailablePlugins()
