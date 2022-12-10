@@ -75,6 +75,7 @@
     "@nuxtjs/axios": "^5.12.5",
     "@nuxtjs/i18n": "^7.2.2",
     "ajv": "^6.12.6",
+    "axios": "^1.2.1",
     "body-parser": "^1.19.0",
     "cacheable-lookup": "^6.0.4",
     "child-process-promise": "^2.2.1",
