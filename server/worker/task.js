@@ -101,7 +101,9 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
   axiosInstance.interceptors.response.use(response => response, error => {
     if (!error.response) return Promise.reject(error)
     delete error.response.request
-    delete error.response.headers
+    const headers = {}
+    if (error.response.headers.location) headers.location = error.response.headers.location
+    error.response.headers = headers
     error.response.config = { method: error.response.config.method, url: error.response.config.url, data: error.response.config.data }
     if (error.response.config.data && error.response.config.data._writableState) delete error.response.config.data
     if (error.response.data && error.response.data._readableState) delete error.response.data
@@ -208,7 +210,6 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
     process.chdir(dir)
     await pluginModule.run(context)
     process.chdir(cwd)
-    await tmpDir.cleanup()
     if (_stopped) await log.error('interrompu')
     else await log.info('terminé')
   } catch (err) {
@@ -224,8 +225,10 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
       await log.error(err.message)
       await log.debug(err.stack)
     }
-    await tmpDir.cleanup()
     return err
+  } finally {
+    await tmpDir.cleanup()
+    if (ws._ws) await ws._ws.terminate()
   }
 }
 
