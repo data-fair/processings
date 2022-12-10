@@ -49,3 +49,13 @@ exports.pagination = (query, defaultSize = 10) => {
 
   return [skip, size]
 }
+
+exports.project = (selectStr) => {
+  const select = { _id: 0 }
+  if (selectStr) {
+    selectStr.split(',').forEach(s => {
+      select[s] = 1
+    })
+  }
+  return select
+}

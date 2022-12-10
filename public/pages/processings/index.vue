@@ -144,11 +144,22 @@ export default {
   },
   methods: {
     async fetchInstalledPlugins () {
-      this.installedPlugins = await this.$axios.$get('/api/v1/plugins', { params: { privateAccess: `${this.activeAccount.type}:${this.activeAccount.id}` } })
+      this.installedPlugins = await this.$axios.$get('/api/v1/plugins', {
+        params: {
+          privateAccess: `${this.activeAccount.type}:${this.activeAccount.id}`
+        }
+      })
     },
     async refresh () {
       try {
-        this.processings = await this.$axios.$get('api/v1/processings', { params: { size: 1000, showAll: this.showAll } })
+        this.processings = await this.$axios.$get('api/v1/processings', {
+          params: {
+            size: 10000,
+            showAll: this.showAll,
+            sort: 'updated.date:-1',
+            select: '_id,title,plugin,lastRun,nextRun,owner'
+          }
+        })
       } catch (error) {
         eventBus.$emit('notification', { error, msg: 'Erreur pendant la récupération de la liste des traitements' })
       }

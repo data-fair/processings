@@ -37,7 +37,7 @@ router.get('', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const sort = findUtils.sort(req.query.sort)
   const [skip, size] = findUtils.pagination(req.query)
   const query = findUtils.query(req)
-  const project = {}
+  const project = findUtils.project(req.query.select)
   const processings = req.app.get('db').collection('processings')
   const [results, count] = await Promise.all([
     size > 0 ? processings.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
