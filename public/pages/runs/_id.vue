@@ -69,6 +69,7 @@ export default {
   },
   computed: {
     ...mapState(['runBackLink']),
+    ...mapState('session', ['user']),
     wsLogChannel () {
       return `processings/${this.run.processing._id}/run-log`
     },
@@ -80,7 +81,7 @@ export default {
       const steps = []
       let lastStep
       for (const log of this.run.log) {
-        if (log.type === 'debug') continue
+        if (log.type === 'debug' && !this.user.adminMode) continue
         if (log.type === 'step') {
           lastStep = { ...log, children: [] }
           steps.push(lastStep)
