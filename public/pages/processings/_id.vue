@@ -78,6 +78,7 @@ export default {
         title: 'Plugin ' + this.plugin.fullName,
         'x-options': { deleteReadOnly: false }
       }
+      if (this.user.adminMode) delete schema.properties.debug.readOnly
       return schema
     },
     vjsfOptions () {

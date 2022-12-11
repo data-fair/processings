@@ -91,7 +91,7 @@ router.patch('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   if (!permissions.isAdmin(req.user, processing)) return res.status(403).send()
   // Restrict the parts of the processing that can be edited by API
   const acceptedParts = Object.keys(processingSchema.properties)
-    .filter(k => !processingSchema.properties[k].readOnly)
+    .filter(k => req.user.adminMode || !processingSchema.properties[k].readOnly)
   for (const key in req.body) {
     if (!acceptedParts.includes(key)) return res.status(400).send('Unsupported patch part ' + key)
   }

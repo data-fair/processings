@@ -39,6 +39,8 @@ module.exports = {
     scheduling,
     debug: {
       type: 'boolean',
+      title: 'activer le mode debug',
+      description: 'Permet à un administrateur d\'obtenir des logs plus détaillés sur les prochaines exécutions du traitement.',
       readOnly: true
     },
     lastRun: { ...run, title: 'Dernière exécution' },
