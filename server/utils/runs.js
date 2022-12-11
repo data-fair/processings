@@ -10,6 +10,7 @@ const schedulingUtils = require('./scheduling')
 const notifications = require('./notifications')
 const prometheus = require('./prometheus')
 const limits = require('./limits')
+const moment = require('moment')
 
 exports.applyProcessing = async (db, processing) => {
   // if processing is deactivated, cancel pending runs
@@ -34,7 +35,7 @@ exports.deleteProcessing = async (db, processing) => {
   await fs.remove(path.resolve(config.dataDir, 'processings', processing._id))
 }
 
-exports.createNext = async (db, processing, triggered) => {
+exports.createNext = async (db, processing, triggered, delaySeconds = 0) => {
   const run = {
     _id: nanoid(),
     owner: processing.owner,
@@ -51,6 +52,13 @@ exports.createNext = async (db, processing, triggered) => {
   if (triggered) {
     await db.collection('runs')
       .deleteMany({ 'processing._id': processing._id, status: { $in: ['triggered', 'scheduled'] } })
+    if (delaySeconds) {
+      const scheduledAt = moment()
+      scheduledAt.add(delaySeconds, 'seconds')
+      run.scheduledAt = scheduledAt.toISOString()
+    } else {
+      run.scheduledAt = run.createdAt
+    }
   } else {
     await db.collection('runs')
       .deleteMany({ 'processing._id': processing._id, status: 'scheduled' })

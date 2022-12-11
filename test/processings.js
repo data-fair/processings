@@ -14,13 +14,19 @@ describe('Processings', () => {
     })).data
   })
 
-  it('should create a new processing, activate it and run it', async () => {
+  it.only('should create a new processing, activate it and run it', async () => {
     let processing = (await global.ax.superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
       plugin: plugin.id
     })).data
     assert.ok(processing._id)
     assert.equal(processing.scheduling.type, 'trigger')
+    assert.ok(!processing.webhookKey)
+
+    const processings = (await global.ax.superadmin.get('/api/v1/processings')).data
+    assert.equal(processings.count, 1)
+    assert.equal(processings.results[0]._id, processing._id)
+    assert.ok(!processings.results[0].webhookKey)
 
     // no run at first
     let runs = (await global.ax.superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
@@ -66,6 +72,7 @@ describe('Processings', () => {
     processing = (await global.ax.superadmin.get(`/api/v1/processings/${processing._id}`)).data
     assert.ok(processing.lastRun)
     assert.equal(processing.lastRun.status, 'error')
+    assert.ok(!processing.webhookKey)
   })
 
   it('should kill a long run with SIGTERM', async () => {

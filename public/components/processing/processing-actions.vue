@@ -3,20 +3,59 @@
     dense
     class="list-actions"
   >
-    <v-list-item
+    <v-menu
       v-if="canAdmin"
-      :disabled="!processing.active"
-      @click="run()"
+      v-model="showTriggerMenu"
+      :close-on-content-click="false"
+      max-width="800"
     >
-      <v-list-item-icon>
-        <v-icon color="primary">
-          mdi-play
-        </v-icon>
-      </v-list-item-icon>
-      <v-list-item-content>
-        <v-list-item-title>Exécuter</v-list-item-title>
-      </v-list-item-content>
-    </v-list-item>
+      <template #activator="{on, attrs}">
+        <v-list-item
+          v-bind="attrs"
+          v-on="on"
+        >
+          <v-list-item-icon>
+            <v-icon color="primary">
+              mdi-play
+            </v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>Exécuter</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </template>
+      <v-card outlined>
+        <v-card-title primary-title>
+          Exécution du traitement
+        </v-card-title>
+        <v-card-text>
+          <p>
+            Vous pouvez déclencher une exécution sans être connecté à la plateforme en envoyant une requête HTTP POST à cette URL sécurisée :
+            <br>{{ webhookLink }}
+          </p>
+          <v-text-field
+            v-model="triggerDelay"
+            type="number"
+            label="Appliquer un délai en secondes"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            text
+            @click="showTriggerMenu = false"
+          >
+            Annuler
+          </v-btn>
+          <v-btn
+            color="primary"
+            @click="trigger(triggerDelay);showTriggerMenu = false"
+          >
+            Déclencher manuellement
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-menu>
 
     <v-menu
       v-if="canAdmin"
@@ -135,7 +174,10 @@ export default {
   props: ['processing'],
   data: () => ({
     showDeleteMenu: false,
-    showNotifMenu: false
+    showNotifMenu: false,
+    showTriggerMenu: false,
+    triggerDelay: 0,
+    webhookKey: null
   }),
   computed: {
     ...mapState(['env']),
@@ -150,6 +192,16 @@ export default {
       ]
       const urlTemplate = window.parent.location.href
       return `${this.env.notifyUrl}/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false`
+    },
+    webhookLink () {
+      let link = `${this.env.publicUrl}/api/v1/processings/${this.processing._id}/_trigger?key=${this.webhookKey}`
+      if (this.triggerDelay) link += `&delay=${this.triggerDelay}`
+      return link
+    }
+  },
+  watch: {
+    showTriggerMenu (v) {
+      if (v) this.getWebhookKey()
     }
   },
   methods: {
@@ -158,9 +210,12 @@ export default {
       await this.$axios.$delete(`api/v1/processings/${this.processing._id}`)
       this.$router.push('/processings')
     },
-    async run () {
-      await this.$axios.$post(`api/v1/processings/${this.processing._id}/_trigger`)
+    async trigger (delay) {
+      await this.$axios.$post(`api/v1/processings/${this.processing._id}/_trigger`, null, { params: { delay } })
       this.$emit('triggered')
+    },
+    async getWebhookKey () {
+      this.webhookKey = await this.$axios.$get(`api/v1/processings/${this.processing._id}/webhook-key`)
     }
   }
 }

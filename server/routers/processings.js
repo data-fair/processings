@@ -32,6 +32,11 @@ const validateFullProcessing = async (processing) => {
   if (!configValid) throw createError(400, JSON.stringify(configValidate.errors))
 }
 
+const cleanProcessing = (processing) => {
+  delete processing.webhookKey
+  return processing
+}
+
 // Get the list of processings
 router.get('', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const sort = findUtils.sort(req.query.sort)
@@ -43,7 +48,7 @@ router.get('', session.requiredAuth, asyncWrap(async (req, res, next) => {
     size > 0 ? processings.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
     processings.countDocuments(query)
   ])
-  res.json({ results, count })
+  res.json({ results: results.map(cleanProcessing), count })
 }))
 
 // Create a processing
@@ -75,7 +80,7 @@ router.post('', session.requiredAuth, asyncWrap(async (req, res, next) => {
   await validateFullProcessing(req.body)
   await db.collection('processings').insertOne(req.body)
   await runs.applyProcessing(db, req.body)
-  res.status(200).json(req.body)
+  res.status(200).json(cleanProcessing(req.body))
 }))
 
 // Patch some of the attributes of a processing
@@ -110,7 +115,7 @@ router.patch('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   await validateFullProcessing(patchedprocessing)
   await db.collection('processings').updateOne({ _id: req.params.id }, patch)
   await runs.applyProcessing(db, patchedprocessing)
-  res.status(200).json(patchedprocessing)
+  res.status(200).json(cleanProcessing(patchedprocessing))
 }))
 
 router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
@@ -118,7 +123,7 @@ router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
     .findOne({ _id: req.params.id }, { projection: {} })
   if (!processing) return res.status(404).send()
   if (!permissions.isContrib(req.user, processing)) return res.status(403).send()
-  res.status(200).json(processing)
+  res.status(200).json(cleanProcessing(processing))
 }))
 
 router.delete('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
@@ -131,13 +136,42 @@ router.delete('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => 
   res.sendStatus(204)
 }))
 
+router.get('/:id/webhook-key', session.requiredAuth, asyncWrap(async (req, res, next) => {
+  const db = req.app.get('db')
+  const processing = await db.collection('processings').findOne({ _id: req.params.id })
+  if (!processing) return res.status(404).send()
+  if (!permissions.isAdmin(req.user, processing)) return res.status(403).send()
+  res.send(processing.webhookKey)
+}))
+
+router.delete('/:id/webhook-key', session.requiredAuth, asyncWrap(async (req, res, next) => {
+  const db = req.app.get('db')
+  const processing = await db.collection('processings').findOne({ _id: req.params.id })
+  if (!processing) return res.status(404).send()
+  if (!permissions.isAdmin(req.user, processing)) return res.status(403).send()
+  const webhookKey = cryptoRandomString({ length: 16, type: 'url-safe' })
+  await db.collection('processings').updateOne(
+    { _id: processing._id },
+    { $set: { webhookKey } }
+  )
+  res.send(webhookKey)
+}))
+
 // TODO: also accept webhook key
-router.post('/:id/_trigger', session.requiredAuth, asyncWrap(async (req, res, next) => {
+router.post('/:id/_trigger', session.auth, asyncWrap(async (req, res, next) => {
   const db = req.app.get('db')
   const processing = await db.collection('processings')
     .findOne({ _id: req.params.id }, { projection: {} })
-  if (!permissions.isContrib(req.user, processing)) return res.status(403).send('Vous devez être contributeur pour déclencher un traitement')
-  if (!req.user.adminMode && processing.scheduling.type !== 'trigger') return res.status(400).send('Le traitement n\'est pas en mode de déclenchement manuel')
+  if (req.query.key) {
+    console.log(req.query.key, processing.webhookKey)
+    if (req.query.key !== processing.webhookKey) {
+      return res.status(403).send('Mauvaise clé de déclenchement')
+    }
+  } else {
+    if (!req.user || !permissions.isAdmin(req.user, processing)) {
+      return res.status(403).send('Vous devez être contributeur pour déclencher un traitement')
+    }
+  }
   if (!processing.active) return res.status(409).send('Le traitement n\'est pas actif')
-  res.send(await runs.createNext(db, processing, true))
+  res.send(await runs.createNext(db, processing, true, req.query.delay ? Number(req.query.delay) : 0))
 }))

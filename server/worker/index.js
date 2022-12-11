@@ -228,7 +228,7 @@ async function acquireNext (db) {
     .aggregate([{
       $match: {
         $or: [
-          { status: 'triggered' },
+          { status: 'triggered', scheduledAt: { $lte: new Date().toISOString() } },
           { status: 'scheduled', scheduledAt: { $lte: new Date().toISOString() } },
           // we also fetch running tasks to check if lock was released (meaning task was brutally interrupted)
           { status: 'running' }

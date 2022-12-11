@@ -52,6 +52,9 @@
       </v-list-item-avatar>
       <v-list-item-content>
         <v-list-item-title>déclenchée manuellement {{ run.createdAt | fromNow }}</v-list-item-title>
+        <v-list-item-subtitle v-if="run.scheduledAt && run.scheduledAt !== run.createdAt">
+          planifiée {{ run.scheduledAt | fromNow(true) }}
+        </v-list-item-subtitle>
       </v-list-item-content>
     </template>
 
