@@ -236,10 +236,21 @@ async function acquireNext (db) {
       }
     }, { $sample: { size: 100 } }])
   while (await cursor.hasNext()) {
-    const run = await cursor.next()
+    let run = await cursor.next()
     // console.log('resource', resource)
     const ack = await locks.acquire(db, run.processing._id)
     debug('acquire lock for run ?', run, ack)
-    if (ack) return run
+    if (ack) {
+      if (!['triggered', 'scheduled'].includes(run.status)) {
+        console.error('lock was acquired while the run has wrong status', run.processing, run.status)
+        continue
+      }
+      run = await db.collection('runs').findOne({ _id: run._id })
+      if (!['triggered', 'scheduled'].includes(run.status)) {
+        console.error('lock was acquired but the updated run has wrong status', run.processing, run.status)
+        continue
+      }
+      return run
+    }
   }
 }
