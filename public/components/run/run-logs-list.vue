@@ -33,6 +33,12 @@
         {{ log.msg }}
       </span>
       <span
+        v-if="log.type === 'debug'"
+        class="text-caption"
+      >
+        {{ log.msg }}
+      </span>
+      <span
         v-if="log.type === 'task'"
         class="text-body-2"
         :class="`${taskColor(log)}--text`"

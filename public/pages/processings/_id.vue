@@ -112,11 +112,11 @@ export default {
       this.$store.commit('setAny', { runBackLink: true })
     }
     await this.fetchProcessing()
-    this.editProcessing = { ...this.processing }
-    Object.keys(processingSchema.properties).forEach(key => {
-      if (processingSchema.properties[key].readOnly) delete this.editProcessing[key]
-    })
     this.plugin = await this.$axios.$get('api/v1/plugins/' + this.processing.plugin)
+    this.editProcessing = { ...this.processing }
+    Object.keys(this.processingSchema.properties).forEach(key => {
+      if (this.processingSchema.properties[key].readOnly) delete this.editProcessing[key]
+    })
   },
   methods: {
     async fetchProcessing () {
