@@ -38,8 +38,8 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
     async info (msg, extra) {
       return pushLog({ type: 'info', date: new Date().toISOString(), msg, extra })
     },
-    async debug (msg, extra, force) {
-      if (!processing.debug && !force) return
+    async debug (msg, extra) {
+      if (!processing.debug) return
       return pushLog({ type: 'debug', date: new Date().toISOString(), msg, extra })
     },
     async task (msg) {
@@ -215,10 +215,12 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
   } catch (err) {
     process.chdir(cwd)
     if (err.status && err.statusText) {
-      const message = err.data && typeof err.data === 'string' ? err.data : err.statusText
+      let message = err.data && typeof err.data === 'string' ? err.data : err.statusText
+      if (err.config && err.config.url) message += ` (${err.config.url})`
       console.error(message)
+      console.log(err)
       await log.error(message)
-      await log.debug('axios error', err, true)
+      await log.debug('axios error', err)
     } else {
       console.error(err.message)
       console.log(err)
