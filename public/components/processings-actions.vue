@@ -72,7 +72,7 @@ import { mapState, mapGetters } from 'vuex'
 
 export default {
   props: {
-    installedPlugins: { type: Array, required: true }
+    installedPlugins: { type: Object, required: true }
   },
   data: () => ({
     showCreateMenu: false,

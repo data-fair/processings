@@ -7,6 +7,7 @@ const event2promise = require('event-to-promise')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const { createProxyMiddleware } = require('http-proxy-middleware')
+const cors = require('cors')
 const session = require('./utils/session')
 const prometheus = require('./utils/prometheus')
 const limits = require('./utils/limits')
@@ -63,6 +64,7 @@ let server, wss
 exports.start = async ({ db }) => {
   const nuxt = await require('./nuxt')()
   app.use(session.auth)
+  app.use('/_nuxt', cors()) // prevent CORS errors when fetching fonts in multi-domain mode
   app.use(nuxt.render)
   app.set('db', db)
 
