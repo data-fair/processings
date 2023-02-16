@@ -4,7 +4,7 @@ const nock = require('nock')
 const axios = require('axios')
 const app = require('../server/app')
 const worker = require('../server/worker')
-const axiosAuth = require('@koumoul/sd-express').axiosAuth
+const axiosAuth = require('@data-fair/sd-express').axiosAuth
 
 before('global mocks', () => {
   // fake remote service
