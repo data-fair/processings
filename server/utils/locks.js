@@ -28,11 +28,13 @@ exports.acquire = async (db, _id) => {
   try {
     await locks.insertOne({ _id, pid })
     try {
-      await locks.updateOne({ _id }, { $currentDate: { updatedAt: true } })
+      await locks.updateOne({ _id, pid }, { $currentDate: { updatedAt: true } })
     } catch (err) {
       await locks.deleteOne({ _id, pid })
       throw err
     }
+    // double check in case of a weird race condition on the insertOne unique check
+    if (!await locks.findOne({ _id, pid })) return false
     return true
   } catch (err) {
     if (err.code !== 11000) throw err

@@ -64,7 +64,7 @@ exports.start = async ({ db, wsPublish }) => {
     const freeSlot = promisePool.findIndex(p => !p)
     debugLoop('free slot', freeSlot)
 
-    const run = await acquireNext(db)
+    const run = await acquireNext(db, wsPublish)
 
     if (!run) {
       continue
@@ -222,7 +222,7 @@ async function iter (db, wsPublish, run) {
   }
 }
 
-async function acquireNext (db) {
+async function acquireNext (db, wsPublish) {
   // Random sort prevents from insisting on the same failed dataset again and again
   const cursor = db.collection('runs')
     .aggregate([{
@@ -241,13 +241,23 @@ async function acquireNext (db) {
     const ack = await locks.acquire(db, run.processing._id)
     debug('acquire lock for run ?', run, ack)
     if (ack) {
-      if (!['triggered', 'scheduled'].includes(run.status)) {
-        console.error('lock was acquired while the run has wrong status', run.processing, run.status)
-        continue
-      }
+      // re-fetch run to prevent some race condition
       run = await db.collection('runs').findOne({ _id: run._id })
-      if (!['triggered', 'scheduled'].includes(run.status)) {
-        console.error('lock was acquired but the updated run has wrong status', run.processing, run.status)
+
+      // if we could asquire the lock it means the task was brutally interrupted
+      if (run.status === 'running') {
+        try {
+          console.warn('we had to close a run that was stuck in running status', run)
+          await runs.finish(db, wsPublish, run, 'le traitement a été interrompu suite à une opération de maintenance', 'error')
+          const processing = await db.collection('processings').findOne({ _id: run.processing._id })
+          await locks.release(db, run.processing._id)
+          if (processing && processing.scheduling.type !== 'trigger') {
+            await runs.createNext(db, processing)
+          }
+        } catch (err) {
+          prometheus.internalError.inc({ errorCode: 'manage-running' })
+          console.error('(manage-running) failure while closing a run that was left in running status by error', err)
+        }
         continue
       }
       return run
