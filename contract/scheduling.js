@@ -43,7 +43,7 @@ module.exports = {
           description: 'de 0 à 59',
           type: 'integer',
           minimum: 0,
-          maximum: 23,
+          maximum: 59,
           default: 0,
           'x-cols': 6,
           'x-class': 'pr-1'
@@ -109,7 +109,7 @@ module.exports = {
           description: 'de 0 à 59',
           type: 'integer',
           minimum: 0,
-          maximum: 23,
+          maximum: 59,
           default: 0,
           'x-cols': 6,
           'x-class': 'pr-1'
@@ -159,7 +159,7 @@ module.exports = {
           description: 'de 0 à 59',
           type: 'integer',
           minimum: 0,
-          maximum: 23,
+          maximum: 59,
           default: 0,
           'x-cols': 6,
           'x-class': 'pr-1'
