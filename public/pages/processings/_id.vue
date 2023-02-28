@@ -11,6 +11,7 @@
         <v-form ref="form">
           <v-jsf
             v-if="processingSchema"
+            :key="renderVjsfKey"
             v-model="editProcessing"
             :schema="processingSchema"
             :options="vjsfOptions"
@@ -64,7 +65,8 @@ export default {
   data: () => ({
     processing: null,
     editProcessing: null,
-    plugin: null
+    plugin: null,
+    renderVjsfKey: 0
   }),
   computed: {
     ...mapState(['env']),
@@ -128,9 +130,13 @@ export default {
         text: this.processing.title
       }])
     },
-    async patch (patch) {
+    async patch () {
       if (!this.$refs.form.validate()) return
-      await this.$axios.$patch('api/v1/processings/' + this.$route.params.id, patch)
+      if (this.editProcessing.scheduling && this.editProcessing.scheduling.type === 'weekly') {
+        if (this.editProcessing.scheduling.dayOfWeek === '*') this.editProcessing.scheduling.dayOfWeek = '1'
+        this.renderVjsfKey += 1
+      }
+      await this.$axios.$patch('api/v1/processings/' + this.$route.params.id, this.editProcessing)
       await this.fetchProcessing()
     }
   }

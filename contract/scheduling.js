@@ -25,20 +25,28 @@ module.exports = {
           type: 'integer',
           minimum: 1,
           maximum: 28,
-          default: 1
+          default: 1,
+          'x-cols': 6,
+          'x-class': 'pr-1'
         },
         hour: {
           title: 'Heure de la journée',
+          description: 'de 0 à 23',
+          type: 'integer',
+          minimum: 0,
+          maximum: 23,
+          default: 0,
+          'x-cols': 6
+        },
+        minute: {
+          title: 'Minute',
+          description: 'de 0 à 59',
           type: 'integer',
           minimum: 0,
           maximum: 23,
           default: 0,
           'x-cols': 6,
           'x-class': 'pr-1'
-        },
-        minute: {
-          type: 'integer',
-          const: 0
         },
         month: {
           type: 'string',
@@ -88,6 +96,7 @@ module.exports = {
         },
         hour: {
           title: 'Heure de la journée',
+          description: 'de 0 à 23',
           type: 'integer',
           minimum: 0,
           maximum: 23,
@@ -96,8 +105,14 @@ module.exports = {
           'x-class': 'pl-1'
         },
         minute: {
+          title: 'Minute',
+          description: 'de 0 à 59',
           type: 'integer',
-          const: 0
+          minimum: 0,
+          maximum: 23,
+          default: 0,
+          'x-cols': 6,
+          'x-class': 'pr-1'
         },
         dayOfMonth: {
           type: 'string',
@@ -126,14 +141,28 @@ module.exports = {
         },
         hour: {
           title: 'Heure de la journée',
+          description: 'de 0 à 23',
           type: 'integer',
           minimum: 0,
           maximum: 23,
-          default: 0
+          default: 0,
+          'x-cols': 6,
+          'x-class': 'pr-1'
+        },
+        timeZone: {
+          type: 'string',
+          'x-cols': 6,
+          'x-display': 'custom-time-zone'
         },
         minute: {
+          title: 'Minute',
+          description: 'de 0 à 59',
           type: 'integer',
-          const: 0
+          minimum: 0,
+          maximum: 23,
+          default: 0,
+          'x-cols': 6,
+          'x-class': 'pr-1'
         },
         dayOfMonth: {
           type: 'string',
@@ -142,11 +171,6 @@ module.exports = {
         month: {
           type: 'string',
           const: '*'
-        },
-        timeZone: {
-          type: 'string',
-          'x-cols': 6,
-          'x-display': 'custom-time-zone'
         }
       }
     },
@@ -175,6 +199,7 @@ module.exports = {
         },
         minute: {
           title: 'Minute',
+          description: 'de 0 à 59',
           type: 'integer',
           minimum: 0,
           maximum: 59,
