@@ -104,7 +104,7 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
     const headers = {}
     if (error.response.headers.location) headers.location = error.response.headers.location
     error.response.headers = headers
-    error.response.config = { method: error.response.config.method, url: error.response.config.url, data: error.response.config.data }
+    error.response.config = { method: error.response.config.method, url: error.response.config.url, params: error.response.config.params, data: error.response.config.data }
     if (error.response.config.data && error.response.config.data._writableState) delete error.response.config.data
     if (error.response.data && error.response.data._readableState) delete error.response.data
     return Promise.reject(error.response)
@@ -214,12 +214,12 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
     else await log.info('terminé')
   } catch (err) {
     process.chdir(cwd)
-    if (err.status && err.statusText) {
-      let message = err.data && typeof err.data === 'string' ? err.data : err.statusText
-      if (err.config && err.config.url) message += ` (${err.config.url})`
-      console.error(message)
+    let httpMessage = err.data && typeof err.data === 'string' ? err.data : err.statusText
+    if (err.status && httpMessage) {
+      if (err.config && err.config.url) httpMessage += ` (${err.config.url})`
+      console.error(httpMessage)
       console.log(err)
-      await log.error(message)
+      await log.error(httpMessage)
       await log.debug('axios error', err)
     } else {
       console.error(err.message)
