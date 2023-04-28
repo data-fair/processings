@@ -14,7 +14,7 @@ describe('Processings', () => {
     })).data
   })
 
-  it.only('should create a new processing, activate it and run it', async () => {
+  it('should create a new processing, activate it and run it', async () => {
     let processing = (await global.ax.superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
       plugin: plugin.id
