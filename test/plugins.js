@@ -4,20 +4,20 @@ const assert = require('assert').strict
 describe('Plugins', () => {
   it('should install a new plugin then list and remove it', async () => {
     const plugin = {
-      name: '@koumoul/data-fair-processings-hello-world',
-      version: '0.3.0',
+      name: '@data-fair/processing-hello-world',
+      version: '0.11.0',
       distTag: 'latest',
       description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.',
-      npm: 'https://www.npmjs.com/package/%40koumoul%2Fdata-fair-processings-hello-world'
+      npm: 'https://www.npmjs.com/package/%40ata-fair%2F@dprocessing-hello-world'
     }
     let res = await global.ax.superadmin.post('/api/v1/plugins', plugin)
     plugin.id = res.data.id
-    assert.equal(res.data.name, '@koumoul/data-fair-processings-hello-world')
+    assert.equal(res.data.name, '@data-fair/processing-hello-world')
 
     res = await global.ax.superadmin.get('/api/v1/plugins')
     assert.equal(res.data.count, 1)
     assert.equal(res.data.results.length, 1)
-    assert.equal(res.data.results[0].name, '@koumoul/data-fair-processings-hello-world')
+    assert.equal(res.data.results[0].name, '@data-fair/processing-hello-world')
 
     await assert.rejects(global.ax.anonymous.get('/api/v1/plugins'), (err) => err.status === 401)
     await assert.rejects(global.ax.dmeadus.get('/api/v1/plugins'), (err) => err.status === 400)
