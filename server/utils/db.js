@@ -37,7 +37,7 @@ exports.init = async (poolSize, readPreference) => {
   await exports.ensureIndex(db, 'processings', { title: 'text' }, { name: 'fulltext' })
   await exports.ensureIndex(db, 'processings', { 'owner.type': 1, 'owner.id': 1 }, { name: 'main' })
 
-  await exports.ensureIndex(db, 'runs', { 'owner.type': 1, 'owner.id': 1, 'processing._id': 1 }, { name: 'main' })
+  await exports.ensureIndex(db, 'runs', { 'owner.type': 1, 'owner.id': 1, 'processing._id': 1, createdAt: -1 }, { name: 'main' })
 
   return { db, client }
 }
