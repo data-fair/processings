@@ -16,8 +16,8 @@ exports.ensureIndex = async (db, collection, key, options) => {
 exports.connect = async (maxPoolSize = 5, readPreference = 'primary') => {
   let client
   // const opts = { maxPoolSize }
-  const opts = {}
-  const url = `mongodb://${config.mongo.host}:${config.mongo.port}/${config.mongo.db}?readPreference=${readPreference}`
+  const opts = { readPreference }
+  const url = config.mongo.url || `mongodb://${config.mongo.host}:${config.mongo.port}/${config.mongo.db}`
   try {
     client = await MongoClient.connect(url, opts)
   } catch (err) {

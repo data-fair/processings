@@ -14,7 +14,8 @@ module.exports = {
   privateNotifyUrl: 'PRIVATE_NOTIFY_URL',
   mongo: {
     host: 'MONGO_HOST',
-    db: 'MONGO_DB'
+    db: 'MONGO_DB',
+    url: 'MONGO_URL'
   },
   mails: {
     transport: {
