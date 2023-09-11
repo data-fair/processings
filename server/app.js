@@ -74,6 +74,8 @@ exports.start = async ({ db }) => {
       console.error('(http) Error in express route', err)
       prometheus.internalError.inc({ errorCode: 'http' })
     }
+    // settings content-type as plain text instead of html to prevent XSS attack
+    res.type('text/plain')
     res.status(status).send(err.message)
   })
 
