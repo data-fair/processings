@@ -45,7 +45,8 @@ exports.createNext = async (db, processing, triggered, delaySeconds = 0) => {
     },
     createdAt: new Date().toISOString(),
     status: triggered ? 'triggered' : 'scheduled',
-    log: []
+    log: [],
+    permissions: processing.permissions || []
   }
 
   // cancel one that might have been scheduled previously

@@ -5,10 +5,11 @@ const worker = require('../server/worker')
 
 describe('Processings', () => {
   let plugin
-  before('prepare a plugin', async () => {
+  beforeEach('prepare a plugin', async () => {
     plugin = (await global.ax.superadmin.post('/api/v1/plugins', {
       name: '@data-fair/processing-hello-world',
-      version: '0.9.5',
+      version: '0.11.0',
+      distTag: 'latest',
       description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.',
       npm: 'https://www.npmjs.com/package/%40data-fair%2Fprocessing-hello-world'
     })).data
@@ -138,7 +139,7 @@ describe('Processings', () => {
     assert.equal(run.log.length, 2)
   })
 
-  it('should fail a run if processings_seconds limit is execeeded', async function () {
+  it('should fail a run if processings_seconds limit is exceeded', async function () {
     this.timeout(30000)
 
     await global.ax.superadmin.post('/api/v1/limits/user/superadmin', {

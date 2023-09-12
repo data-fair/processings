@@ -58,7 +58,7 @@ export default {
     },
     async refresh () {
       this.loading = true
-      this.runs = await this.$axios.$get('api/v1/runs', { params: { processing: this.processing._id, size: 1000, sort: 'createdAt:-1' } })
+      this.runs = await this.$axios.$get('api/v1/runs', { params: { processing: this.processing._id, size: 1000, sort: 'createdAt:-1', owner: `${this.processing.owner.type}:${this.processing.owner.id}` } })
       this.loading = false
     }
   }

@@ -1,4 +1,5 @@
 const { owner } = require('./owner')
+const permissions = require('./permissions')
 
 module.exports = {
   type: 'object',
@@ -58,6 +59,7 @@ module.exports = {
           }
         }
       }
-    }
+    },
+    permissions
   }
 }

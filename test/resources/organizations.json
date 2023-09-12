@@ -98,11 +98,19 @@
       "id": "dhannan8",
       "role": "user"
     }, {
-      "id": "user1",
-      "role": "user"
+      "id": "admin1",
+      "role": "admin"
     }, {
       "id": "contrib1",
       "role": "contrib"
+    }, {
+      "id": "user1",
+      "role": "user"
+    }],
+    "partners": [{
+      "id": "KWqAGZ4mG",
+      "name": "Fivechat",
+      "contactEmail": "dmeadus0@answers.com"
     }]
   }
 ]

@@ -15,6 +15,8 @@ const session = require('../utils/session')
 
 const pluginsDir = path.join(config.dataDir, 'plugins')
 
+const sensitiveParts = ['permissions', 'webhookKey', 'config']
+
 const router = module.exports = express.Router()
 
 const validateFullProcessing = async (processing) => {
@@ -32,8 +34,12 @@ const validateFullProcessing = async (processing) => {
   if (!configValid) throw createError(400, JSON.stringify(configValidate.errors))
 }
 
-const cleanProcessing = (processing) => {
+const cleanProcessing = (processing, user) => {
   delete processing.webhookKey
+  processing.userProfile = permissions.getUserResourceProfile(processing, user)
+  if (processing.userProfile !== 'admin') {
+    for (const part of sensitiveParts) delete processing[part]
+  }
   return processing
 }
 
@@ -48,7 +54,7 @@ router.get('', session.requiredAuth, asyncWrap(async (req, res, next) => {
     size > 0 ? processings.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
     processings.countDocuments(query)
   ])
-  res.json({ results: results.map(cleanProcessing), count })
+  res.json({ results: results.map(p => cleanProcessing(p, req.user)), count })
 }))
 
 // Create a processing
@@ -56,7 +62,7 @@ router.post('', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const db = req.app.get('db')
   req.body._id = nanoid()
   if (req.body.owner && !req.user.adminMode) return res.status(403).send('owner can only be set for superadmin')
-  req.body.owner = req.body.owner || req.user.activeAccount
+  req.body.owner = req.body.owner || req.user.accountOwner
   if (!permissions.isAdmin(req.user, req.body)) return res.status(403).send()
   req.body.scheduling = req.body.scheduling || { type: 'trigger' }
   req.body.webhookKey = cryptoRandomString({ length: 16, type: 'url-safe' })
@@ -80,7 +86,7 @@ router.post('', session.requiredAuth, asyncWrap(async (req, res, next) => {
   await validateFullProcessing(req.body)
   await db.collection('processings').insertOne(req.body)
   await runs.applyProcessing(db, req.body)
-  res.status(200).json(cleanProcessing(req.body))
+  res.status(200).json(cleanProcessing(req.body, req.user))
 }))
 
 // Patch some of the attributes of a processing
@@ -88,7 +94,7 @@ router.patch('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const db = req.app.get('db')
   const processing = await db.collection('processings').findOne({ _id: req.params.id }, { projection: {} })
   if (!processing) return res.status(404).send()
-  if (!permissions.isAdmin(req.user, processing)) return res.status(403).send()
+  if (permissions.getUserResourceProfile(processing, req.user) !== 'admin') return res.status(403).send()
   // Restrict the parts of the processing that can be edited by API
   const acceptedParts = Object.keys(processingSchema.properties)
     .filter(k => req.user.adminMode || !processingSchema.properties[k].readOnly)
@@ -114,23 +120,24 @@ router.patch('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const patchedprocessing = { ...processing, ...req.body }
   await validateFullProcessing(patchedprocessing)
   await db.collection('processings').updateOne({ _id: req.params.id }, patch)
+  await db.collection('runs').updateMany({ 'processing._id': processing._id }, { $set: { permissions: patchedprocessing.permissions || [] } })
   await runs.applyProcessing(db, patchedprocessing)
-  res.status(200).json(cleanProcessing(patchedprocessing))
+  res.status(200).json(cleanProcessing(patchedprocessing, req.user))
 }))
 
 router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const processing = await req.app.get('db').collection('processings')
     .findOne({ _id: req.params.id }, { projection: {} })
   if (!processing) return res.status(404).send()
-  if (!permissions.isContrib(req.user, processing)) return res.status(403).send()
-  res.status(200).json(cleanProcessing(processing))
+  if (!['admin', 'read'].includes(permissions.getUserResourceProfile(processing, req.user))) return res.status(403).send()
+  res.status(200).json(cleanProcessing(processing, req.user))
 }))
 
 router.delete('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const db = req.app.get('db')
   const processing = await db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
-  if (!permissions.isAdmin(req.user, processing)) return res.status(403).send()
+  if (permissions.getUserResourceProfile(processing, req.user) !== 'admin') return res.status(403).send()
   await db.collection('processings').deleteOne({ _id: req.params.id })
   if (processing && processing.value) await runs.deleteProcessing(db, processing)
   res.sendStatus(204)
@@ -140,7 +147,7 @@ router.get('/:id/webhook-key', session.requiredAuth, asyncWrap(async (req, res, 
   const db = req.app.get('db')
   const processing = await db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
-  if (!permissions.isAdmin(req.user, processing)) return res.status(403).send()
+  if (permissions.getUserResourceProfile(processing, req.user) !== 'admin') return res.status(403).send()
   res.send(processing.webhookKey)
 }))
 
@@ -148,7 +155,7 @@ router.delete('/:id/webhook-key', session.requiredAuth, asyncWrap(async (req, re
   const db = req.app.get('db')
   const processing = await db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
-  if (!permissions.isAdmin(req.user, processing)) return res.status(403).send()
+  if (permissions.getUserResourceProfile(processing, req.user) !== 'admin') return res.status(403).send()
   const webhookKey = cryptoRandomString({ length: 16, type: 'url-safe' })
   await db.collection('processings').updateOne(
     { _id: processing._id },
@@ -157,20 +164,16 @@ router.delete('/:id/webhook-key', session.requiredAuth, asyncWrap(async (req, re
   res.send(webhookKey)
 }))
 
-// TODO: also accept webhook key
 router.post('/:id/_trigger', session.auth, asyncWrap(async (req, res, next) => {
   const db = req.app.get('db')
   const processing = await db.collection('processings')
     .findOne({ _id: req.params.id }, { projection: {} })
   if (req.query.key) {
-    console.log(req.query.key, processing.webhookKey)
     if (req.query.key !== processing.webhookKey) {
       return res.status(403).send('Mauvaise clé de déclenchement')
     }
   } else {
-    if (!req.user || !permissions.isAdmin(req.user, processing)) {
-      return res.status(403).send('Vous devez être contributeur pour déclencher un traitement')
-    }
+    if (permissions.getUserResourceProfile(processing, req.user) !== 'admin') return res.status(403).send()
   }
   if (!processing.active) return res.status(409).send('Le traitement n\'est pas actif')
   res.send(await runs.createNext(db, processing, true, req.query.delay ? Number(req.query.delay) : 0))

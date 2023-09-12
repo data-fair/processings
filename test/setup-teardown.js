@@ -40,13 +40,17 @@ before('init globals', async () => {
     global.ax.builder('dmeadus0@answers.com:passwd').then(ax => { global.ax.dmeadus = ax }),
     global.ax.builder('dmeadus0@answers.com:passwd', 'KWqAGZ4mG').then(ax => { global.ax.dmeadusOrg = ax }),
     global.ax.builder('cdurning2@desdev.cn:passwd').then(ax => { global.ax.cdurning2 = ax }),
-    global.ax.builder('superadmin@test.com:superpasswd:adminMode').then(ax => { global.ax.superadmin = ax })
+    global.ax.builder('superadmin@test.com:superpasswd:adminMode').then(ax => { global.ax.superadmin = ax }),
+    global.ax.builder('admin1@test.com:passwd', 'koumoul').then(ax => { global.ax.admin1Koumoul = ax }),
+    global.ax.builder('contrib1@test.com:passwd', 'koumoul').then(ax => { global.ax.contrib1Koumoul = ax }),
+    global.ax.builder('user1@test.com:passwd', 'koumoul').then(ax => { global.ax.user1Koumoul = ax })
   ])
 })
 
-before('scratch all', async () => {
-  await global.db.dropDatabase()
-  await fs.remove('./data/test')
+beforeEach('scratch all', async () => {
+  await global.db.collection('runs').deleteMany({})
+  await global.db.collection('processings').deleteMany({})
+  await fs.emptyDir('./data/test')
 })
 
 before('start service', async function () {

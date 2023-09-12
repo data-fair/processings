@@ -1,4 +1,5 @@
 const createError = require('http-errors')
+const permissions = require('./permissions')
 
 // Util functions shared accross the main find (GET on collection) endpoints
 
@@ -12,8 +13,12 @@ exports.query = (req, fieldsMap = {}) => {
     throw createError(400, 'Only super admins can override permissions filter with showAll parameter')
   }
   if (!showAll) {
-    query['owner.type'] = req.user.activeAccount.type
-    query['owner.id'] = req.user.activeAccount.id
+    let owner = req.user.activeAccount
+    if (req.query.owner) {
+      const ownerParts = req.query.owner.split(':')
+      owner = { type: ownerParts[0], id: ownerParts[1], department: ownerParts[2] }
+    }
+    Object.assign(query, permissions.getOwnerPermissionFilter(owner, req.user))
   }
 
   Object.keys(fieldsMap).filter(name => req.query[name] !== undefined).forEach(name => {

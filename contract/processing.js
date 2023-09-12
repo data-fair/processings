@@ -1,5 +1,6 @@
 const { owner } = require('./owner')
 const scheduling = require('./scheduling')
+const permissions = require('./permissions')
 const run = JSON.parse(JSON.stringify(require('./run')))
 delete run.required
 delete run.properties.log
@@ -47,9 +48,10 @@ module.exports = {
     nextRun: { ...run, title: 'Prochaine exécution' },
     webhookKey: {
       type: 'string',
-      title: 'Identifiant du traitement',
+      title: 'Clé pour exécution à distance du traitement',
       readOnly: true
     },
+    permissions,
     created: {
       type: 'object',
       additionalProperties: false,

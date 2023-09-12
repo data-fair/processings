@@ -14,6 +14,7 @@ services:
       - NO_UI=${NO_UI}
       - AUTHRATELIMIT_ATTEMPTS=200
       - PROMETHEUS_ACTIVE=false
+      - MANAGE_PARTNERS=true
     volumes:
       - ./test/resources/users.json:/webapp/data/users.json
       - ./test/resources/organizations.json:/webapp/data/organizations.json

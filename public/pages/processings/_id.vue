@@ -74,6 +74,7 @@ export default {
     ...mapGetters(['canAdmin']),
     processingSchema () {
       if (!this.plugin) return
+      if (!this.processing) return
       const schema = JSON.parse(JSON.stringify(processingSchema))
       schema.properties.config = {
         ...this.plugin.processingConfigSchema,
@@ -81,6 +82,11 @@ export default {
         'x-options': { deleteReadOnly: false }
       }
       if (this.user.adminMode) delete schema.properties.debug.readOnly
+      if (this.processing.userProfile !== 'admin') {
+        delete schema.properties.permissions
+        delete schema.properties.config
+        delete schema.properties.webhookKey
+      }
       return schema
     },
     vjsfOptions () {
@@ -91,7 +97,7 @@ export default {
           ownerFilter: this.env.dataFairAdminMode ? `owner=${this.processing.owner.type}:${encodeURIComponent(this.processing.owner.id)}` : '',
           dataFairUrl: this.env.dataFairUrl
         },
-        disableAll: !this.canAdmin,
+        disableAll: this.processing.userProfile !== 'admin',
         locale: 'fr',
         // rootDisplay: 'expansion-panels',
         // rootDisplay: 'tabs',
