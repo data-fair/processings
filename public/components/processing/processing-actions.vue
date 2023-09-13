@@ -12,6 +12,7 @@
       <template #activator="{on, attrs}">
         <v-list-item
           v-bind="attrs"
+          :disabled="!processing.active"
           v-on="on"
         >
           <v-list-item-icon>
@@ -168,6 +169,7 @@
 import { mapState, mapGetters } from 'vuex'
 import 'iframe-resizer/js/iframeResizer'
 import VIframe from '@koumoul/v-iframe'
+import eventBus from '../../event-bus'
 
 export default {
   components: { VIframe },
@@ -207,12 +209,20 @@ export default {
   methods: {
     async confirmRemove () {
       this.showDeleteMenu = false
-      await this.$axios.$delete(`api/v1/processings/${this.processing._id}`)
-      this.$router.push('/processings')
+      try {
+        await this.$axios.$delete(`api/v1/processings/${this.processing._id}`)
+        this.$router.push('/processings')
+      } catch (error) {
+        eventBus.$emit('notification', { error, msg: 'Erreur pendant la suppression du traitement' })
+      }
     },
     async trigger (delay) {
-      await this.$axios.$post(`api/v1/processings/${this.processing._id}/_trigger`, null, { params: { delay } })
-      this.$emit('triggered')
+      try {
+        await this.$axios.$post(`api/v1/processings/${this.processing._id}/_trigger`, null, { params: { delay } })
+        this.$emit('triggered')
+      } catch (error) {
+        eventBus.$emit('notification', { error, msg: 'Erreur pendant le déclenchement du traitement' })
+      }
     },
     async getWebhookKey () {
       this.webhookKey = await this.$axios.$get(`api/v1/processings/${this.processing._id}/webhook-key`)
