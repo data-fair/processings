@@ -71,10 +71,10 @@ export default {
     ...mapState(['runBackLink']),
     ...mapState('session', ['user']),
     wsLogChannel () {
-      return `processings/${this.run.processing._id}/run-log`
+      return this.run && `processings/${this.run.processing._id}/run-log`
     },
     wsPatchChannel () {
-      return `processings/${this.run.processing._id}/run-patch`
+      return this.run && `processings/${this.run.processing._id}/run-patch`
     },
     steps () {
       if (!this.run) return

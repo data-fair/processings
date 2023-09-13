@@ -120,7 +120,7 @@
     </v-list-item>
 
     <v-menu
-      v-if="notifUrl"
+      v-if="notifUrl && processing.owner.type === activeAccount.type && processing.owner.id === activeAccount.id && !activeAccount.department"
       v-model="showNotifMenu"
       max-width="500"
       min-width="500"
@@ -173,7 +173,7 @@ import eventBus from '../../event-bus'
 
 export default {
   components: { VIframe },
-  props: ['processing'],
+  props: ['processing', 'canAdmin'],
   data: () => ({
     showDeleteMenu: false,
     showNotifMenu: false,
@@ -184,7 +184,7 @@ export default {
   computed: {
     ...mapState(['env']),
     ...mapState('session', ['user']),
-    ...mapGetters(['canAdmin']),
+    ...mapGetters('session', ['activeAccount']),
     notifUrl () {
       if (!this.env.notifyUrl) return null
       const topics = [

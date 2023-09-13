@@ -35,6 +35,7 @@
       <layout-navigation-right v-if="$vuetify.breakpoint.lgAndUp">
         <processing-actions
           :processing="processing"
+          :can-admin="canAdminProcessing"
           @triggered="$refs.runs.refresh()"
         />
       </layout-navigation-right>
@@ -54,7 +55,7 @@
 </template>
 
 <script>
-import { mapState, mapGetters } from 'vuex'
+import { mapState } from 'vuex'
 import VJsf from '@koumoul/vjsf/lib/VJsf.js'
 
 const processingSchema = require('~/../contract/processing')
@@ -71,7 +72,10 @@ export default {
   computed: {
     ...mapState(['env']),
     ...mapState('session', ['user']),
-    ...mapGetters(['canAdmin']),
+    canAdminProcessing () {
+      if (!this.processing) return
+      return this.processing.userProfile === 'admin'
+    },
     processingSchema () {
       if (!this.plugin) return
       if (!this.processing) return
@@ -82,7 +86,7 @@ export default {
         'x-options': { deleteReadOnly: false }
       }
       if (this.user.adminMode) delete schema.properties.debug.readOnly
-      if (this.processing.userProfile !== 'admin') {
+      if (!this.canAdminProcessing) {
         delete schema.properties.permissions
         delete schema.properties.config
         delete schema.properties.webhookKey
@@ -97,7 +101,7 @@ export default {
           ownerFilter: this.env.dataFairAdminMode ? `owner=${this.processing.owner.type}:${encodeURIComponent(this.processing.owner.id)}` : '',
           dataFairUrl: this.env.dataFairUrl
         },
-        disableAll: this.processing.userProfile !== 'admin',
+        disableAll: !this.canAdminProcessing,
         locale: 'fr',
         // rootDisplay: 'expansion-panels',
         // rootDisplay: 'tabs',

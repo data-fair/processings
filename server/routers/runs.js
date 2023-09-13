@@ -7,6 +7,16 @@ const router = express.Router()
 
 module.exports = router
 
+const sensitiveParts = ['permissions']
+
+const cleanRun = (run, user) => {
+  run.userProfile = permissions.getUserResourceProfile(run, user)
+  if (run.userProfile !== 'admin') {
+    for (const part of sensitiveParts) delete run[part]
+  }
+  return run
+}
+
 router.get('', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const sort = findUtils.sort(req.query.sort)
   const [skip, size] = findUtils.pagination(req.query)
@@ -19,14 +29,14 @@ router.get('', session.requiredAuth, asyncWrap(async (req, res, next) => {
     size > 0 ? runs.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
     runs.countDocuments(query)
   ])
-  res.send({ results, count })
+  res.send({ results: results.map(r => cleanRun(r, req.user)), count })
 }))
 
 router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const run = await req.app.get('db').collection('runs').findOne({ _id: req.params.id })
   if (!run) return res.status(404).send()
   if (!['admin', 'read'].includes(permissions.getUserResourceProfile(run, req.user))) return res.status(403).send()
-  res.send(run)
+  res.send(cleanRun(run, req.user))
 }))
 
 router.post('/:id/_kill', session.requiredAuth, asyncWrap(async (req, res, next) => {
@@ -35,5 +45,5 @@ router.post('/:id/_kill', session.requiredAuth, asyncWrap(async (req, res, next)
   if (permissions.getUserResourceProfile(run, req.user) !== 'admin') return res.status(403).send()
   await req.app.get('db').collection('runs').updateOne({ _id: run._id }, { $set: { status: 'kill' } })
   run.status = 'kill'
-  res.send(run)
+  res.send(cleanRun(run, req.user))
 }))
