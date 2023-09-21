@@ -1,5 +1,8 @@
 <template>
-  <div class="actions-buttons">
+  <div
+    class="actions-buttons"
+    style="position:absolute;right:20px;"
+  >
     <v-menu
       bottom
       left

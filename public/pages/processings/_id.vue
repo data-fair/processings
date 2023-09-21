@@ -46,6 +46,7 @@
         <template #actions>
           <processing-actions
             :processing="processing"
+            :can-admin="canAdminProcessing"
             @triggered="$refs.runs.refresh()"
           />
         </template>
