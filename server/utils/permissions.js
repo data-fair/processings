@@ -50,12 +50,12 @@ const matchPermissionTarget = (target, user) => {
 }
 
 exports.getUserResourceProfile = (processing, user) => {
-  if (exports.getOwnerRole(processing.owner, user) === 'admin') return 'admin'
-  if (exports.getOwnerRole(processing.owner, user) === 'contrib') return 'read'
   for (const profile of ['admin', 'read']) {
     if (processing.permissions && processing.permissions.find(p => p.profile === profile && matchPermissionTarget(p.target, user))) {
       return profile
     }
   }
+  if (exports.getOwnerRole(processing.owner, user) === 'admin') return 'admin'
+  if (exports.getOwnerRole(processing.owner, user) === 'contrib') return 'read'
   return null
 }
