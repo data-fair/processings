@@ -99,7 +99,8 @@ export default {
         context: {
           owner: this.processing.owner,
           ownerFilter: this.env.dataFairAdminMode ? `owner=${this.processing.owner.type}:${encodeURIComponent(this.processing.owner.id)}` : '',
-          dataFairUrl: this.env.dataFairUrl
+          dataFairUrl: this.env.dataFairUrl,
+          directoryUrl: this.env.directoryUrl
         },
         disableAll: !this.canAdminProcessing,
         locale: 'fr',
@@ -115,7 +116,9 @@ export default {
         },
         arrayItemCardProps: { outlined: true, tile: true },
         dialogCardProps: { outlined: true },
-        deleteReadOnly: true
+        deleteReadOnly: true,
+        editMode: 'inline',
+        disableSorting: true
       }
     }
   },

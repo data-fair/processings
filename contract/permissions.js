@@ -43,7 +43,7 @@ module.exports = {
               organization: {
                 type: 'object',
                 title: 'Organisation',
-                'x-fromUrl': '/simple-directory/api/organizations/{context.owner.id}',
+                'x-fromUrl': '{context.directoryUrl}/api/organizations/{context.owner.id}',
                 'x-itemsProp': 'partners',
                 'x-itemKey': 'id',
                 'x-itemTitle': 'name',
