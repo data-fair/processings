@@ -4,7 +4,7 @@
     class="list-actions"
   >
     <v-menu
-      v-if="canAdmin"
+      v-if="canAdmin || canExec"
       v-model="showTriggerMenu"
       :close-on-content-click="false"
       max-width="800"
@@ -30,7 +30,7 @@
           Exécution du traitement
         </v-card-title>
         <v-card-text>
-          <p>
+          <p v-if="canAdmin">
             Vous pouvez déclencher une exécution sans être connecté à la plateforme en envoyant une requête HTTP POST à cette URL sécurisée :
             <br>{{ webhookLink }}
           </p>
@@ -173,7 +173,7 @@ import eventBus from '../../event-bus'
 
 export default {
   components: { VIframe },
-  props: ['processing', 'canAdmin'],
+  props: ['processing', 'canAdmin', 'canExec'],
   data: () => ({
     showDeleteMenu: false,
     showNotifMenu: false,
@@ -203,7 +203,7 @@ export default {
   },
   watch: {
     showTriggerMenu (v) {
-      if (v) this.getWebhookKey()
+      if (v && this.canAdmin) this.getWebhookKey()
     }
   },
   methods: {

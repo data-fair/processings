@@ -129,7 +129,8 @@ router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const processing = await req.app.get('db').collection('processings')
     .findOne({ _id: req.params.id }, { projection: {} })
   if (!processing) return res.status(404).send()
-  if (!['admin', 'read'].includes(permissions.getUserResourceProfile(processing, req.user))) return res.status(403).send()
+  console.log('PROFILE', permissions.getUserResourceProfile(processing, req.user))
+  if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(processing, req.user))) return res.status(403).send()
   res.status(200).json(cleanProcessing(processing, req.user))
 }))
 
@@ -173,7 +174,7 @@ router.post('/:id/_trigger', session.auth, asyncWrap(async (req, res, next) => {
       return res.status(403).send('Mauvaise clé de déclenchement')
     }
   } else {
-    if (permissions.getUserResourceProfile(processing, req.user) !== 'admin') return res.status(403).send()
+    if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(processing, req.user))) return res.status(403).send()
   }
   if (!processing.active) return res.status(409).send('Le traitement n\'est pas actif')
   res.send(await runs.createNext(db, processing, true, req.query.delay ? Number(req.query.delay) : 0))

@@ -14,6 +14,7 @@
             :key="run._id + '-item'"
             :run="run"
             :link="true"
+            :can-exec="canExec"
           />
         </template>
       </template>
@@ -25,7 +26,7 @@
 import eventBus from '~/event-bus'
 
 export default {
-  props: ['processing'],
+  props: ['processing', 'canExec'],
   data () {
     return { loading: false, runs: null }
   },

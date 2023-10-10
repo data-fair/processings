@@ -30,12 +30,14 @@
           ref="runs"
           :processing="processing"
           class="mt-4"
+          :can-exec="canExecProcessing"
         />
       </v-col>
       <layout-navigation-right v-if="$vuetify.breakpoint.lgAndUp">
         <processing-actions
           :processing="processing"
           :can-admin="canAdminProcessing"
+          :can-exec="canExecProcessing"
           @triggered="$refs.runs.refresh()"
         />
       </layout-navigation-right>
@@ -47,6 +49,7 @@
           <processing-actions
             :processing="processing"
             :can-admin="canAdminProcessing"
+            :can-exec="canExecProcessing"
             @triggered="$refs.runs.refresh()"
           />
         </template>
@@ -76,6 +79,10 @@ export default {
     canAdminProcessing () {
       if (!this.processing) return
       return this.processing.userProfile === 'admin'
+    },
+    canExecProcessing () {
+      if (!this.processing) return
+      return ['admin', 'exec'].includes(this.processing.userProfile)
     },
     processingSchema () {
       if (!this.plugin) return

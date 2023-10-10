@@ -21,7 +21,10 @@
     </v-row>
     <v-row>
       <v-col>
-        <run-list-item :run="run" />
+        <run-list-item
+          :run="run"
+          :can-exec="canExec"
+        />
         <run-logs-list
           v-if="steps.length === 1 && !steps.msg"
           :logs="steps[0].children"
@@ -70,6 +73,10 @@ export default {
   computed: {
     ...mapState(['runBackLink']),
     ...mapState('session', ['user']),
+    canExec () {
+      if (!this.run) return
+      return ['admin', 'exec'].includes(this.run.userProfile)
+    },
     wsLogChannel () {
       return this.run && `processings/${this.run.processing._id}/run-log`
     },

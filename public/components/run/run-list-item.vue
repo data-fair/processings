@@ -81,7 +81,7 @@
       </v-list-item-content>
     </template>
 
-    <template v-if="!run.finishedAt && run.status !== 'kill'">
+    <template v-if="!run.finishedAt && run.status !== 'kill' && canExec">
       <v-list-item-action>
         <v-btn
           fab
@@ -99,7 +99,7 @@
 
 <script>
 export default {
-  props: ['run', 'link'],
+  props: ['run', 'link', 'canExec'],
   methods: {
     async kill (e) {
       e.preventDefault()

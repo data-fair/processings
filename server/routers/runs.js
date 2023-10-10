@@ -35,14 +35,14 @@ router.get('', session.requiredAuth, asyncWrap(async (req, res, next) => {
 router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const run = await req.app.get('db').collection('runs').findOne({ _id: req.params.id })
   if (!run) return res.status(404).send()
-  if (!['admin', 'read'].includes(permissions.getUserResourceProfile(run, req.user))) return res.status(403).send()
+  if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(run, req.user))) return res.status(403).send()
   res.send(cleanRun(run, req.user))
 }))
 
 router.post('/:id/_kill', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const run = await req.app.get('db').collection('runs').findOne({ _id: req.params.id })
   if (!run) return res.status(404).send()
-  if (permissions.getUserResourceProfile(run, req.user) !== 'admin') return res.status(403).send()
+  if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(run, req.user))) return res.status(403).send()
   await req.app.get('db').collection('runs').updateOne({ _id: run._id }, { $set: { status: 'kill' } })
   run.status = 'kill'
   res.send(cleanRun(run, req.user))
