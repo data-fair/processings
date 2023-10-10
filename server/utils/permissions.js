@@ -29,7 +29,7 @@ exports.getOwnerPermissionFilter = (owner, user) => {
     'owner.type': owner.type,
     'owner.id': owner.id
   }
-  if (['admin', 'contrib'].includes(exports.getOwnerRole(owner, user))) return filter
+  if (user.adminMode || ['admin', 'contrib'].includes(exports.getOwnerRole(owner, user))) return filter
   const or = [{ 'target.type': 'userEmail', 'target.email': user.email }]
   if (user.activeAccount.type === 'organization') {
     or.push({ 'target.type': 'partner', 'target.organization.id': user.activeAccount.id, 'target.roles': user.activeAccount.role })

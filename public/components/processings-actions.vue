@@ -4,7 +4,6 @@
     class="list-actions"
   >
     <v-menu
-      v-if="canAdmin"
       v-model="showCreateMenu"
       :close-on-content-click="false"
       min-width="500px"

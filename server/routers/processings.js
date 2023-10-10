@@ -129,7 +129,6 @@ router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const processing = await req.app.get('db').collection('processings')
     .findOne({ _id: req.params.id }, { projection: {} })
   if (!processing) return res.status(404).send()
-  console.log('PROFILE', permissions.getUserResourceProfile(processing, req.user))
   if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(processing, req.user))) return res.status(403).send()
   res.status(200).json(cleanProcessing(processing, req.user))
 }))

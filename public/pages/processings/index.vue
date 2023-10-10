@@ -50,7 +50,10 @@
         class="pt-2"
       >
         <template #actions>
-          <processings-actions :installed-plugins="installedPlugins" />
+          <processings-actions
+            v-if="ownerRole === 'admin' || user.adminMode"
+            :installed-plugins="installedPlugins"
+          />
         </template>
       </layout-actions-button>
     </v-row>
@@ -72,7 +75,26 @@ export default {
   }),
   computed: {
     ...mapState('session', ['user']),
-    ...mapGetters('session', ['activeAccount'])
+    ...mapGetters('session', ['activeAccount']),
+    owner () {
+      if (this.$route.query.owner) {
+        const parts = this.$route.query.owner.split(':')
+        return { type: parts[0], id: parts[1] }
+      } else {
+        return this.activeAccount
+      }
+    },
+    ownerRole () {
+      if (this.owner.type === 'user') {
+        if (this.owner.id === this.user.id) return 'admin'
+        else return 'anonymous'
+      }
+      const userOrg = this.user.organizations.find(o => o.id === this.owner.id)
+      return userOrg ? userOrg.role : 'anonymous'
+    },
+    ownerFilter () {
+      return `${this.owner.type}:${this.owner.id}`
+    }
   },
   watch: {},
   created () {
@@ -86,20 +108,24 @@ export default {
     async fetchInstalledPlugins () {
       this.installedPlugins = await this.$axios.$get('/api/v1/plugins', {
         params: {
-          privateAccess: `${this.activeAccount.type}:${this.activeAccount.id}`
+          privateAccess: this.ownerFilter
         }
       })
     },
     async refresh () {
       try {
-        this.processings = await this.$axios.$get('api/v1/processings', {
-          params: {
-            size: 10000,
-            showAll: this.showAll,
-            sort: 'updated.date:-1',
-            select: '_id,title,plugin,lastRun,nextRun,owner'
-          }
-        })
+        const params = {
+          size: 10000,
+          showAll: this.showAll,
+          sort: 'updated.date:-1',
+          select: '_id,title,plugin,lastRun,nextRun,owner'
+        }
+        if (this.showAll) {
+          params.showAll = true
+        } else {
+          params.owner = this.ownerFilter
+        }
+        this.processings = await this.$axios.$get('api/v1/processings', { params })
       } catch (error) {
         eventBus.$emit('notification', { error, msg: 'Erreur pendant la récupération de la liste des traitements' })
       }
