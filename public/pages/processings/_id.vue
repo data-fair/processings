@@ -66,7 +66,6 @@ const processingSchema = require('~/../contract/processing')
 
 export default {
   components: { VJsf },
-  middleware: 'contrib-required',
   data: () => ({
     processing: null,
     editProcessing: null,

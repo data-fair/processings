@@ -66,7 +66,6 @@ import { mapState } from 'vuex'
 import eventBus from '~/event-bus'
 
 export default {
-  middleware: 'contrib-required',
   data () {
     return { loading: false, run: null }
   },

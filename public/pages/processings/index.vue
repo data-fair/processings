@@ -67,7 +67,6 @@ import eventBus from '~/event-bus'
 
 export default {
   components: {},
-  middleware: 'contrib-required',
   data: () => ({
     processings: null,
     installedPlugins: {},
