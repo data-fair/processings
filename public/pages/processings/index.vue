@@ -51,7 +51,7 @@
       >
         <template #actions>
           <processings-actions
-            v-if="ownerRole === 'admin' || user.adminMode"
+            v-if="canAdmin"
             :installed-plugins="installedPlugins"
           />
         </template>
@@ -94,6 +94,9 @@ export default {
     },
     ownerFilter () {
       return `${this.owner.type}:${this.owner.id}`
+    },
+    canAdmin () {
+      return this.ownerRole === 'admin' || this.user.adminMode
     }
   },
   watch: {},
@@ -106,6 +109,7 @@ export default {
   },
   methods: {
     async fetchInstalledPlugins () {
+      if (!this.canAdmin) return
       this.installedPlugins = await this.$axios.$get('/api/v1/plugins', {
         params: {
           privateAccess: this.ownerFilter
