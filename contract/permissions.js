@@ -12,8 +12,7 @@ module.exports = {
         default: 'read',
         oneOf: [
           { const: 'read', title: 'lecture - permet d\'accéder aux informations essentielles du traitement dont les logs, mais pas aux informations sensibles' },
-          { const: 'exec', title: 'exécution - permet d\'accéder aux informations essentielles du traitement et de déclencher le traitement' },
-          { const: 'admin', title: 'administration - permet de lire et écrire toutes les informations, déclencher le traitement, etc.' }
+          { const: 'exec', title: 'exécution - permet d\'accéder aux informations essentielles du traitement et de déclencher le traitement' }
         ]
       },
       target: {

@@ -36,7 +36,7 @@ exports.getOwnerPermissionFilter = (owner, user) => {
   }
   filter.permissions = {
     $elemMatch: {
-      profile: { $in: ['read', 'exec', 'admin'] },
+      profile: { $in: ['read', 'exec'] },
       $or: or
     }
   }
@@ -50,7 +50,7 @@ const matchPermissionTarget = (target, user) => {
 }
 
 exports.getUserResourceProfile = (processing, user) => {
-  for (const profile of ['admin', 'exec', 'read']) {
+  for (const profile of ['read', 'exec']) {
     if (processing.permissions && processing.permissions.find(p => p.profile === profile && matchPermissionTarget(p.target, user))) {
       return profile
     }
