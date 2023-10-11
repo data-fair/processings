@@ -25,7 +25,10 @@
         </v-container>
       </v-col>
       <layout-navigation-right v-if="$vuetify.breakpoint.lgAndUp">
-        <processings-actions :installed-plugins="installedPlugins" />
+        <processings-actions
+          v-if="canAdmin"
+          :installed-plugins="installedPlugins"
+        />
         <v-card
           v-if="user.adminMode"
           color="admin"
