@@ -49,12 +49,11 @@
         </v-card>
       </layout-navigation-right>
       <layout-actions-button
-        v-else
+        v-else-if="canAdmin"
         class="pt-2"
       >
         <template #actions>
           <processings-actions
-            v-if="canAdmin"
             :installed-plugins="installedPlugins"
           />
         </template>
