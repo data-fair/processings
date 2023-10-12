@@ -6,18 +6,21 @@ export default ({ store, app, env, route, $vuetify }) => {
   dataFairUrl.host = currentHost
   const notifyUrl = new URL(env.notifyUrl)
   notifyUrl.host = currentHost
+  const directoryUrl = new URL(env.directoryUrl)
+  directoryUrl.host = currentHost
   store.commit('setAny', {
     env: {
       ...env,
       // reconstruct this env var that we used to have but lost when implementing multi-domain exposition
       publicUrl,
       dataFairUrl: dataFairUrl.href,
-      notifyUrl: notifyUrl.href
+      notifyUrl: notifyUrl.href,
+      directoryUrl: directoryUrl.href
     }
   })
   store.dispatch('session/init', {
     cookies: app.$cookies,
-    directoryUrl: env.directoryUrl
+    directoryUrl: directoryUrl.href
   })
   if (!store.getters.embed) {
     store.dispatch('session/loop', app.$cookies)

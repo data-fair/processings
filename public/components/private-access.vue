@@ -72,9 +72,9 @@ export default {
       }
 
       this.loading = true
-      const orgs = (await this.$axios.$get(process.env.directoryUrl + '/api/organizations', { params: { q: this.search } }))
+      const orgs = (await this.$axios.$get(this.env.directoryUrl + '/api/organizations', { params: { q: this.search } }))
         .results.map(r => ({ ...r, type: 'organization' }))
-      const users = (await this.$axios.$get(process.env.directoryUrl + '/api/users', { params: { q: this.search } }))
+      const users = (await this.$axios.$get(this.env.directoryUrl + '/api/users', { params: { q: this.search } }))
         .results.map(r => ({ ...r, type: 'user' }))
       this.suggestions = this.patch.privateAccess.concat(orgs).concat(users)
       this.loading = false

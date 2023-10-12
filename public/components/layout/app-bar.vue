@@ -40,10 +40,7 @@ export default {
   computed: {
     ...mapState(['breadcrumbs']),
     ...mapState('session', ['user', 'initialized']),
-    ...mapGetters('session', ['activeAccount']),
-    directoryUrl () {
-      return process.env.directoryUrl
-    }
+    ...mapGetters('session', ['activeAccount'])
   },
   methods: {
     ...mapActions('session', ['logout', 'login', 'setAdminMode', 'switchOrganization']),

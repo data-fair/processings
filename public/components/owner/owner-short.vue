@@ -6,7 +6,7 @@
         v-on="on"
       >
         <v-avatar :size="28">
-          <img :src="`${directoryUrl}/api/avatars/${owner.type}/${owner.id}/avatar.png`">
+          <img :src="`${env.directoryUrl}/api/avatars/${owner.type}/${owner.id}/avatar.png`">
         </v-avatar>
       </span>
     </template>
@@ -16,12 +16,12 @@
 
 <script>
 
+import { mapState } from 'vue'
+
 export default {
   props: ['owner'],
   computed: {
-    directoryUrl () {
-      return process.env.directoryUrl
-    },
+    ...mapState(['env']),
     label () {
       let label = this.owner.name
       if (this.owner.role) label += ` (${this.owner.role})`

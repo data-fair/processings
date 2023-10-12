@@ -13,7 +13,11 @@ export default () => {
       embed: false,
       breadcrumbs: null,
       env: null,
-      runBackLink: false
+      runBackLink: false,
+      publicUrl: null,
+      dataFairUrl: null,
+      directoryUrl: null,
+      notifyUrl: null
     },
     getters: {
       embed () {
