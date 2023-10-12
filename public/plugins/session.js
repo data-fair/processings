@@ -13,6 +13,7 @@ export default ({ store, app, env, route, $vuetify }) => {
       ...env,
       // reconstruct this env var that we used to have but lost when implementing multi-domain exposition
       publicUrl,
+      secondaryHost: currentHost !== new URL(env.mainPublicUrl).host,
       dataFairUrl: dataFairUrl.href,
       notifyUrl: notifyUrl.href,
       directoryUrl: directoryUrl.href

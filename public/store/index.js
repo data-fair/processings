@@ -13,11 +13,7 @@ export default () => {
       embed: false,
       breadcrumbs: null,
       env: null,
-      runBackLink: false,
-      publicUrl: null,
-      dataFairUrl: null,
-      directoryUrl: null,
-      notifyUrl: null
+      runBackLink: false
     },
     getters: {
       embed () {
@@ -26,14 +22,6 @@ export default () => {
         } catch (e) {
           return true
         }
-      },
-      canAdmin (state, getters) {
-        const activeAccount = getters['session/activeAccount']
-        if (!activeAccount) return false
-        if (activeAccount.adminMode) return true
-        if (activeAccount.type === 'user') return true
-        const role = state.session.user.organization.role
-        return role === process.env.adminRole
       }
     },
     mutations: {

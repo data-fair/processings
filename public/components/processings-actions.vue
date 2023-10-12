@@ -79,8 +79,7 @@ export default {
   }),
   computed: {
     ...mapState('session', ['user']),
-    ...mapGetters('session', ['activeAccount']),
-    ...mapGetters(['canAdmin'])
+    ...mapGetters('session', ['activeAccount'])
   },
   methods: {
     async createProcessing (processing) {

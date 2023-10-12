@@ -49,14 +49,18 @@ const matchPermissionTarget = (target, user) => {
   return false
 }
 
-exports.getUserResourceProfile = (processing, user) => {
+exports.getUserResourceProfile = (processing, req) => {
+  if (!req.user) return null
   // this line is first, a manual permission cannot demote an admin
-  if (exports.getOwnerRole(processing.owner, user) === 'admin') return 'admin'
+  if (exports.getOwnerRole(processing.owner, req.user) === 'admin') {
+    if (req.secondaryHost) return 'exec' // no admin functionality in portals
+    else return 'admin'
+  }
   for (const profile of ['read', 'exec']) {
     if (processing.permissions && processing.permissions.find(p => p.profile === profile && matchPermissionTarget(p.target, user))) {
       return profile
     }
   }
-  if (exports.getOwnerRole(processing.owner, user) === 'contrib') return 'read'
+  if (exports.getOwnerRole(processing.owner, req.user) === 'contrib') return 'read'
   return null
 }

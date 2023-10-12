@@ -75,6 +75,7 @@ export default {
     showAll: false
   }),
   computed: {
+    ...mapState(['env']),
     ...mapState('session', ['user']),
     ...mapGetters('session', ['activeAccount']),
     owner () {
@@ -97,6 +98,7 @@ export default {
       return `${this.owner.type}:${this.owner.id}`
     },
     canAdmin () {
+      if (this.env.secondaryHost) return false
       return this.ownerRole === 'admin' || this.user.adminMode
     }
   },

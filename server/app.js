@@ -43,6 +43,10 @@ if (!dataFairIsLocal) {
   }))
 }
 
+app.use((req, res, next) => {
+  req.secondaryHost = publicHost !== req.headers.host
+})
+
 if (process.env.NODE_ENV === 'development') {
   // Create a mono-domain environment with other services in dev
   app.use('/simple-directory', createProxyMiddleware({ target: 'http://localhost:8080', pathRewrite: { '^/simple-directory': '' } }))
