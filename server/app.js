@@ -45,6 +45,7 @@ if (!dataFairIsLocal) {
 
 app.use((req, res, next) => {
   req.secondaryHost = publicHost !== req.headers.host
+  next()
 })
 
 if (process.env.NODE_ENV === 'development') {
