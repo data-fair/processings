@@ -57,7 +57,7 @@ exports.getUserResourceProfile = (processing, req) => {
     else return 'admin'
   }
   for (const profile of ['read', 'exec']) {
-    if (processing.permissions && processing.permissions.find(p => p.profile === profile && matchPermissionTarget(p.target, user))) {
+    if (processing.permissions && processing.permissions.find(p => p.profile === profile && matchPermissionTarget(p.target, req.user))) {
       return profile
     }
   }
