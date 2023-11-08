@@ -98,6 +98,7 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
 
     if ((cfg.method === 'post' || cfg.method === 'put') && config.privateDataFairUrl && cfg.url.startsWith(config.dataFairUrl)) {
       cfg.url = cfg.url.replace(config.dataFairUrl, config.privateDataFairUrl)
+      cfg.headers.host = new URL(config.dataFairUrl).host
     }
     return cfg
   }, error => Promise.reject(error))
