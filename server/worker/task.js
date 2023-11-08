@@ -95,6 +95,10 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
       else cfg.url = config.dataFairUrl + '/' + cfg.url
     }
     if (cfg.url.startsWith(config.dataFairUrl)) Object.assign(cfg.headers, headers)
+
+    if ((cfg.method === 'post' || cfg.method === 'put') && config.privateDataFairUrl && cfg.url.startsWith(config.dataFairUrl)) {
+      cfg.url = cfg.url.replace(config.dataFairUrl, config.privateDataFairUrl)
+    }
     return cfg
   }, error => Promise.reject(error))
   // customize axios errors for shorter stack traces when a request fails
