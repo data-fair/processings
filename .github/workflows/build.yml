@@ -16,7 +16,7 @@ jobs:
     # instead work on moving to some images hosted on ghcr.io, it is the fastest
     - name: Run test dependencies
       run: |
-        NO_UI=true docker-compose --profile test up -d
+        NO_UI=true docker compose --profile test up -d --wait
         docker ps
     
     - name: Prepare docker image tags

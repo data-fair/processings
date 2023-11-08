@@ -25,6 +25,9 @@ services:
     image: ghcr.io/data-fair/data-fair:master
     restart: on-failure:10
     network_mode: host
+    depends_on:
+      - sd
+      - mongo
     environment:
       - PORT=8081
       - DEBUG=files
