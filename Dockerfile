@@ -1,36 +1,34 @@
 ############################################################
 # Stage: install libraries for geographic data manipulations
-FROM node:16.13.2-alpine3.14 AS geodeps
+FROM node:20.9.0-alpine3.18 AS geodeps
+
+RUN apk add --no-cache curl cmake make g++ linux-headers
+RUN apk add --no-cache boost-dev gmp gmp-dev mpfr-dev
 
 # build CGAL (not yet present in alpine repos)
 WORKDIR /tmp
-RUN apk add --no-cache --virtual .curl curl && \
-    curl -L https://github.com/CGAL/cgal/releases/download/releases%2FCGAL-4.14/CGAL-4.14.tar.xz -o cgal.tar.xz && \
-    apk del .curl && \
-    tar -xf cgal.tar.xz && \
-    rm cgal.tar.xz
-WORKDIR /tmp/CGAL-4.14
-RUN apk add --no-cache cmake make g++ gmp gmp-dev mpfr-dev boost-dev && \
-    cmake -D CMAKE_BUILD_TYPE=Release . && \
-    make && \
-    make install
+RUN curl -L https://github.com/CGAL/cgal/releases/download/releases%2FCGAL-4.14.3/CGAL-4.14.3.tar.xz -o cgal.tar.xz
+RUN tar -xf cgal.tar.xz
+WORKDIR /tmp/CGAL-4.14.3
+RUN cmake -D CMAKE_BUILD_TYPE=Release .
+RUN make
+RUN make install
 
 ############################################################################################################
 # Stage: prepare a base image with all native utils pre-installed, used both by builder and definitive image
 
-FROM node:16.13.2-alpine3.14 AS nativedeps
+FROM node:20.9.0-alpine3.18 AS nativedeps
 
 COPY --from=geodeps /usr/local/lib/libCGAL.so.13 /usr/local/lib/libCGAL.so.13
 
 # some of these are also geodeps, but we need to install them here as they pull many dependencies
-RUN apk add --no-cache unzip p7zip dumb-init gmp gdal-tools proj && \
-    test -f /usr/bin/ogr2ogr && \
-    ln -s /usr/lib/libproj.so.21.1.2 /usr/lib/libproj.so && \
-    test -f /usr/lib/libproj.so
+RUN apk add --no-cache unzip p7zip dumb-init gmp gdal-tools proj
+RUN test -f /usr/bin/ogr2ogr
+RUN ln -s /usr/lib/libproj.so.25 /usr/lib/libproj.so
+RUN test -f /usr/lib/libproj.so
 
 # processing plugins should be able to install native dependencies themselves
-RUN apk add --no-cache python3 make g++ && \
-    ln -s /usr/bin/python3 /usr/bin/python
+RUN apk add --no-cache python3 make g++
 
 ######################################
 # Stage: nodejs dependencies and build
