@@ -99,15 +99,16 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
   }, error => Promise.reject(error))
   // customize axios errors for shorter stack traces when a request fails
   axiosInstance.interceptors.response.use(response => response, error => {
-    if (!error.response) return Promise.reject(error)
-    delete error.response.request
+    const response = error.response ?? error.res
+    if (!response) return Promise.reject(error)
+    delete response.request
     const headers = {}
-    if (error.response.headers.location) headers.location = error.response.headers.location
-    error.response.headers = headers
-    error.response.config = { method: error.response.config.method, url: error.response.config.url, params: error.response.config.params, data: error.response.config.data }
-    if (error.response.config.data && error.response.config.data._writableState) delete error.response.config.data
-    if (error.response.data && error.response.data._readableState) delete error.response.data
-    return Promise.reject(error.response)
+    if (response.headers.location) headers.location = response.headers.location
+    response.headers = headers
+    response.config = { method: response.config.method, url: response.config.url, params: response.config.params, data: response.config.data }
+    if (response.config.data && response.config.data._writableState) delete response.config.data
+    if (response.data && response.data._readableState) delete response.data
+    return Promise.reject(response)
   })
 
   const ws = new EventEmitter()
@@ -214,8 +215,9 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
     else await log.info('terminé')
   } catch (err) {
     process.chdir(cwd)
-    let httpMessage = err.data && typeof err.data === 'string' ? err.data : err.statusText
-    if (err.status && httpMessage) {
+    const errStatus = err.status ?? err.statusCode
+    let httpMessage = err.data && typeof err.data === 'string' ? err.data : (err.statusText ?? err.statusMessage)
+    if (errStatus && httpMessage) {
       if (err.config && err.config.url) httpMessage += ` (${err.config.url})`
       console.error(httpMessage)
       console.log(err)
