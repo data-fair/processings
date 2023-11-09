@@ -93,7 +93,7 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
   }, error => Promise.reject(error))
   // customize axios errors for shorter stack traces when a request fails
   axiosInstance.interceptors.response.use(response => response, error => {
-    const response = error.response ?? error.res
+    const response = error.response ?? error.request?.res ?? error.res
     if (!response) return Promise.reject(error)
     delete response.request
     const headers = {}

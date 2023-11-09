@@ -1,28 +1,18 @@
 // prepare an axios instance with improved error management
 
 const axios = require('axios')
-const http = require('http')
-const https = require('https')
-const CacheableLookup = require('cacheable-lookup')
+const { httpAgent, httpsAgent } = require('../utils/http-agents')
 
-const cacheableLookup = new CacheableLookup()
-const httpAgent = new http.Agent({})
-const httpsAgent = new https.Agent({})
-cacheableLookup.install(httpAgent)
-cacheableLookup.install(httpsAgent)
-
-module.exports = axios.create({
-  httpAgent,
-  httpsAgent
-})
+module.exports = axios.create({ httpAgent, httpsAgent })
 
 module.exports.interceptors.response.use(response => response, error => {
-  if (!error.response) return Promise.reject(error)
-  delete error.response.request
-  delete error.response.headers
-  error.response.config = { method: error.response.config.method, url: error.response.config.url, data: error.response.config.data }
-  if (error.response.config.data && error.response.config.data._writableState) delete error.response.config.data
-  if (error.response.data && error.response.data._readableState) delete error.response.data
-  error.response.message = `${error.response.status} - ${error.response.data || error.response.statusText}`
-  return Promise.reject(error.response)
+  const response = error.response ?? error.request?.res ?? error.res
+  if (!response) return Promise.reject(error)
+  delete response.request
+  delete response.headers
+  response.config = { method: response.config.method, url: response.config.url, data: response.config.data }
+  if (response.config.data && response.config.data._writableState) delete response.config.data
+  if (response.data && response.data._readableState) delete response.data
+  response.message = `${response.status} - ${response.data || response.statusText}`
+  return Promise.reject(response)
 })
