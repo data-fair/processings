@@ -97,10 +97,13 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
     if (!response) return Promise.reject(error)
     delete response.request
     const headers = {}
-    if (response.headers.location) headers.location = response.headers.location
+    if (response.headers?.location) headers.location = response.headers.location
     response.headers = headers
-    response.config = { method: response.config.method, url: response.config.url, params: response.config.params, data: response.config.data }
-    if (response.config.data && response.config.data._writableState) delete response.config.data
+    response.config = response.config ?? error.config
+    if (response.config) {
+      response.config = { method: response.config.method, url: response.config.url, params: response.config.params, data: response.config.data }
+      if (response.config.data && response.config.data._writableState) delete response.config.data
+    }
     if (response.data && response.data._readableState) delete response.data
     return Promise.reject(response)
   })
