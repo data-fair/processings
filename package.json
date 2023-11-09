@@ -74,10 +74,11 @@
     "vue-truncate-filter": "^1.1.7"
   },
   "dependencies": {
-    "@koumoul/nuxt-config-inject": "^0.4.10",
     "@data-fair/sd-express": "1.4.3",
+    "@koumoul/nuxt-config-inject": "^0.4.10",
     "@nuxtjs/axios": "^5.12.5",
     "@nuxtjs/i18n": "^7.2.2",
+    "agentkeepalive": "^4.5.0",
     "ajv": "^6.12.6",
     "axios": "^1.6.0",
     "body-parser": "^1.19.0",

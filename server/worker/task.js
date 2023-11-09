@@ -2,15 +2,11 @@ const EventEmitter = require('node:events')
 const config = require('config')
 const path = require('path')
 const fs = require('fs-extra')
-const http = require('http')
-const https = require('https')
 const axios = require('axios')
 const tmp = require('tmp-promise')
-const CacheableLookup = require('cacheable-lookup')
 const WebSocket = require('ws')
 const runs = require('../utils/runs')
-
-const cacheableLookup = new CacheableLookup()
+const { httpAgent, httpsAgent } = require('../utils/http-agents')
 
 let pluginModule, _stopped
 
@@ -75,13 +71,6 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
   if (config.dataFairAdminMode) headers['x-account'] = JSON.stringify(processing.owner)
   headers['x-processing'] = JSON.stringify({ _id: processing._id, title: encodeURIComponent(processing.title) })
 
-  // use better DNS lookup thant nodejs default and try to reduce number of socket openings
-  const agentOpts = { keepAlive: true }
-  const httpAgent = new http.Agent(agentOpts)
-  const httpsAgent = new https.Agent(agentOpts)
-  cacheableLookup.install(httpAgent)
-  cacheableLookup.install(httpsAgent)
-
   const axiosInstance = axios.create({
     // this is necessary to prevent excessive memory usage during large file uploads, see https://github.com/axios/axios/issues/1045
     maxRedirects: 0,
@@ -96,7 +85,7 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
     }
     if (cfg.url.startsWith(config.dataFairUrl)) Object.assign(cfg.headers, headers)
 
-    if ((cfg.method === 'post' || cfg.method === 'put') && config.privateDataFairUrl && cfg.url.startsWith(config.dataFairUrl)) {
+    if (['post', 'put', 'delete'].includes(cfg.method) && config.privateDataFairUrl && cfg.url.startsWith(config.dataFairUrl)) {
       cfg.url = cfg.url.replace(config.dataFairUrl, config.privateDataFairUrl)
       cfg.headers.host = new URL(config.dataFairUrl).host
     }
