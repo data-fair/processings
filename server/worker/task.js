@@ -215,7 +215,14 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
     const errStatus = err.status ?? err.statusCode
     let httpMessage = err.data && typeof err.data === 'string' ? err.data : (err.statusText ?? err.statusMessage)
     if (errStatus && httpMessage) {
-      if (err.config && err.config.url) httpMessage += ` (${err.config.url})`
+      if (err.config && err.config.url) {
+        let url = err.config.url
+        url = url.replace(config.dataFairUrl, '')
+        if (config.privateDataFairUrl) {
+          url = url.replace(config.privateDataFairUrl, '')
+        }
+        httpMessage += ` (${url})`
+      }
       console.error(httpMessage)
       console.log(err)
       await log.error(httpMessage)
