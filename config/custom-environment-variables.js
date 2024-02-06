@@ -4,6 +4,7 @@ module.exports = {
   port: 'PORT',
   sessionDomain: 'SESSION_DOMAIN',
   directoryUrl: 'DIRECTORY_URL',
+  privateDirectoryUrl: 'PRIVATE_DIRECTORY_URL',
   dataFairUrl: 'DATA_FAIR_URL',
   privateDataFairUrl: 'PRIVATE_DATA_FAIR_URL',
   dataFairAPIKey: 'DATA_FAIR_API_KEY',

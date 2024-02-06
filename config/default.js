@@ -5,6 +5,7 @@ module.exports = {
   publicUrl: 'http://localhost:5600',
   dataDir: '/data',
   directoryUrl: 'http://localhost:5600/simple-directory',
+  privateDirectoryUrl: null,
   dataFairUrl: 'http://localhost:5600/data-fair',
   privateDataFairUrl: null,
   dataFairAPIKey: null,
