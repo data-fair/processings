@@ -5,10 +5,13 @@ const fs = require('fs-extra')
 const axios = require('axios')
 const tmp = require('tmp-promise')
 const WebSocket = require('ws')
+const resolvePath = require('resolve-path')
 const runs = require('../utils/runs')
 const { httpAgent, httpsAgent } = require('../utils/http-agents')
 
 let pluginModule, _stopped
+
+const processingsDir = path.join(config.dataDir, 'processings')
 
 exports.run = async ({ db, mailTransport, wsPublish }) => {
   const [run, processing] = await Promise.all([
@@ -85,7 +88,8 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
     }
     if (cfg.url.startsWith(config.dataFairUrl)) Object.assign(cfg.headers, headers)
 
-    if (['post', 'put', 'delete'].includes(cfg.method) && config.privateDataFairUrl && cfg.url.startsWith(config.dataFairUrl)) {
+    // no 'get' here so that it still appears in metrics
+    if (['post', 'put', 'delete', 'patch'].includes(cfg.method) && config.privateDataFairUrl && cfg.url.startsWith(config.dataFairUrl)) {
       cfg.url = cfg.url.replace(config.dataFairUrl, config.privateDataFairUrl)
       cfg.headers.host = new URL(config.dataFairUrl).host
     }
@@ -180,7 +184,7 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
     return event
   }
 
-  const dir = path.resolve(config.dataDir, 'processings', processing._id)
+  const dir = resolvePath(processingsDir, processing._id)
   await fs.ensureDir(dir)
   const tmpDir = await tmp.dir({ unsafeCleanup: true })
   const processingConfig = processing.config || {}

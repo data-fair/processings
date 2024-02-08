@@ -109,6 +109,7 @@
     "prom-client": "^14.0.1",
     "pump": "^3.0.0",
     "require-without-cache": "0.0.6",
+    "resolve-path": "^1.4.0",
     "semver": "^7.3.4",
     "semver-extract": "^1.1.1",
     "slugify": "^1.4.6",

@@ -7,6 +7,7 @@ const util = require('util')
 const exec = util.promisify(require('child_process').exec)
 const tmp = require('tmp-promise')
 const ajv = require('ajv')()
+const resolvePath = require('resolve-path')
 const asyncWrap = require('../utils/async-wrap')
 const permissions = require('../utils/permissions')
 const session = require('../utils/session')
@@ -80,7 +81,7 @@ router.get('/', session.requiredAuth, asyncWrap(async (req, res, next) => {
 }))
 
 router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
-  const pluginInfo = await fs.readJson(path.join(pluginsDir, req.params.id, 'plugin.json'))
+  const pluginInfo = await fs.readJson(resolvePath(pluginsDir, path.join(req.params.id, 'plugin.json')))
   res.send(preparePluginInfo(pluginInfo))
 }))
 

@@ -6,6 +6,7 @@ const { nanoid } = require('nanoid')
 const cryptoRandomString = require('crypto-random-string')
 const createError = require('http-errors')
 const ajv = require('ajv')({ allErrors: false })
+const resolvePath = require('resolve-path')
 const processingSchema = require('../../contract/processing')
 const findUtils = require('../utils/find')
 const asyncWrap = require('../utils/async-wrap')
@@ -13,7 +14,7 @@ const permissions = require('../utils/permissions')
 const runs = require('../utils/runs')
 const session = require('../utils/session')
 
-const pluginsDir = path.join(config.dataDir, 'plugins')
+const pluginsDir = path.resolve(config.dataDir, 'plugins')
 
 const sensitiveParts = ['permissions', 'webhookKey', 'config']
 
@@ -27,8 +28,9 @@ const validateFullProcessing = async (processing) => {
   const validate = ajv.compile(schema)
   const valid = validate(processing)
   if (!valid) throw createError(400, JSON.stringify(validate.errors))
+  if (!await fs.pathExists(resolvePath(pluginsDir, processing.plugin))) throw createError(400, 'Plugin not found')
   if (!processing.config) return
-  const pluginInfo = await fs.readJson(path.join(pluginsDir, processing.plugin, 'plugin.json'))
+  const pluginInfo = await fs.readJson(resolvePath(pluginsDir, path.join(processing.plugin, 'plugin.json')))
   const configValidate = ajv.compile(pluginInfo.processingConfigSchema)
   const configValid = configValidate(processing.config)
   if (!configValid) throw createError(400, JSON.stringify(configValidate.errors))
@@ -72,7 +74,7 @@ router.post('', session.requiredAuth, asyncWrap(async (req, res, next) => {
     date: new Date().toISOString()
   }
 
-  const access = await fs.pathExists(path.join(pluginsDir, req.body.plugin + '-access.json')) ? await fs.readJson(path.join(pluginsDir, req.body.plugin + '-access.json')) : { public: false, privateAccess: [] }
+  const access = await fs.pathExists(resolvePath(pluginsDir, req.body.plugin + '-access.json')) ? await fs.readJson(resolvePath(pluginsDir, req.body.plugin + '-access.json')) : { public: false, privateAccess: [] }
   if (req.user.adminMode) {
     // ok for super admins
   } else if (access && access.public) {

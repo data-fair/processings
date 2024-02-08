@@ -4,6 +4,7 @@ const fs = require('fs-extra')
 const CronJob = require('cron').CronJob
 const { nanoid } = require('nanoid')
 const ajv = require('ajv')()
+const resolvePath = require('resolve-path')
 const runSchema = require('../../contract/run')
 const validate = ajv.compile(runSchema)
 const schedulingUtils = require('./scheduling')
@@ -11,6 +12,8 @@ const notifications = require('./notifications')
 const prometheus = require('./prometheus')
 const limits = require('./limits')
 const moment = require('moment')
+
+const processingsDir = path.resolve(config.dataDir, 'processings')
 
 exports.applyProcessing = async (db, processing) => {
   // if processing is deactivated, cancel pending runs
@@ -32,7 +35,7 @@ exports.applyProcessing = async (db, processing) => {
 
 exports.deleteProcessing = async (db, processing) => {
   await db.collection('runs').deleteMany({ 'processing._id': processing._id })
-  await fs.remove(path.resolve(config.dataDir, 'processings', processing._id))
+  await fs.remove(resolvePath(processingsDir, processing._id))
 }
 
 exports.createNext = async (db, processing, triggered, delaySeconds = 0) => {
