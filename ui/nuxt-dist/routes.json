@@ -1,0 +1,37 @@
+[
+  {
+    "name": "processings",
+    "path": "/processings",
+    "component": "/home/edm115/Documents/processings/ui/pages/processings/index.vue",
+    "chunkName": "pages/processings/index",
+    "_name": "_3a662de8"
+  },
+  {
+    "name": "admin-plugins",
+    "path": "/admin/plugins",
+    "component": "/home/edm115/Documents/processings/ui/pages/admin/plugins.vue",
+    "chunkName": "pages/admin/plugins",
+    "_name": "_1a94fa29"
+  },
+  {
+    "name": "index",
+    "path": "/",
+    "component": "/home/edm115/Documents/processings/ui/pages/index.vue",
+    "chunkName": "pages/index",
+    "_name": "_6062221b"
+  },
+  {
+    "name": "processings-id",
+    "path": "/processings/:id",
+    "component": "/home/edm115/Documents/processings/ui/pages/processings/_id.vue",
+    "chunkName": "pages/processings/_id",
+    "_name": "_3b4c8318"
+  },
+  {
+    "name": "runs-id",
+    "path": "/runs/:id?",
+    "component": "/home/edm115/Documents/processings/ui/pages/runs/_id.vue",
+    "chunkName": "pages/runs/_id",
+    "_name": "_b8be4b8c"
+  }
+]

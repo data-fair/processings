@@ -2,8 +2,8 @@ data/
 node_modules/
 .nuxt
 config/local-*
-/nuxt-dist
-/dist
+nuxt-dist/
+dist/
 
-public/assets/css/
-public/assets/fonts/
+ui/assets/css/
+ui/assets/fonts/

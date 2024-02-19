@@ -57,7 +57,7 @@ module.exports = {
   telemetry: false,
   ssr: false,
   components: true,
-  srcDir: 'public/',
+  srcDir: './',
   buildDir: 'nuxt-dist',
   build: {
     // always the same url to fetch static resource, even in multi-domain mode
