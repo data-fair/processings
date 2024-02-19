@@ -1,4 +1,5 @@
 {
+  "name": "ui",
   "scripts": {
     "build": "nuxt build",
     "dev": "NODE_ENV=development nuxt -p 3039",

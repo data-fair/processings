@@ -8,8 +8,8 @@ Run service and dependencies in dev mode:
 
 ```
 npm run dev-deps
-npm run dev-server
-npm run dev-client
+npm run dev-api
+npm run dev-ui
 ```
 
 Test built nuxt distributable in dev:
@@ -17,7 +17,7 @@ Test built nuxt distributable in dev:
 ```
 # first set proxyNuxt to false in config/development.js
 NODE_ENV=development npm run build
-npm run dev-server
+npm run dev-api
 ```
 
 Run test suite:

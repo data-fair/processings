@@ -1,7 +1,7 @@
 
 const assert = require('assert').strict
 const event2promise = require('event-to-promise')
-const worker = require('../server/worker')
+const worker = require('../api/worker')
 
 describe('Processings', () => {
   let plugin

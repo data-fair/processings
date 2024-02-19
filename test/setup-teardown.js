@@ -2,8 +2,8 @@ const config = require('config')
 const fs = require('fs-extra')
 const nock = require('nock')
 const axios = require('axios')
-const app = require('../server/app')
-const worker = require('../server/worker')
+const app = require('../api/app')
+const worker = require('../api/worker')
 const axiosAuth = require('@data-fair/sd-express').axiosAuth
 
 before('global mocks', () => {
@@ -15,7 +15,7 @@ before('global mocks', () => {
 })
 
 before('init globals', async () => {
-  const { db, client } = await require('../server/utils/db.js').connect()
+  const { db, client } = await require('../api/utils/db.js').connect()
   global.db = db
   global.mongoClient = client
 

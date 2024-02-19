@@ -1,5 +1,0 @@
-{
-  "verbose": false,
-  "ext": "js json html",
-  "watch": ["index.js", "config/", "package.json", "contract/", "server/", "sources/"]
-}
