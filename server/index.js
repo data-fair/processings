@@ -1,4 +1,4 @@
-
+const exec = require('util').promisify(require('child_process').exec)
 const config = require('config')
 const nodemailer = require('nodemailer')
 const dbUtils = require('./utils/db')
@@ -28,6 +28,8 @@ async function start () {
   } else if (config.prometheus.active) {
     await prometheus.start(db)
   }
+
+  if (process.env.HTTPS_PROXY) await exec('npm config set https-proxy ' + process.env.HTTPS_PROXY)
 
   if (config.mode.includes('worker')) {
     await require('../upgrade')(db)
