@@ -4,8 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "analyze": "nuxt build --analyze",
-    "build": "nuxt build",
     "dev-api": "npm -w api run dev",
     "dev-deps": "docker compose --profile dev up -d --wait",
     "dev-ui": "npm -w ui run dev",
@@ -57,7 +55,7 @@
   "homepage": "https://github.com/data-fair/processings#readme",
   "devDependencies": {
     "babel-eslint": "^10.0.2",
-    "clean-modules": "^2.0.4",
+    "clean-modules": "^3.0.4",
     "eslint": "^7.32.0",
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-import": "^2.25.4",
