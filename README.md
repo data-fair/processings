@@ -42,6 +42,7 @@ curl https://sh.rustup.rs -sSf | sh
 # choose 1
 cargo install --locked zellij
 # in processings
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 nvm install
 ```
 
