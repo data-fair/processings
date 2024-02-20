@@ -1,13 +1,11 @@
 {
   "name": "ui",
-  "type": "module",
   "scripts": {
     "analyze": "nuxt build --analyze",
     "build": "nuxt build",
     "dev": "NODE_ENV=development nuxt -p 3039",
     "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "preview": "nuxt preview"
   },
   "devDependencies": {
     "@data-fair/sd-vue": "^2.6.1",
