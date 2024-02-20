@@ -1,0 +1,32 @@
+layout {
+    pane {
+      split_direction "vertical"
+      pane name="processings" borderless=true {
+        command "bash"
+        args "-ic" "nvm use && bash"
+      }
+      pane name="deps" {
+        command "bash"
+        args "-ic" "dc up"
+        args "-ic" "npm run dev-deps && docker compose logs -f"
+      }
+    }
+    pane {
+      split_direction "vertical"
+      pane name="ui" {
+        command "bash"
+        args "-ic" "nvm use && npm -w ui run dev"
+      }
+      pane name="api" {
+        command "bash"
+        args "-ic" "nvm use && npm -w api run dev"
+      }
+      pane name="worker" {
+        command "bash"
+        args "-ic" "nvm use && npm -w worker run dev"
+      }
+    }
+    pane size=2 borderless=true {
+        plugin location="zellij:status-bar"
+    }
+}
