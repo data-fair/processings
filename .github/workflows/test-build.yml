@@ -5,19 +5,19 @@ on:
 
 jobs:
   build-api:
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/main-build.yml
     with:
       workspace: api
       push_images: false
 
   build-worker:
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/main-build.yml
     with:
       workspace: worker
       push_images: false
 
   build-ui:
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/main-build.yml
     with:
       workspace: ui
       push_images: false

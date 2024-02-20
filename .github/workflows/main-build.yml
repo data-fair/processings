@@ -24,6 +24,7 @@ jobs:
         driver-opts: network=host
 
     - name: Login to Github container registry
+      if: inputs.push_images
       uses: docker/login-action@v3
       with:
         registry: ghcr.io
