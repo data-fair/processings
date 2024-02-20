@@ -8,11 +8,8 @@ module.exports = {
   dataFairUrl: 'http://localhost:5600/data-fair',
   privateDataFairUrl: null,
   dataFairAPIKey: null,
-  dataFairAdminMode: false,
   notifyUrl: null,
   privateNotifyUrl: null,
-  adminRole: 'admin',
-  contribRole: 'contrib',
   mongo: {
     host: 'localhost',
     port: 27017,

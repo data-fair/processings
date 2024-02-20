@@ -1,10 +1,10 @@
 const config = require('config')
 const spawn = require('child-process-promise').spawn
 const kill = require('tree-kill')
-const locks = require('../utils/locks')
-const runs = require('../utils/runs')
-const prometheus = require('../utils/prometheus')
-const limits = require('../utils/limits')
+const locks = require('../api/utils/locks')
+const runs = require('../api/utils/runs')
+const prometheus = require('../api/utils/prometheus')
+const limits = require('../api/utils/limits')
 const debug = require('debug')('worker')
 const debugLoop = require('debug')('worker-loop')
 

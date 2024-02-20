@@ -7,10 +7,6 @@ module.exports = {
   dataFairUrl: 'DATA_FAIR_URL',
   privateDataFairUrl: 'PRIVATE_DATA_FAIR_URL',
   dataFairAPIKey: 'DATA_FAIR_API_KEY',
-  dataFairAdminMode: {
-    __name: 'DATA_FAIR_ADMIN_MODE',
-    __format: 'json'
-  },
   notifyUrl: 'NOTIFY_URL',
   privateNotifyUrl: 'PRIVATE_NOTIFY_URL',
   mongo: {

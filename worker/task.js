@@ -6,8 +6,8 @@ const axios = require('axios')
 const tmp = require('tmp-promise')
 const WebSocket = require('ws')
 const resolvePath = require('resolve-path')
-const runs = require('../utils/runs')
-const { httpAgent, httpsAgent } = require('../utils/http-agents')
+const runs = require('../api/utils/runs')
+const { httpAgent, httpsAgent } = require('../api/utils/http-agents')
 
 let pluginModule, _stopped
 

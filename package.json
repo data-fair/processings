@@ -9,7 +9,7 @@
     "dev-api": "npm -w api run dev",
     "dev-deps": "docker compose --profile dev up -d --wait",
     "dev-ui": "npm -w ui run dev",
-    "i": "rimraf node_modules api/node_modules ui/node_modules && npm i && cd api && npm i && cd ../ui && npm i",
+    "i": "rimraf node_modules && npm i && cd api && npm i && cd ../ui && npm i && cd ../worker && npm i",
     "lint": "eslint --ext js,vue --ignore-path .gitignore .",
     "lint-fix": "eslint --ext js,vue --ignore-path .gitignore --fix .",
     "test": "NODE_ENV=test mocha --exit --bail --timeout 10000 test/",
@@ -24,7 +24,8 @@
   "license": "AGPL-3.0-only",
   "workspaces": [
     "ui",
-    "api"
+    "api",
+    "worker"
   ],
   "eslintConfig": {
     "root": true,
@@ -69,7 +70,6 @@
   "dependencies": {
     "@data-fair/sd-express": "1.4.3",
     "axios": "^1.6.0",
-    "child-process-promise": "^2.2.1",
     "config": "^3.3.6",
     "crypto-random-string": "^3.3.0",
     "debug": "^4.3.1",
