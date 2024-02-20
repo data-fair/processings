@@ -1,5 +1,9 @@
 {
   "verbose": false,
-  "ext": "js json html",
-  "watch": ["index.js", "config/", "package.json", "contract/", "api/", "sources/"]
+  "ext": "js, json, html",
+  "watch": [
+    "./**/*",
+    "../contract/",
+    "../sources/"
+  ]
 }
