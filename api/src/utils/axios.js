@@ -1,7 +1,7 @@
 // prepare an axios instance with improved error management
 
 const axios = require('axios')
-const { httpAgent, httpsAgent } = require('../utils/http-agents')
+const { httpAgent, httpsAgent } = require('./http-agents')
 
 module.exports = axios.create({ httpAgent, httpsAgent })
 
