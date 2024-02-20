@@ -13,7 +13,7 @@ Downstream examples:
 {type: 'error', data: {...}}
 */
 const { nanoid } = require('nanoid')
-const permissions = require('./permissions')
+const permissions = require('./permissions.cjs')
 
 let cursor
 const subscribers = {}

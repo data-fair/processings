@@ -1,7 +1,7 @@
 const config = require('config')
-const axios = require('./axios')
+const axios = require('./axios.cjs')
 const debug = require('debug')('notifications')
-const prometheus = require('./prometheus')
+const prometheus = require('./prometheus.cjs')
 
 exports.send = async (notification) => {
   if (global.events) global.events.emit('notification', notification)

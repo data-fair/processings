@@ -1,47 +1,30 @@
-import config from './config'
-import nodemailer from 'nodemailer'
-import dbUtils from './utils/db'
-import prometheus from './utils/prometheus'
-import wsUtils from './utils/ws'
+import http from 'http'
+import { createHttpTerminator } from 'http-terminator'
+import config from 'config'
+import { session } from '@data-fair/lib/express/index.js'
+import * as prometheus from '@data-fair/lib/node/observer.js'
+import mongo from '@data-fair/lib/node/mongo.js'
+import { app } from './app.js'
 
-let _client, _stopped
+const server = http.createServer(app)
+const httpTerminator = createHttpTerminator({ server })
+
+server.keepAliveTimeout = (60 * 1000) + 1000
+server.headersTimeout = (60 * 1000) + 2000
 
 export const start = async () => {
-  let poolSize = 5
-  let readPreference = 'primary' // better to prevent read before write cases in workers
-  if (config.mode === 'server') {
-    readPreference = 'nearest' // the Web API is not as sensitive to small freshness problems
-  }
-  if (config.mode === 'worker' || config.mode === 'task') {
-    poolSize = 1 // no need for much concurrency inside worker/tasks
-  }
-  const { client, db } = await dbUtils.init(poolSize, readPreference)
-  const wsPublish = await wsUtils.initPublisher(db)
-  _client = client
-  if (config.mode === 'task') {
-    const mailTransport = nodemailer.createTransport(config.mails.transport)
-    const err = await require('../worker/task').run({ db, mailTransport, wsPublish })
-    if (err) process.exit(-1)
-    if (_stopped) process.exit(143)
-    process.exit()
-  } else if (config.prometheus.active) {
-    await prometheus.start(db)
-  }
+  if (config.prometheus.active) await prometheus.start()
+  await session.init(config.directoryUrl)
+  const url = config.mongo.url || `mongodb://${config.mongo.host}:${config.mongo.port}/${config.mongo.db}`
+  await mongo.connect(url, { readPreference: 'nearest' })
 
-  if (config.mode.includes('worker')) {
-    await require('../upgrade')(db)
-    require('../worker').start({ db, wsPublish })
-  }
-  if (config.mode.includes('server')) {
-    await require('./app').start({ db, wsPublish })
-  }
+  server.listen(config.port)
+  await new Promise(resolve => server.once('listening', resolve))
+  console.log(`Processings API available on ${config.publicUrl}/api/ (listening on port ${config.port})`)
 }
 
 export const stop = async () => {
-  _stopped = true
-  if (config.mode.includes('server')) await require('./app').stop()
-  if (config.mode.includes('worker')) await require('../worker').stop()
-  if (config.mode === 'task') await require('../worker/task').stop()
-  else if (config.prometheus.active) await prometheus.stop()
-  if (_client) await _client.close()
+  await httpTerminator.terminate()
+  if (config.prometheus.active) await prometheus.stop()
+  await mongo.client.close()
 }

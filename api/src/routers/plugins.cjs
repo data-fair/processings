@@ -8,9 +8,9 @@ const exec = util.promisify(require('child_process').exec)
 const tmp = require('tmp-promise')
 const ajv = require('ajv')()
 const resolvePath = require('resolve-path')
-const asyncWrap = require('../utils/async-wrap')
-const permissions = require('../utils/permissions')
-const session = require('../utils/session')
+const asyncWrap = require('../utils/async-wrap.cjs')
+const permissions = require('../utils/permissions.cjs')
+const session = require('../utils/session.cjs')
 
 const router = module.exports = express.Router()
 

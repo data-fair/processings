@@ -1,8 +1,8 @@
 const express = require('express')
 const router = module.exports = express.Router()
 const memoize = require('memoizee')
-const axios = require('../utils/axios')
-const asyncWrap = require('../utils/async-wrap')
+const axios = require('../utils/axios.cjs')
+const asyncWrap = require('../utils/async-wrap.cjs')
 
 const search = memoize(async (q) => {
   // see https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md#get-v1search

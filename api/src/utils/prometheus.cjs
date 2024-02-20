@@ -8,7 +8,7 @@ const config = require('config')
 const express = require('express')
 const client = require('prom-client')
 const eventToPromise = require('event-to-promise')
-const asyncWrap = require('./async-wrap')
+const asyncWrap = require('./async-wrap.cjs')
 
 const localRegister = new client.Registry()
 const globalRegister = new client.Registry()
