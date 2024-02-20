@@ -51,7 +51,9 @@ beforeEach('scratch all', async () => {
   await global.db.collection('runs').deleteMany({})
   await global.db.collection('processings').deleteMany({})
   await global.db.collection('limits').deleteMany({})
-  await fs.emptyDir('./data/test')
+  await fs.emptyDir('./data/test/plugins')
+  await fs.emptyDir('./data/test/processings')
+  await fs.emptyDir('./data/test/tmp')
 })
 
 before('start service', async function () {

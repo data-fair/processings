@@ -16,6 +16,8 @@ const router = module.exports = express.Router()
 
 const pluginsDir = path.join(config.dataDir, 'plugins')
 fs.ensureDirSync(pluginsDir)
+const tmpDir = path.join(config.dataDir, 'tmp')
+fs.ensureDirSync(tmpDir)
 
 const preparePluginInfo = (pluginInfo) => {
   const version = pluginInfo.distTag === 'latest' ? pluginInfo.version : `${pluginInfo.distTag} - ${pluginInfo.version}`
@@ -28,7 +30,7 @@ router.post('/', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async
   plugin.id = plugin.name.replace('/', '-') + '-' + semver.major(plugin.version)
   if (plugin.distTag !== 'latest') plugin.id += '-' + plugin.distTag
   const pluginDir = path.join(pluginsDir, plugin.id)
-  const dir = await tmp.dir({ unsafeCleanup: true, dir: path.resolve(config.dataDir, 'tmp') })
+  const dir = await tmp.dir({ unsafeCleanup: true, dir: tmpDir })
   try {
     // create a pseudo npm package with a dependency to the plugin referenced from the registry
     await fs.writeFile(path.join(dir.path, 'package.json'), JSON.stringify({
