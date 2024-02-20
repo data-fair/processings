@@ -9,6 +9,7 @@
     "dev-api": "npm -w api run dev",
     "dev-deps": "docker compose --profile dev up -d --wait",
     "dev-ui": "npm -w ui run dev",
+    "dev-zellij": "zellij --layout .zellij.kdl",
     "i": "rimraf node_modules api/node_modules ui/node_modules && npm i && cd api && npm i && cd ../ui && npm i",
     "lint": "eslint --ext js,vue --ignore-path .gitignore .",
     "lint-fix": "eslint --ext js,vue --ignore-path .gitignore --fix .",
