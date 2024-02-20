@@ -6,6 +6,10 @@ on:
       workspace:
         required: true
         type: string
+      push_images:
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   build:
@@ -54,7 +58,7 @@ jobs:
       with:
         context: .
         file: ${{ inputs.workspace }}/Dockerfile
-        push: ${{ github.event_name != 'pull_request' }}
+        push: ${{ github.event_name != 'pull_request' && inputs.push_images }}
         tags: ${{ steps.docker_meta.outputs.tags }}
         labels: ${{ steps.docker_meta.outputs.labels }}
         platforms: linux/amd64
