@@ -21,7 +21,7 @@ async function start () {
   _client = client
   if (config.mode === 'task') {
     const mailTransport = nodemailer.createTransport(config.mails.transport)
-    const err = await require('./worker/task').run({ db, mailTransport, wsPublish })
+    const err = await require('../worker/task').run({ db, mailTransport, wsPublish })
     if (err) process.exit(-1)
     if (_stopped) process.exit(143)
     process.exit()
@@ -31,7 +31,7 @@ async function start () {
 
   if (config.mode.includes('worker')) {
     await require('../upgrade')(db)
-    require('./worker').start({ db, wsPublish })
+    require('../worker').start({ db, wsPublish })
   }
   if (config.mode.includes('server')) {
     await require('./app').start({ db, wsPublish })
@@ -41,8 +41,8 @@ async function start () {
 async function stop () {
   _stopped = true
   if (config.mode.includes('server')) await require('./app').stop()
-  if (config.mode.includes('worker')) await require('./worker').stop()
-  if (config.mode === 'task') await require('./worker/task').stop()
+  if (config.mode.includes('worker')) await require('../worker').stop()
+  if (config.mode === 'task') await require('../worker/task').stop()
   else if (config.prometheus.active) await prometheus.stop()
   if (_client) await _client.close()
 }

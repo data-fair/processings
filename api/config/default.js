@@ -1,7 +1,6 @@
 module.exports = {
   mode: 'server_worker', // can be server_worker, server or worker
-  port: 5600,
-  sessionDomain: null,
+  port: 8082,
   publicUrl: 'http://localhost:5600',
   dataDir: '/data',
   directoryUrl: 'http://localhost:5600/simple-directory',
@@ -9,11 +8,8 @@ module.exports = {
   dataFairUrl: 'http://localhost:5600/data-fair',
   privateDataFairUrl: null,
   dataFairAPIKey: null,
-  dataFairAdminMode: false,
   notifyUrl: null,
   privateNotifyUrl: null,
-  adminRole: 'admin',
-  contribRole: 'contrib',
   mongo: {
     host: 'localhost',
     port: 27017,
@@ -51,11 +47,6 @@ module.exports = {
     // in seconds
     ttl: 60
   },
-  i18n: {
-    locales: 'fr,en',
-    defaultLocale: 'fr'
-  },
-  proxyNuxt: false,
   prometheus: {
     active: true,
     port: 9090

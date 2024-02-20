@@ -48,13 +48,6 @@ app.use((req, res, next) => {
   next()
 })
 
-if (process.env.NODE_ENV === 'development') {
-  // Create a mono-domain environment with other services in dev
-  app.use('/simple-directory', createProxyMiddleware({ target: 'http://localhost:8080', pathRewrite: { '^/simple-directory': '' } }))
-  app.use('/data-fair', createProxyMiddleware({ target: 'http://localhost:8081', pathRewrite: { '^/data-fair': '' }, ws: true }))
-  app.use('/notify', createProxyMiddleware({ target: 'http://localhost:8088', pathRewrite: { '^/notify': '' }, ws: true }))
-}
-
 app.use(cookieParser())
 app.use(bodyParser.json())
 app.use(bodyParser.text())
@@ -67,10 +60,8 @@ app.use('/api/v1/limits', limits.router)
 
 let server, wss
 exports.start = async ({ db }) => {
-  const nuxt = await require('./nuxt')()
   app.use(session.auth)
   app.use('/_nuxt', cors()) // prevent CORS errors when fetching fonts in multi-domain mode
-  app.use(nuxt.render)
   app.set('db', db)
 
   app.use((err, req, res, next) => {

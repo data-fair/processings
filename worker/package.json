@@ -1,0 +1,13 @@
+{
+  "name": "worker",
+  "main": "index.js",
+  "scripts": {
+    "dev": "NODE_ENV=development DEBUG=scheduler,upgrade nodemon api"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.3"
+  },
+  "dependencies": {
+    "child-process-promise": "^2.2.1"
+  }
+}
