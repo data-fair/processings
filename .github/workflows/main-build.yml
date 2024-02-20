@@ -1,25 +1,81 @@
 name: Main Build CI
 
 on:
-  push:
-    branches:
-      - 'master'
-    tags:
-      - 'v*.*.*'
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      workspace:
+        required: true
+        type: string
+      push_images:
+        required: false
+        type: boolean
+        default: true
 
 jobs:
-  build-api:
-    uses: ./.github/workflows/build.yml
-    with:
-      workspace: api
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout git repository
+      uses: actions/checkout@v4
 
-  build-worker:
-    uses: ./.github/workflows/build.yml
-    with:
-      workspace: worker
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        driver-opts: network=host
 
-  build-ui:
-    uses: ./.github/workflows/build.yml
-    with:
-      workspace: ui
+    - name: Login to Github container registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Prepare BUILD.json
+      run: |
+        echo '{"version": "${{github.ref_name}}", "repository": "${{github.server_url}}/${{github.repository}}", "commit": "${{github.sha}}"}' > BUILD.json
+        cat BUILD.json
+
+    - name: Run test dependencies
+      run: |
+        NO_UI=true docker compose --profile test up -d --wait
+        docker ps
+
+    - name: Prepare docker image tags
+      id: docker_meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ghcr.io/${{ github.repository }}/${{ inputs.workspace }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+
+    - name: Build and push docker images
+      id: docker_build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ${{ inputs.workspace }}/Dockerfile
+        push: ${{ github.event_name != 'pull_request' && inputs.push_images }}
+        tags: ${{ steps.docker_meta.outputs.tags }}
+        labels: ${{ steps.docker_meta.outputs.labels }}
+        platforms: linux/amd64
+        allow: network.host
+        network: host
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Stop test dependencies
+      run: docker-compose stop
+
+    - name: Image digest
+      run: echo ${{ steps.docker_build.outputs.digest }}
+
+    - name: Send Keel notification to staging-koumoul.com
+      run: |
+        curl -s --fail --show-error -X POST https://keel.admin.staging-koumoul.com/v1/webhooks/native -u ${{ secrets.KEEL_STAGING_USER }}:${{ secrets.KEEL_STAGING_PASSWORD }} -d '{"name": "ghcr.io/${{ github.repository }}", "tag": "${{ steps.docker_meta.outputs.version }}"}'
+    - name: Send Keel notification to koumoul.com
+      run: |
+        curl -s --fail --show-error -X POST https://keel.admin.koumoul.com/v1/webhooks/native -u ${{ secrets.KEEL_PROD_USER }}:${{ secrets.KEEL_PROD_PASSWORD }} -d '{"name": "ghcr.io/${{ github.repository }}", "tag": "${{ steps.docker_meta.outputs.version }}"}'
