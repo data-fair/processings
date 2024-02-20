@@ -1,24 +1,26 @@
-const config = require('config')
-const fs = require('fs-extra')
-const path = require('path')
-const express = require('express')
-const { nanoid } = require('nanoid')
-const cryptoRandomString = require('crypto-random-string')
-const createError = require('http-errors')
-const ajv = require('ajv')({ allErrors: false })
-const resolvePath = require('resolve-path')
-const processingSchema = require('../../../contract/processing')
-const findUtils = require('../utils/find')
-const asyncWrap = require('../utils/async-wrap')
-const permissions = require('../utils/permissions')
-const runs = require('../utils/runs')
-const session = require('../utils/session')
+import config from 'config'
+import fs from 'fs-extra'
+import path from 'path'
+import express from 'express'
+import { nanoid } from 'nanoid'
+import cryptoRandomString from 'crypto-random-string'
+import createError from 'http-errors'
+import Ajv from 'ajv'
+import resolvePath from 'resolve-path'
+import processingSchema from '../../../contract/processing.js'
+import findUtils from '../utils/find.cjs'
+import asyncWrap from '../utils/async-wrap.cjs'
+import permissions from '../utils/permissions.cjs'
+import runs from '../utils/runs.cjs'
+import session from '../utils/session.cjs'
+import mongo from '@data-fair/lib/node/mongo.js'
 
+const ajv = new Ajv()
 const pluginsDir = path.resolve(config.dataDir, 'plugins')
 
 const sensitiveParts = ['permissions', 'webhookKey', 'config']
 
-const router = module.exports = express.Router()
+const router = express.Router()
 
 const validateFullProcessing = async (processing) => {
   // config is required only after the processing was activated
@@ -51,7 +53,7 @@ router.get('', session.requiredAuth, asyncWrap(async (req, res, next) => {
   const [skip, size] = findUtils.pagination(req.query)
   const query = findUtils.query(req)
   const project = findUtils.project(req.query.select)
-  const processings = req.app.get('db').collection('processings')
+  const processings = await mongo.db.collection('processings')
   const [results, count] = await Promise.all([
     size > 0 ? processings.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
     processings.countDocuments(query)
@@ -61,7 +63,6 @@ router.get('', session.requiredAuth, asyncWrap(async (req, res, next) => {
 
 // Create a processing
 router.post('', session.requiredAuth, asyncWrap(async (req, res, next) => {
-  const db = req.app.get('db')
   req.body._id = nanoid()
   if (req.body.owner && !req.user.adminMode) return res.status(403).send('owner can only be set for superadmin')
   req.body.owner = req.body.owner || req.user.accountOwner
@@ -86,15 +87,14 @@ router.post('', session.requiredAuth, asyncWrap(async (req, res, next) => {
   }
 
   await validateFullProcessing(req.body)
-  await db.collection('processings').insertOne(req.body)
-  await runs.applyProcessing(db, req.body)
+  await mongo.db.collection('processings').insertOne(req.body)
+  await runs.applyProcessing(mongo.db, req.body)
   res.status(200).json(cleanProcessing(req.body, req))
 }))
 
 // Patch some of the attributes of a processing
 router.patch('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
-  const db = req.app.get('db')
-  const processing = await db.collection('processings').findOne({ _id: req.params.id }, { projection: {} })
+  const processing = await mongo.db.collection('processings').findOne({ _id: req.params.id }, { projection: {} })
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing, req) !== 'admin') return res.status(403).send()
   // Restrict the parts of the processing that can be edited by API
@@ -121,14 +121,14 @@ router.patch('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
   }
   const patchedprocessing = { ...processing, ...req.body }
   await validateFullProcessing(patchedprocessing)
-  await db.collection('processings').updateOne({ _id: req.params.id }, patch)
-  await db.collection('runs').updateMany({ 'processing._id': processing._id }, { $set: { permissions: patchedprocessing.permissions || [] } })
-  await runs.applyProcessing(db, patchedprocessing)
+  await mongo.db.collection('processings').updateOne({ _id: req.params.id }, patch)
+  await mongo.db.collection('runs').updateMany({ 'processing._id': processing._id }, { $set: { permissions: patchedprocessing.permissions || [] } })
+  await runs.applyProcessing(mongo.db, patchedprocessing)
   res.status(200).json(cleanProcessing(patchedprocessing, req))
 }))
 
 router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
-  const processing = await req.app.get('db').collection('processings')
+  const processing = await mongo.db.collection('processings')
     .findOne({ _id: req.params.id }, { projection: {} })
   if (!processing) return res.status(404).send()
   if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(processing, req))) return res.status(403).send()
@@ -136,30 +136,27 @@ router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
 }))
 
 router.delete('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
-  const db = req.app.get('db')
-  const processing = await db.collection('processings').findOne({ _id: req.params.id })
+  const processing = await mongo.db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing, req) !== 'admin') return res.status(403).send()
-  await db.collection('processings').deleteOne({ _id: req.params.id })
-  if (processing && processing.value) await runs.deleteProcessing(db, processing)
+  await mongo.db.collection('processings').deleteOne({ _id: req.params.id })
+  if (processing && processing.value) await runs.deleteProcessing(mongo.db, processing)
   res.sendStatus(204)
 }))
 
 router.get('/:id/webhook-key', session.requiredAuth, asyncWrap(async (req, res, next) => {
-  const db = req.app.get('db')
-  const processing = await db.collection('processings').findOne({ _id: req.params.id })
+  const processing = await mongo.db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing, req) !== 'admin') return res.status(403).send()
   res.send(processing.webhookKey)
 }))
 
 router.delete('/:id/webhook-key', session.requiredAuth, asyncWrap(async (req, res, next) => {
-  const db = req.app.get('db')
-  const processing = await db.collection('processings').findOne({ _id: req.params.id })
+  const processing = await mongo.db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing, req) !== 'admin') return res.status(403).send()
   const webhookKey = cryptoRandomString({ length: 16, type: 'url-safe' })
-  await db.collection('processings').updateOne(
+  await mongo.db.collection('processings').updateOne(
     { _id: processing._id },
     { $set: { webhookKey } }
   )
@@ -167,8 +164,7 @@ router.delete('/:id/webhook-key', session.requiredAuth, asyncWrap(async (req, re
 }))
 
 router.post('/:id/_trigger', session.auth, asyncWrap(async (req, res, next) => {
-  const db = req.app.get('db')
-  const processing = await db.collection('processings')
+  const processing = await mongo.db.collection('processings')
     .findOne({ _id: req.params.id }, { projection: {} })
   if (req.query.key) {
     if (req.query.key !== processing.webhookKey) {
@@ -178,5 +174,7 @@ router.post('/:id/_trigger', session.auth, asyncWrap(async (req, res, next) => {
     if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(processing, req))) return res.status(403).send()
   }
   if (!processing.active) return res.status(409).send('Le traitement n\'est pas actif')
-  res.send(await runs.createNext(db, processing, true, req.query.delay ? Number(req.query.delay) : 0))
+  res.send(await runs.createNext(mongo.db, processing, true, req.query.delay ? Number(req.query.delay) : 0))
 }))
+
+export default router

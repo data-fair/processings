@@ -1,5 +1,5 @@
 const createError = require('http-errors')
-const permissions = require('./permissions')
+const permissions = require('./permissions.cjs')
 
 // Util functions shared accross the main find (GET on collection) endpoints
 

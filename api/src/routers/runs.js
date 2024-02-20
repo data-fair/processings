@@ -1,11 +1,13 @@
-const express = require('express')
-const findUtils = require('../utils/find')
-const asyncWrap = require('../utils/async-wrap')
-const permissions = require('../utils/permissions')
-const session = require('../utils/session')
+import express from 'express'
+import findUtils from '../utils/find.cjs'
+import asyncWrap from '../utils/async-wrap.cjs'
+import permissions from '../utils/permissions.cjs'
+import session from '../utils/session.cjs'
+import mongo from '@data-fair/lib/node/mongo.js'
+
 const router = express.Router()
 
-module.exports = router
+export default router
 
 const sensitiveParts = ['permissions']
 
@@ -24,7 +26,7 @@ router.get('', session.requiredAuth, asyncWrap(async (req, res, next) => {
   if (req.user.adminMode) req.query.showAll = 'true'
   const query = findUtils.query(req, { processing: 'processing._id' })
   const project = { log: 0 }
-  const runs = req.app.get('db').collection('runs')
+  const runs = mongo.db.collection('runs')
   const [results, count] = await Promise.all([
     size > 0 ? runs.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
     runs.countDocuments(query)
@@ -33,17 +35,17 @@ router.get('', session.requiredAuth, asyncWrap(async (req, res, next) => {
 }))
 
 router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
-  const run = await req.app.get('db').collection('runs').findOne({ _id: req.params.id })
+  const run = await mongo.db.collection('runs').findOne({ _id: req.params.id })
   if (!run) return res.status(404).send()
   if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(run, req))) return res.status(403).send()
   res.send(cleanRun(run, req))
 }))
 
 router.post('/:id/_kill', session.requiredAuth, asyncWrap(async (req, res, next) => {
-  const run = await req.app.get('db').collection('runs').findOne({ _id: req.params.id })
+  const run = await mongo.db.collection('runs').findOne({ _id: req.params.id })
   if (!run) return res.status(404).send()
   if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(run, req))) return res.status(403).send()
-  await req.app.get('db').collection('runs').updateOne({ _id: run._id }, { $set: { status: 'kill' } })
+  await mongo.db.collection('runs').updateOne({ _id: run._id }, { $set: { status: 'kill' } })
   run.status = 'kill'
   res.send(cleanRun(run, req))
 }))

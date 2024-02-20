@@ -1,25 +1,25 @@
 const express = require('express')
 const config = require('config')
 const moment = require('moment')
-const ajv = require('ajv')()
-const asyncWrap = require('./async-wrap')
-const dbUtils = require('./db')
-const session = require('./session')
+// const ajv = require('ajv')
+const asyncWrap = require('./async-wrap.cjs')
+const dbUtils = require('./db.cjs')
+const session = require('./session.cjs')
 
-const limitTypeSchema = { limit: { type: 'number' }, consumption: { type: 'number' } }
-const schema = {
-  type: 'object',
-  required: ['id', 'type', 'lastUpdate'],
-  properties: {
-    type: { type: 'string' },
-    id: { type: 'string' },
-    name: { type: 'string' },
-    lastUpdate: { type: 'string', format: 'date-time' },
-    defaults: { type: 'boolean', title: 'these limits were defined using default values only, not specifically defined' },
-    processings_seconds: limitTypeSchema
-  }
-}
-const validate = ajv.compile(schema)
+// const limitTypeSchema = { limit: { type: 'number' }, consumption: { type: 'number' } }
+// const schema = {
+//   type: 'object',
+//   required: ['id', 'type', 'lastUpdate'],
+//   properties: {
+//     type: { type: 'string' },
+//     id: { type: 'string' },
+//     name: { type: 'string' },
+//     lastUpdate: { type: 'string', format: 'date-time' },
+//     defaults: { type: 'boolean', title: 'these limits were defined using default values only, not specifically defined' },
+//     processings_seconds: limitTypeSchema
+//   }
+// }
+// const validate = ajv.compile(schema)
 
 exports.init = async (db) => {
   await dbUtils.ensureIndex(db, 'limits', { id: 'text', name: 'text' }, { name: 'fulltext' })
@@ -109,8 +109,8 @@ const isAccountMember = (req, res, next) => {
 router.post('/:type/:id', isSuperAdmin, asyncWrap(async (req, res, next) => {
   req.body.type = req.params.type
   req.body.id = req.params.id
-  const valid = validate(req.body)
-  if (!valid) return res.status(400).send(validate.errors)
+  // const valid = validate(req.body)
+  // if (!valid) return res.status(400).send(validate.errors)
   await req.app.get('db').collection('limits')
     .replaceOne({ type: req.params.type, id: req.params.id }, req.body, { upsert: true })
   res.send(req.body)

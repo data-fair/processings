@@ -1,99 +1,23 @@
-const EventEmitter = require('events')
-const config = require('config')
-const express = require('express')
-const http = require('http')
-const { URL } = require('url')
-const event2promise = require('event-to-promise')
-const bodyParser = require('body-parser')
-const cookieParser = require('cookie-parser')
-const { createProxyMiddleware } = require('http-proxy-middleware')
-const cors = require('cors')
-const session = require('./utils/session')
-const prometheus = require('./utils/prometheus')
-const limits = require('./utils/limits')
-const wsUtils = require('./utils/ws')
-const debug = require('debug')('main')
+import express from 'express'
+import { session, errorHandler } from '@data-fair/lib/express/index.js'
 
-const publicHost = new URL(config.publicUrl).host
-debug('Public host', publicHost)
+import pluginsRegistryRouter from './routers/plugins-registry.cjs'
+import pluginsRouter from './routers/plugins.cjs'
+import processingsRouter from './routers/processings.js'
+import runsRouter from './routers/runs.js'
 
-// a global event emitter for testing
-global.events = new EventEmitter()
+export const app = express()
 
-// Second express application for proxying requests based on host
-const app = express()
+// no fancy embedded arrays, just string and arrays of strings in req.query
+app.set('query parser', 'simple')
+app.use(session.middleware())
 
-app.set('json spaces', 2)
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
-// re-expose remote data-fair using local api-key
-const dataFairUrl = new URL(config.dataFairUrl)
-const dataFairIsLocal = new URL(config.publicUrl).origin === dataFairUrl.origin
-if (!dataFairIsLocal) {
-  app.use('/data-fair-proxy', session.auth, createProxyMiddleware({
-    target: dataFairUrl.origin,
-    pathRewrite: { '^/data-fair-proxy': dataFairUrl.pathname },
-    secure: false,
-    logLevel: 'debug',
-    changeOrigin: true,
-    onProxyReq (proxyReq, req, res) {
-      if (!req.user || !req.user.adminMode) return res.status(403).send('Super admin only')
-      proxyReq.setHeader('cookie', '')
-      proxyReq.setHeader('x-apiKey', config.dataFairAPIKey)
-    }
-  }))
-}
+app.use('/api/v1/plugins-registry', pluginsRegistryRouter)
+app.use('/api/v1/plugins', pluginsRouter)
+app.use('/api/v1/processings', processingsRouter)
+app.use('/api/v1/runs', runsRouter)
 
-app.use((req, res, next) => {
-  req.secondaryHost = publicHost !== req.headers.host
-  next()
-})
-
-app.use(cookieParser())
-app.use(bodyParser.json())
-app.use(bodyParser.text())
-
-app.use('/api/v1/processings', require('./routers/processings'))
-app.use('/api/v1/runs', require('./routers/runs'))
-app.use('/api/v1/plugins-registry', require('./routers/plugins-registry'))
-app.use('/api/v1/plugins', require('./routers/plugins'))
-app.use('/api/v1/limits', limits.router)
-
-let server, wss
-exports.start = async ({ db }) => {
-  app.use(session.auth)
-  app.use('/_nuxt', cors()) // prevent CORS errors when fetching fonts in multi-domain mode
-  app.set('db', db)
-
-  app.use((err, req, res, next) => {
-    const status = err.statusCode || err.status || 500
-    if (status === 500) {
-      console.error('(http) Error in express route', err)
-      prometheus.internalError.inc({ errorCode: 'http' })
-    }
-    // settings content-type as plain text instead of html to prevent XSS attack
-    res.type('text/plain')
-    res.status(status).send(err.message)
-  })
-
-  await limits.init(db)
-
-  const WebSocket = require('ws')
-  server = http.createServer(app)
-
-  wss = new WebSocket.Server({ server })
-  await wsUtils.initServer(wss, db, session)
-
-  server.listen(config.port)
-  await event2promise(server, 'listening')
-  console.log('HTTP server is listening http://localhost:' + config.port)
-}
-
-exports.stop = async () => {
-  if (server) {
-    wss.close()
-    wsUtils.stop(wss)
-    await event2promise(wss, 'close')
-    server.close()
-    await event2promise(server, 'close')
-  }
-}
+app.use(errorHandler)

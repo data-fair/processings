@@ -11,6 +11,7 @@ module.exports = {
   privateNotifyUrl: 'PRIVATE_NOTIFY_URL',
   mongo: {
     host: 'MONGO_HOST',
+    port: 'MONGO_PORT',
     db: 'MONGO_DB',
     url: 'MONGO_URL'
   },

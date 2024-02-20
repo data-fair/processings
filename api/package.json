@@ -1,6 +1,7 @@
 {
   "name": "api",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "dev": "NODE_ENV=development DEBUG=scheduler,upgrade nodemon api"
   },
@@ -8,6 +9,7 @@
     "nodemon": "^1.19.3"
   },
   "dependencies": {
+    "@data-fair/lib": "0.26.0",
     "agentkeepalive": "^4.5.0",
     "ajv": "^6.12.6",
     "body-parser": "^1.19.0",
@@ -18,6 +20,7 @@
     "express": "^4.17.1",
     "http-errors": "^1.8.0",
     "http-proxy-middleware": "^1.0.6",
+    "http-terminator": "^3.2.0",
     "memoizee": "^0.4.15",
     "mongodb": "^4.2.2",
     "nanoid": "^3.1.22",
