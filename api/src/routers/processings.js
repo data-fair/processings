@@ -1,7 +1,7 @@
 import config from 'config'
 import fs from 'fs-extra'
 import path from 'path'
-import express from 'express'
+import { Router } from 'express'
 import { nanoid } from 'nanoid'
 import cryptoRandomString from 'crypto-random-string'
 import createError from 'http-errors'
@@ -17,11 +17,12 @@ import Ajv from 'ajv'
 import ajvFormats from 'ajv-formats'
 
 const ajv = ajvFormats(new Ajv({ strict: false }))
-const pluginsDir = path.resolve(config.dataDir, 'plugins')
+const pluginsDir = path.join(config.dataDir, 'plugins')
 
 const sensitiveParts = ['permissions', 'webhookKey', 'config']
 
-const router = express.Router()
+const router = Router()
+export default router
 
 const validateFullProcessing = async (processing) => {
   // config is required only after the processing was activated
@@ -31,9 +32,9 @@ const validateFullProcessing = async (processing) => {
   const validate = ajv.compile(schema)
   const valid = validate(processing)
   if (!valid) throw createError(400, JSON.stringify(validate.errors))
-  if (!await fs.pathExists(resolvePath(pluginsDir, processing.plugin))) throw createError(400, 'Plugin not found')
+  if (!await fs.pathExists(path.join(pluginsDir, processing.plugin))) throw createError(400, 'Plugin not found')
   if (!processing.config) return
-  const pluginInfo = await fs.readJson(resolvePath(pluginsDir, path.join(processing.plugin, 'plugin.json')))
+  const pluginInfo = await fs.readJson(path.join(pluginsDir, path.join(processing.plugin, 'plugin.json')))
   const configValidate = ajv.compile(pluginInfo.processingConfigSchema)
   const configValid = configValidate(processing.config)
   if (!configValid) throw createError(400, JSON.stringify(configValidate.errors))
@@ -177,5 +178,3 @@ router.post('/:id/_trigger', session.auth, asyncWrap(async (req, res, next) => {
   if (!processing.active) return res.status(409).send('Le traitement n\'est pas actif')
   res.send(await runs.createNext(mongo.db, processing, true, req.query.delay ? Number(req.query.delay) : 0))
 }))
-
-export default router
