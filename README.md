@@ -12,6 +12,22 @@ npm run dev-api
 npm run dev-ui
 ```
 
+Or Run the zellij command :
+
+*first time instructions*
+```sh
+curl https://sh.rustup.rs -sSf | sh
+# choose 1
+cargo install --locked zellij
+# in processings
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+nvm install
+```
+
+```sh
+npm run dev-zellij
+```
+
 Test built nuxt distributable in dev:
 
 ```sh
@@ -34,18 +50,23 @@ docker build --network=host -t processings-dev .
 docker run --network=host --env PORT=8081 processings-dev
 ```
 
-Run the zellij command :
+Tests the builds of the Docker images :
 
-*first time instructions*
+- Install act
+
 ```sh
-curl https://sh.rustup.rs -sSf | sh
-# choose 1
-cargo install --locked zellij
-# in processings
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-nvm install
+brew install act
 ```
 
+*if you don't have homebrew yet*
 ```sh
-npm run dev-zellij
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+- Tests the builds individually
+
+```sh
+act workflow_dispatch -W '.github/workflows/test-build.yml' -j build-api
+act workflow_dispatch -W '.github/workflows/test-build.yml' -j build-ui
+act workflow_dispatch -W '.github/workflows/test-build.yml' -j build-worker
 ```

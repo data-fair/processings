@@ -6,10 +6,13 @@ RUN apk add --no-cache curl cmake make g++ linux-headers
 RUN apk add --no-cache boost-dev gmp gmp-dev mpfr-dev
 
 # build CGAL (not yet present in alpine repos)
-WORKDIR /tmp
+WORKDIR /tmp/
+
 RUN curl -L https://github.com/CGAL/cgal/releases/download/releases%2FCGAL-4.14.3/CGAL-4.14.3.tar.xz -o cgal.tar.xz
 RUN tar -xf cgal.tar.xz
-WORKDIR /tmp/CGAL-4.14.3
+
+WORKDIR /tmp/CGAL-4.14.3/
+
 RUN cmake -D CMAKE_BUILD_TYPE=Release .
 RUN make
 RUN make install
@@ -34,30 +37,30 @@ RUN apk add --no-cache python3 make g++
 # Stage: nodejs dependencies and build
 FROM nativedeps AS builder
 
-WORKDIR /worker
+WORKDIR /app/
 
-ADD package.json .
-ADD package-lock.json .
+ADD /package.json .
+ADD /package-lock.json .
+
 RUN npm ci --workspaces=false --no-audit --no-fund --omit=optional
 
-ADD /worker/ /worker/
-ADD /contract/ /contract/
+ADD /worker/ worker/
+ADD /contract/ contract/
 
 ##########################
 # install worker prod deps
 FROM node:20.11.1-alpine3.19 AS installer
 
-WORKDIR /worker/
+WORKDIR /app/
 
-ADD package.json .
-ADD package-lock.json .
+ADD /package.json .
+ADD /package-lock.json .
 ADD /worker/package.json worker/
+
 RUN npm pkg set scripts.prepare="echo 'skip prepare'"
+RUN npm i -g clean-modules@3.0.4
 RUN npm ci -w worker --no-audit --no-fund --omit=optional --omit=dev &&\
     clean-modules --yes
-
-# check that we don't have deps in local node_modules (sign of deps that couldn't be deduped)
-RUN test ! -d worker/node_modules
 
 ##############################################
 # copy deps and build and assemble actual dist
@@ -66,18 +69,18 @@ LABEL org.opencontainers.image.authors="contact@koumoul.com"
 
 ENV NODE_ENV production
 
-WORKDIR /worker/
+WORKDIR /app/
 
-COPY --from=builder /worker/worker /worker/worker
+COPY --from=builder /app/worker/ worker/
 COPY --from=nativedeps /usr/lib/libproj.so /usr/lib/libproj.so
-COPY --from=installer /worker/node_modules /worker/node_modules
+COPY --from=installer /app/node_modules/ node_modules/
 
-ADD /contract/ /contract/
-ADD README.md .
-ADD package.json .
-ADD LICENSE .
+ADD /contract/ contract/
+ADD /README.md .
+ADD /package.json .
+ADD /LICENSE .
 
-WORKDIR /worker/worker
+WORKDIR /app/worker
 
 USER node
 

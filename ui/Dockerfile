@@ -3,17 +3,20 @@
 FROM node:20.11.1-alpine3.19 AS builder
 
 WORKDIR /webapp/
+
 ADD /package.json .
 ADD /package-lock.json .
 ADD /ui/package.json ui/
 
+RUN npm i -g clean-modules@3.0.4
 RUN npm -w ui --include-workspace-root ci --no-audit --no-fund && \
-    clean-modules --yes --exclude exceljs/lib/doc/ --exclude mocha/lib/test.js --exclude "**/*.mustache"
+    clean-modules --yes "!exceljs/lib/doc/" "!mocha/lib/test.js" "!**/*.mustache"
+
 ADD /ui/ ui/
-ADD /ui/nuxt.config.js ui/
-ADD /contract/ /contract/
+ADD /contract/ contract/
 
 ENV NODE_ENV production
+
 RUN npm -w ui run build
 
 ############################################
@@ -26,14 +29,15 @@ ENV PORT 3039
 
 WORKDIR /webapp/
 
-COPY --from=builder /webapp/ui/node_modules /webapp/ui/node_modules
-COPY --from=builder /webapp/ui/.output /webapp/ui/.output
+COPY --from=builder /webapp/ui/node_modules ui/node_modules/
+COPY --from=builder /webapp/ui/dist ui/dist/
+COPY --from=builder /webapp/ui/nuxt-dist ui/nuxt-dist/
 
 ADD /ui/nuxt.config.js ui/
-ADD /contract/ /contract/
-ADD README.md .
-ADD package.json .
-ADD LICENSE .
+ADD /contract/ contract/
+ADD /README.md .
+ADD /package.json .
+ADD /LICENSE .
 
 WORKDIR /webapp/ui
 
@@ -41,5 +45,4 @@ EXPOSE 3039
 
 USER node
 
-CMD ["node", "--max-http-header-size", "64000", ".output/server/index.mjs"]
-
+CMD ["node", "--max-http-header-size", "64000", "nuxt start"]

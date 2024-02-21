@@ -24,7 +24,7 @@ jobs:
         driver-opts: network=host
 
     - name: Login to Github container registry
-      if: inputs.push_images
+      if: ${{ inputs.push_images }}
       uses: docker/login-action@v3
       with:
         registry: ghcr.io
@@ -42,6 +42,7 @@ jobs:
         docker ps
 
     - name: Prepare docker image tags
+      if: ${{ inputs.push_images }}
       id: docker_meta
       uses: docker/metadata-action@v5
       with:
@@ -60,8 +61,8 @@ jobs:
         context: .
         file: ${{ inputs.workspace }}/Dockerfile
         push: ${{ github.event_name != 'pull_request' && inputs.push_images }}
-        tags: ${{ steps.docker_meta.outputs.tags }}
-        labels: ${{ steps.docker_meta.outputs.labels }}
+        tags: ${{ inputs.push_images && steps.docker_meta.outputs.tags || 'local-test:unpushed' }}
+        labels: ${{ inputs.push_images && steps.docker_meta.outputs.labels || 'build.scope=local-test,build.status=unpushed' }}
         platforms: linux/amd64
         allow: network.host
         network: host
@@ -69,14 +70,17 @@ jobs:
         cache-to: type=gha,mode=max
 
     - name: Stop test dependencies
-      run: docker-compose stop
+      run: docker compose down
 
     - name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}
 
     - name: Send Keel notification to staging-koumoul.com
+      if: ${{ inputs.push_images }}
       run: |
         curl -s --fail --show-error -X POST https://keel.admin.staging-koumoul.com/v1/webhooks/native -u ${{ secrets.KEEL_STAGING_USER }}:${{ secrets.KEEL_STAGING_PASSWORD }} -d '{"name": "ghcr.io/${{ github.repository }}", "tag": "${{ steps.docker_meta.outputs.version }}"}'
+
     - name: Send Keel notification to koumoul.com
+      if: ${{ inputs.push_images }}
       run: |
         curl -s --fail --show-error -X POST https://keel.admin.koumoul.com/v1/webhooks/native -u ${{ secrets.KEEL_PROD_USER }}:${{ secrets.KEEL_PROD_PASSWORD }} -d '{"name": "ghcr.io/${{ github.repository }}", "tag": "${{ steps.docker_meta.outputs.version }}"}'
