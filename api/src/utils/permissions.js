@@ -5,7 +5,7 @@ const getOwnerRole = (owner, reqSession) => {
   if (reqSession.account.department) return null
   if (reqSession.account.type !== owner.type || reqSession.account.id !== owner.id) return null
   if (reqSession.account.type === 'user') return 'admin'
-  return reqSession.account.role
+  return reqSession.accountRole
 }
 
 const isSuperAdmin = async (req, res, next) => {
@@ -34,7 +34,7 @@ const getOwnerPermissionFilter = (owner, reqSession) => {
   if (reqSession.user.adminMode || ['admin', 'contrib'].includes(getOwnerRole(owner, reqSession))) return filter
   const or = [{ 'target.type': 'userEmail', 'target.email': reqSession.user.email }]
   if (reqSession.account.type === 'organization') {
-    or.push({ 'target.type': 'partner', 'target.organization.id': reqSession.account.id, 'target.roles': reqSession.account.role })
+    or.push({ 'target.type': 'partner', 'target.organization.id': reqSession.account.id, 'target.roles': reqSession.accountRole })
   }
   filter.permissions = {
     $elemMatch: {
@@ -47,7 +47,7 @@ const getOwnerPermissionFilter = (owner, reqSession) => {
 
 const matchPermissionTarget = (target, reqSession) => {
   if (target.type === 'userEmail' && target.email === reqSession.user.email) return true
-  if (target.type === 'partner' && reqSession.account.type === 'organization' && reqSession.account.id === target.organization.id && target.roles.includes(reqSession.account.role)) return true
+  if (target.type === 'partner' && reqSession.account.type === 'organization' && reqSession.account.id === target.organization.id && target.roles.includes(reqSession.accountRole)) return true
   return false
 }
 
