@@ -1,19 +1,21 @@
-const semver = require('semver')
-const config = require('config')
-const express = require('express')
-const fs = require('fs-extra')
-const path = require('path')
-const util = require('util')
-const exec = util.promisify(require('child_process').exec)
-const tmp = require('tmp-promise')
-const Ajv = require('ajv')
-const ajv = new Ajv({ strict: false })
-const resolvePath = require('resolve-path')
-const asyncWrap = require('../utils/async-wrap.cjs')
-const permissions = require('../utils/permissions.cjs')
-const session = require('../utils/session.cjs')
+import semver from 'semver'
+import config from 'config'
+import { Router } from 'express'
+import fs from 'fs-extra'
+import path from 'path'
+import { promisify } from 'util'
+import { exec as execCallback } from 'child_process'
+import tmp from 'tmp-promise'
+import Ajv from 'ajv'
+import resolvePath from 'resolve-path'
+import permissions from '../utils/permissions.js'
+import { session, asyncHandler } from '@data-fair/lib/express/index.js'
 
-const router = module.exports = express.Router()
+const exec = promisify(execCallback)
+const ajv = new Ajv({ strict: false })
+
+const router = Router()
+export default router
 
 const pluginsDir = path.join(config.dataDir, 'plugins')
 fs.ensureDirSync(pluginsDir)
@@ -24,7 +26,9 @@ const preparePluginInfo = (pluginInfo) => {
 }
 
 // prepare the plugin in a subdirectory
-router.post('/', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {
+router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
+  await session.reqAuthenticated(req)
+
   const plugin = req.body
   plugin.id = plugin.name.replace('/', '-') + '-' + semver.major(plugin.version)
   if (plugin.distTag !== 'latest') plugin.id += '-' + plugin.distTag
@@ -50,13 +54,15 @@ router.post('/', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async
   res.send(plugin)
 }))
 
-router.get('/', session.requiredAuth, asyncWrap(async (req, res, next) => {
+router.get('/', asyncHandler(async (req, res) => {
+  const reqSession = await session.reqAuthenticated(req)
+
   const dirs = (await fs.readdir(pluginsDir)).filter(p => !p.endsWith('.json'))
   const results = []
   for (const dir of dirs) {
     const pluginInfo = await fs.readJson(path.join(pluginsDir, dir, 'plugin.json'))
     const access = await fs.pathExists(path.join(pluginsDir, dir + '-access.json')) ? await fs.readJson(path.join(pluginsDir, dir + '-access.json')) : { public: false, privateAccess: [] }
-    if (req.user.adminMode) {
+    if (reqSession.user.adminMode) {
       if (await fs.pathExists(path.join(pluginsDir, dir + '-config.json'))) {
         pluginInfo.config = await fs.readJson(path.join(pluginsDir, dir + '-config.json'))
       }
@@ -64,13 +70,13 @@ router.get('/', session.requiredAuth, asyncWrap(async (req, res, next) => {
     }
     if (req.query.privateAccess) {
       const [type, id] = req.query.privateAccess.split(':')
-      if (!req.user.adminMode && (type !== req.user.activeAccount.type || id !== req.user.activeAccount.id)) {
+      if (!reqSession.user.adminMode && (type !== reqSession.account.type || id !== reqSession.account.id)) {
         return res.status(403).send('privateAccess does not match current account')
       }
       if (!access.public && !access.privateAccess.find(p => p.type === type && p.id === id)) {
         continue
       }
-    } else if (!req.user.adminMode) {
+    } else if (!reqSession.user.adminMode) {
       return res.status(400).send('privateAccess filter is required')
     }
     results.push(preparePluginInfo(pluginInfo))
@@ -81,19 +87,23 @@ router.get('/', session.requiredAuth, asyncWrap(async (req, res, next) => {
   })
 }))
 
-router.get('/:id', session.requiredAuth, asyncWrap(async (req, res, next) => {
+router.get('/:id', asyncHandler(async (req, res) => {
+  await session.reqAuthenticated(req)
+
   const pluginInfo = await fs.readJson(resolvePath(pluginsDir, path.join(req.params.id, 'plugin.json')))
   res.send(preparePluginInfo(pluginInfo))
 }))
 
-router.delete('/:id', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {
+router.delete('/:id', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
+  await session.reqAuthenticated(req)
   await fs.remove(path.join(pluginsDir, req.params.id))
   await fs.remove(path.join(pluginsDir, req.params.id + '-config.json'))
   await fs.remove(path.join(pluginsDir, req.params.id + '-access.json'))
   res.status(204).send()
 }))
 
-router.put('/:id/config', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {
+router.put('/:id/config', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
+  await session.reqAuthenticated(req)
   const { pluginConfigSchema } = await fs.readJson(path.join(pluginsDir, req.params.id, 'plugin.json'))
   const validate = ajv.compile(pluginConfigSchema)
   const valid = validate(req.body)
@@ -102,7 +112,8 @@ router.put('/:id/config', session.requiredAuth, permissions.isSuperAdmin, asyncW
   res.send(req.body)
 }))
 
-router.put('/:id/access', session.requiredAuth, permissions.isSuperAdmin, asyncWrap(async (req, res, next) => {
+router.put('/:id/access', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
+  await session.reqAuthenticated(req)
   await fs.writeJson(path.join(pluginsDir, req.params.id + '-access.json'), req.body)
   res.send(req.body)
 }))

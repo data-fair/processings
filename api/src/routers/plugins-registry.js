@@ -1,9 +1,10 @@
-import express from 'express'
+import { Router } from 'express'
 import memoize from 'memoizee'
 import axios from '@data-fair/lib/node/axios.js'
-import asyncWrap from '../utils/async-wrap.cjs'
+import { asyncHandler } from '@data-fair/lib/express/index.js'
 
-const router = express.Router()
+const router = Router()
+export default router
 
 const search = memoize(async (q) => {
   // see https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md#get-v1search
@@ -30,8 +31,6 @@ const search = memoize(async (q) => {
   maxAge: 5 * 60 * 1000 // cached for 5 minutes to be polite with npmjs
 })
 
-router.get('/', asyncWrap(async (req, res, next) => {
+router.get('/', asyncHandler(async (req, res) => {
   res.send(await search(req.query.q))
 }))
-
-export default router

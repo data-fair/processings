@@ -1,24 +1,23 @@
-const createError = require('http-errors')
-const permissions = require('./permissions.cjs')
+import createError from 'http-errors'
+import permissions from './permissions.js'
 
 // Util functions shared accross the main find (GET on collection) endpoints
-
-exports.query = (req, fieldsMap = {}) => {
+const query = (req, reqSession, fieldsMap = {}) => {
   const query = {}
 
   if (req.query.q) query.$text = { $search: req.query.q }
 
   const showAll = req.query.showAll === 'true'
-  if (showAll && !req.user.adminMode) {
+  if (showAll && !reqSession.user.adminMode) {
     throw createError(400, 'Only super admins can override permissions filter with showAll parameter')
   }
   if (!showAll) {
-    let owner = req.user.activeAccount
+    let owner = reqSession.account
     if (req.query.owner) {
       const ownerParts = req.query.owner.split(':')
       owner = { type: ownerParts[0], id: ownerParts[1], department: ownerParts[2] }
     }
-    Object.assign(query, permissions.getOwnerPermissionFilter(owner, req.user))
+    Object.assign(query, permissions.getOwnerPermissionFilter(owner, reqSession))
   }
 
   Object.keys(fieldsMap).filter(name => req.query[name] !== undefined).forEach(name => {
@@ -27,7 +26,7 @@ exports.query = (req, fieldsMap = {}) => {
   return query
 }
 
-exports.sort = (sortStr) => {
+const sort = (sortStr) => {
   const sort = {}
   if (!sortStr) return sort
   Object.assign(sort, ...sortStr.split(',').map(s => {
@@ -39,7 +38,7 @@ exports.sort = (sortStr) => {
   return sort
 }
 
-exports.pagination = (query, defaultSize = 10) => {
+const pagination = (query, defaultSize = 10) => {
   let size = defaultSize
   if (query && query.size && !isNaN(parseInt(query.size))) {
     size = parseInt(query.size)
@@ -55,7 +54,7 @@ exports.pagination = (query, defaultSize = 10) => {
   return [skip, size]
 }
 
-exports.project = (selectStr) => {
+const project = (selectStr) => {
   const select = {}
   if (selectStr) {
     selectStr.split(',').forEach(s => {
@@ -63,4 +62,11 @@ exports.project = (selectStr) => {
     })
   }
   return select
+}
+
+export default {
+  query,
+  sort,
+  pagination,
+  project
 }

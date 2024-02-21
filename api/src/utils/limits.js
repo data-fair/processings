@@ -1,8 +1,7 @@
 import express from 'express'
 import config from 'config'
 import moment from 'moment'
-import asyncWrap from './async-wrap.cjs'
-import session from './session.cjs'
+import { asyncHandler } from '@data-fair/lib/express/index.js'
 import mongo from '@data-fair/lib/node/mongo.js'
 import Ajv from 'ajv'
 import ajvFormats from 'ajv-formats'
@@ -91,7 +90,6 @@ export const setConsumption = async (db, consumer, type, value) => {
 }
 
 export const router = express.Router()
-router.use(session.auth)
 
 const isSuperAdmin = (req, res, next) => {
   if (req.user && req.user.adminMode) return next()
@@ -115,7 +113,7 @@ const isAccountMember = (req, res, next) => {
 }
 
 // Endpoint for customers service to create/update limits
-router.post('/:type/:id', isSuperAdmin, asyncWrap(async (req, res, next) => {
+router.post('/:type/:id', isSuperAdmin, asyncHandler(async (req, res) => {
   req.body.type = req.params.type
   req.body.id = req.params.id
   const valid = validate(req.body)
@@ -126,14 +124,14 @@ router.post('/:type/:id', isSuperAdmin, asyncWrap(async (req, res, next) => {
 }))
 
 // A user can get limits information for himself only
-router.get('/:type/:id', isAccountMember, asyncWrap(async (req, res, next) => {
+router.get('/:type/:id', isAccountMember, asyncHandler(async (req, res) => {
   const limits = await exports.getLimits(req.app.get('db'), { type: req.params.type, id: req.params.id })
   if (!limits) return res.status(404).send()
   delete limits._id
   res.send(limits)
 }))
 
-router.get('/', isSuperAdmin, asyncWrap(async (req, res, next) => {
+router.get('/', isSuperAdmin, asyncHandler(async (req, res) => {
   const filter = {}
   if (req.query.type) filter.type = req.query.type
   if (req.query.id) filter.id = req.query.id
