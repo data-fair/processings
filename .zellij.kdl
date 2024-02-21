@@ -3,27 +3,27 @@ layout {
       split_direction "vertical"
       pane name="processings" borderless=true {
         command "${DEV_SHELL}"
-        args "-ic" "nvm use && ${DEV_SHELL}"
+        args "-ic" "nvm use > /dev/null 2>&1 && ${DEV_SHELL}"
       }
       pane name="deps" {
         command "${DEV_SHELL}"
-        args "-ic" "nvm use && npm run dev-deps && touch /tmp/zjdfui /tmp/zjdfapi /tmp/zjdfworker && docker compose logs -f"
+        args "-ic" "nvm use > /dev/null 2>&1 && npm run dev-deps && touch /tmp/zjdfui /tmp/zjdfapi /tmp/zjdfworker && docker compose logs -f"
       }
     }
     pane {
       split_direction "vertical"
       pane name="ui" {
         command "${DEV_SHELL}"
-        args "-ic" "nvm use && while [ ! -f /tmp/zjdfui ]; do sleep 1; done && rm /tmp/zjdfui && npm -w ui run dev"
+        args "-ic" "nvm use > /dev/null 2>&1 && echo 'waiting for deps to start...' && while [ ! -f /tmp/zjdfui ]; do sleep 1; done && rm /tmp/zjdfui && npm -w ui run dev"
       }
       pane name="api" {
         command "${DEV_SHELL}"
-        args "-ic" "nvm use && while [ ! -f /tmp/zjdfapi ]; do sleep 1; done && rm /tmp/zjdfapi && npm -w api run dev"
+        args "-ic" "nvm use > /dev/null 2>&1 && echo 'waiting for deps to start...' && while [ ! -f /tmp/zjdfapi ]; do sleep 1; done && rm /tmp/zjdfapi && npm -w api run dev"
       }
       pane name="worker" {
         command "${DEV_SHELL}"
-        /* args "-ic" "nvm use && while [ ! -f /tmp/zjdfworker ]; do sleep 1; done && rm /tmp/zjdfworker && npm -w worker run dev" */
-        args "-ic" "echo 'todo'"
+        /* args "-ic" "nvm use > /dev/null 2>&1 && while [ ! -f /tmp/zjdfworker ]; do sleep 1; done && rm /tmp/zjdfworker && npm -w worker run dev" */
+        args "-ic" "echo 'waiting for deps to start...' && echo 'todo'"
       }
     }
     pane size=2 borderless=true {

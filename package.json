@@ -7,7 +7,7 @@
     "dev-api": "npm -w api run dev",
     "dev-deps": "docker compose --profile dev up -d --wait",
     "dev-ui": "npm -w ui run dev",
-    "dev-zellij": "export DEV_SHELL=$(basename \"$SHELL\") && zellij --layout .zellij.kdl",
+    "dev-zellij": "export DEV_SHELL=$(basename \"$SHELL\") && zellij --layout .zellij.kdl && npm run stop-dev-deps",
     "i": "rimraf node_modules ui/node_modules api/node_modules worker/node_modules && npm i && cd api && npm i && cd ../ui && npm i && cd ../worker && npm i",
     "lint": "eslint --ext js,vue --ignore-path .gitignore .",
     "lint-fix": "eslint --ext js,vue --ignore-path .gitignore --fix .",
