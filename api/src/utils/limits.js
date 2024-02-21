@@ -1,32 +1,41 @@
-const express = require('express')
-const config = require('config')
-const moment = require('moment')
-// const ajv = require('ajv')
-const asyncWrap = require('./async-wrap.cjs')
-const dbUtils = require('./db.cjs')
-const session = require('./session.cjs')
+import express from 'express'
+import config from 'config'
+import moment from 'moment'
+import asyncWrap from './async-wrap.cjs'
+import session from './session.cjs'
+import mongo from '@data-fair/lib/node/mongo.js'
+import Ajv from 'ajv'
+import ajvFormats from 'ajv-formats'
 
-// const limitTypeSchema = { limit: { type: 'number' }, consumption: { type: 'number' } }
-// const schema = {
-//   type: 'object',
-//   required: ['id', 'type', 'lastUpdate'],
-//   properties: {
-//     type: { type: 'string' },
-//     id: { type: 'string' },
-//     name: { type: 'string' },
-//     lastUpdate: { type: 'string', format: 'date-time' },
-//     defaults: { type: 'boolean', title: 'these limits were defined using default values only, not specifically defined' },
-//     processings_seconds: limitTypeSchema
-//   }
-// }
-// const validate = ajv.compile(schema)
+const ajv = ajvFormats(new Ajv({ strict: false }))
 
-exports.init = async (db) => {
-  await dbUtils.ensureIndex(db, 'limits', { id: 'text', name: 'text' }, { name: 'fulltext' })
-  await dbUtils.ensureIndex(db, 'limits', { type: 1, id: 1 }, { name: 'limits-find-current', unique: true })
+const schema = {
+  type: 'object',
+  required: ['id', 'type', 'lastUpdate'],
+  properties: {
+    type: { type: 'string' },
+    id: { type: 'string' },
+    name: { type: 'string' },
+    lastUpdate: { type: 'string', format: 'date-time' },
+    defaults: { type: 'boolean', title: 'these limits were defined using default values only, not specifically defined' },
+    processings_seconds: {
+      limit: {
+        type: 'number'
+      },
+      consumption: {
+        type: 'number'
+      }
+    }
+  }
+}
+const validate = ajv.compile(schema)
+
+export const init = async (db) => {
+  await mongo.ensureIndex(db, 'limits', { id: 'text', name: 'text' }, { name: 'fulltext' })
+  await mongo.ensureIndex(db, 'limits', { type: 1, id: 1 }, { name: 'limits-find-current', unique: true })
 }
 
-exports.getLimits = async (db, consumer) => {
+export const getLimits = async (db, consumer) => {
   const coll = db.collection('limits')
   const now = moment()
   let limits = await coll.findOne({ type: consumer.type, id: consumer.id })
@@ -49,7 +58,7 @@ exports.getLimits = async (db, consumer) => {
   return limits
 }
 
-exports.get = async (db, consumer, type) => {
+export const get = async (db, consumer, type) => {
   const limits = await exports.getLimits(db, consumer)
   const res = (limits && limits[type]) || { limit: 0, consumption: 0 }
   res.type = type
@@ -64,24 +73,24 @@ const calculateRemainingLimit = (limits, key) => {
   return Math.max(0, limit - consumption)
 }
 
-exports.remaining = async (db, consumer) => {
+export const remaining = async (db, consumer) => {
   const limits = await exports.getLimits(db, consumer)
   return {
     processingsSeconds: calculateRemainingLimit(limits, 'processings_seconds')
   }
 }
 
-exports.incrementConsumption = async (db, consumer, type, inc) => {
+export const incrementConsumption = async (db, consumer, type, inc) => {
   return (await db.collection('limits')
     .findOneAndUpdate({ type: consumer.type, id: consumer.id }, { $inc: { [`${type}.consumption`]: inc } }, { returnDocument: 'after', upsert: true })).value
 }
 
-exports.setConsumption = async (db, consumer, type, value) => {
+export const setConsumption = async (db, consumer, type, value) => {
   return (await db.collection('limits')
     .findOneAndUpdate({ type: consumer.type, id: consumer.id }, { $set: { [`${type}.consumption`]: value } }, { returnDocument: 'after', upsert: true })).value
 }
 
-const router = exports.router = express.Router()
+export const router = express.Router()
 router.use(session.auth)
 
 const isSuperAdmin = (req, res, next) => {
@@ -109,8 +118,8 @@ const isAccountMember = (req, res, next) => {
 router.post('/:type/:id', isSuperAdmin, asyncWrap(async (req, res, next) => {
   req.body.type = req.params.type
   req.body.id = req.params.id
-  // const valid = validate(req.body)
-  // if (!valid) return res.status(400).send(validate.errors)
+  const valid = validate(req.body)
+  if (!valid) return res.status(400).send(validate.errors)
   await req.app.get('db').collection('limits')
     .replaceOne({ type: req.params.type, id: req.params.id }, req.body, { upsert: true })
   res.send(req.body)

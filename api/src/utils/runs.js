@@ -1,22 +1,24 @@
-const config = require('config')
-const path = require('path')
-const fs = require('fs-extra')
-const CronJob = require('cron').CronJob
-const { nanoid } = require('nanoid')
-const Ajv = require('ajv')
-const ajv = new Ajv()
-const resolvePath = require('resolve-path')
-const runSchema = require('../../../contract/run')
+import config from 'config'
+import path from 'path'
+import fs from 'fs-extra'
+import { CronJob } from 'cron'
+import { nanoid } from 'nanoid'
+import resolvePath from 'resolve-path'
+import runSchema from '../../../contract/run.js'
+import schedulingUtils from './scheduling.cjs'
+import notifications from './notifications.js'
+import prometheus from './prometheus.cjs'
+import { incrementConsumption } from './limits.js'
+import moment from 'moment'
+import Ajv from 'ajv'
+import ajvFormats from 'ajv-formats'
+
+const ajv = ajvFormats(new Ajv({ strict: false }))
 const validate = ajv.compile(runSchema)
-const schedulingUtils = require('./scheduling.cjs')
-const notifications = require('./notifications.cjs')
-const prometheus = require('./prometheus.cjs')
-const limits = require('./limits.cjs')
-const moment = require('moment')
 
 const processingsDir = path.resolve(config.dataDir, 'processings')
 
-exports.applyProcessing = async (db, processing) => {
+export const applyProcessing = async (db, processing) => {
   // if processing is deactivated, cancel pending runs
   if (!processing.active) {
     await db.collection('runs')
@@ -34,12 +36,12 @@ exports.applyProcessing = async (db, processing) => {
   await exports.createNext(db, processing)
 }
 
-exports.deleteProcessing = async (db, processing) => {
+export const deleteProcessing = async (db, processing) => {
   await db.collection('runs').deleteMany({ 'processing._id': processing._id })
   await fs.remove(resolvePath(processingsDir, processing._id))
 }
 
-exports.createNext = async (db, processing, triggered, delaySeconds = 0) => {
+export const createNext = async (db, processing, triggered, delaySeconds = 0) => {
   const run = {
     _id: nanoid(),
     owner: processing.owner,
@@ -85,7 +87,7 @@ exports.createNext = async (db, processing, triggered, delaySeconds = 0) => {
   return run
 }
 
-exports.running = async (db, wsPublish, run) => {
+export const running = async (db, wsPublish, run) => {
   const patch = { status: 'running', startedAt: new Date().toISOString() }
   const lastRun = (await db.collection('runs').findOneAndUpdate(
     { _id: run._id },
@@ -97,7 +99,7 @@ exports.running = async (db, wsPublish, run) => {
     .updateOne({ _id: run.processing._id }, { $set: { lastRun }, $unset: { nextRun: '' } })
 }
 
-exports.finish = async (db, wsPublish, run, errorMessage, errorLogType = 'debug') => {
+export const finish = async (db, wsPublish, run, errorMessage, errorLogType = 'debug') => {
   const query = {
     $set: {
       status: 'finished',
@@ -124,7 +126,7 @@ exports.finish = async (db, wsPublish, run, errorMessage, errorLogType = 'debug'
   await wsPublish(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch: query.$set })
   const duration = (new Date(lastRun.finishedAt).getTime() - new Date(lastRun.startedAt).getTime()) / 1000
   prometheus.runs.labels(({ status: query.$set.status, owner: run.owner.name })).observe(duration)
-  await limits.incrementConsumption(db, run.owner, 'processings_seconds', Math.round(duration))
+  await incrementConsumption(db, run.owner, 'processings_seconds', Math.round(duration))
 
   // manage post run notification
   const sender = { ...run.owner }
@@ -171,4 +173,12 @@ exports.finish = async (db, wsPublish, run, errorMessage, errorLogType = 'debug'
   delete lastRun.log
   await db.collection('processings')
     .updateOne({ _id: run.processing._id }, { $set: { lastRun } })
+}
+
+export default {
+  applyProcessing,
+  deleteProcessing,
+  createNext,
+  running,
+  finish
 }

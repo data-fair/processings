@@ -1,9 +1,9 @@
-const config = require('config')
-const axios = require('./axios.cjs')
-const debug = require('debug')('notifications')
-const prometheus = require('./prometheus.cjs')
+import config from 'config'
+import axios from '@data-fair/lib/node/axios.js'
+import debug from 'debug'
+import prometheus from './prometheus.cjs'
 
-exports.send = async (notification) => {
+export const send = async (notification) => {
   if (global.events) global.events.emit('notification', notification)
   debug('send notification', notification)
   if (!config.notifyUrl) {
@@ -18,3 +18,5 @@ exports.send = async (notification) => {
       })
   }
 }
+
+export default { send }

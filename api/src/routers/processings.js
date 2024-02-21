@@ -5,17 +5,18 @@ import express from 'express'
 import { nanoid } from 'nanoid'
 import cryptoRandomString from 'crypto-random-string'
 import createError from 'http-errors'
-import Ajv from 'ajv'
 import resolvePath from 'resolve-path'
 import processingSchema from '../../../contract/processing.js'
 import findUtils from '../utils/find.cjs'
 import asyncWrap from '../utils/async-wrap.cjs'
 import permissions from '../utils/permissions.cjs'
-import runs from '../utils/runs.cjs'
+import runs from '../utils/runs.js'
 import session from '../utils/session.cjs'
 import mongo from '@data-fair/lib/node/mongo.js'
+import Ajv from 'ajv'
+import ajvFormats from 'ajv-formats'
 
-const ajv = new Ajv()
+const ajv = ajvFormats(new Ajv({ strict: false }))
 const pluginsDir = path.resolve(config.dataDir, 'plugins')
 
 const sensitiveParts = ['permissions', 'webhookKey', 'config']
