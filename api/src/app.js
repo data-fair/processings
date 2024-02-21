@@ -1,7 +1,7 @@
 import express from 'express'
 import { session, errorHandler } from '@data-fair/lib/express/index.js'
 
-import pluginsRegistryRouter from './routers/plugins-registry.cjs'
+import pluginsRegistryRouter from './routers/plugins-registry.js'
 import pluginsRouter from './routers/plugins.cjs'
 import processingsRouter from './routers/processings.js'
 import runsRouter from './routers/runs.js'
@@ -12,6 +12,7 @@ export const app = express()
 app.set('query parser', 'simple')
 app.use(session.middleware())
 
+app.set('json spaces', 2)
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
