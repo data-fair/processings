@@ -7,8 +7,5 @@ module.exports = {
     concurrency: 1,
     killInterval: 2000,
     gracePeriod: 3000
-  },
-  prometheus: {
-    port: 9092
   }
 }

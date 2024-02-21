@@ -8,7 +8,6 @@ module.exports = {
     notifications: 'secret-notifications'
   },
   prometheus: {
-    active: false,
-    port: 9090
+    active: true
   }
 }

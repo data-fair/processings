@@ -48,8 +48,7 @@ module.exports = {
     ttl: 60
   },
   prometheus: {
-    active: true,
-    port: 9090
+    active: true
   },
   defaultLimits: {
     // Maximum time spent running processings

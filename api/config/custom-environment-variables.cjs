@@ -40,8 +40,7 @@ module.exports = {
     active: {
       __name: 'PROMETHEUS_ACTIVE',
       __format: 'json'
-    },
-    port: 'PROMETHEUS_PORT'
+    }
   },
   defaultLimits: {
     processingsSeconds: {
