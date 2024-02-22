@@ -62,82 +62,76 @@
   </v-container>
 </template>
 
-<script>
-import { mapState, mapGetters } from 'vuex'
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useStore } from '../store/index.js'
+import { useRoute } from 'vue-router'
 import format from '~/assets/format.js'
 import eventBus from '~/event-bus'
+import { useAxios } from '@vueuse/integrations/useAxios'
 
-export default {
-  components: {},
-  data: () => ({
-    processings: null,
-    installedPlugins: {},
-    showAll: false
-  }),
-  computed: {
-    ...mapState(['env']),
-    ...mapState('session', ['user']),
-    ...mapGetters('session', ['activeAccount']),
-    owner () {
-      if (this.$route.query.owner) {
-        const parts = this.$route.query.owner.split(':')
-        return { type: parts[0], id: parts[1] }
-      } else {
-        return this.activeAccount
-      }
-    },
-    ownerRole () {
-      if (this.owner.type === 'user') {
-        if (this.owner.id === this.user.id) return 'admin'
-        else return 'anonymous'
-      }
-      const userOrg = this.user.organizations.find(o => o.id === this.owner.id)
-      return userOrg ? userOrg.role : 'anonymous'
-    },
-    ownerFilter () {
-      return `${this.owner.type}:${this.owner.id}`
-    },
-    canAdmin () {
-      if (this.env.secondaryHost) return false
-      return this.ownerRole === 'admin' || this.user.adminMode
-    }
-  },
-  watch: {},
-  created () {
-    this.$store.dispatch('setBreadcrumbs', [{
-      text: 'traitements'
-    }])
-    this.refresh()
-    this.fetchInstalledPlugins()
-  },
-  methods: {
-    async fetchInstalledPlugins () {
-      if (!this.canAdmin) return
-      this.installedPlugins = await this.$axios.$get('/api/v1/plugins', {
-        params: {
-          privateAccess: this.ownerFilter
-        }
-      })
-    },
-    async refresh () {
-      try {
-        const params = {
-          size: 10000,
-          showAll: this.showAll,
-          sort: 'updated.date:-1',
-          select: '_id,title,plugin,lastRun,nextRun,owner'
-        }
-        if (this.showAll) {
-          params.showAll = true
-        } else {
-          params.owner = this.ownerFilter
-        }
-        this.processings = await this.$axios.$get('api/v1/processings', { params })
-      } catch (error) {
-        eventBus.$emit('notification', { error, msg: 'Erreur pendant la récupération de la liste des traitements' })
-      }
-    },
-    format
+const store = useStore()
+const route = useRoute()
+
+const processings = ref(null)
+const installedPlugins = ref({})
+const showAll = ref(false)
+
+const env = computed(() => store.env)
+const user = computed(() => store.user)
+const activeAccount = computed(() => store.activeAccount)
+
+const owner = computed(() => {
+  if (route.query.owner) {
+    const parts = route.query.owner.split(':')
+    return { type: parts[0], id: parts[1] }
+  } else {
+    return activeAccount.value
+  }
+})
+
+const ownerRole = computed(() => {
+  if (owner.value.type === 'user') {
+    if (owner.value.id === user.value.id) return 'admin'
+    else return 'anonymous'
+  }
+  const userOrg = user.value.organizations.find(o => o.id === owner.value.id)
+  return userOrg ? userOrg.role : 'anonymous'
+})
+
+const ownerFilter = computed(() => `${owner.value.type}:${owner.value.id}`)
+
+const canAdmin = computed(() => {
+  if (env.value.secondaryHost) return false
+  return ownerRole.value === 'admin' || user.value.adminMode
+})
+
+onMounted(async () => {
+  store.setBreadcrumbs([{ text: 'traitements' }])
+  await refresh()
+  await fetchInstalledPlugins()
+})
+
+async function fetchInstalledPlugins() {
+  if (!canAdmin.value) return
+  const { data } = await useAxios(`/api/v1/plugins?privateAccess=${ownerFilter.value}`)
+  installedPlugins.value = data.value
+}
+
+async function refresh() {
+  try {
+    const params = new URLSearchParams({
+      size: '10000',
+      showAll: showAll.value ? 'true' : 'false',
+      sort: 'updated.date:-1',
+      select: '_id,title,plugin,lastRun,nextRun,owner',
+      owner: ownerFilter.value
+    }).toString()
+    const { data } = await useAxios(`api/v1/processings?${params}`)
+    processings.value = data.value
+  } catch (error) {
+    eventBus.$emit('notification', { error, msg: 'Erreur pendant la récupération de la liste des traitements' })
   }
 }
+
 </script>

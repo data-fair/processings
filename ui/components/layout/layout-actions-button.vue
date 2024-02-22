@@ -1,35 +1,21 @@
 <template>
-  <div
-    class="actions-buttons"
-    style="position:absolute;right:20px;"
-  >
-    <v-menu
-      bottom
-      left
-      :close-on-content-click="false"
-    >
-      <template #activator="{on}">
-        <v-btn
-          fab
-          small
-          color="accent"
-          v-on="on"
-        >
-          <v-icon v-text="icon" />
+  <div class="actions-buttons" style="position: absolute; right: 20px;">
+    <v-menu bottom left :close-on-content-click="false">
+      <template #activator="{ on }">
+        <v-btn fab small color="accent" v-on="on">
+          <v-icon>{{ icon }}</v-icon>
         </v-btn>
       </template>
-      <slot name="actions" />
+      <slot name="actions"></slot>
     </v-menu>
   </div>
 </template>
 
-<script>
-export default {
-  props: {
-    icon: { type: String, default: 'mdi-dots-vertical' }
-  }
-}
+<script setup>
+const props = defineProps({
+  icon: { type: String, default: 'mdi-dots-vertical' }
+})
 </script>
 
-<style lang="css" scoped>
+<style scoped>
 </style>

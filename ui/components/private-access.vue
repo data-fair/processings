@@ -29,6 +29,54 @@
   </v-row>
 </template>
 
+<script setup>
+import { ref, watch, computed } from 'vue'
+import { useStore } from '../store/index.js'
+
+const props = defineProps(['patch'])
+const emit = defineEmits(['change'])
+
+const store = useStore()
+const env = computed(() => store.env)
+const loading = ref(false)
+const search = ref('')
+const suggestions = ref([])
+
+watch(search, () => {
+  listSuggestions()
+})
+
+// Initialize privateAccess if not already done
+if (!props.patch.privateAccess) {
+  props.patch.privateAccess = []
+}
+
+// Convert to setup-style lifecycle hook
+onMounted(() => {
+  listSuggestions()
+})
+
+async function listSuggestions() {
+  if (!search.value || search.value.length < 3) {
+    suggestions.value = props.patch.privateAccess
+    return
+  }
+
+  loading.value = true
+  const orgsResponse = await store.$axios.$get(`${env.value.directoryUrl}/api/organizations`, { params: { q: search.value } })
+  const orgs = orgsResponse.results.map(r => ({ ...r, type: 'organization' }))
+  const usersResponse = await store.$axios.$get(`${env.value.directoryUrl}/api/users`, { params: { q: search.value } })
+  const users = usersResponse.results.map(r => ({ ...r, type: 'user' }))
+  suggestions.value = [...new Set([...props.patch.privateAccess, ...orgs, ...users])]
+  loading.value = false
+}
+
+function onChange() {
+  search.value = ''
+  emit('change')
+}
+</script>
+
 <i18n lang="yaml">
 fr:
   public: Public
@@ -39,53 +87,6 @@ en:
   privateAccess: Restricted access to some accounts
   searchName: Search an organization name
 </i18n>
-
-<script>
-import { mapState } from 'vuex'
-
-export default {
-  props: ['patch'],
-  data () {
-    return {
-      loading: false,
-      search: '',
-      suggestions: []
-    }
-  },
-  computed: {
-    ...mapState(['env'])
-  },
-  watch: {
-    search () {
-      this.listSuggestions()
-    }
-  },
-  created () {
-    this.patch.privateAccess = this.patch.privateAccess || []
-    this.listSuggestions()
-  },
-  methods: {
-    listSuggestions: async function () {
-      if (!this.search || this.search.length < 3) {
-        this.suggestions = this.patch.privateAccess
-        return
-      }
-
-      this.loading = true
-      const orgs = (await this.$axios.$get(this.env.directoryUrl + '/api/organizations', { params: { q: this.search } }))
-        .results.map(r => ({ ...r, type: 'organization' }))
-      const users = (await this.$axios.$get(this.env.directoryUrl + '/api/users', { params: { q: this.search } }))
-        .results.map(r => ({ ...r, type: 'user' }))
-      this.suggestions = this.patch.privateAccess.concat(orgs).concat(users)
-      this.loading = false
-    },
-    onChange () {
-      this.search = ''
-      this.$emit('change')
-    }
-  }
-}
-</script>
 
 <style>
 

@@ -1,5 +1,10 @@
-const URL = require('url').URL
-let config = { ...require('config') }
+import config from './config'
+import en from 'vuetify/es5/locale/en'
+import fr from 'vuetify/es5/locale/fr'
+import nuxtConfigInject from '@koumoul/nuxt-config-inject'
+import { defineNuxtConfig } from 'nuxt'
+import { URL } from 'url'
+
 config.basePath = new URL(config.publicUrl + '/').pathname
 const dataFairIsLocal = new URL(config.publicUrl).origin === new URL(config.dataFairUrl).origin
 config.localDataFairUrl = dataFairIsLocal ? config.dataFairUrl : config.publicUrl + '/data-fair-proxy'
@@ -7,7 +12,6 @@ config.localDataFairUrl = dataFairIsLocal ? config.dataFairUrl : config.publicUr
 const isBuilding = process.argv.slice(-1)[0] === 'build'
 
 if (process.env.NODE_ENV === 'production') {
-  const nuxtConfigInject = require('@koumoul/nuxt-config-inject')
   if (isBuilding) config = nuxtConfigInject.prepare(config)
   else nuxtConfigInject.replace(config, ['nuxt-dist/**/*', 'public/static/**/*'])
 }
@@ -15,9 +19,6 @@ if (process.env.NODE_ENV === 'production') {
 let vuetifyOptions = {}
 
 if (process.env.NODE_ENV !== 'production' || isBuilding) {
-  const fr = require('vuetify/es5/locale/fr').default
-  const en = require('vuetify/es5/locale/en').default
-
   vuetifyOptions = {
     customVariables: ['~assets/variables.scss'],
     treeShake: true,
@@ -53,10 +54,9 @@ if (process.env.NODE_ENV !== 'production' || isBuilding) {
   }
 }
 
-module.exports = {
+export default defineNuxtConfig({
   telemetry: false,
   ssr: false,
-  components: true,
   srcDir: './',
   buildDir: 'nuxt-dist',
   build: {
@@ -75,27 +75,36 @@ module.exports = {
   router: {
     base: config.basePath
   },
-  modules: ['@nuxtjs/axios', 'cookie-universal-nuxt', ['@nuxtjs/i18n', {
-    seo: false,
-    locales: ['fr', 'en'],
-    defaultLocale: config.i18n.defaultLocale,
-    vueI18nLoader: true,
-    strategy: 'no_prefix',
-    detectBrowserLanguage: {
-      useCookie: true,
-      cookieKey: 'i18n_lang'
-    },
-    vueI18n: {
-      fallbackLocale: config.i18n.defaultLocale
-    }
-  }]],
+  modules: [
+    '@nuxtjs/axios',
+    ['@nuxtjs/google-fonts', {
+      download: true,
+      display: 'swap',
+      families: {
+        Nunito: [100, 300, 400, 500, 700, 900]
+      }
+    }],
+    ['@nuxtjs/i18n', {
+      seo: false,
+      locales: ['fr', 'en'],
+      defaultLocale: config.i18n.defaultLocale,
+      vueI18nLoader: true,
+      strategy: 'no_prefix',
+      detectBrowserLanguage: {
+        useCookie: true,
+        cookieKey: 'i18n_lang'
+      },
+      vueI18n: {
+        fallbackLocale: config.i18n.defaultLocale
+      }
+    }],
+    '@nuxtjs/vuetify',
+    '@pinia/nuxt',
+    'cookie-universal-nuxt'
+  ],
   axios: {
     browserBaseURL: config.basePath
   },
-  buildModules: [
-    '@nuxtjs/vuetify',
-    ['@nuxtjs/google-fonts', { download: true, display: 'swap', families: { Nunito: [100, 300, 400, 500, 700, 900] } }]
-  ],
   vuetify: vuetifyOptions,
   env: {
     mainPublicUrl: config.publicUrl,
@@ -109,7 +118,7 @@ module.exports = {
     contribRole: config.contribRole,
     defaultTimeZone: config.defaultTimeZone
   },
-  head: {
+  meta: {
     title: 'Data Fair Processings',
     meta: [
       { charset: 'utf-8' },
@@ -122,4 +131,4 @@ module.exports = {
   css: [
     '@mdi/font/css/materialdesignicons.min.css'
   ]
-}
+})

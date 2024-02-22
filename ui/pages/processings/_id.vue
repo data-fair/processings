@@ -1,4 +1,4 @@
-<template lang="html">
+<template>
   <v-container
     v-if="processing"
     data-iframe-height
@@ -58,107 +58,113 @@
   </v-container>
 </template>
 
-<script>
-import { mapState } from 'vuex'
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useStore } from '../store/index.js'
+import { useRoute, useRouter } from 'vue-router'
 import VJsf from '@koumoul/vjsf/lib/VJsf.js'
+import { useAxios } from '@vueuse/integrations/useAxios'
 
-const processingSchema = require('~/../contract/processing')
+const store = useStore()
+const route = useRoute()
+const router = useRouter()
 
-export default {
-  components: { VJsf },
-  data: () => ({
-    processing: null,
-    editProcessing: null,
-    plugin: null,
-    renderVjsfKey: 0
-  }),
-  computed: {
-    ...mapState(['env']),
-    ...mapState('session', ['user']),
-    canAdminProcessing () {
-      if (!this.processing) return
-      return this.processing.userProfile === 'admin'
-    },
-    canExecProcessing () {
-      if (!this.processing) return
-      return ['admin', 'exec'].includes(this.processing.userProfile)
-    },
-    processingSchema () {
-      if (!this.plugin) return
-      if (!this.processing) return
-      const schema = JSON.parse(JSON.stringify(processingSchema))
-      schema.properties.config = {
-        ...this.plugin.processingConfigSchema,
-        title: 'Plugin ' + this.plugin.fullName,
-        'x-options': { deleteReadOnly: false }
-      }
-      if (this.user.adminMode) delete schema.properties.debug.readOnly
-      if (!this.canAdminProcessing) {
-        delete schema.properties.permissions
-        delete schema.properties.config
-        delete schema.properties.webhookKey
-      }
-      return schema
-    },
-    vjsfOptions () {
-      if (!this.processing) return
-      return {
-        context: {
-          owner: this.processing.owner,
-          ownerFilter: this.env.dataFairAdminMode ? `owner=${this.processing.owner.type}:${encodeURIComponent(this.processing.owner.id)}` : '',
-          dataFairUrl: this.env.dataFairUrl,
-          directoryUrl: this.env.directoryUrl
-        },
-        disableAll: !this.canAdminProcessing,
-        locale: 'fr',
-        // rootDisplay: 'expansion-panels',
-        // rootDisplay: 'tabs',
-        expansionPanelsProps: {
-          value: 0,
-          hover: true
-        },
-        dialogProps: {
-          maxWidth: 500,
-          overlayOpacity: 0 // better when inside an iframe
-        },
-        arrayItemCardProps: { outlined: true, tile: true },
-        dialogCardProps: { outlined: true },
-        deleteReadOnly: true,
-        editMode: 'inline',
-        disableSorting: true
-      }
-    }
-  },
-  async mounted () {
-    if (this.$route.query['back-link'] === 'true') {
-      this.$store.commit('setAny', { runBackLink: true })
-    }
-    await this.fetchProcessing()
-    this.plugin = await this.$axios.$get('api/v1/plugins/' + this.processing.plugin)
-    this.editProcessing = { ...this.processing }
-    Object.keys(this.processingSchema.properties).forEach(key => {
-      if (this.processingSchema.properties[key].readOnly) delete this.editProcessing[key]
-    })
-  },
-  methods: {
-    async fetchProcessing () {
-      this.processing = await this.$axios.$get('api/v1/processings/' + this.$route.params.id)
-      this.$store.dispatch('setBreadcrumbs', [{
-        text: 'traitements',
-        to: '/processings'
-      }, {
-        text: this.processing.title
-      }])
-    },
-    async patch () {
-      if (!this.$refs.form.validate()) return
-      if (this.editProcessing.scheduling && this.editProcessing.scheduling.type === 'weekly') {
-        if (this.editProcessing.scheduling.dayOfWeek === '*') this.editProcessing.scheduling.dayOfWeek = '1'
-        this.renderVjsfKey += 1
-      }
-      await this.$axios.$patch('api/v1/processings/' + this.$route.params.id, this.editProcessing)
-      await this.fetchProcessing()
-    }
+const processing = ref(null)
+const editProcessing = ref(null)
+const plugin = ref(null)
+const renderVjsfKey = ref(0)
+
+const env = computed(() => store.env)
+const user = computed(() => store.user)
+
+const canAdminProcessing = computed(() => {
+  if (!processing.value) return false
+  return processing.value.userProfile === 'admin'
+})
+
+const canExecProcessing = computed(() => {
+  if (!processing.value) return false
+  return ['admin', 'exec'].includes(processing.value.userProfile)
+})
+
+const processingSchema = computed(() => {
+  if (!plugin.value || !processing.value) return
+  const schema = JSON.parse(JSON.stringify(require('~/../contract/processing')))
+  schema.properties.config = {
+    ...plugin.value.processingConfigSchema,
+    title: 'Plugin ' + plugin.value.fullName,
+    'x-options': { deleteReadOnly: false }
   }
+  if (user.value.adminMode) delete schema.properties.debug.readOnly
+  if (!canAdminProcessing.value) {
+    delete schema.properties.permissions
+    delete schema.properties.config
+    delete schema.properties.webhookKey
+  }
+  return schema
+})
+
+const vjsfOptions = computed(() => ({
+  context: {
+    owner: processing.value.owner,
+    ownerFilter: env.value.dataFairAdminMode ? `owner=${processing.value.owner.type}:${encodeURIComponent(processing.value.owner.id)}` : '',
+    dataFairUrl: env.value.dataFairUrl,
+    directoryUrl: env.value.directoryUrl
+  },
+  disableAll: !canAdminProcessing.value,
+  locale: 'fr',
+  expansionPanelsProps: {
+    value: 0,
+    hover: true
+  },
+  dialogProps: {
+    maxWidth: 500,
+    overlayOpacity: 0 // better when inside an iframe
+  },
+  arrayItemCardProps: { outlined: true, tile: true },
+  dialogCardProps: { outlined: true },
+  deleteReadOnly: true,
+  editMode: 'inline',
+  disableSorting: true
+}))
+
+onMounted(async () => {
+  if (route.query['back-link'] === 'true') {
+    store.setAny({ runBackLink: true })
+  }
+  await fetchProcessing()
+  await fetchPlugin()
+})
+
+async function fetchProcessing() {
+  const { data } = await useAxios(`api/v1/processings/${route.params.id}`)
+  processing.value = data.value
+  store.setBreadcrumbs([{
+    text: 'traitements',
+    to: '/processings'
+  }, {
+    text: processing.value.title
+  }])
+  editProcessing.value = { ...processing.value }
+}
+
+async function fetchPlugin() {
+  if (processing.value && processing.value.plugin) {
+    const { data } = await useAxios(`api/v1/plugins/${processing.value.plugin}`)
+    plugin.value = data.value
+    Object.keys(processingSchema.value.properties).forEach(key => {
+      if (processingSchema.value.properties[key].readOnly) delete editProcessing.value[key]
+    })
+  }
+}
+
+async function patch() {
+  if (!editProcessing.value) return
+  if (editProcessing.value.scheduling && editProcessing.value.scheduling.type === 'weekly') {
+    if (editProcessing.value.scheduling.dayOfWeek === '*') editProcessing.value.scheduling.dayOfWeek = '1'
+    renderVjsfKey.value += 1
+  }
+  await useAxios.patch(`api/v1/processings/${route.params.id}`, editProcessing.value)
+  await fetchProcessing()
 }
 </script>

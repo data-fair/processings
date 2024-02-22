@@ -8,24 +8,23 @@
   </v-app>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue'
+import { useStore } from '../store/index.js'
 import 'iframe-resizer/js/iframeResizer.contentWindow'
-import { mapGetters } from 'vuex'
 import Notifications from '../components/notifications.vue'
 import AppBar from '~/components/layout/app-bar.vue'
 
-global.iFrameResizer = {
+const store = useStore()
+
+const embed = computed(() => store.embed)
+
+globalThis.iFrameResizer = {
   heightCalculationMethod: 'taggedElement'
 }
-
-export default {
-  components: { AppBar, Notifications },
-  computed: {
-    ...mapGetters(['embed'])
-  }
-}
-
 </script>
+
+<components :AppBar="AppBar" :Notifications="Notifications" />
 
 <style>
 .v-list.list-actions .v-list-item .v-list-item__icon {

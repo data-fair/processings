@@ -9,12 +9,19 @@
   </div>
 </template>
 
-<script>
-export default {
-  layout: 'empty',
-  props: ['error'],
-  mounted () {
-    if (this.error.statusCode === 401) this.$store.dispatch('session/login')
-  }
-}
+<script setup>
+import { onMounted, toRefs } from 'vue'
+import { useStore } from '../store/index.js'
+
+const props = defineProps({
+  error: Object
+})
+
+const { error } = toRefs(props)
+
+const store = useStore()
+
+onMounted(() => {
+  if (error.value.statusCode === 401) store.login()
+})
 </script>

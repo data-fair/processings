@@ -1,14 +1,17 @@
-<template lang="html">
+<template>
   <p />
 </template>
 
-<script>
-export default {
-  mounted () {
-    this.$store.dispatch('setBreadcrumbs', [])
-  }
-}
+<script setup>
+import { onMounted } from 'vue'
+import { useStore } from '../store/index.js'
+
+const store = useStore()
+
+onMounted(() => {
+  store.setBreadcrumbs([])
+})
 </script>
 
-<style lang="css" scoped>
+<style scoped>
 </style>

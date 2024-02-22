@@ -1,53 +1,33 @@
 <template>
-  <v-app-bar
-    app
-    flat
-    dense
-    class="px-0 main-app-bar"
-  >
+  <v-app-bar app flat dense class="px-0 main-app-bar">
     <v-toolbar-items>
-      <v-btn
-        text
-        :to="{name: 'processings'}"
-      >
-        Traitements
-      </v-btn>
-      <v-btn
-        text
-        :to="{name: 'admin-plugins'}"
-        color="admin"
-      >
-        Plugins
-      </v-btn>
+      <v-btn text :to="{ name: 'processings' }">Traitements</v-btn>
+      <v-btn text :to="{ name: 'admin-plugins' }" color="admin">Plugins</v-btn>
     </v-toolbar-items>
-    <v-breadcrumbs
-      v-if="breadcrumbs"
-      :items="breadcrumbs"
-    />
+    <v-breadcrumbs v-if="breadcrumbs" :items="breadcrumbs" />
     <v-spacer />
-    <lang-switcher />
-    <personal-menu />
+    <LangSwitcher />
+    <PersonalMenu />
   </v-app-bar>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue'
 import PersonalMenu from '@data-fair/sd-vue/src/vuetify/personal-menu.vue'
 import LangSwitcher from '@data-fair/sd-vue/src/vuetify/lang-switcher.vue'
-import { mapState, mapGetters, mapActions } from 'vuex'
+import { useStore } from '../store/index.js'
 
-export default {
-  components: { PersonalMenu, LangSwitcher },
-  computed: {
-    ...mapState(['breadcrumbs']),
-    ...mapState('session', ['user', 'initialized']),
-    ...mapGetters('session', ['activeAccount'])
-  },
-  methods: {
-    ...mapActions('session', ['logout', 'login', 'setAdminMode', 'switchOrganization']),
-    reload () {
-      window.location.reload()
-    }
-  }
+const store = useStore()
+
+const breadcrumbs = computed(() => store.breadcrumbs)
+const user = computed(() => store.user)
+const initialized = computed(() => store.initialized)
+const activeAccount = computed(() => store.activeAccount)
+
+const { logout, login, setAdminMode, switchOrganization } = store
+
+const reload = () => {
+  window.location.reload()
 }
 </script>
 

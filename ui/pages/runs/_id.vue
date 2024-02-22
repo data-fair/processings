@@ -26,7 +26,7 @@
           :can-exec="canExec"
         />
         <run-logs-list
-          v-if="steps.length === 1 && !steps.msg"
+          v-if="steps.length === 1 && !steps[0].msg"
           :logs="steps[0].children"
         />
         <v-expansion-panels
@@ -61,99 +61,88 @@
   </v-container>
 </template>
 
-<script>
-import { mapState } from 'vuex'
+<script setup>
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useStore } from '../store/index.js'
+import { useRoute } from 'vue-router'
 import eventBus from '~/event-bus'
+import RunListItem from '@/components/RunListItem.vue'
+import RunLogsList from '@/components/RunLogsList.vue'
 
-export default {
-  data () {
-    return { loading: false, run: null }
-  },
-  computed: {
-    ...mapState(['runBackLink']),
-    ...mapState('session', ['user']),
-    canExec () {
-      if (!this.run) return
-      return ['admin', 'exec'].includes(this.run.userProfile)
-    },
-    wsLogChannel () {
-      return this.run && `processings/${this.run.processing._id}/run-log`
-    },
-    wsPatchChannel () {
-      return this.run && `processings/${this.run.processing._id}/run-patch`
-    },
-    steps () {
-      if (!this.run) return
-      const steps = []
-      let lastStep
-      for (const log of this.run.log) {
-        if (log.type === 'debug' && !this.user.adminMode) continue
-        if (log.type === 'step') {
-          lastStep = { ...log, children: [] }
-          steps.push(lastStep)
-        } else {
-          if (!lastStep) {
-            lastStep = { date: log.date, msg: '', children: [] }
-            steps.push(lastStep)
-          }
-          lastStep.children.push(log)
-        }
-      }
-      return steps
-    }
-  },
-  async mounted () {
-    await this.refresh()
-  },
-  destroyed () {
-    eventBus.$emit('unsubscribe', this.wsLogChannel)
-    eventBus.$emit('unsubscribe', this.wsPatchChannel)
-    eventBus.$off(this.onRunPatch)
-    eventBus.$off(this.onRunLog)
-  },
-  methods: {
-    async refresh () {
-      this.loading = true
-      this.run = await this.$axios.$get(`api/v1/runs/${this.$route.params.id}`)
+const store = useStore()
+const route = useRoute()
 
-      eventBus.$emit('subscribe', this.wsPatchChannel)
-      eventBus.$on(this.wsPatchChannel, this.onRunPatch)
-      eventBus.$emit('subscribe', this.wsLogChannel)
-      eventBus.$on(this.wsLogChannel, this.onRunLog)
+const run = ref(null)
+const runBackLink = computed(() => store.runBackLink)
+const user = computed(() => store.user)
 
-      this.$store.dispatch('setBreadcrumbs', [{
-        text: 'traitements',
-        to: '/processings'
-      }, {
-        text: this.run.processing.title,
-        to: `/processings/${this.run.processing._id}`
-      }, {
-        text: 'exécution'
-      }])
-      this.loading = false
-    },
-    onRunPatch (runPatch) {
-      if (!this.run || this.run._id !== runPatch._id) return
-      for (const key of Object.keys(runPatch.patch)) {
-        this.$set(this.run, key, runPatch.patch[key])
+const canExec = computed(() => {
+  if (!run.value) return false
+  return ['admin', 'exec'].includes(run.value.userProfile)
+})
+
+const steps = computed(() => {
+  if (!run.value || !run.value.log) return []
+  const steps = []
+  let lastStep
+  for (const log of run.value.log) {
+    if (log.type === 'debug' && !user.value.adminMode) continue
+    if (log.type === 'step') {
+      lastStep = { ...log, children: [] }
+      steps.push(lastStep)
+    } else {
+      if (!lastStep) {
+        lastStep = { date: log.date, msg: '', children: [] }
+        steps.push(lastStep)
       }
-    },
-    onRunLog (runLog) {
-      if (!this.run || this.run._id !== runLog._id) return
-      if (runLog.log.type === 'task') {
-        const matchingTask = this.run.log.find(l => l.type === 'task' && l.msg === runLog.log.msg)
-        if (matchingTask) {
-          for (const key of Object.keys(runLog.log)) {
-            this.$set(matchingTask, key, runLog.log[key])
-          }
-          return
-        }
-      }
-      this.run.log.push(runLog.log)
+      lastStep.children.push(log)
     }
   }
+  return steps
+})
+
+onMounted(async () => {
+  await refresh()
+  eventBus.$on('run-patch', onRunPatch)
+  eventBus.$on('run-log', onRunLog)
+})
+
+onUnmounted(() => {
+  eventBus.$off('run-patch', onRunPatch)
+  eventBus.$off('run-log', onRunLog)
+})
+
+async function refresh() {
+  try {
+    const response = await fetch(`api/v1/runs/${route.params.id}`)
+    run.value = await response.json()
+    store.setBreadcrumbs([
+      { text: 'traitements', to: '/processings' },
+      { text: run.value.processing.title, to: `/processings/${run.value.processing._id}` },
+      { text: 'exécution' }
+    ])
+  } catch (error) {
+    console.error('Failed to fetch run details:', error)
+  }
+}
+
+function onRunPatch(runPatch) {
+  if (!run.value || run.value._id !== runPatch._id) return;
+  run.value = { ...run.value, ...runPatch.patch };
+}
+
+function onRunLog(runLog) {
+  if (!run.value || run.value._id !== runLog._id) return;
+  if (runLog.log.type === 'task') {
+    const matchingTaskIndex = run.value.log.findIndex(l => l.type === 'task' && l.msg === runLog.log.msg);
+    if (matchingTaskIndex !== -1) {
+      run.value.log[matchingTaskIndex] = { ...run.value.log[matchingTaskIndex], ...runLog.log };
+    } else {
+      run.value.log.push(runLog.log);
+    }
+  } else {
+    run.value.log.push(runLog.log);
+  }
+  run.value.log = [...run.value.log];
 }
 </script>
-
-<style lang="css" scoped>
-</style>

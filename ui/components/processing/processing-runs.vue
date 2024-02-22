@@ -1,8 +1,5 @@
 <template>
-  <v-card
-    tile
-    :loading="loading"
-  >
+  <v-card tile :loading="loading">
     <v-card-title>
       Exécutions
     </v-card-title>
@@ -22,49 +19,65 @@
   </v-card>
 </template>
 
-<script>
-import eventBus from '~/event-bus'
+<script setup>
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useEventBus } from '../..event-bus.js'
+import axios from 'axios'
+import RunListItem from '~/components/run/run-list-item.vue'
 
-export default {
-  props: ['processing', 'canExec'],
-  data () {
-    return { loading: false, runs: null }
-  },
-  computed: {
-    wsChannel () {
-      return `processings/${this.processing._id}/run-patch`
-    }
-  },
-  async mounted () {
-    eventBus.$emit('subscribe', this.wsChannel)
-    eventBus.$on(this.wsChannel, this.onRunPatch)
-    await this.refresh()
-  },
-  destroyed () {
-    eventBus.$emit('unsubscribe', this.wsChannel)
-    eventBus.$off(this.onRunPatch)
-  },
-  methods: {
-    onRunPatch (runPatch) {
-      console.log('message from', this.wsChannel, runPatch)
-      if (!this.runs) return
-      const matchingRun = this.runs.results.find(run => run._id === runPatch._id)
-      if (!matchingRun) {
-        console.log('received info from WS about an unknown run, refresh list')
-        return this.refresh()
-      }
-      for (const key of Object.keys(runPatch.patch)) {
-        this.$set(matchingRun, key, runPatch.patch[key])
-      }
-    },
-    async refresh () {
-      this.loading = true
-      this.runs = await this.$axios.$get('api/v1/runs', { params: { processing: this.processing._id, size: 1000, sort: 'createdAt:-1', owner: `${this.processing.owner.type}:${this.processing.owner.id}` } })
-      this.loading = false
-    }
+const props = defineProps({
+  processing: Object,
+  canExec: Boolean
+})
+
+const loading = ref(false)
+const runs = ref(null)
+
+const eventBus = useEventBus()
+const wsChannel = `processings/${props.processing._id}/run-patch`
+
+function onRunPatch(runPatch) {
+  console.log('message from', wsChannel, runPatch)
+  if (!runs.value) return
+  const matchingRun = runs.value.results.find(run => run._id === runPatch._id)
+  if (!matchingRun) {
+    console.log('received info from WS about an unknown run, refresh list')
+    return refresh()
+  }
+  for (const key of Object.keys(runPatch.patch)) {
+    matchingRun[key] = runPatch.patch[key]
   }
 }
+
+async function refresh() {
+  loading.value = true
+  try {
+    const response = await axios.get('api/v1/runs', { 
+      params: { 
+        processing: props.processing._id, 
+        size: 1000, 
+        sort: 'createdAt:-1', 
+        owner: `${props.processing.owner.type}:${props.processing.owner.id}` 
+      } 
+    })
+    runs.value = response.data
+  } catch (error) {
+    console.error('Failed to refresh runs:', error)
+  }
+  loading.value = false
+}
+
+onMounted(async () => {
+  eventBus.subscribe(wsChannel, onRunPatch)
+  await refresh()
+})
+
+onUnmounted(() => {
+  eventBus.unsubscribe(wsChannel)
+})
+
+watch(props.processing, refresh, { deep: true })
 </script>
 
-<style lang="css" scoped>
+<style scoped>
 </style>

@@ -6,10 +6,7 @@
     style="padding-top: 20px;"
   >
     <v-list>
-      <v-list-item
-        :to="{name: 'index'}"
-        exact
-      >
+      <v-list-item :to="{ name: 'index' }" exact>
         <v-list-item-action>
           <v-icon>mdi-home</v-icon>
         </v-list-item-action>
@@ -17,33 +14,19 @@
       </v-list-item>
 
       <template v-if="!embed">
-        <v-list-item
-          v-if="!user"
-          color="primary"
-          @click="setAdminMode"
-        >
-          <v-list-item-title>
-            Connexion
-          </v-list-item-title>
+        <v-list-item v-if="!user" color="primary" @click="setAdminMode">
+          <v-list-item-title>Connexion</v-list-item-title>
         </v-list-item>
-        <v-list-item
-          v-else
-          @click="logout"
-        >
-          <v-list-item>
-            <v-list-item-title>
-              Se déconnecter
-            </v-list-item-title>
-          </v-list-item>
+        <v-list-item v-else @click="logout">
+          <v-list-item-title>Se déconnecter</v-list-item-title>
         </v-list-item>
         <v-list-item v-if="user">
-          <v-menu
-            offset-y
-            left
-          >
-            <template #activator="{}">
+          <v-menu offset-y left>
+            <template #activator="{ on, attrs }">
               <v-select
-                :items="[{text: 'Compte personnel', value: null}].concat(user.organizations.map(o => ({text: o.name, value: o.id})))"
+                v-bind="attrs"
+                v-on="on"
+                :items="[{ text: 'Compte personnel', value: null }].concat(user.organizations.map(o => ({ text: o.name, value: o.id })))"
                 label="Compte actif"
                 :value="activeAccount && activeAccount.type === 'organization' ? activeAccount.id : null"
                 @change="val => switchOrganization(val)"
@@ -54,7 +37,7 @@
       </template>
       <template v-if="!embed && user">
         <v-subheader>Vues embarquées</v-subheader>
-        <v-list-item :to="{name: `embed-processings`}">
+        <v-list-item :to="{ name: 'embed-processings' }">
           <v-list-item-action>
             <v-icon>mdi-face-agent</v-icon>
           </v-list-item-action>
@@ -65,23 +48,31 @@
   </v-navigation-drawer>
 </template>
 
-<script>
-import { mapState, mapGetters, mapActions } from 'vuex'
-export default {
-  computed: {
-    ...mapState('session', ['user']),
-    ...mapState(['embed']),
-    ...mapGetters('session', ['activeAccount'])
-  },
-  methods: {
-    ...mapActions('session', ['switchOrganization', 'logout', 'setAdminMode'])
-  }
+<script setup>
+import { computed } from 'vue'
+import { useStore } from '../store/index.js'
+
+const store = useStore()
+
+const user = computed(() => store.user)
+const embed = computed(() => store.embed)
+const activeAccount = computed(() => store.activeAccount)
+
+const switchOrganization = (val) => {
+  store.switchOrganization(val)
 }
 
+const logout = () => {
+  store.logout()
+}
+
+const setAdminMode = () => {
+  store.setAdminMode()
+}
 </script>
 
 <style>
-.v-navigation-drawer{
-    z-index:0!important;
+.v-navigation-drawer {
+  z-index: 0 !important;
 }
 </style>

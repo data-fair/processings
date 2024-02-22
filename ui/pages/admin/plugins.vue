@@ -1,4 +1,4 @@
-<template lang="html">
+<template>
   <v-container data-iframe-height>
     <v-text-field
       v-model="search"
@@ -102,69 +102,75 @@
   </v-container>
 </template>
 
-<script>
+<script setup>
+import { ref, computed } from 'vue'
 import VJsf from '@koumoul/vjsf/lib/VJsf.js'
 import '@koumoul/vjsf/lib/deps/third-party.js'
 import '@koumoul/vjsf/dist/main.css'
+import { useStore } from '../store/index.js'
+import { useAxios } from '@vueuse/integrations/useAxios'
 
-export default {
-  components: { VJsf },
-  middleware: 'superadmin-required',
-  data: () => ({
-    loading: false,
-    availablePlugins: {},
-    installedPlugins: {},
-    search: ''
-  }),
-  computed: {
-    filteredAvailablePlugins () {
-      if (!this.availablePlugins.results) return
-      if (!this.search) return this.availablePlugins.results
-      return this.availablePlugins.results.filter(r => r.name.includes(this.search) || (r.description && r.description.includes(this.search)))
-    },
-    filteredInstalledPlugins () {
-      if (!this.installedPlugins.results) return
-      if (!this.search) return this.installedPlugins.results
-      return this.installedPlugins.results.filter(r => r.name.includes(this.search) || (r.description && r.description.includes(this.search)))
-    }
-  },
-  created () {
-    this.$store.dispatch('setBreadcrumbs', [{ text: 'plugins' }])
-    this.fetchAvailablePlugins()
-    this.fetchInstalledPlugins()
-  },
-  methods: {
-    async fetchAvailablePlugins () {
-      this.availablePlugins = await this.$axios.$get('/api/v1/plugins-registry')
-    },
-    async fetchInstalledPlugins () {
-      this.installedPlugins = await this.$axios.$get('/api/v1/plugins')
-    },
-    async install (plugin) {
-      this.loading = true
-      await this.$axios.$post('/api/v1/plugins', plugin)
-      await this.fetchInstalledPlugins()
-      this.loading = false
-    },
-    async uninstall (plugin) {
-      this.loading = true
-      await this.$axios.$delete('/api/v1/plugins/' + plugin.id)
-      await this.fetchInstalledPlugins()
-      this.loading = false
-    },
-    async saveConfig (plugin) {
-      this.loading = true
-      await this.$axios.$put(`/api/v1/plugins/${plugin.id}/config`, plugin.config)
-      this.loading = false
-    },
-    async saveAccess (plugin) {
-      this.loading = true
-      await this.$axios.$put(`/api/v1/plugins/${plugin.id}/access`, plugin.access)
-      this.loading = false
-    }
-  }
+const store = useStore()
+
+const loading = ref(false)
+const availablePlugins = ref({})
+const installedPlugins = ref({})
+const search = ref('')
+
+const filteredAvailablePlugins = computed(() => {
+  if (!availablePlugins.value.results) return
+  if (!search.value) return availablePlugins.value.results
+  return availablePlugins.value.results.filter(r => r.name.includes(search.value) || (r.description && r.description.includes(search.value)))
+})
+
+const filteredInstalledPlugins = computed(() => {
+  if (!installedPlugins.value.results) return
+  if (!search.value) return installedPlugins.value.results
+  return installedPlugins.value.results.filter(r => r.name.includes(search.value) || (r.description && r.description.includes(search.value)))
+})
+
+onMounted(async () => {
+  store.setBreadcrumbs([{ text: 'plugins' }])
+  await fetchAvailablePlugins()
+  await fetchInstalledPlugins()
+})
+
+async function fetchAvailablePlugins() {
+  const { data } = await useAxios('/api/v1/plugins-registry')
+  availablePlugins.value = data.value
+}
+
+async function fetchInstalledPlugins() {
+  const { data } = await useAxios('/api/v1/plugins')
+  installedPlugins.value = data.value
+}
+
+async function install(plugin) {
+  loading.value = true
+  await useAxios.post('/api/v1/plugins', plugin)
+  await fetchInstalledPlugins()
+  loading.value = false
+}
+
+async function uninstall(plugin) {
+  loading.value = true
+  await useAxios.delete('/api/v1/plugins/' + plugin.id)
+  await fetchInstalledPlugins()
+  loading.value = false
+}
+
+async function saveConfig(plugin) {
+  loading.value = true
+  await useAxios.put(`/api/v1/plugins/${plugin.id}/config`, plugin.config)
+  loading.value = false
+}
+
+async function saveAccess(plugin) {
+  loading.value = true
+  await useAxios.put(`/api/v1/plugins/${plugin.id}/access`, plugin.access)
+  loading.value = false
 }
 </script>
 
-<style lang="css" scoped>
+<style scoped>
 </style>

@@ -13,8 +13,7 @@
   </v-navigation-drawer>
 </template>
 
-<script>
-export default {}
+<script setup>
 </script>
 
 <style lang="css" scoped>
