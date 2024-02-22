@@ -1,7 +1,7 @@
 import { Histogram, Gauge } from 'prom-client'
 import { servicePromRegistry } from '@data-fair/lib/node/observer.js'
 
-const runs = new Histogram({
+const runsMetrics = new Histogram({
   name: 'df_processings_runs',
   help: 'Number and duration in seconds of processing runs',
   buckets: [0.1, 1, 10, 60, 600],
@@ -20,4 +20,4 @@ const initMetrics = async db => {
   })
 }
 
-export { initMetrics, runs }
+export { initMetrics, runsMetrics }

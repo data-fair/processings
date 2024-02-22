@@ -7,8 +7,8 @@ import resolvePath from 'resolve-path'
 import runSchema from '../../../contract/run.js'
 import schedulingUtils from './scheduling.cjs'
 import notifications from './notifications.js'
-// import prometheus from './prometheus.cjs'
 import { incrementConsumption } from './limits.js'
+import { runsMetrics } from './metrics.js'
 import moment from 'moment'
 import Ajv from 'ajv'
 import ajvFormats from 'ajv-formats'
@@ -125,7 +125,7 @@ export const finish = async (db, wsPublish, run, errorMessage, errorLogType = 'd
   }
   await wsPublish(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch: query.$set })
   const duration = (new Date(lastRun.finishedAt).getTime() - new Date(lastRun.startedAt).getTime()) / 1000
-  // prometheus.runs.labels(({ status: query.$set.status, owner: run.owner.name })).observe(duration)
+  runsMetrics.labels(({ status: query.$set.status, owner: run.owner.name })).observe(duration)
   await incrementConsumption(db, run.owner, 'processings_seconds', Math.round(duration))
 
   // manage post run notification
