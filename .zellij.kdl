@@ -22,8 +22,7 @@ layout {
       }
       pane name="worker" {
         command "${DEV_SHELL}"
-        /* args "-ic" "nvm use && while [ ! -f /tmp/zjdfworker ]; do sleep 1; done && rm /tmp/zjdfworker && npm -w worker run dev" */
-        args "-ic" "echo 'todo'"
+        args "-ic" "nvm use && while [ ! -f /tmp/zjdfworker ]; do sleep 1; done && rm /tmp/zjdfworker && npm -w worker run dev"
       }
     }
     pane size=2 borderless=true {
