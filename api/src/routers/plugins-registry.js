@@ -17,10 +17,10 @@ const search = memoize(async (q) => {
   const results = []
   for (const o of res.data.objects) {
     if (!o.package.keywords || !o.package.keywords.includes('data-fair-processings-plugin')) continue
-    const details = (await axios.get('https://registry.npmjs.com/' + o.package.name)).data
+    const distTags = (await axios.get('https://registry.npmjs.com/-/package/' + o.package.name + '/dist-tags')).data
     const plugin = { name: o.package.name, description: o.package.description, npm: o.package.links.npm }
-    for (const distTag in details['dist-tags']) {
-      results.push({ ...plugin, version: details['dist-tags'][distTag], distTag })
+    for (const distTag in distTags) {
+      results.push({ ...plugin, version: distTags[distTag], distTag })
     }
   }
   return {
