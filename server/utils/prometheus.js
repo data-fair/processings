@@ -10,15 +10,14 @@ const client = require('prom-client')
 const eventToPromise = require('event-to-promise')
 const asyncWrap = require('./async-wrap')
 
-const localRegister = new client.Registry()
 const globalRegister = new client.Registry()
 
 // metrics server
 const app = express()
 const server = require('http').createServer(app)
 app.get('/metrics', asyncWrap(async (req, res) => {
-  res.set('Content-Type', localRegister.contentType)
-  res.send(await localRegister.metrics())
+  res.set('Content-Type', client.register.contentType)
+  res.send(await client.register.metrics())
 }))
 app.get('/global-metrics', asyncWrap(async (req, res) => {
   res.set('Content-Type', globalRegister.contentType)
@@ -29,20 +28,17 @@ app.get('/global-metrics', asyncWrap(async (req, res) => {
 exports.internalError = new client.Counter({
   name: 'df_internal_error',
   help: 'Errors in some worker process, socket handler, etc.',
-  labelNames: ['errorCode'],
-  registers: [localRegister]
+  labelNames: ['errorCode']
 })
 exports.runs = new client.Histogram({
   name: 'df_processings_runs',
   help: 'Number and duration in seconds of processing runs',
   buckets: [0.1, 1, 10, 60, 600],
-  labelNames: ['status', 'owner'],
-  registers: [localRegister]
+  labelNames: ['status', 'owner']
 })
 
 exports.start = async (db) => {
   // global metrics based on db connection
-
   new client.Gauge({
     name: 'df_processings_processings_total',
     help: 'Total number of processings',

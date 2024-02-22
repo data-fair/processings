@@ -39,7 +39,7 @@ services:
       - WS_PUBLIC_URL=ws://localhost:5600/data-fair
       - EXTRA_NAV_ITEMS=[{"id":"processings","can":"contrib","iframe":"http://localhost:5600/embed/processings","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
       - EXTRA_ADMIN_NAV_ITEMS=[{"id":"processings","iframe":"http://localhost:5600/","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
-      - PROMETHEUS_ACTIVE=false
+      - OBSERVE_ACTIVE=false
     volumes:
       - data-fair-data:/data
 
