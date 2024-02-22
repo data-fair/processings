@@ -5,6 +5,7 @@ import pluginsRegistryRouter from './routers/plugins-registry.js'
 import pluginsRouter from './routers/plugins.js'
 import processingsRouter from './routers/processings.js'
 import runsRouter from './routers/runs.js'
+import limitsRouter from './utils/limits.js'
 
 export const app = express()
 
@@ -20,5 +21,6 @@ app.use('/api/v1/plugins-registry', pluginsRegistryRouter)
 app.use('/api/v1/plugins', pluginsRouter)
 app.use('/api/v1/processings', processingsRouter)
 app.use('/api/v1/runs', runsRouter)
+app.use('/api/v1/limits', limitsRouter)
 
 app.use(errorHandler)

@@ -8,6 +8,6 @@ module.exports = {
     notifications: 'secret-notifications'
   },
   prometheus: {
-    active: true
+    active: false
   }
 }

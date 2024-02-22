@@ -1,8 +1,9 @@
-import express from 'express'
+import { Router } from 'express'
 import config from 'config'
 import moment from 'moment'
 import { asyncHandler } from '@data-fair/lib/express/index.js'
 import mongo from '@data-fair/lib/node/mongo.js'
+import permissions from './permissions.js'
 import Ajv from 'ajv'
 import ajvFormats from 'ajv-formats'
 
@@ -29,9 +30,9 @@ const schema = {
 }
 const validate = ajv.compile(schema)
 
-export const init = async (db) => {
-  await mongo.ensureIndex(db, 'limits', { id: 'text', name: 'text' }, { name: 'fulltext' })
-  await mongo.ensureIndex(db, 'limits', { type: 1, id: 1 }, { name: 'limits-find-current', unique: true })
+export const initLimits = async (db) => {
+  await mongo.ensureIndex('limits', { id: 'text', name: 'text' }, { name: 'fulltext' })
+  await mongo.ensureIndex('limits', { type: 1, id: 1 }, { name: 'limits-find-current', unique: true })
 }
 
 export const getLimits = async (db, consumer) => {
@@ -89,31 +90,11 @@ export const setConsumption = async (db, consumer, type, value) => {
     .findOneAndUpdate({ type: consumer.type, id: consumer.id }, { $set: { [`${type}.consumption`]: value } }, { returnDocument: 'after', upsert: true })).value
 }
 
-export const router = express.Router()
-
-const isSuperAdmin = (req, res, next) => {
-  if (req.user && req.user.adminMode) return next()
-  if (req.query.key === config.secretKeys.limits) return next()
-  res.status(401).send()
-}
-
-const isAccountMember = (req, res, next) => {
-  if (req.query.key === config.secretKeys.limits) return next()
-  if (!req.user) return res.status(401).send()
-  if (req.user.adminMode) return next()
-  if (!['organization', 'user'].includes(req.params.type)) return res.status(400).send('Wrong consumer type')
-  if (req.params.type === 'user') {
-    if (req.user.id !== req.params.id) return res.status(403).send()
-  }
-  if (req.params.type === 'organization') {
-    const org = req.user.organizations.find(o => o.id === req.params.id)
-    if (!org) return res.status(403).send()
-  }
-  next()
-}
+const router = Router()
+export default router
 
 // Endpoint for customers service to create/update limits
-router.post('/:type/:id', isSuperAdmin, asyncHandler(async (req, res) => {
+router.post('/:type/:id', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
   req.body.type = req.params.type
   req.body.id = req.params.id
   const valid = validate(req.body)
@@ -124,14 +105,14 @@ router.post('/:type/:id', isSuperAdmin, asyncHandler(async (req, res) => {
 }))
 
 // A user can get limits information for himself only
-router.get('/:type/:id', isAccountMember, asyncHandler(async (req, res) => {
+router.get('/:type/:id', permissions.isAccountMember, asyncHandler(async (req, res) => {
   const limits = await exports.getLimits(req.app.get('db'), { type: req.params.type, id: req.params.id })
   if (!limits) return res.status(404).send()
   delete limits._id
   res.send(limits)
 }))
 
-router.get('/', isSuperAdmin, asyncHandler(async (req, res) => {
+router.get('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
   const filter = {}
   if (req.query.type) filter.type = req.query.type
   if (req.query.id) filter.id = req.query.id

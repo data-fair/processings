@@ -6,6 +6,7 @@ import { startObserver, stopObserver } from '@data-fair/lib/node/observer.js'
 import mongo from '@data-fair/lib/node/mongo.js'
 import { app } from './app.js'
 import { initMetrics } from './utils/metrics.js'
+import { initLimits } from './utils/limits.js'
 
 const server = http.createServer(app)
 const httpTerminator = createHttpTerminator({ server })
@@ -22,6 +23,8 @@ export const start = async () => {
     await startObserver()
   }
 
+  await initLimits(mongo.db)
+
   server.listen(config.port)
   await new Promise(resolve => server.once('listening', resolve))
   console.log(`Processings API available on ${config.publicUrl}/api/ (listening on port ${config.port})`)
@@ -29,6 +32,6 @@ export const start = async () => {
 
 export const stop = async () => {
   await httpTerminator.terminate()
-  if (config.prometheus.active) await stopObserver()
   await mongo.client.close()
+  if (config.prometheus.active) await stopObserver()
 }

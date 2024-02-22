@@ -13,7 +13,6 @@ Downstream examples:
 {type: 'error', data: {...}}
 */
 const { nanoid } = require('nanoid')
-const permissions = require('./permissions.js')
 
 let cursor
 const subscribers = {}
@@ -52,6 +51,7 @@ exports.initServer = async (wss, db, session) => {
           if (message.type === 'subscribe') {
             const [type, _id] = message.channel.split('/')
             const resource = await db.collection(type).findOne({ _id })
+            const permissions = await import('../api/src/utils/permissions.js')
             if (!permissions.isContrib(req.user, resource)) {
               return ws.send(JSON.stringify({ type: 'error', status: 403, data: 'Permission manquante.' }))
             }
