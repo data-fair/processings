@@ -1,12 +1,14 @@
 import config from 'config'
 import { spawn } from 'child-process-promise'
 import kill from 'tree-kill'
+import mongo from '@data-fair/lib/node/mongo.js'
+import { initPublisher } from '../../shared/ws.mjs'
+import { initMetrics } from './metrics.js'
+import limits from './limits.js'
 import locks from './locks.cjs'
-import runs from '../api/utils/runs.js'
-import prometheus from '../api/utils/prometheus.cjs'
-import limits from '../api/utils/limits.cjs'
+import runs from './runs.js'
+import { startObserver, stopObserver, internalError } from '@data-fair/lib/node/observer.js'
 import debug from 'debug'
-
 const debugLoop = debug('loop')
 
 let stopped = false
@@ -14,7 +16,7 @@ const promisePool = []
 
 // Hooks for testing
 const hooks = {}
-exports.hook = (key) => new Promise((resolve, reject) => {
+export const hook = (key) => new Promise((resolve, reject) => {
   hooks[key] = { resolve, reject }
 })
 
@@ -32,9 +34,17 @@ export const clear = () => {
 
 /* eslint no-unmodified-loop-condition: 0 */
 // Run main loop !
-export const start = async ({ db, wsPublish }) => {
+export const start = async () => {
+  const url = config.mongo.url || `mongodb://${config.mongo.host}:${config.mongo.port}/${config.mongo.db}`
+  await mongo.connect(url, { readPreference: 'primary' })
+  const db = mongo.db
   await locks.init(db)
-  console.log('start worker')
+  const wsPublish = await initPublisher(db)
+  if (config.prometheus.active) {
+    await initMetrics(mongo.db)
+    await startObserver()
+  }
+  await limits.initLimits(mongo.db)
 
   // initialize empty promise pool
   for (let i = 0; i < config.worker.concurrency; i++) {
@@ -77,7 +87,7 @@ export const start = async ({ db, wsPublish }) => {
 
     promisePool[freeSlot] = iter(db, wsPublish, run)
     promisePool[freeSlot].catch(err => {
-      prometheus.internalError.inc({ errorCode: 'worker-iter' })
+      internalError('worker-iter, error in worker iter', { error: err })
       console.error('(worker-iter) error in worker iter', err)
     })
     // always empty the slot after the promise is finished
@@ -92,6 +102,8 @@ export const start = async ({ db, wsPublish }) => {
 // Stop and wait for all workers to finish their current task
 export const stop = async () => {
   stopped = true
+  await mongo.client.close()
+  if (config.prometheus.active) await stopObserver()
   await Promise.all(promisePool.filter(p => !!p))
 }
 
@@ -104,12 +116,12 @@ async function killLoop (db, wsPublish) {
       const runs = await db.collection('runs').find({ status: 'kill' }).toArray()
       for (const run of runs) {
         killRun(db, wsPublish, run).catch(err => {
-          prometheus.internalError.inc({ errorCode: 'task-kill' })
+          internalError('worker-task-kill', 'error while killing task', { error: err })
           console.error('(task-kill) error while killing task', err)
         })
       }
     } catch (err) {
-      prometheus.internalError.inc({ errorCode: 'loop-kill' })
+      internalError('worker-loop-kill', 'error while killing task loop', { error: err })
       console.error('(loop-kill) error while killing task loop', err)
     }
   }
@@ -144,7 +156,7 @@ async function iter (db, wsPublish, run) {
   try {
     processing = await db.collection('processings').findOne({ _id: run.processing._id })
     if (!processing) {
-      prometheus.internalError.inc({ errorCode: 'missing-processing' })
+      internalError('worker-missing-processing', 'found a run without associated processing, weird')
       console.error('(missing-processing) found a run without associated processing, weird')
       await db.collection('runs').deleteOne({ _id: run._id })
       return
@@ -164,9 +176,9 @@ async function iter (db, wsPublish, run) {
       return
     }
 
-    // Run a task in a dedicated child process for  extra resiliency to fatal memory exceptions
-    const spawnPromise = spawn('node', ['server', run._id, processing._id], {
-      env: { ...process.env, MODE: 'task' },
+    // Run a task in a dedicated child process for extra resiliency to fatal memory exceptions
+    const spawnPromise = spawn('node', ['./task/index', run._id, processing._id], {
+      env: process.env,
       stdio: ['ignore', 'inherit', 'pipe']
     })
     spawnPromise.childProcess.stderr.on('data', data => {
@@ -203,7 +215,7 @@ async function iter (db, wsPublish, run) {
         if (hooks[processing._id]) hooks[processing._id].reject({ run, message: errorMessage.join('\n') })
       }
     } else {
-      prometheus.internalError.inc({ errorCode: 'worker' })
+      internalError('worker', 'failure in worker', { error: err })
       console.error('(worker) failure in worker', err)
     }
   } finally {
@@ -215,7 +227,7 @@ async function iter (db, wsPublish, run) {
       try {
         await runs.createNext(db, processing)
       } catch (err) {
-        prometheus.internalError.inc({ errorCode: 'next-run' })
+        internalError('worker-next-run', 'failure while creating next run', { error: err })
         console.error('(next-run) failure while creating next run', err)
       }
     }
@@ -255,7 +267,7 @@ async function acquireNext (db, wsPublish) {
             await runs.createNext(db, processing)
           }
         } catch (err) {
-          prometheus.internalError.inc({ errorCode: 'manage-running' })
+          internalError('worker-manage-running', 'failure while closing a run that was left in running status by error', { error: err })
           console.error('(manage-running) failure while closing a run that was left in running status by error', err)
         }
         continue

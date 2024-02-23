@@ -5,7 +5,7 @@ import pluginsRegistryRouter from './routers/plugins-registry.js'
 import pluginsRouter from './routers/plugins.js'
 import processingsRouter from './routers/processings.js'
 import runsRouter from './routers/runs.js'
-import limitsRouter from './utils/limits.js'
+import limitsRouter from './routers/limits.js'
 
 export const app = express()
 

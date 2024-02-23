@@ -12,25 +12,17 @@ Downstream examples:
 {type: 'message', channel: 'my_channel', data: {...}}
 {type: 'error', data: {...}}
 */
-const { nanoid } = require('nanoid')
+import { nanoid } from 'nanoid'
+import { channel } from '../../../shared/ws.mjs'
+import { WebSocketServer } from 'ws'
 
 let cursor
 const subscribers = {}
 const clients = {}
 
 let stopped = false
-exports.stop = async () => {
-  stopped = true
-  if (cursor) await cursor.close()
-}
-
-async function channel (db) {
-  const collection = (await db.listCollections({ name: 'messages' }).toArray())[0]
-  if (!collection) await db.createCollection('messages', { capped: true, size: 100000, max: 1000 })
-  return db.collection('messages')
-}
-
-exports.initServer = async (wss, db, session) => {
+export const initWSS = async (server, db, session) => {
+  const wss = new WebSocketServer({ server })
   wss.on('connection', (ws, req) => {
     session.auth(req, null, () => {
       // Associate ws connections to ids for subscriptions
@@ -49,12 +41,11 @@ exports.initServer = async (wss, db, session) => {
             return ws.send(JSON.stringify({ type: 'error', data: '"channel" is required' }))
           }
           if (message.type === 'subscribe') {
-            const [type, _id] = message.channel.split('/')
-            const resource = await db.collection(type).findOne({ _id })
-            const permissions = await import('../../api/src/utils/permissions.js')
-            if (!permissions.isContrib(req.user, resource)) {
-              return ws.send(JSON.stringify({ type: 'error', status: 403, data: 'Permission manquante.' }))
-            }
+            // const [type, _id] = message.channel.split('/')
+            // const resource = await db.collection(type).findOne({ _id })
+            // if (!permissions.isContrib(req.user, resource)) {
+            //   return ws.send(JSON.stringify({ type: 'error', status: 403, data: 'Permission manquante.' }))
+            // }
 
             subscribers[message.channel] = subscribers[message.channel] || {}
             subscribers[message.channel][clientId] = 1
@@ -100,6 +91,11 @@ exports.initServer = async (wss, db, session) => {
   initCursor(db, mongoChannel)
 }
 
+export const stopWSS = async () => {
+  stopped = true
+  if (cursor) await cursor.close()
+}
+
 // Listen to pubsub channel based on mongodb to support scaling on multiple processes
 let startDate = new Date().toISOString()
 const initCursor = (db, mongoChannel) => {
@@ -120,14 +116,4 @@ const initCursor = (db, mongoChannel) => {
     console.log('WS tailable cursor was interrupted, reinit it', err && err.message)
     initCursor(db, mongoChannel)
   })
-}
-
-exports.initPublisher = async (db) => {
-  // Write to pubsub channel
-  const mongoChannel = await channel(db)
-  await mongoChannel.insertOne({ type: 'init' })
-  return (channel, data) => {
-    // console.log(channel, data)
-    mongoChannel.insertOne({ type: 'message', channel, data })
-  }
 }
