@@ -1,0 +1,6 @@
+{
+  "name": "data-fair-processing-meteo-0",
+  "dependencies": {
+    "@data-fair/processing-meteo": "^0.1.2"
+  }
+}

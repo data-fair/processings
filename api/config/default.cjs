@@ -1,7 +1,7 @@
 module.exports = {
   port: 8082,
   origin: 'http://localhost:5600',
-  dataDir: '/data',
+  dataDir: '../data',
   directoryUrl: 'http://localhost:5600/simple-directory',
   privateDirectoryUrl: null,
   dataFairUrl: 'http://localhost:5600/data-fair',

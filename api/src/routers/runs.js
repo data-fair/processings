@@ -30,7 +30,7 @@ router.get('', asyncHandler(async (req, res) => {
     size > 0 ? runs.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
     runs.countDocuments(query)
   ])
-  res.send({ results: results.map(r => cleanRun(r, req.session)), count })
+  res.send({ results: results.map(r => cleanRun(r, reqSession)), count })
 }))
 
 router.get('/:id', asyncHandler(async (req, res) => {

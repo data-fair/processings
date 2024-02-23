@@ -171,7 +171,7 @@ router.delete('/:id/webhook-key', asyncHandler(async (req, res) => {
   res.send(webhookKey)
 }))
 
-router.post('/:id/_trigger', session.middleware, asyncHandler(async (req, res) => {
+router.post('/:id/_trigger', asyncHandler(async (req, res) => {
   const processing = await mongo.db.collection('processings')
     .findOne({ _id: req.params.id }, { projection: {} })
   if (req.query.key) {
@@ -179,7 +179,7 @@ router.post('/:id/_trigger', session.middleware, asyncHandler(async (req, res) =
       return res.status(403).send('Mauvaise clé de déclenchement')
     }
   } else {
-    const reqSession = await session.reqAuthenticated(req)
+    const reqSession = await session.req(req)
     if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(processing, reqSession))) return res.status(403).send()
   }
   if (!processing.active) return res.status(409).send('Le traitement n\'est pas actif')

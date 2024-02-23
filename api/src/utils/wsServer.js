@@ -24,8 +24,6 @@ const clients = {}
 
 let stopped = false
 export const startWSServer = async (server, db, session) => {
-  console.log(server.address())
-
   wss = new WebSocketServer({ server })
   wss.on('connection', async (ws, req) => {
     req = await session.req(req)
