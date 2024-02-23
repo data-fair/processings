@@ -7,17 +7,18 @@ module.exports = {
     'no-only-tests'
   ],
   extends: [
-    'plugin:vue/essential',
     'eslint:recommended',
-    'standard',
-    'plugin:vue/recommended'
+    'plugin:vue/essential',
+    'plugin:vue/recommended',
+    'plugin:vuetify/base',
+    'standard'
   ],
   rules: {
-    'vue/no-v-html': off,
-    'vue/multi-word-component-names': off,
-    'node/no-deprecated-api': off,
-    'vue/no-mutating-props': off,
-    'vue/require-prop-types': off,
-    'vue/no-useless-template-attributes': off
+    'node/no-deprecated-api': 'off',
+    'vue/multi-word-component-names': 'off',
+    'vue/no-mutating-props': 'off',
+    'vue/no-useless-template-attributes': 'off',
+    'vue/no-v-html': 'off',
+    'vue/require-prop-types': 'off'
   }
 }

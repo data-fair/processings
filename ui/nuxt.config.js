@@ -1,10 +1,14 @@
-import config from './config'
-import en from 'vuetify/es5/locale/en'
-import fr from 'vuetify/es5/locale/fr'
+import * as baseConfig from './config/default'
+import * as devConfig from './config/development'
+import { en, fr } from 'vuetify/locale'
 import nuxtConfigInject from '@koumoul/nuxt-config-inject'
-import { defineNuxtConfig } from 'nuxt'
+import { defineNuxtConfig } from 'nuxt/config'
 import { URL } from 'url'
 
+let config = { ...baseConfig.default }
+if (process.env.NODE_ENV === 'development') {
+  config = { ...config, ...devConfig.default }
+}
 config.basePath = new URL(config.publicUrl + '/').pathname
 const dataFairIsLocal = new URL(config.publicUrl).origin === new URL(config.dataFairUrl).origin
 config.localDataFairUrl = dataFairIsLocal ? config.dataFairUrl : config.publicUrl + '/data-fair-proxy'
@@ -13,7 +17,7 @@ const isBuilding = process.argv.slice(-1)[0] === 'build'
 
 if (process.env.NODE_ENV === 'production') {
   if (isBuilding) config = nuxtConfigInject.prepare(config)
-  else nuxtConfigInject.replace(config, ['nuxt-dist/**/*', 'public/static/**/*'])
+  else nuxtConfigInject.replace(config, ['nuxt-dist/**/*', 'static/**/*'])
 }
 
 let vuetifyOptions = {}
@@ -76,34 +80,30 @@ export default defineNuxtConfig({
     base: config.basePath
   },
   modules: [
-    '@nuxtjs/axios',
-    ['@nuxtjs/google-fonts', {
-      download: true,
-      display: 'swap',
-      families: {
-        Nunito: [100, 300, 400, 500, 700, 900]
-      }
-    }],
-    ['@nuxtjs/i18n', {
-      seo: false,
-      locales: ['fr', 'en'],
-      defaultLocale: config.i18n.defaultLocale,
-      vueI18nLoader: true,
-      strategy: 'no_prefix',
-      detectBrowserLanguage: {
-        useCookie: true,
-        cookieKey: 'i18n_lang'
-      },
-      vueI18n: {
-        fallbackLocale: config.i18n.defaultLocale
-      }
-    }],
-    '@nuxtjs/vuetify',
+    '@nuxtjs/google-fonts',
+    '@nuxtjs/i18n',
     '@pinia/nuxt',
-    'cookie-universal-nuxt'
+    'vuetify-nuxt-module'
   ],
-  axios: {
-    browserBaseURL: config.basePath
+  i18n: {
+    seo: false,
+    locales: ['fr', 'en'],
+    defaultLocale: config.i18n.defaultLocale,
+    strategy: 'no_prefix',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_lang'
+    },
+    vueI18n: './i18n.config.js'
+  },
+  googleFonts: {
+    preconnect: true,
+    preload: true,
+    display: 'swap',
+    download: true,
+    families: {
+      Nunito: [100, 300, 400, 500, 700, 900]
+    }
   },
   vuetify: vuetifyOptions,
   env: {
