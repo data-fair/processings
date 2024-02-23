@@ -86,10 +86,17 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
       if (cfg.url.startsWith('/')) cfg.url = config.dataFairUrl + cfg.url
       else cfg.url = config.dataFairUrl + '/' + cfg.url
     }
-    if (cfg.url.startsWith(config.dataFairUrl)) Object.assign(cfg.headers, headers)
+    const isDataFairUrl = cfg.url.startsWith(config.dataFairUrl)
+    if (isDataFairUrl) Object.assign(cfg.headers, headers)
 
-    // no 'get' here so that it still appears in metrics
-    if (['post', 'put', 'delete', 'patch'].includes(cfg.method) && config.privateDataFairUrl && cfg.url.startsWith(config.dataFairUrl)) {
+    // use private data fair url if specified to prevent leaving internal infrastructure
+    // except from GET requests so that they still appear in metrics
+    // except if config.getFromPrivateDataFairUrl is set to true, then all requests are sent to the private url
+    const usePrivate =
+      config.privateDataFairUrl &&
+      isDataFairUrl &&
+      (config.getFromPrivateDataFairUrl || ['post', 'put', 'delete', 'patch'].includes(cfg.method))
+    if (usePrivate) {
       cfg.url = cfg.url.replace(config.dataFairUrl, config.privateDataFairUrl)
       cfg.headers.host = new URL(config.dataFairUrl).host
     }

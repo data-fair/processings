@@ -8,6 +8,7 @@ module.exports = {
   privateDirectoryUrl: null,
   dataFairUrl: 'http://localhost:5600/data-fair',
   privateDataFairUrl: null,
+  getFromPrivateDataFairUrl: false,
   dataFairAPIKey: null,
   dataFairAdminMode: false,
   notifyUrl: null,

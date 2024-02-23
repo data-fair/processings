@@ -7,6 +7,10 @@ module.exports = {
   privateDirectoryUrl: 'PRIVATE_DIRECTORY_URL',
   dataFairUrl: 'DATA_FAIR_URL',
   privateDataFairUrl: 'PRIVATE_DATA_FAIR_URL',
+  getFromPrivateDataFairUrl: {
+    __name: 'GET_FROM_PRIVATE_DATA_FAIR_URL',
+    __format: 'json'
+  },
   dataFairAPIKey: 'DATA_FAIR_API_KEY',
   dataFairAdminMode: {
     __name: 'DATA_FAIR_ADMIN_MODE',
