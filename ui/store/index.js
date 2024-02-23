@@ -1,17 +1,15 @@
-import { createPinia } from 'pinia'
-import { sessionPiniaStoreBuilder } from '@data-fair/sd-vue'
+import { sessionPiniaStoreBuilder } from '../../../sd-vue/src/index'
 
-Vue.use(createPinia())
-
-export const useStore = sessionPiniaStoreBuilder().$patch({
-  state: {
+const extension = {
+  state: () => ({
     embed: false,
     breadcrumbs: null,
     env: null,
     runBackLink: false
-  },
+  }),
+  mutations: {},
   getters: {
-    embed () {
+    getEmbed () {
       try {
         return window.self !== window.top
       } catch (e) {
@@ -26,6 +24,10 @@ export const useStore = sessionPiniaStoreBuilder().$patch({
       if (global.parent) parent.postMessage({ breadcrumbs }, '*')
     }
   }
-})
+}
+
+const storeDefinition = sessionPiniaStoreBuilder(extension)
+
+export const useStore = storeDefinition
 
 export default useStore

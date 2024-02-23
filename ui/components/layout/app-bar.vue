@@ -13,8 +13,8 @@
 
 <script setup>
 import { computed } from 'vue'
-import PersonalMenu from '@data-fair/sd-vue/src/vuetify/personal-menu.vue'
-import LangSwitcher from '@data-fair/sd-vue/src/vuetify/lang-switcher.vue'
+import PersonalMenu from '@data-fair/sd-vue/src/vuetify/pinia/personal-menu.vue'
+import LangSwitcher from '@data-fair/sd-vue/src/vuetify/pinia/lang-switcher.vue'
 import { useStore } from '../store/index.js'
 
 const store = useStore()

@@ -24,7 +24,7 @@ let vuetifyOptions = {}
 
 if (process.env.NODE_ENV !== 'production' || isBuilding) {
   vuetifyOptions = {
-    customVariables: ['~assets/variables.scss'],
+    customVariables: ['assets/variables.scss'],
     treeShake: true,
     defaultAssets: false,
     lang: {
@@ -70,11 +70,11 @@ export default defineNuxtConfig({
   },
   loading: { color: '#1e88e5' }, // Customize the progress bar color
   plugins: [
-    { src: '~plugins/filters' },
-    { src: '~plugins/dayjs' },
-    { src: '~plugins/session', ssr: false },
-    { src: '~plugins/ws', ssr: false },
-    { src: '~plugins/v-iframe.js', ssr: false }
+    { src: 'plugins/dayjs' },
+    { src: 'plugins/filters' },
+    { src: 'plugins/session', ssr: false },
+    { src: 'plugins/v-iframe.js', ssr: false },
+    { src: 'plugins/ws', ssr: false }
   ],
   router: {
     base: config.basePath
@@ -106,17 +106,19 @@ export default defineNuxtConfig({
     }
   },
   vuetify: vuetifyOptions,
-  env: {
-    mainPublicUrl: config.publicUrl,
-    basePath: config.basePath,
-    directoryUrl: config.directoryUrl,
-    dataFairUrl: config.dataFairUrl,
-    dataFairAdminMode: config.dataFairAdminMode,
-    notifyUrl: config.notifyUrl,
-    datasetsUrlTemplate: config.datasetsUrlTemplate,
-    adminRole: config.adminRole,
-    contribRole: config.contribRole,
-    defaultTimeZone: config.defaultTimeZone
+  runtimeConfig: {
+    public: {
+      mainPublicUrl: config.publicUrl,
+      basePath: config.basePath,
+      directoryUrl: config.directoryUrl,
+      dataFairUrl: config.dataFairUrl,
+      dataFairAdminMode: config.dataFairAdminMode,
+      notifyUrl: config.notifyUrl,
+      datasetsUrlTemplate: config.datasetsUrlTemplate,
+      adminRole: config.adminRole,
+      contribRole: config.contribRole,
+      defaultTimeZone: config.defaultTimeZone
+    }
   },
   meta: {
     title: 'Data Fair Processings',

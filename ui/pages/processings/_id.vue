@@ -89,7 +89,7 @@ const canExecProcessing = computed(() => {
 
 const processingSchema = computed(() => {
   if (!plugin.value || !processing.value) return
-  const schema = JSON.parse(JSON.stringify(require('~/../contract/processing')))
+  const schema = JSON.parse(JSON.stringify(require('../../../contract/processing')))
   schema.properties.config = {
     ...plugin.value.processingConfigSchema,
     title: 'Plugin ' + plugin.value.fullName,

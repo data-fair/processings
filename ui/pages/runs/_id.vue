@@ -65,12 +65,13 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useStore } from '../store/index.js'
 import { useRoute } from 'vue-router'
-import eventBus from '~/event-bus'
+import useEventBus from '../../composables/event-bus'
 import RunListItem from '@/components/RunListItem.vue'
 import RunLogsList from '@/components/RunLogsList.vue'
 
 const store = useStore()
 const route = useRoute()
+const eventBus = useEventBus()
 
 const run = ref(null)
 const runBackLink = computed(() => store.runBackLink)
@@ -103,13 +104,13 @@ const steps = computed(() => {
 
 onMounted(async () => {
   await refresh()
-  eventBus.$on('run-patch', onRunPatch)
-  eventBus.$on('run-log', onRunLog)
+  eventBus.on('run-patch', onRunPatch)
+  eventBus.on('run-log', onRunLog)
 })
 
 onUnmounted(() => {
-  eventBus.$off('run-patch', onRunPatch)
-  eventBus.$off('run-log', onRunLog)
+  eventBus.off('run-patch', onRunPatch)
+  eventBus.off('run-log', onRunLog)
 })
 
 async function refresh() {

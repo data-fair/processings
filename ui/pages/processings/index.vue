@@ -66,12 +66,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useStore } from '../store/index.js'
 import { useRoute } from 'vue-router'
-import format from '~/assets/format.js'
-import eventBus from '~/event-bus'
+import useEventBus from '../../event-bus'
 import { useAxios } from '@vueuse/integrations/useAxios'
 
 const store = useStore()
 const route = useRoute()
+const eventBus = useEventBus()
 
 const processings = ref(null)
 const installedPlugins = ref({})

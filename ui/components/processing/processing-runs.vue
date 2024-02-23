@@ -5,10 +5,9 @@
     </v-card-title>
     <v-list class="py-0">
       <template v-if="runs">
-        <template v-for="run in runs.results">
-          <v-divider :key="run._id + '-divider'" />
+        <template v-for="(run, index) in runs.results" :key="index">
+          <v-divider />
           <run-list-item
-            :key="run._id + '-item'"
             :run="run"
             :link="true"
             :can-exec="canExec"
@@ -21,9 +20,9 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { useEventBus } from '../..event-bus.js'
+import { useEventBus } from '../../composables/event-bus'
 import axios from 'axios'
-import RunListItem from '~/components/run/run-list-item.vue'
+import RunListItem from '../run/run-list-item.vue'
 
 const props = defineProps({
   processing: Object,

@@ -24,13 +24,14 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import eventBus from '../event-bus'
+import useEventBus from '../composables/event-bus'
 
 const notification = ref(null)
 const showSnackbar = ref(false)
+const eventBus = useEventBus()
 
 onMounted(() => {
-  eventBus.$on('notification', async (notif) => {
+  eventBus.on('notification', async (notif) => {
     if (showSnackbar.value) {
       showSnackbar.value = false
       await new Promise(resolve => setTimeout(resolve, 300))
