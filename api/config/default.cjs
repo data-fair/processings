@@ -1,7 +1,6 @@
 module.exports = {
-  mode: 'server_worker', // can be server_worker, server or worker
   port: 8082,
-  publicUrl: 'http://localhost:5600',
+  origin: 'http://localhost:5600',
   dataDir: '/data',
   directoryUrl: 'http://localhost:5600/simple-directory',
   privateDirectoryUrl: null,
@@ -10,12 +9,7 @@ module.exports = {
   dataFairAPIKey: null,
   notifyUrl: null,
   privateNotifyUrl: null,
-  mongo: {
-    host: 'localhost',
-    port: 27017,
-    db: 'data-fair-processings-' + (process.env.NODE_ENV || 'development'),
-    url: null
-  },
+  mongoUrl: 'mongodb://localhost:27017/data-fair-processings',
   mails: {
     // transport is a full configuration object for createTransport of nodemailer
     // cf https://nodemailer.com/smtp/

@@ -19,8 +19,8 @@ const isAdmin = (reqSession, resource) => {
   return (reqSession.user.adminMode || getOwnerRole(resource.owner, reqSession) === 'admin')
 }
 
-const isContrib = (user, resource) => {
-  return (user.adminMode || getOwnerRole(resource.owner, user) === 'admin' || getOwnerRole(resource.owner, user) === 'contrib')
+const isContrib = (reqSession, resource) => {
+  return (reqSession.user.adminMode || getOwnerRole(resource.owner, reqSession) === 'admin' || getOwnerRole(resource.owner, reqSession) === 'contrib')
 }
 const isMember = (reqSession, resource) => {
   return (reqSession.user.adminMode || !!getOwnerRole(resource.owner, reqSession))

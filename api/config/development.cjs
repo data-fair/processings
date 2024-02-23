@@ -9,5 +9,6 @@ module.exports = {
   },
   prometheus: {
     active: false
-  }
+  },
+  mongoUrl: 'mongodb://localhost:27017/data-fair-processings-development'
 }

@@ -46,7 +46,7 @@ export default ({ store, env }) => {
   // reconstruct this env var that we used to have but lost when implementing multi-domain exposition
   const wsPublicUrl = (window.location.origin + env.basePath)
     .replace('http:', 'ws:').replace('https:', 'wss:')
-  configureWS(wsPublicUrl)
+  configureWS(`${wsPublicUrl}api/`)
 
   // only configure notify websocket in main back-office mode, not multi-domain embeds
   if (env.notifyWSUrl && new URL(env.notifyWSUrl).hostname === window.location.hostname) {

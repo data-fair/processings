@@ -1,6 +1,5 @@
 module.exports = {
-  mode: 'MODE',
-  publicUrl: 'PUBLIC_URL',
+  origin: 'ORIGIN',
   port: 'PORT',
   directoryUrl: 'DIRECTORY_URL',
   privateDirectoryUrl: 'PRIVATE_DIRECTORY_URL',
@@ -9,12 +8,7 @@ module.exports = {
   dataFairAPIKey: 'DATA_FAIR_API_KEY',
   notifyUrl: 'NOTIFY_URL',
   privateNotifyUrl: 'PRIVATE_NOTIFY_URL',
-  mongo: {
-    host: 'MONGO_HOST',
-    port: 'MONGO_PORT',
-    db: 'MONGO_DB',
-    url: 'MONGO_URL'
-  },
+  mongoUrl: 'MONGO_URL',
   mails: {
     transport: {
       __name: 'MAILS_TRANSPORT',

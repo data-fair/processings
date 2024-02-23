@@ -69,7 +69,7 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
 
   const headers = {
     'x-apiKey': config.dataFairAPIKey,
-    referer: config.publicUrl
+    referer: config.origin
   }
   if (config.dataFairAdminMode) headers['x-account'] = JSON.stringify(processing.owner)
   headers['x-processing'] = JSON.stringify({ _id: processing._id, title: encodeURIComponent(processing.title) })

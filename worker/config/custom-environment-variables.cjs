@@ -1,5 +1,5 @@
 module.exports = {
-  publicUrl: 'PUBLIC_URL',
+  origin: 'PUBLIC_URL',
   dataFairUrl: 'DATA_FAIR_URL',
   dataFairAdminMode: {
     __name: 'DATA_FAIR_ADMIN_MODE',
