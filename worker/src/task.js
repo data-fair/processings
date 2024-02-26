@@ -52,17 +52,18 @@ const wsInstance = (config, log) => {
 
 const prepareLog = (db, wsPublish, processing) => {
   const pushLog = async (log) => {
+    log.date = new Date().toISOString()
     await db.collection('runs').updateOne({ _id: run._id }, { $push: { log } })
     await wsPublish(`processings/${processing._id}/run-log`, { _id: run._id, log })
   }
 
   return {
-    step: async (msg) => pushLog({ type: 'step', date: new Date().toISOString(), msg }),
-    error: async (msg, extra) => pushLog({ type: 'error', date: new Date().toISOString(), msg, extra }),
-    warning: async (msg, extra) => pushLog({ type: 'warning', date: new Date().toISOString(), msg, extra }),
-    info: async (msg, extra) => pushLog({ type: 'info', date: new Date().toISOString(), msg, extra }),
-    debug: async (msg, extra) => { if (!processing.debug) pushLog({ type: 'debug', date: new Date().toISOString(), msg, extra }) },
-    task: async (msg) => pushLog({ type: 'task', date: new Date().toISOString(), msg }),
+    step: async (msg) => pushLog({ type: 'step', msg }),
+    error: async (msg, extra) => pushLog({ type: 'error', msg, extra }),
+    warning: async (msg, extra) => pushLog({ type: 'warning', msg, extra }),
+    info: async (msg, extra) => pushLog({ type: 'info', msg, extra }),
+    debug: async (msg, extra) => { if (!processing.debug) pushLog({ type: 'debug', msg, extra }) },
+    task: async (msg) => pushLog({ type: 'task', msg }),
     progress: async (msg, progress, total) => {
       const progressDate = new Date().toISOString()
       await db.collection('runs')
