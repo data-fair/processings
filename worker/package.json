@@ -9,8 +9,9 @@
     "nodemon": "^1.19.3"
   },
   "dependencies": {
-    "@data-fair/lib": "0.26.0",
+    "cacheable-lookup": "6",
     "child-process-promise": "^2.2.1",
+    "mongodb": "6",
     "tree-kill": "^1.2.2"
   }
 }
