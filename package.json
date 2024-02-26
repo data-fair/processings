@@ -7,6 +7,7 @@
     "dev-api": "npm -w api run dev",
     "dev-deps": "docker compose --profile dev up -d --wait",
     "dev-ui": "npm -w ui run dev",
+    "dev-worker": "npm -w worker run dev",
     "dev-zellij": "export DEV_SHELL=$(basename \"$SHELL\") && zellij --layout .zellij.kdl && npm run stop-dev-deps",
     "i": "rimraf node_modules ui/node_modules api/node_modules worker/node_modules && npm i && cd api && npm i && cd ../ui && npm i && cd ../worker && npm i",
     "lint": "eslint --ext js,vue --ignore-path .gitignore .",
@@ -67,7 +68,6 @@
     "rimraf": "^5.0.5"
   },
   "dependencies": {
-    "@data-fair/sd-express": "1.4.3",
     "ajv-i18n": "^4.2.0",
     "axios": "^1.6.0",
     "config": "^3.3.6",
@@ -79,8 +79,6 @@
     "pump": "^3.0.0",
     "resolve-path": "^1.4.0",
     "semver": "^7.3.4",
-    "tmp-promise": "^2.1.1",
-    "tree-kill": "^1.2.2",
-    "ws": "^8.9.0"
+    "tmp-promise": "^2.1.1"
   }
 }

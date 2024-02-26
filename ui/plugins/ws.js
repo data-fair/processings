@@ -47,7 +47,6 @@ function configureWS(wsUrl, suffix = '', eventBus) {
 export default defineNuxtPlugin(nuxtApp => {
   const eventBus = useEventBus()
   const runtimeConfig = useRuntimeConfig()
-
   const wsPublicUrl = (window.location.origin + runtimeConfig.public.basePath)
     .replace('http:', 'ws:').replace('https:', 'wss:')
   configureWS(`${wsPublicUrl}api/`, '', eventBus)

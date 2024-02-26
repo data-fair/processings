@@ -1,0 +1,84 @@
+{
+  "$id": "https://github.com/data-fair/processings/worker/config",
+  "x-exports": [
+    "types",
+    "validate"
+  ],
+  "x-ajv": {
+    "coerceTypes": "array"
+  },
+  "type": "object",
+  "title": "Worker config",
+  "additionalProperties": false,
+  "required": [
+    "dataDir",
+    "dataFairUrl",
+    "defaultLimits",
+    "mongoUrl",
+    "locks",
+    "prometheus",
+    "worker"
+  ],
+  "properties": {
+    "dataDir": {
+      "type": "string"
+    },
+    "dataFairUrl": {
+      "type": "string",
+      "pattern": "^https?://"
+    },
+    "defaultLimits" : {
+      "type": "object",
+      "properties": {
+        "processingsSeconds": {
+          "type": "number"
+        }
+      }
+    },
+    "mongoUrl": {
+      "type": "string"
+    },
+    "locks": {
+      "type": "object",
+      "properties": {
+        "ttl": {
+          "type": "number"
+        }
+      }
+    },
+    "prometheus": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "type": "boolean"
+        }
+      }
+    },
+    "worker": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "type": "number"
+        },
+        "inactiveInterval": {
+          "type": "number"
+        },
+        "inactivityDelay": {
+          "type": "number"
+        },
+        "killInterval": {
+          "type": "number"
+        },
+        "concurrency": {
+          "type": "number"
+        },
+        "gracePeriod": {
+          "type": "number"
+        }
+      }
+    },
+    "util": {},
+    "get": {},
+    "has": {}
+  }
+}

@@ -1,0 +1,138 @@
+{
+  "name": "@data-fair/processing-meteo",
+  "npm": "https://www.npmjs.com/package/%40data-fair%2Fprocessing-meteo",
+  "version": "0.1.2",
+  "distTag": "latest",
+  "id": "@data-fair-processing-meteo-0",
+  "pluginConfigSchema": {
+    "type": "object",
+    "required": [
+      "apiAccessToken"
+    ],
+    "properties": {
+      "apiAccessToken": {
+        "type": "string",
+        "title": "Jeton d'accès aux API de l'Insee ",
+        "description": "Le jeton d'accès aux API de l'Insee est disponible sur votre espace, pour ce traitement il faudra créer un nouveau jeton avec une durée plus longue (environ 1 mois dans le cas d'un traitement pour toutes les années)",
+        "x-display": "password"
+      }
+    }
+  },
+  "processingConfigSchema": {
+    "type": "object",
+    "x-display": "tabs",
+    "required": [
+      "datasetMode"
+    ],
+    "allOf": [
+      {
+        "title": "Jeu de données",
+        "oneOf": [
+          {
+            "title": "Créer un jeu de données",
+            "required": [
+              "dataset"
+            ],
+            "properties": {
+              "datasetMode": {
+                "type": "string",
+                "const": "create",
+                "title": "Action"
+              },
+              "dataset": {
+                "type": "object",
+                "required": [
+                  "title"
+                ],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "title": "Titre (laissez vide pour utiliser le nom de fichier téléchargé)"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "title": "Mettre à jour un jeu de données (fichier)",
+            "required": [
+              "dataset"
+            ],
+            "properties": {
+              "datasetMode": {
+                "type": "string",
+                "const": "update"
+              },
+              "dataset": {
+                "type": "object",
+                "title": "Jeu de donnée existant",
+                "x-fromUrl": "{context.dataFairUrl}/api/v1/datasets?q={q}&select=id,title&{context.ownerFilter}",
+                "x-itemsProp": "results",
+                "x-itemTitle": "title",
+                "x-itemKey": "id",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "title": "Identifiant"
+                  },
+                  "title": {
+                    "type": "string",
+                    "title": "Titre"
+                  }
+                }
+              },
+              "forceUpdate": {
+                "title": "Forcer la mise à jour",
+                "description": "La mise à jour forcée permet de remettre à jour le schéma en cas de modification sur le jeu de donnée",
+                "type": "boolean",
+                "default": false
+              }
+            }
+          }
+        ]
+      },
+      {
+        "title": "Paramètres",
+        "properties": {
+          "departements": {
+            "type": "array",
+            "title": "Départements",
+            "description": "Départements à extraire, laisser vide pour extraire tous les départements",
+            "items": {
+              "type": "string"
+            }
+          },
+          "years": {
+            "type": "array",
+            "title": "Années",
+            "description": "Années à extraire, laisser vide pour extraire toutes les années",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "frequency": {
+            "type": "integer",
+            "title": "Fréquence horaire",
+            "description": "Le nombre d'heures entre chaque mesure",
+            "enum": [
+              1,
+              2,
+              3,
+              4,
+              6,
+              8,
+              12,
+              24
+            ],
+            "default": 1
+          },
+          "clearFiles": {
+            "type": "boolean",
+            "title": "Supprimer les fichiers temporaires",
+            "default": true
+          }
+        }
+      }
+    ]
+  }
+}

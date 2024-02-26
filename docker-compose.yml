@@ -3,7 +3,6 @@ services:
   #####
   # reverse proxy for the whole environment
   #####
-
   nginx:
     image: nginx:1.23.1-alpine
     network_mode: host
@@ -14,7 +13,6 @@ services:
   #####
   # related services from the data-fair stack
   #####
-
   simple-directory:
     profiles:
       - dev

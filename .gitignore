@@ -1,4 +1,4 @@
-api/data/
+data/
 node_modules/
 config/local-*
 ui/.nuxt
@@ -6,3 +6,4 @@ ui/nuxt-dist/
 ui/dist/
 ui/assets/css/
 ui/assets/fonts/
+.config/
