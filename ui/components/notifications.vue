@@ -23,8 +23,8 @@
 </template>
 
 <script setup>
+import useEventBus from '~/composables/event-bus'
 import { ref, onMounted } from 'vue'
-import useEventBus from '../composables/event-bus'
 
 const notification = ref(null)
 const showSnackbar = ref(false)

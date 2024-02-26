@@ -1,8 +1,8 @@
 import * as baseConfig from './config/default'
 import * as devConfig from './config/development'
-import { en, fr } from 'vuetify/locale'
 import nuxtConfigInject from '@koumoul/nuxt-config-inject'
 import { defineNuxtConfig } from 'nuxt/config'
+import { en, fr } from 'vuetify/locale'
 import { URL } from 'url'
 
 let config = { ...baseConfig.default }
@@ -68,7 +68,13 @@ export default defineNuxtConfig({
     publicPath: config.publicUrl + '/_nuxt/',
     transpile: ['@koumoul', '@data-fair']
   },
-  loading: { color: '#1e88e5' }, // Customize the progress bar color
+  loading: { color: '#1e88e5' },
+  devtools: {
+    enabled: true,
+    timeline: {
+      enabled: true
+    }
+  },
   plugins: [
     { src: 'plugins/dayjs' },
     { src: 'plugins/filters' },

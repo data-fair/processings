@@ -80,9 +80,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
 import axios from 'axios'
-import { useDateFormat, useRelativeTime } from '@/composables' // probably doesn't exist
+import { ref } from 'vue'
+import { useDateFormat, useRelativeTime } from '~/composables' // probably doesn't exist
 
 const props = defineProps({
   run: Object,

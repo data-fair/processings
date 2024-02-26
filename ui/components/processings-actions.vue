@@ -52,9 +52,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useStore } from '../store/index.js'
 import axios from 'axios'
+import { ref } from 'vue'
+import { useStore } from '~/store/index'
 import { useRouter } from 'vue-router'
 
 const props = defineProps({

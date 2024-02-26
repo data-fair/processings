@@ -19,10 +19,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { useEventBus } from '../../composables/event-bus'
 import axios from 'axios'
-import RunListItem from '../run/run-list-item.vue'
+import RunListItem from '~/components/run/run-list-item.vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useEventBus } from '~/composables/event-bus'
 
 const props = defineProps({
   processing: Object,

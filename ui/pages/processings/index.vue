@@ -63,11 +63,11 @@
 </template>
 
 <script setup>
+import useEventBus from '~/composables/event-bus'
 import { ref, computed, onMounted } from 'vue'
-import { useStore } from '../store/index.js'
-import { useRoute } from 'vue-router'
-import useEventBus from '../../event-bus'
 import { useAxios } from '@vueuse/integrations/useAxios'
+import { useRoute } from 'vue-router'
+import { useStore } from '~/store/index'
 
 const store = useStore()
 const route = useRoute()

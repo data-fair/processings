@@ -30,7 +30,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { useStore } from '../../store/index.js'
+import { useStore } from '~/store/index'
 
 const props = defineProps({
   processing: { type: Object, required: true }

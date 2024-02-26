@@ -1,13 +1,14 @@
+import Cookies from 'js-cookie'
 import { defineNuxtPlugin } from 'nuxt/app'
+import { ofetch } from 'ofetch'
 import { useRoute } from 'vue-router'
 import { useCookie } from '#app'
-import { useStore } from '~/store/index.js'
+import { useStore } from '~/store/index'
 
 export default defineNuxtPlugin(nuxtApp => {
   const route = useRoute()
   const themeCookie = useCookie('theme_dark')
   const store = useStore()
-  console.log('store', store)
   const runtimeConfig = useRuntimeConfig()
 
   nuxtApp.hook('app:mounted', () => {
@@ -30,16 +31,18 @@ export default defineNuxtPlugin(nuxtApp => {
         dataFairUrl: dataFairUrl.href,
         notifyUrl: notifyUrl.href,
         directoryUrl: directoryUrl.href,
-      }
+      },
+      vuetify: nuxtApp.$vuetify,
     })
 
     store.init({
-      cookies: nuxtApp.$cookies,
+      cookies: Cookies,
       directoryUrl: directoryUrl.href,
+      httpLib: ofetch,
     })
 
     if (!store.embed) {
-      store.loop(nuxtApp.$cookies)
+      store.loop(Cookies)
     }
 
     if (themeCookie.value !== undefined) {

@@ -1,6 +1,6 @@
-import { defineNuxtPlugin } from 'nuxt/app'
 import ReconnectingWebSocket from 'reconnecting-websocket'
-import useEventBus from '../composables/event-bus'
+import useEventBus from '~/composables/event-bus'
+import { defineNuxtPlugin } from 'nuxt/app'
 
 function configureWS(wsUrl, suffix = '', eventBus) {
   console.log('Configure WS', wsUrl)

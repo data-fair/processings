@@ -50,7 +50,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useStore } from '../store/index.js'
+import { useStore } from '~/store/index'
 
 const store = useStore()
 

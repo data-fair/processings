@@ -62,12 +62,12 @@
 </template>
 
 <script setup>
+import useEventBus from '~/composables/event-bus'
+import RunListItem from '~/components/run/run-list-item.vue'
+import RunLogsList from '~/components/run/run-logs-list.vue'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { useStore } from '../store/index.js'
 import { useRoute } from 'vue-router'
-import useEventBus from '../../composables/event-bus'
-import RunListItem from '@/components/RunListItem.vue'
-import RunLogsList from '@/components/RunLogsList.vue'
+import { useStore } from '~/store/index.js'
 
 const store = useStore()
 const route = useRoute()

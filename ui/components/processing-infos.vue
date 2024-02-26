@@ -78,9 +78,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useStore } from '../store/index.js'
 import axios from 'axios'
+import { ref, computed, onMounted } from 'vue'
+import { useStore } from '~/store/index'
 
 const props = defineProps({
   processing: { type: Object, required: true }

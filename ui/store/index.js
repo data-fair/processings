@@ -7,9 +7,8 @@ const extension = {
     env: null,
     runBackLink: false
   }),
-  mutations: {},
   getters: {
-    getEmbed () {
+    getEmbed() {
       try {
         return window.self !== window.top
       } catch (e) {
@@ -18,10 +17,9 @@ const extension = {
     }
   },
   actions: {
-    setBreadcrumbs ({ commit }, breadcrumbs) {
+    setBreadcrumbs(breadcrumbs) {
       breadcrumbs.forEach(b => { b.exact = true })
-      commit('setAny', { breadcrumbs })
-      if (global.parent) parent.postMessage({ breadcrumbs }, '*')
+      this.setAny(breadcrumbs)
     }
   }
 }

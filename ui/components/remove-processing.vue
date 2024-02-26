@@ -33,9 +33,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useEventBus } from '../composables/useEventBus' // Assuming a composable for EventBus
 import axios from 'axios'
+import { ref } from 'vue'
+import { useEventBus } from '~/composables/useEventBus' // Assuming a composable for EventBus
 import { useRouter } from 'vue-router'
 
 const props = defineProps({

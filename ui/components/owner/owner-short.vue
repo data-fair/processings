@@ -13,7 +13,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useStore } from '../store/index.js'
+import { useStore } from '~/store/index'
 
 const props = defineProps({
   owner: Object

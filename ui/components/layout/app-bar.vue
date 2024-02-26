@@ -12,10 +12,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import PersonalMenu from '@data-fair/sd-vue/src/vuetify/pinia/personal-menu.vue'
 import LangSwitcher from '@data-fair/sd-vue/src/vuetify/pinia/lang-switcher.vue'
-import { useStore } from '../store/index.js'
+import PersonalMenu from '@data-fair/sd-vue/src/vuetify/pinia/personal-menu.vue'
+import { computed } from 'vue'
+import { useStore } from '~/store/index'
 
 const store = useStore()
 

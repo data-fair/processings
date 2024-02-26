@@ -14,8 +14,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import timeZones from 'timezones.json'
+import { computed } from 'vue'
 
 const props = defineProps({
   value: String,

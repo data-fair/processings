@@ -11,7 +11,7 @@
 
 <script setup>
 import { onMounted, toRefs } from 'vue'
-import { useStore } from '../store/index.js'
+import { useStore } from '~/store/index'
 
 const props = defineProps({
   error: Object

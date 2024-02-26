@@ -1,19 +1,19 @@
 <template>
   <v-app>
-    <client-only><app-bar v-if="!embed" /></client-only>
+    <client-only><AppBar v-if="!embed" /></client-only>
     <v-main>
-      <nuxt-child />
-      <notifications />
+      <NuxtPage />
+      <Notifications />
     </v-main>
   </v-app>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useStore } from '../store/index.js'
 import 'iframe-resizer/js/iframeResizer.contentWindow'
-import Notifications from '../components/notifications.vue'
-import AppBar from '../components/layout/app-bar.vue'
+import Notifications from '~/components/notifications.vue'
+import AppBar from '~/components/layout/app-bar.vue'
+import { computed } from 'vue'
+import { useStore } from '~/store/index'
 
 const store = useStore()
 

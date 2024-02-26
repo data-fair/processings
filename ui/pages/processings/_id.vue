@@ -59,11 +59,11 @@
 </template>
 
 <script setup>
+import VJsf from '@koumoul/vjsf/lib/VJsf'
 import { ref, computed, onMounted } from 'vue'
-import { useStore } from '../store/index.js'
-import { useRoute, useRouter } from 'vue-router'
-import VJsf from '@koumoul/vjsf/lib/VJsf.js'
 import { useAxios } from '@vueuse/integrations/useAxios'
+import { useRoute, useRouter } from 'vue-router'
+import { useStore } from '~/store/index'
 
 const store = useStore()
 const route = useRoute()

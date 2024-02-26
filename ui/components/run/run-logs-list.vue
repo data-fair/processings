@@ -40,7 +40,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useDateFormat } from '@/composables' // probably doesn't exist
+import { useDateFormat } from '~/composables' // probably doesn't exist
 
 const props = defineProps({
   logs: Array

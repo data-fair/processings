@@ -103,12 +103,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import VJsf from '@koumoul/vjsf/lib/VJsf.js'
-import '@koumoul/vjsf/lib/deps/third-party.js'
+import '@koumoul/vjsf/lib/deps/third-party'
 import '@koumoul/vjsf/dist/main.css'
-import { useStore } from '../store/index.js'
+import VJsf from '@koumoul/vjsf/lib/VJsf'
+import { ref, computed } from 'vue'
 import { useAxios } from '@vueuse/integrations/useAxios'
+import { useStore } from '~/store/index'
 
 const store = useStore()
 

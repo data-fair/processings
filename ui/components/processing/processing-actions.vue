@@ -93,11 +93,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
 import axios from 'axios'
-import { useRouter } from 'vue-router'
 import VIframe from '@koumoul/v-iframe'
-import { useStore } from '../../store'
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useStore } from '~/store'
 
 const props = defineProps({
   processing: Object,

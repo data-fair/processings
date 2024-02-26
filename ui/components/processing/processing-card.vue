@@ -82,8 +82,8 @@
 </template>
 
 <script setup>
+import OwnerShort from '~/components/owner/owner-short.vue'
 import { ref } from 'vue'
-import OwnerShort from '../owner/owner-short.vue'
 
 const props = defineProps({
   processing: Object,

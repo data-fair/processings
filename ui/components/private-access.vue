@@ -31,7 +31,7 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue'
-import { useStore } from '../store/index.js'
+import { useStore } from '~/store/index'
 
 const props = defineProps(['patch'])
 const emit = defineEmits(['change'])
