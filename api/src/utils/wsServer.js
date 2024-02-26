@@ -26,7 +26,6 @@ let stopped = false
 export const startWSServer = async (server, db, session) => {
   wss = new WebSocketServer({ server })
   wss.on('connection', async (ws, req) => {
-    req = await session.req(req)
     // Associate ws connections to ids for subscriptions
     const clientId = nanoid()
     clients[clientId] = ws
@@ -45,7 +44,8 @@ export const startWSServer = async (server, db, session) => {
         if (message.type === 'subscribe') {
           const [type, _id] = message.channel.split('/')
           const resource = await db.collection(type).findOne({ _id })
-          if (!permissions.isContrib(session, resource)) {
+          const reqSession = await session.req(req)
+          if (!permissions.isContrib(reqSession, resource)) {
             return ws.send(JSON.stringify({ type: 'error', status: 403, data: 'Permission manquante.' }))
           }
 
