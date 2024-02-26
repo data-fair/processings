@@ -31,7 +31,7 @@ export const getLimits = async (db, consumer) => {
 }
 
 export const get = async (db, consumer, type) => {
-  const limits = await exports.getLimits(db, consumer)
+  const limits = await getLimits(db, consumer)
   const res = (limits && limits[type]) || { limit: 0, consumption: 0 }
   res.type = type
   res.lastUpdate = limits ? limits.lastUpdate : new Date().toISOString()
@@ -46,7 +46,7 @@ const calculateRemainingLimit = (limits, key) => {
 }
 
 export const remaining = async (db, consumer) => {
-  const limits = await exports.getLimits(db, consumer)
+  const limits = await getLimits(db, consumer)
   return {
     processingsSeconds: calculateRemainingLimit(limits, 'processings_seconds')
   }

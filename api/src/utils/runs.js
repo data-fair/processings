@@ -30,7 +30,7 @@ export const applyProcessing = async (db, processing) => {
     return
   }
 
-  await exports.createNext(db, processing)
+  await createNext(db, processing)
 }
 
 export const deleteProcessing = async (db, processing) => {

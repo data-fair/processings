@@ -9,7 +9,7 @@ import resolvePath from 'resolve-path'
 import processingSchema from '../../../contract/processing.js'
 import findUtils from '../utils/find.js'
 import permissions from '../utils/permissions.js'
-import runs from '../utils/runs.js'
+import { createNext, applyProcessing, deleteProcessing } from '../utils/runs.js'
 import mongo from '@data-fair/lib/node/mongo.js'
 import { session, asyncHandler } from '@data-fair/lib/express/index.js'
 import Ajv from 'ajv'
@@ -91,7 +91,7 @@ router.post('', asyncHandler(async (req, res) => {
 
   await validateFullProcessing(req.body)
   await mongo.db.collection('processings').insertOne(req.body)
-  await runs.applyProcessing(mongo.db, req.body)
+  await applyProcessing(mongo.db, req.body)
   res.status(200).json(cleanProcessing(req.body, reqSession))
 }))
 
@@ -127,7 +127,7 @@ router.patch('/:id', asyncHandler(async (req, res) => {
   await validateFullProcessing(patchedprocessing)
   await mongo.db.collection('processings').updateOne({ _id: req.params.id }, patch)
   await mongo.db.collection('runs').updateMany({ 'processing._id': processing._id }, { $set: { permissions: patchedprocessing.permissions || [] } })
-  await runs.applyProcessing(mongo.db, patchedprocessing)
+  await applyProcessing(mongo.db, patchedprocessing)
   res.status(200).json(cleanProcessing(patchedprocessing, reqSession))
 }))
 
@@ -146,7 +146,7 @@ router.delete('/:id', asyncHandler(async (req, res) => {
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing, reqSession) !== 'admin') return res.status(403).send()
   await mongo.db.collection('processings').deleteOne({ _id: req.params.id })
-  if (processing && processing.value) await runs.deleteProcessing(mongo.db, processing)
+  if (processing && processing.value) await deleteProcessing(mongo.db, processing)
   res.sendStatus(204)
 }))
 
@@ -183,5 +183,5 @@ router.post('/:id/_trigger', asyncHandler(async (req, res) => {
     if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(processing, reqSession))) return res.status(403).send()
   }
   if (!processing.active) return res.status(409).send('Le traitement n\'est pas actif')
-  res.send(await runs.createNext(mongo.db, processing, true, req.query.delay ? Number(req.query.delay) : 0))
+  res.send(await createNext(mongo.db, processing, true, req.query.delay ? Number(req.query.delay) : 0))
 }))

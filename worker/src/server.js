@@ -1,13 +1,13 @@
-import config from 'config'
-import { spawn } from 'child-process-promise'
-import kill from 'tree-kill'
 import mongo from '@data-fair/lib/node/mongo.js'
-import { initPublisher } from '../../shared/ws.mjs'
-import { initMetrics } from './utils/metrics.js'
 import limits from './utils/limits.js'
 import locks from './utils/locks.cjs'
-import runs from './utils/runs.js'
+import config from 'config'
+import kill from 'tree-kill'
 import { startObserver, stopObserver, internalError } from '@data-fair/lib/node/observer.js'
+import { initPublisher } from '../../shared/ws.mjs'
+import { initMetrics } from './utils/metrics.js'
+import { finish, createNext } from './utils/runs.js'
+import { spawn } from 'child-process-promise'
 import debug from 'debug'
 const debugLoop = debug('loop')
 
@@ -35,8 +35,7 @@ export const clear = () => {
 /* eslint no-unmodified-loop-condition: 0 */
 // Run main loop !
 export const start = async () => {
-  const url = config.mongo.url || `mongodb://${config.mongo.host}:${config.mongo.port}/${config.mongo.db}`
-  await mongo.connect(url, { readPreference: 'primary' })
+  await mongo.connect(config.mongoUrl, { readPreference: 'primary' })
   const db = mongo.db
   await locks.init(db)
   const wsPublish = await initPublisher(db)
@@ -134,7 +133,7 @@ async function killRun (db, wsPublish, run) {
       console.warn('the run should be killed, it is not locked by another worker and we have no running PID, mark it as already killed', run._id)
       debug('mark as already killed', run)
       run.status = 'killed'
-      await runs.finish(db, wsPublish, run)
+      await finish(db, wsPublish, run)
     }
     return
   }
@@ -162,7 +161,7 @@ async function iter (db, wsPublish, run) {
       return
     }
     if (!processing.active) {
-      await runs.finish(db, wsPublish, run, 'le traitement a été désactivé', 'error')
+      await finish(db, wsPublish, run, 'le traitement a été désactivé', 'error')
       if (hooks[processing._id]) hooks[processing._id].reject({ run, message: 'le traitement a été désactivé' })
       return
     }
@@ -171,13 +170,13 @@ async function iter (db, wsPublish, run) {
 
     const remaining = await limits.remaining(db, processing.owner)
     if (remaining.processingsSeconds === 0) {
-      await runs.finish(db, wsPublish, run, 'le temps de traitement autorisé est épuisé', 'error')
+      await finish(db, wsPublish, run, 'le temps de traitement autorisé est épuisé', 'error')
       if (hooks[processing._id]) hooks[processing._id].reject({ run, message: 'le temps de traitement autorisé est épuisé' })
       return
     }
 
     // Run a task in a dedicated child process for extra resiliency to fatal memory exceptions
-    const spawnPromise = spawn('node', ['./task/index', run._id, processing._id], {
+    const spawnPromise = spawn('node', ['./src/task.js', run._id, processing._id], {
       env: process.env,
       stdio: ['ignore', 'inherit', 'pipe']
     })
@@ -188,7 +187,7 @@ async function iter (db, wsPublish, run) {
     pids[run._id] = spawnPromise.childProcess.pid
     await spawnPromise
 
-    await runs.finish(db, wsPublish, run)
+    await finish(db, wsPublish, run)
     if (hooks[processing._id]) {
       hooks[processing._id].resolve(await db.collection('runs').findOne({ _id: run._id }))
     }
@@ -207,11 +206,11 @@ async function iter (db, wsPublish, run) {
       // case of interruption by a SIGTERM
       if (err.code === 143) {
         run.status = 'killed'
-        await runs.finish(db, wsPublish, run)
+        await finish(db, wsPublish, run)
         if (hooks[processing._id]) hooks[processing._id].resolve({ run, message: 'interrupted' })
       } else {
         console.warn(`failure ${processing.title} > ${run._id}`, errorMessage.join('\n'))
-        await runs.finish(db, wsPublish, run, errorMessage.join('\n'))
+        await finish(db, wsPublish, run, errorMessage.join('\n'))
         if (hooks[processing._id]) hooks[processing._id].reject({ run, message: errorMessage.join('\n') })
       }
     } else {
@@ -225,7 +224,7 @@ async function iter (db, wsPublish, run) {
     }
     if (processing && processing.scheduling.type !== 'trigger') {
       try {
-        await runs.createNext(db, processing)
+        await createNext(db, processing)
       } catch (err) {
         internalError('worker-next-run', 'failure while creating next run', { error: err })
         console.error('(next-run) failure while creating next run', err)
@@ -260,11 +259,11 @@ async function acquireNext (db, wsPublish) {
       if (run.status === 'running') {
         try {
           console.warn('we had to close a run that was stuck in running status', run)
-          await runs.finish(db, wsPublish, run, 'le traitement a été interrompu suite à une opération de maintenance', 'error')
+          await finish(db, wsPublish, run, 'le traitement a été interrompu suite à une opération de maintenance', 'error')
           const processing = await db.collection('processings').findOne({ _id: run.processing._id })
           await locks.release(db, run.processing._id)
           if (processing && processing.scheduling.type !== 'trigger') {
-            await runs.createNext(db, processing)
+            await createNext(db, processing)
           }
         } catch (err) {
           internalError('worker-manage-running', 'failure while closing a run that was left in running status by error', { error: err })

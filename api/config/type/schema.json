@@ -1,0 +1,55 @@
+{
+  "$id": "https://github.com/data-fair/processings/api/config",
+  "x-exports": [
+    "types",
+    "validate"
+  ],
+  "x-ajv": {
+    "coerceTypes": "array"
+  },
+  "type": "object",
+  "title": "Api config",
+  "additionalProperties": false,
+  "required": [
+    "dataDir",
+    "defaultTimeZone",
+    "directoryUrl",
+    "mongoUrl",
+    "origin",
+    "port",
+    "prometheus"
+  ],
+  "properties": {
+    "dataDir": {
+      "type": "string"
+    },
+    "defaultTimeZone": {
+      "type": "string"
+    },
+    "directoryUrl": {
+      "type": "string",
+      "pattern": "^https?://"
+    },
+    "mongoUrl": {
+      "type": "string"
+    },
+    "origin": {
+      "type": "string",
+      "pattern": "^https?://"
+    },
+    "port": {
+      "type": "number"
+    },
+    "prometheus": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "type": "boolean"
+        }
+      }
+    },
+    "util": {},
+    "get": {},
+    "has": {}
+  }
+}

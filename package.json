@@ -79,7 +79,6 @@
     "pump": "^3.0.0",
     "resolve-path": "^1.4.0",
     "semver": "^7.3.4",
-    "tmp-promise": "^2.1.1",
-    "ws": "^8.9.0"
+    "tmp-promise": "^2.1.1"
   }
 }

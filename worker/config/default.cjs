@@ -1,16 +1,20 @@
 module.exports = {
-  origin: 'http://localhost:5600',
-  dataFairUrl: 'http://localhost:5600/data-fair',
+  dataDir: '../data',
   dataFairAdminMode: false,
-  mongo: {
-    host: 'localhost',
-    port: 27017,
-    db: 'data-fair-processings-' + (process.env.NODE_ENV || 'development'),
-    url: null
+  dataFairAPIKey: null,
+  dataFairUrl: 'http://localhost:5600/data-fair',
+  defaultLimits: {
+    // Maximum time spent running processings
+    // -1 for unlimited storage
+    processingsSeconds: -1
   },
+  mongoUrl: 'mongodb://localhost:27017/data-fair-processings',
   locks: {
     // in seconds
     ttl: 60
+  },
+  prometheus: {
+    active: true
   },
   worker: {
     // base interval for polling the database for new resources to work on
