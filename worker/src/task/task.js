@@ -69,6 +69,9 @@ const wsInstance = (log) => {
   })
 }
 
+/**
+ * @returns {import('@data-fair/lib/processings/types.js').LogFunctions} Log functions.
+ */
 const prepareLog = (db, wsPublish, processing, run) => {
   const pushLog = async (log) => {
     log.date = new Date().toISOString()
