@@ -176,7 +176,7 @@ async function iter (db, wsPublish, run) {
     }
 
     // Run a task in a dedicated child process for extra resiliency to fatal memory exceptions
-    const spawnPromise = spawn('node', ['./src/task.js', run._id, processing._id], {
+    const spawnPromise = spawn('node', ['./src/task', run._id, processing._id], {
       env: process.env,
       stdio: ['ignore', 'inherit', 'pipe']
     })

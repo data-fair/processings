@@ -5,6 +5,8 @@ module.exports = {
   // dataFairUrl: 'https://staging-koumoul.com/s/data-fair',
   // dataFairAPIKey: '2782bd3b-c422-4541-a27a-a03690d9df53',
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings-development',
+  notificationsKeys: 'secret-notifications',
+  notifyUrl: 'http://localhost:5600/notify',
   prometheus: {
     active: false
   }

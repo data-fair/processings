@@ -20,7 +20,7 @@ export const running = async (db, wsPublish, run) => {
     { _id: run._id },
     { $set: patch, $unset: { finishedAt: '' } },
     { returnDocument: 'after', projection: { log: 0, processing: 0, owner: 0 } }
-  )).value
+  ))
   await wsPublish(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch })
   await db.collection('processings')
     .updateOne({ _id: run.processing._id }, { $set: { lastRun }, $unset: { nextRun: '' } })
@@ -42,13 +42,13 @@ export const finish = async (db, wsPublish, run, errorMessage, errorLogType = 'd
     { _id: run._id },
     query,
     { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
-  )).value
+  ))
   if (!lastRun.startedAt) {
     lastRun = (await db.collection('runs').findOneAndUpdate(
       { _id: run._id },
       { $set: { startedAt: lastRun.finishedAt } },
       { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
-    )).value
+    ))
   }
   await wsPublish(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch: query.$set })
   const duration = (new Date(lastRun.finishedAt).getTime() - new Date(lastRun.startedAt).getTime()) / 1000

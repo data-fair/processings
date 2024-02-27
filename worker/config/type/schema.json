@@ -12,6 +12,8 @@
   "additionalProperties": false,
   "required": [
     "dataDir",
+    "dataFairAPIKey",
+    "dataFairAdminMode",
     "dataFairUrl",
     "defaultLimits",
     "mongoUrl",
@@ -22,6 +24,12 @@
   "properties": {
     "dataDir": {
       "type": "string"
+    },
+    "dataFairAPIKey": {
+      "type": "string"
+    },
+    "dataFairAdminMode": {
+      "type": "boolean"
     },
     "dataFairUrl": {
       "type": "string",
@@ -35,8 +43,34 @@
         }
       }
     },
+    "mails": {
+      "type": "object",
+      "properties": {
+        "transport": {
+          "type": "object",
+          "properties": {
+            "port": {
+              "type": "number"
+            },
+            "ignoreTLS": {
+              "type": "boolean"
+            },
+            "default": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
     "mongoUrl": {
       "type": "string"
+    },
+    "notificationsKeys": {
+      "type": "string"
+    },
+    "notifyUrl": {
+      "type": "string",
+      "pattern": "^https?://"
     },
     "locks": {
       "type": "object",

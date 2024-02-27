@@ -6,7 +6,16 @@ module.exports = {
   defaultLimits: {
     processingsSeconds: 'DEFAULT_LIMITS_PROCESSINGS_SECONDS'
   },
+  mails: {
+    transport: {
+      port: 'MAILS_TRANSPORT_PORT',
+      ignoreTLS: 'MAILS_TRANSPORT_IGNORE_TLS',
+      default: 'MAILS_TRANSPORT_DEFAULT'
+    }
+  },
   mongoUrl: 'MONGO_URL',
+  notificationsKeys: 'NOTIFICATIONS_KEYS',
+  notifyUrl: 'NOTIFY_URL',
   locks: {
     ttl: 'LOCKS_TTL'
   },
