@@ -36,10 +36,11 @@
       "no-only-tests"
     ],
     "extends": [
-      "plugin:vue/essential",
       "eslint:recommended",
-      "standard",
-      "plugin:vue/recommended"
+      "plugin:vue/essential",
+      "plugin:vue/recommended",
+      "plugin:vuetify/base",
+      "standard"
     ],
     "rules": {
       "vue/no-v-html": "off",

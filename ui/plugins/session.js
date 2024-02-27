@@ -23,6 +23,12 @@ export default defineNuxtPlugin(nuxtApp => {
     const directoryUrl = new URL(runtimeConfig.public.directoryUrl)
     directoryUrl.host = currentHost
 
+    store.init({
+      cookies: Cookies,
+      directoryUrl: directoryUrl.href,
+      httpLib: ofetch,
+    })
+
     store.setAny({
       env: {
         ...runtimeConfig.public,
@@ -35,22 +41,22 @@ export default defineNuxtPlugin(nuxtApp => {
       vuetify: nuxtApp.$vuetify,
     })
 
-    store.init({
-      cookies: Cookies,
-      directoryUrl: directoryUrl.href,
-      httpLib: ofetch,
-    })
-
     if (!store.embed) {
       store.loop(Cookies)
     }
+  })
 
+  nuxtApp.hook('vuetify:ready', () => {
     if (themeCookie.value !== undefined) {
       nuxtApp.vueApp.provide('theme', themeCookie.value === 'true' ? 'dark' : 'light')
+      nuxtApp.$vuetify.theme.dark = themeCookie.value === 'true'
     }
 
     if (route.query.dark) {
       nuxtApp.vueApp.provide('theme', route.query.dark === 'true' ? 'dark' : 'light')
+      nuxtApp.$vuetify.theme.dark = route.query.dark === 'true'
     }
+    
+    store.setAny({ vuetify: nuxtApp.$vuetify })
   })
 })

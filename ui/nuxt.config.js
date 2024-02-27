@@ -2,7 +2,6 @@ import * as baseConfig from './config/default'
 import * as devConfig from './config/development'
 import nuxtConfigInject from '@koumoul/nuxt-config-inject'
 import { defineNuxtConfig } from 'nuxt/config'
-import { en, fr } from 'vuetify/locale'
 import { URL } from 'url'
 
 let config = { ...baseConfig.default }
@@ -18,44 +17,6 @@ const isBuilding = process.argv.slice(-1)[0] === 'build'
 if (process.env.NODE_ENV === 'production') {
   if (isBuilding) config = nuxtConfigInject.prepare(config)
   else nuxtConfigInject.replace(config, ['nuxt-dist/**/*', 'static/**/*'])
-}
-
-let vuetifyOptions = {}
-
-if (process.env.NODE_ENV !== 'production' || isBuilding) {
-  vuetifyOptions = {
-    customVariables: ['assets/variables.scss'],
-    treeShake: true,
-    defaultAssets: false,
-    lang: {
-      locales: { fr, en },
-      current: config.i18n.defaultLocale
-    },
-    theme: {
-      themes: {
-        light: {
-          primary: '#1E88E5', // blue.darken1
-          secondary: '#42A5F5', // blue.lighten1,
-          accent: '#FF9800', // orange.base
-          error: 'FF5252', // red.accent2
-          info: '#2196F3', // blue.base
-          success: '#4CAF50', // green.base
-          warning: '#E91E63', // pink.base
-          admin: '#E53935' // red.darken1
-        },
-        dark: {
-          primary: '#2196F3', // blue.base
-          secondary: '#42A5F5', // blue.lighten1,
-          accent: '#FF9800', // orange.base
-          error: 'FF5252', // red.accent2
-          info: '#2196F3', // blue.base
-          success: '#00E676', // green.accent3
-          warning: '#E91E63', // pink.base
-          admin: '#E53935' // red.darken1
-        }
-      }
-    }
-  }
 }
 
 export default defineNuxtConfig({
@@ -92,8 +53,7 @@ export default defineNuxtConfig({
     'vuetify-nuxt-module'
   ],
   i18n: {
-    seo: false,
-    locales: ['fr', 'en'],
+    locales: [ 'en', 'fr' ],
     defaultLocale: config.i18n.defaultLocale,
     strategy: 'no_prefix',
     detectBrowserLanguage: {
@@ -107,11 +67,17 @@ export default defineNuxtConfig({
     preload: true,
     display: 'swap',
     download: true,
+    inject: true,
     families: {
       Nunito: [100, 300, 400, 500, 700, 900]
     }
   },
-  vuetify: vuetifyOptions,
+  vuetify: {
+    moduleOptions: {
+      styles: { configFile: './assets/variables.scss' }
+    },
+    vuetifyOptions: './vuetify.config.js'
+  },
   runtimeConfig: {
     public: {
       mainPublicUrl: config.publicUrl,
@@ -137,6 +103,7 @@ export default defineNuxtConfig({
     ]
   },
   css: [
-    '@mdi/font/css/materialdesignicons.min.css'
+    '@mdi/font/css/materialdesignicons.min.css',
+    './assets/variables.scss'
   ]
 })
