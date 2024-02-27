@@ -80,7 +80,6 @@
 </template>
 
 <script setup>
-import axios from 'axios'
 import { ref } from 'vue'
 import { useDateFormat, useRelativeTime } from '~/composables' // probably doesn't exist
 
@@ -92,7 +91,9 @@ const props = defineProps({
 
 const kill = async () => {
   try {
-    await axios.post(`api/v1/runs/${props.run._id}/_kill`)
+    await $fetch(`api/v1/runs/${props.run._id}/_kill`, {
+      method: 'POST'
+    })
     props.run.status = 'kill'
   } catch (error) {
     console.error('Failed to kill the run:', error)

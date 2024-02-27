@@ -61,7 +61,6 @@
 <script setup>
 import VJsf from '@koumoul/vjsf/lib/VJsf'
 import { ref, computed, onMounted } from 'vue'
-import { useAxios } from '@vueuse/integrations/useAxios'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from '~/store/index'
 
@@ -137,8 +136,8 @@ onMounted(async () => {
 })
 
 async function fetchProcessing() {
-  const { data } = await useAxios(`api/v1/processings/${route.params.id}`)
-  processing.value = data.value
+  const data = await $fetch(`api/v1/processings/${route.params.id}`)
+  processing.value = data
   store.setBreadcrumbs([{
     text: 'traitements',
     to: '/processings'
@@ -150,8 +149,8 @@ async function fetchProcessing() {
 
 async function fetchPlugin() {
   if (processing.value && processing.value.plugin) {
-    const { data } = await useAxios(`api/v1/plugins/${processing.value.plugin}`)
-    plugin.value = data.value
+    const data = await $fetch(`api/v1/plugins/${processing.value.plugin}`)
+    plugin.value = data
     Object.keys(processingSchema.value.properties).forEach(key => {
       if (processingSchema.value.properties[key].readOnly) delete editProcessing.value[key]
     })
@@ -164,7 +163,10 @@ async function patch() {
     if (editProcessing.value.scheduling.dayOfWeek === '*') editProcessing.value.scheduling.dayOfWeek = '1'
     renderVjsfKey.value += 1
   }
-  await useAxios.patch(`api/v1/processings/${route.params.id}`, editProcessing.value)
+  await $fetch(`api/v1/processings/${route.params.id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(editProcessing.value)
+  })
   await fetchProcessing()
 }
 </script>

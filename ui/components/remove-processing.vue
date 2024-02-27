@@ -5,8 +5,8 @@
     :close-on-click="false"
     :close-on-content-click="false"
   >
-    <template #activator="{ on }">
-      <v-btn icon color="warning" text v-on="on" @click="open">
+    <template #activator>
+      <v-btn icon color="warning" text @click="open">
         <v-icon>mdi-delete</v-icon>
       </v-btn>
     </template>
@@ -33,9 +33,8 @@
 </template>
 
 <script setup>
-import axios from 'axios'
 import { ref } from 'vue'
-import { useEventBus } from '~/composables/useEventBus' // Assuming a composable for EventBus
+import { useEventBus } from '~/composables/event-bus'
 import { useRouter } from 'vue-router'
 
 const props = defineProps({
@@ -53,7 +52,9 @@ const open = (e) => {
 
 const confirm = async () => {
   try {
-    await axios.delete(`api/v1/processings/${props.processing.id}`)
+    await $fetch(`api/v1/processings/${props.processing.id}`, {
+      method: 'DELETE'
+    })
     emit('removed', { id: props.processing.id })
     emitNotification({ msg: 'Traitement supprimé avec succès', type: 'success' })
   } catch (error) {

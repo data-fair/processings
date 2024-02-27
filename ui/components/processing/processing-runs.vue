@@ -19,7 +19,6 @@
 </template>
 
 <script setup>
-import axios from 'axios'
 import RunListItem from '~/components/run/run-list-item.vue'
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useEventBus } from '~/composables/event-bus'
@@ -51,15 +50,17 @@ function onRunPatch(runPatch) {
 async function refresh() {
   loading.value = true
   try {
-    const response = await axios.get('api/v1/runs', { 
-      params: { 
-        processing: props.processing._id, 
-        size: 1000, 
-        sort: 'createdAt:-1', 
-        owner: `${props.processing.owner.type}:${props.processing.owner.id}` 
-      } 
+    const response = await $fetch('api/v1/runs', {
+      body: {
+        params: { 
+          processing: props.processing._id, 
+          size: 1000, 
+          sort: 'createdAt:-1', 
+          owner: `${props.processing.owner.type}:${props.processing.owner.id}` 
+        } 
+      }
     })
-    runs.value = response.data
+    runs.value = response
   } catch (error) {
     console.error('Failed to refresh runs:', error)
   }

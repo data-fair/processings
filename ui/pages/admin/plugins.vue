@@ -107,7 +107,6 @@ import '@koumoul/vjsf/lib/deps/third-party'
 import '@koumoul/vjsf/dist/main.css'
 import VJsf from '@koumoul/vjsf/lib/VJsf'
 import { ref, computed } from 'vue'
-import { useAxios } from '@vueuse/integrations/useAxios'
 import { useStore } from '~/store/index'
 
 const store = useStore()
@@ -136,38 +135,49 @@ onMounted(async () => {
 })
 
 async function fetchAvailablePlugins() {
-  const { data } = await useAxios('/api/v1/plugins-registry')
-  availablePlugins.value = data.value
+  const data = await $fetch('/api/v1/plugins-registry')
+  availablePlugins.value = data
 }
 
 async function fetchInstalledPlugins() {
-  const { data } = await useAxios('/api/v1/plugins')
-  installedPlugins.value = data.value
+  const data = await $fetch('/api/v1/plugins')
+  installedPlugins.value = data
 }
 
 async function install(plugin) {
   loading.value = true
-  await useAxios.post('/api/v1/plugins', plugin)
+  await $fetch('/api/v1/plugins', {
+    method: 'POST',
+    body: JSON.stringify(plugin)
+  })
   await fetchInstalledPlugins()
   loading.value = false
 }
 
 async function uninstall(plugin) {
   loading.value = true
-  await useAxios.delete('/api/v1/plugins/' + plugin.id)
+  await $fetch('/api/v1/plugins/' + plugin.id, {
+    method: 'DELETE'
+  })
   await fetchInstalledPlugins()
   loading.value = false
 }
 
 async function saveConfig(plugin) {
   loading.value = true
-  await useAxios.put(`/api/v1/plugins/${plugin.id}/config`, plugin.config)
+  await $fetch(`/api/v1/plugins/${plugin.id}/config`, {
+    method: 'PUT',
+    body: JSON.stringify(plugin.config)
+  })
   loading.value = false
 }
 
 async function saveAccess(plugin) {
   loading.value = true
-  await useAxios.put(`/api/v1/plugins/${plugin.id}/access`, plugin.access)
+  await $fetch(`/api/v1/plugins/${plugin.id}/access`, {
+    method: 'PUT',
+    body: JSON.stringify(plugin.access)
+  })
   loading.value = false
 }
 </script>

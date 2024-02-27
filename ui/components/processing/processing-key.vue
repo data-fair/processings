@@ -5,10 +5,10 @@
     :max-width="1000"
     :close-on-content-click="false"
   >
-    <template #activator="{ on: onMenu, attrs }">
+    <template #activator="{ props }">
       <v-tooltip bottom>
-        <template #activator="{ on: onTooltip }">
-          <v-btn text v-bind="attrs" v-on="{ ...onTooltip, ...onMenu }">
+        <template #activator="{ props: tooltipProps }">
+          <v-btn text v-bind="props" v-on="tooltipProps.on">
             <v-icon color="primary" small>mdi-help</v-icon>
           </v-btn>
         </template>

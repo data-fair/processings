@@ -22,10 +22,9 @@
         </v-list-item>
         <v-list-item v-if="user">
           <v-menu offset-y left>
-            <template #activator="{ on, attrs }">
+            <template #activator="{ props }">
               <v-select
-                v-bind="attrs"
-                v-on="on"
+                v-bind="props"
                 :items="[{ text: 'Compte personnel', value: null }].concat(user.organizations.map(o => ({ text: o.name, value: o.id })))"
                 label="Compte actif"
                 :value="activeAccount && activeAccount.type === 'organization' ? activeAccount.id : null"

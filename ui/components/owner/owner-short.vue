@@ -1,7 +1,7 @@
 <template>
   <v-tooltip top>
-    <template #activator="{ on }">
-      <span class="text-body-2" v-on="on">
+    <template #activator>
+      <span class="text-body-2">
         <v-avatar :size="28">
           <img :src="avatarUrl">
         </v-avatar>

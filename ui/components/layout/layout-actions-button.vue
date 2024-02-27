@@ -1,8 +1,8 @@
 <template>
   <div class="actions-buttons" style="position: absolute; right: 20px;">
     <v-menu bottom left :close-on-content-click="false">
-      <template #activator="{ on }">
-        <v-btn fab small color="accent" v-on="on">
+      <template #activator>
+        <v-btn fab small color="accent">
           <v-icon>{{ icon }}</v-icon>
         </v-btn>
       </template>

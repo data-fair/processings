@@ -65,7 +65,6 @@
 <script setup>
 import useEventBus from '~/composables/event-bus'
 import { ref, computed, onMounted } from 'vue'
-import { useAxios } from '@vueuse/integrations/useAxios'
 import { useRoute } from 'vue-router'
 import { useStore } from '~/store/index'
 
@@ -114,8 +113,8 @@ onMounted(async () => {
 
 async function fetchInstalledPlugins() {
   if (!canAdmin.value) return
-  const { data } = await useAxios(`/api/v1/plugins?privateAccess=${ownerFilter.value}`)
-  installedPlugins.value = data.value
+  const data = await $fetch(`/api/v1/plugins?privateAccess=${ownerFilter.value}`)
+  installedPlugins.value = data
 }
 
 async function refresh() {
@@ -127,8 +126,8 @@ async function refresh() {
       select: '_id,title,plugin,lastRun,nextRun,owner',
       owner: ownerFilter.value
     }).toString()
-    const { data } = await useAxios(`api/v1/processings?${params}`)
-    processings.value = data.value
+    const data = await $fetch(`api/v1/processings?${params}`)
+    processings.value = data
   } catch (error) {
     eventBus.$emit('notification', { error, msg: 'Erreur pendant la récupération de la liste des traitements' })
   }

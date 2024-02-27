@@ -1,8 +1,8 @@
 <template>
   <v-list dense class="list-actions">
     <v-menu v-if="canAdmin || canExec" v-model="showTriggerMenu" :close-on-content-click="false" max-width="800">
-      <template #activator="{ on, attrs }">
-        <v-list-item v-bind="attrs" :disabled="!processing.active" v-on="on">
+      <template #activator="{ props }">
+        <v-list-item v-bind="props" :disabled="!processing.active">
           <v-list-item-icon>
             <v-icon color="primary">mdi-play</v-icon>
           </v-list-item-icon>
@@ -31,8 +31,8 @@
     </v-menu>
 
     <v-menu v-if="canAdmin" v-model="showDeleteMenu" :close-on-content-click="false" max-width="500">
-      <template #activator="{ on, attrs }">
-        <v-list-item v-bind="attrs" v-on="on">
+      <template #activator="{ props }">
+        <v-list-item v-bind="props">
           <v-list-item-icon>
             <v-icon color="warning">mdi-delete</v-icon>
           </v-list-item-icon>
@@ -66,8 +66,8 @@
     </v-list-item>
 
     <v-menu v-if="notifUrl && processing.owner.type === activeAccount.type && processing.owner.id === activeAccount.id && !activeAccount.department" v-model="showNotifMenu" max-width="500" min-width="500" :close-on-content-click="false">
-      <template #activator="{ on, attrs }">
-        <v-list-item v-bind="attrs" v-on="on">
+      <template #activator="{ props }">
+        <v-list-item v-bind="props">
           <v-list-item-icon>
             <v-icon color="primary">mdi-bell</v-icon>
           </v-list-item-icon>
@@ -93,7 +93,6 @@
 </template>
 
 <script setup>
-import axios from 'axios'
 import VIframe from '@koumoul/v-iframe'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
@@ -133,7 +132,10 @@ const webhookLink = computed(() => {
 
 const triggerExecution = async () => {
   try {
-    await axios.post(`${env.value.publicUrl}/api/v1/processings/${props.processing._id}/_trigger`, { delay: triggerDelay.value })
+    await $fetch(`${env.value.publicUrl}/api/v1/processings/${props.processing._id}/_trigger`, {
+      method: 'POST',
+      body: { delay: triggerDelay.value }
+    })
     showTriggerMenu.value = false
   } catch (error) {
     console.error('Error triggering processing:', error)
@@ -142,7 +144,9 @@ const triggerExecution = async () => {
 
 const confirmRemove = async () => {
   try {
-    await axios.delete(`${env.value.publicUrl}/api/v1/processings/${props.processing._id}`)
+    await $fetch(`${env.value.publicUrl}/api/v1/processings/${props.processing._id}`, {
+      method: 'DELETE'
+    })
     router.push('/processings')
     showDeleteMenu.value = false
   } catch (error) {
@@ -152,8 +156,8 @@ const confirmRemove = async () => {
 
 const getWebhookKey = async () => {
   try {
-    const response = await axios.get(`${env.value.publicUrl}/api/v1/processings/${props.processing._id}/webhook-key`)
-    webhookKey.value = response.data
+    const response = await $fetch(`${env.value.publicUrl}/api/v1/processings/${props.processing._id}/webhook-key`)
+    webhookKey.value = response
   } catch (error) {
     console.error('Error fetching webhook key:', error)
   }

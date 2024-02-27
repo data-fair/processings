@@ -52,6 +52,4 @@ const taskColor = (log) => {
   if (log.progress && log.progress === log.total) return 'success'
   return 'primary'
 }
-
-// Vue 3 doesn't support filters in the template. You can create a method or a composable for formatting dates.
 </script>

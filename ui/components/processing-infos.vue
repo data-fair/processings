@@ -7,14 +7,14 @@
       :max-width="1200"
       :close-on-content-click="false"
     >
-      <template #activator="{ on, attrs }">
+      <template #activator="{ props }">
         <v-tooltip bottom>
-          <template #activator="{ on: onTooltip }">
+          <template #activator="{ props: tooltipProps }">
             <v-btn
               text
               style="height: 20px;"
-              v-bind="attrs"
-              v-on="{ ...onTooltip, ...on }"
+              v-bind="props.attrs"
+              v-on="tooltipProps.on"
             >
               <v-icon
                 color="primary"
@@ -78,7 +78,6 @@
 </template>
 
 <script setup>
-import axios from 'axios'
 import { ref, computed, onMounted } from 'vue'
 import { useStore } from '~/store/index'
 
@@ -127,8 +126,8 @@ const datasetSchemaConcepts = computed(() => {
 })
 
 onMounted(async () => {
-  vocabulary.value = await axios.get(store.env.dataFairUrl + '/api/v1/vocabulary').then(res => res.data)
-  processingSchema.value = await axios.get('api/v1/processings/_schema').then(res => res.data)
+  vocabulary.value = await $fetch(store.env.dataFairUrl + '/api/v1/vocabulary')
+  processingSchema.value = await $fetch('api/v1/processings/_schema')
 })
 
 function conceptLabel(uri) {

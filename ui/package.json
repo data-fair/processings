@@ -9,6 +9,30 @@
     "prepare": "nuxi prepare",
     "preview": "nuxi preview"
   },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "plugins": [
+      "no-only-tests"
+    ],
+    "extends": [
+      "eslint:recommended",
+      "plugin:vue/essential",
+      "plugin:vue/recommended",
+      "plugin:vuetify/base",
+      "standard"
+    ],
+    "rules": {
+      "vue/no-v-html": "off",
+      "vue/multi-word-component-names": "off",
+      "node/no-deprecated-api": "off",
+      "vue/no-mutating-props": "off",
+      "vue/require-prop-types": "off",
+      "vue/no-useless-template-attributes": "off"
+    }
+  },
   "devDependencies": {
     "@babel/eslint-parser": "^7.23.10",
     "@data-fair/sd-vue": "^2.7.0",

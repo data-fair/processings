@@ -6,8 +6,8 @@
       min-width="500px"
       max-width="500px"
     >
-      <template #activator="{ on, attrs }">
-        <v-list-item v-bind="attrs" v-on="on">
+      <template #activator="{ props }">
+        <v-list-item v-bind="props">
           <v-list-item-icon>
             <v-icon color="primary">mdi-plus-circle</v-icon>
           </v-list-item-icon>
@@ -52,7 +52,6 @@
 </template>
 
 <script setup>
-import axios from 'axios'
 import { ref } from 'vue'
 import { useStore } from '~/store/index'
 import { useRouter } from 'vue-router'
@@ -72,8 +71,11 @@ const activeAccount = computed(() => store.activeAccount)
 
 const createProcessing = async () => {
   try {
-    const response = await axios.post('api/v1/processings', newProcessing.value)
-    router.push(`/processings/${response.data._id}`)
+    const response = await $fetch('api/v1/processings', {
+      method: 'POST',
+      body: JSON.stringify(newProcessing.value)
+    })
+    router.push(`/processings/${response._id}`)
   } catch (error) {
     console.error('Failed to create processing:', error)
   }

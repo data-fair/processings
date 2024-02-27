@@ -115,8 +115,8 @@ onUnmounted(() => {
 
 async function refresh() {
   try {
-    const response = await fetch(`api/v1/runs/${route.params.id}`)
-    run.value = await response.json()
+    const response = await $fetch(`api/v1/runs/${route.params.id}`)
+    run.value = await response
     store.setBreadcrumbs([
       { text: 'traitements', to: '/processings' },
       { text: run.value.processing.title, to: `/processings/${run.value.processing._id}` },
@@ -128,22 +128,22 @@ async function refresh() {
 }
 
 function onRunPatch(runPatch) {
-  if (!run.value || run.value._id !== runPatch._id) return;
-  run.value = { ...run.value, ...runPatch.patch };
+  if (!run.value || run.value._id !== runPatch._id) return
+  run.value = { ...run.value, ...runPatch.patch }
 }
 
 function onRunLog(runLog) {
-  if (!run.value || run.value._id !== runLog._id) return;
+  if (!run.value || run.value._id !== runLog._id) return
   if (runLog.log.type === 'task') {
-    const matchingTaskIndex = run.value.log.findIndex(l => l.type === 'task' && l.msg === runLog.log.msg);
+    const matchingTaskIndex = run.value.log.findIndex(l => l.type === 'task' && l.msg === runLog.log.msg)
     if (matchingTaskIndex !== -1) {
-      run.value.log[matchingTaskIndex] = { ...run.value.log[matchingTaskIndex], ...runLog.log };
+      run.value.log[matchingTaskIndex] = { ...run.value.log[matchingTaskIndex], ...runLog.log }
     } else {
-      run.value.log.push(runLog.log);
+      run.value.log.push(runLog.log)
     }
   } else {
-    run.value.log.push(runLog.log);
+    run.value.log.push(runLog.log)
   }
-  run.value.log = [...run.value.log];
+  run.value.log = [...run.value.log]
 }
 </script>
