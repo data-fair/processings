@@ -6,7 +6,7 @@ import config from 'config'
 import moment from 'moment'
 import { CronJob } from 'cron'
 import schedulingUtils from '../../../api/src/utils/scheduling.cjs'
-import runSchema from '../../../contract/run.js'
+import runSchema from '../../../contract/run.cjs'
 
 import Ajv from 'ajv'
 import ajvFormats from 'ajv-formats'

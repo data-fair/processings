@@ -1,7 +1,7 @@
-const { owner } = require('./owner')
-const scheduling = require('./scheduling')
-const permissions = require('./permissions')
-const run = JSON.parse(JSON.stringify(require('./run')))
+const { owner } = require('./owner.cjs')
+const scheduling = require('./scheduling.cjs')
+const permissions = require('./permissions.cjs')
+const run = JSON.parse(JSON.stringify(require('./run.cjs')))
 delete run.required
 delete run.properties.log
 delete run.properties.processing
