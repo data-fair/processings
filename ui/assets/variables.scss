@@ -231,3 +231,13 @@
 body {
   font-family: 'Nunito', sans-serif;
 }
+
+.v-theme--light {
+  --v-hover-opacity: 0.04;
+  --v-theme-overlay-multiplier: 1;
+}
+
+.v-theme--dark {
+  --v-hover-opacity: 0.04;
+  --v-theme-overlay-multiplier: 1;
+}

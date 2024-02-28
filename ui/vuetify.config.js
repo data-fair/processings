@@ -11,7 +11,7 @@ if (process.env.NODE_ENV !== 'production' || isBuilding) {
     },
     localeMessages: ['en', 'fr'],
     theme: {
-      defaultTheme: 'dark',
+      defaultTheme: 'light',
       themes: {
         light: {
           dark: false,
@@ -24,6 +24,10 @@ if (process.env.NODE_ENV !== 'production' || isBuilding) {
             success: '#4CAF50', // green.base
             warning: '#E91E63', // pink.base
             admin: '#E53935' // red.darken1
+          },
+          variables: {
+            'hover-opacity': 0.04,
+            'overlay-multiplier': 1
           }
         },
         dark: {
@@ -37,6 +41,10 @@ if (process.env.NODE_ENV !== 'production' || isBuilding) {
             success: '#00E676', // green.accent3
             warning: '#E91E63', // pink.base
             admin: '#E53935' // red.darken1
+          },
+          variables: {
+            'hover-opacity': 0.04,
+            'overlay-multiplier': 1
           }
         }
       }

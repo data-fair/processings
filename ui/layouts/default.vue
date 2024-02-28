@@ -1,6 +1,6 @@
 <template>
   <v-app :theme="isDark ? 'dark' : 'light'">
-    <client-only><AppBar v-if="!embed" /></client-only>
+    <ClientOnly><AppBar v-if="!embed" /></ClientOnly>
     <v-main>
       <NuxtPage />
       <Notifications />
