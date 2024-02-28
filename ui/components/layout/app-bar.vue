@@ -1,10 +1,28 @@
 <template>
-  <v-app-bar app flat dense class="px-0 main-app-bar">
+  <v-app-bar
+    flat
+    dense
+    class="px-0 main-app-bar"
+  >
     <v-toolbar-items>
-      <v-btn text :to="{ name: 'processings' }">Traitements</v-btn>
-      <v-btn text :to="{ name: 'admin-plugins' }" color="admin">Plugins</v-btn>
+      <v-btn
+        variant="text"
+        :to="{ name: 'processings' }"
+      >
+        Traitements
+      </v-btn>
+      <v-btn
+        variant="text"
+        :to="{ name: 'admin-plugins' }"
+        color="admin"
+      >
+        Plugins
+      </v-btn>
     </v-toolbar-items>
-    <v-breadcrumbs v-if="breadcrumbs" :items="breadcrumbs" />
+    <v-breadcrumbs
+      v-if="breadcrumbs"
+      :items="breadcrumbs"
+    />
     <v-spacer />
     <LangSwitcher />
     <PersonalMenu />

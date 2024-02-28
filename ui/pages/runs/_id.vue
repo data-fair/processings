@@ -10,7 +10,7 @@
       <v-spacer />
       <v-btn
         v-if="runBackLink"
-        text
+        variant="text"
         :to="`/processings/${run.processing._id}`"
       >
         <v-icon style="transform: scale(-1, 1)">
@@ -31,15 +31,15 @@
         />
         <v-expansion-panels
           v-else
-          accordion
+          variant="accordion"
           multiple
-          :value="[steps.length - 1]"
+          :model-value="[steps.length - 1]"
         >
           <v-expansion-panel
             v-for="(step, i) in steps"
             :key="step.date"
           >
-            <v-expansion-panel-header>
+            <v-expansion-panel-title>
               <span class="text-body-1">
                 <v-progress-circular
                   v-if="i === steps.length-1 && run.status === 'running'"
@@ -50,10 +50,10 @@
                 &nbsp;
                 {{ step.msg }}
               </span>
-            </v-expansion-panel-header>
-            <v-expansion-panel-content v-if="step.children.length">
+            </v-expansion-panel-title>
+            <v-expansion-panel-text v-if="step.children.length">
               <run-logs-list :logs="step.children" />
-            </v-expansion-panel-content>
+            </v-expansion-panel-text>
           </v-expansion-panel>
         </v-expansion-panels>
       </v-col>

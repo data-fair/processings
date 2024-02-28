@@ -1,5 +1,5 @@
 <template>
-  <v-tooltip top>
+  <v-tooltip location="top">
     <template #activator>
       <span class="text-body-2">
         <v-avatar :size="28">

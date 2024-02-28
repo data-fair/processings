@@ -5,17 +5,21 @@
     v-model="showSnackbar"
     :color="notification.type"
     :timeout="notification.type === 'error' ? 0 : 300000"
-    :text="notification.type === 'default'"
     class="notification"
-    tile
-    right
-    bottom
-    :outlined="$vuetify.theme.dark"
+    location="right bottom"
+    :variant="$vuetify.theme.dark && 'outlined'"
   >
     <p v-text="notification.msg" />
-    <p v-if="notification.errorMsg" class="ml-3" v-text="notification.errorMsg" />
-    <template #action="{ }">
-      <v-btn icon @click="showSnackbar = false">
+    <p
+      v-if="notification.errorMsg"
+      class="ml-3"
+      v-text="notification.errorMsg"
+    />
+    <template #action>
+      <v-btn
+        icon
+        @click="showSnackbar = false"
+      >
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </template>

@@ -1,17 +1,28 @@
 <template>
-  <v-list dense class="list-actions">
-    <v-menu v-if="canAdmin || canExec" v-model="showTriggerMenu" :close-on-content-click="false" max-width="800">
+  <v-list
+    density="compact"
+    class="list-actions"
+  >
+    <v-menu
+      v-if="canAdmin || canExec"
+      v-model="showTriggerMenu"
+      :close-on-content-click="false"
+      max-width="800"
+    >
       <template #activator="{ props }">
-        <v-list-item v-bind="props" :disabled="!processing.active">
-          <v-list-item-icon>
-            <v-icon color="primary">mdi-play</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title>Exécuter</v-list-item-title>
-          </v-list-item-content>
+        <v-list-item
+          v-bind="props"
+          :disabled="!processing.active"
+        >
+          <template #prepend>
+            <v-icon color="primary">
+              mdi-play
+            </v-icon>
+          </template>
+          <span>Exécuter</span>
         </v-list-item>
       </template>
-      <v-card outlined>
+      <v-card variant="outlined">
         <v-card-title primary-title>
           Exécution du traitement
         </v-card-title>
@@ -20,28 +31,47 @@
             Vous pouvez déclencher une exécution sans être connecté à la plateforme en envoyant une requête HTTP POST à cette URL sécurisée :
             <br>{{ webhookLink }}
           </p>
-          <v-text-field v-model="triggerDelay" type="number" label="Appliquer un délai en secondes" />
+          <v-text-field
+            v-model="triggerDelay"
+            type="number"
+            label="Appliquer un délai en secondes"
+          />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn text @click="showTriggerMenu = false">Annuler</v-btn>
-          <v-btn color="primary" @click="triggerExecution">Déclencher manuellement</v-btn>
+          <v-btn
+            variant="text"
+            @click="showTriggerMenu = false"
+          >
+            Annuler
+          </v-btn>
+          <v-btn
+            color="primary"
+            @click="triggerExecution"
+          >
+            Déclencher manuellement
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-menu>
 
-    <v-menu v-if="canAdmin" v-model="showDeleteMenu" :close-on-content-click="false" max-width="500">
+    <v-menu
+      v-if="canAdmin"
+      v-model="showDeleteMenu"
+      :close-on-content-click="false"
+      max-width="500"
+    >
       <template #activator="{ props }">
         <v-list-item v-bind="props">
-          <v-list-item-icon>
-            <v-icon color="warning">mdi-delete</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title>Supprimer</v-list-item-title>
-          </v-list-item-content>
+          <template #prepend>
+            <v-icon color="warning">
+              mdi-delete
+            </v-icon>
+          </template>
+          Supprimer
         </v-list-item>
       </template>
-      <v-card outlined>
+      <v-card variant="outlined">
         <v-card-title primary-title>
           Suppression du traitement
         </v-card-title>
@@ -50,33 +80,53 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn text @click="showDeleteMenu = false">Non</v-btn>
-          <v-btn color="warning" @click="confirmRemove">Oui</v-btn>
+          <v-btn
+            variant="text"
+            @click="showDeleteMenu = false"
+          >
+            Non
+          </v-btn>
+          <v-btn
+            color="warning"
+            @click="confirmRemove"
+          >
+            Oui
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-menu>
 
-    <v-list-item v-if="processing.config && processing.config.dataset && processing.config.dataset.id" :href="`${env.dataFairUrl}/dataset/${processing.config.dataset.id}`" target="_blank">
-      <v-list-item-icon>
-        <v-icon color="primary">mdi-open-in-new</v-icon>
-      </v-list-item-icon>
-      <v-list-item-content>
-        <v-list-item-title>Voir le jeu de données</v-list-item-title>
-      </v-list-item-content>
+    <v-list-item
+      v-if="processing.config && processing.config.dataset && processing.config.dataset.id"
+      :href="`${env.dataFairUrl}/dataset/${processing.config.dataset.id}`"
+      target="_blank"
+    >
+      <template #prepend>
+        <v-icon color="primary">
+          mdi-open-in-new
+        </v-icon>
+      </template>
+      Voir le jeu de données
     </v-list-item>
 
-    <v-menu v-if="notifUrl && processing.owner.type === activeAccount.type && processing.owner.id === activeAccount.id && !activeAccount.department" v-model="showNotifMenu" max-width="500" min-width="500" :close-on-content-click="false">
+    <v-menu
+      v-if="notifUrl && processing.owner.type === activeAccount.type && processing.owner.id === activeAccount.id && !activeAccount.department"
+      v-model="showNotifMenu"
+      max-width="500"
+      min-width="500"
+      :close-on-content-click="false"
+    >
       <template #activator="{ props }">
         <v-list-item v-bind="props">
-          <v-list-item-icon>
-            <v-icon color="primary">mdi-bell</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title>Notifications</v-list-item-title>
-          </v-list-item-content>
+          <template #prepend>
+            <v-icon color="primary">
+              mdi-bell
+            </v-icon>
+          </template>
+          Notifications
         </v-list-item>
       </template>
-      <v-card outlined>
+      <v-card variant="outlined">
         <v-card-title primary-title>
           Notifications
         </v-card-title>
@@ -85,7 +135,12 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn color="primary" @click="showNotifMenu = false">ok</v-btn>
+          <v-btn
+            color="primary"
+            @click="showNotifMenu = false"
+          >
+            ok
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-menu>

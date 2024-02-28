@@ -9,7 +9,6 @@
     menu-props="auto"
     :hint="$t('defaultTZ', { defaultTimeZone })"
     @update:model-value="$emit('update:modelValue', $event)"
-    @change="$emit('change')"
   />
 </template>
 

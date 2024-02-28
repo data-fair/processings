@@ -1,11 +1,10 @@
 <template>
   <v-navigation-drawer
     class="navigation-right pl-2"
-    right
+    location="right"
     permanent
-    clipped
     floating
-    fixed
+    position="fixed"
     style="padding-top: 60px"
     color="transparent"
   >

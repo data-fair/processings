@@ -3,14 +3,14 @@
     <v-text-field
       v-model="search"
       placeholder="rechercher"
-      outlined
-      dense
+      variant="outlined"
+      density="compact"
       hide-details
       clearable
       style="max-width:400px;"
       append-icon="mdi-magnify"
     />
-    <v-subheader>Plugins Installés</v-subheader>
+    <v-list-subheader>Plugins Installés</v-list-subheader>
     <v-progress-linear
       v-if="!installedPlugins.results"
       indeterminate
@@ -23,8 +23,8 @@
         v-if="result.pluginConfigSchema"
         :key="'installed-' + result.id"
         class="my-1"
-        outlined
-        tile
+        variant="outlined"
+        rounded="0"
       >
         <v-toolbar
           dense
@@ -67,7 +67,7 @@
       </v-card>
     </template>
     <v-list>
-      <v-subheader>Plugins disponibles</v-subheader>
+      <v-list-subheader>Plugins disponibles</v-list-subheader>
       <v-progress-linear
         v-if="!availablePlugins.results"
         indeterminate
@@ -77,15 +77,13 @@
         v-else
         :key="'available-' + result.name + '-' + result.version"
       >
-        <v-list-item-content>
-          <v-list-item-title v-if="result.distTag === 'latest'">
-            {{ result.name }} ({{ result.version }})
-          </v-list-item-title>
-          <v-list-item-title v-else>
-            {{ result.name }} ({{ result.distTag }} - {{ result.version }})
-          </v-list-item-title>
-          <v-list-item-subtitle>{{ result.description }}</v-list-item-subtitle>
-        </v-list-item-content>
+        <v-list-item-title v-if="result.distTag === 'latest'">
+          {{ result.name }} ({{ result.version }})
+        </v-list-item-title>
+        <v-list-item-title v-else>
+          {{ result.name }} ({{ result.distTag }} - {{ result.version }})
+        </v-list-item-title>
+        <v-list-item-subtitle>{{ result.description }}</v-list-item-subtitle>
         <v-list-item-action>
           <v-btn
             title="Installer"

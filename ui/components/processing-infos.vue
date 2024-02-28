@@ -8,10 +8,10 @@
       :close-on-content-click="false"
     >
       <template #activator="{ props }">
-        <v-tooltip bottom>
+        <v-tooltip location="bottom">
           <template #activator="{ props: tooltipProps }">
             <v-btn
-              text
+              variant="text"
               style="height: 20px;"
               v-bind="props.attrs"
               v-on="tooltipProps.on"
@@ -28,22 +28,37 @@
         </v-tooltip>
       </template>
       <v-card class="py-3">
-        <v-simple-table>
+        <v-table>
           <thead>
             <tr>
-              <th class="text-center" style="width:45%;">Entrée</th>
+              <th
+                class="text-center"
+                style="width:45%;"
+              >
+                Entrée
+              </th>
               <th style="width:10%;" />
-              <th class="text-center" style="width:45%;">Données interopérables</th>
+              <th
+                class="text-center"
+                style="width:45%;"
+              >
+                Données interopérables
+              </th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td class="text-center">{{ sourceTypeDescription }}</td>
               <td class="text-center">
-                <v-icon x-large color="primary">mdi-arrow-right</v-icon>
+                <v-icon
+                  size="x-large"
+                  color="primary"
+                >
+                  mdi-arrow-right
+                </v-icon>
               </td>
               <td class="text-center">
-                <v-simple-table>
+                <v-table>
                   <tbody>
                     <tr>
                       <td class="text-left">Description</td>
@@ -67,11 +82,11 @@
                       </td>
                     </tr>
                   </tbody>
-                </v-simple-table>
+                </v-table>
               </td>
             </tr>
           </tbody>
-        </v-simple-table>
+        </v-table>
       </v-card>
     </v-menu>
   </span>

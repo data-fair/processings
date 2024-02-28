@@ -2,11 +2,16 @@
   <v-menu
     v-model="menu"
     width="500"
-    :close-on-click="false"
+    persistent
     :close-on-content-click="false"
   >
     <template #activator>
-      <v-btn icon color="warning" text @click="open">
+      <v-btn
+        icon
+        color="warning"
+        variant="text"
+        @click="open"
+      >
         <v-icon>mdi-delete</v-icon>
       </v-btn>
     </template>
@@ -18,15 +23,28 @@
       <v-card-text>
         <p>
           Voulez vous vraiment supprimer le traitement
-          <span v-if="processing.title" class="accent--text">{{ processing.title }}</span> ?
+          <span
+            v-if="processing.title"
+            class="text-accent"
+          >{{ processing.title }}</span> ?
         </p>
         <p>La suppression est définitive.</p>
       </v-card-text>
       <v-divider />
       <v-card-actions>
         <v-spacer />
-        <v-btn text @click="menu = false">Annuler</v-btn>
-        <v-btn color="warning" @click="confirm">Oui</v-btn>
+        <v-btn
+          variant="text"
+          @click="menu = false"
+        >
+          Annuler
+        </v-btn>
+        <v-btn
+          color="warning"
+          @click="confirm"
+        >
+          Oui
+        </v-btn>
       </v-card-actions>
     </v-card>
   </v-menu>

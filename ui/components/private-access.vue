@@ -5,32 +5,31 @@
       :label="$t('public')"
       hide-details
       class="ml-2 mb-2 mr-4"
-      dense
-      @change="$emit('change')"
+      @update:model-value="$emit('change')"
     />
     <v-autocomplete
       v-if="!patch.public"
       v-model="patch.privateAccess"
       :items="suggestions"
       :loading="loading"
-      :search-input.sync="search"
-      :filter="() => true"
+      :search.sync="search"
+      :custom-filter="() => true"
       :multiple="true"
       :clearable="true"
-      :item-text="(item) => item && `${item.name || item.id} (${item.type})`"
+      :item-title="(item) => item && `${item.name || item.id} (${item.type})`"
       :item-value="(item) => item && `${item.type}:${item.id}`"
       :label="$t('privateAccess')"
       :placeholder="$t('searchName')"
       return-object
       style="max-width:400px;"
       hide-details
-      @change="onChange"
+      @update:model-value="onChange"
     />
   </v-row>
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { useStore } from '~/store/index'
 
 const props = defineProps(['patch'])

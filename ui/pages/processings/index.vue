@@ -6,7 +6,7 @@
     <v-row>
       <v-col :style="$vuetify.breakpoint.lgAndUp ? 'padding-right:256px;' : ''">
         <v-container>
-          <v-subheader>{{ (processings && processings.count) || 0 }} traitements</v-subheader>
+          <v-list-subheader>{{ (processings && processings.count) || 0 }} traitements</v-list-subheader>
           <v-row v-if="processings">
             <v-col
               v-for="processing in processings.results"
@@ -41,9 +41,9 @@
               v-model="showAll"
               label="voir tous les traitements"
               hide-details
-              dense
+              density="compact"
               class="mt-0"
-              @change="refresh"
+              @update:model-value="refresh"
             />
           </v-card-text>
         </v-card>

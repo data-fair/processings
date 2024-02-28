@@ -6,10 +6,19 @@
     :close-on-content-click="false"
   >
     <template #activator="{ props }">
-      <v-tooltip bottom>
+      <v-tooltip location="bottom">
         <template #activator="{ props: tooltipProps }">
-          <v-btn text v-bind="props" v-on="tooltipProps.on">
-            <v-icon color="primary" small>mdi-help</v-icon>
+          <v-btn
+            variant="text"
+            v-bind="props"
+            v-on="tooltipProps.on"
+          >
+            <v-icon
+              color="primary"
+              size="small"
+            >
+              mdi-help
+            </v-icon>
           </v-btn>
         </template>
         <span>Déclenchement par webhook</span>

@@ -1,13 +1,17 @@
 <template>
-  <v-card tile :loading="loading">
+  <v-card
+    rounded="0"
+    :loading="loading"
+  >
     <v-card-title>
       Exécutions
     </v-card-title>
     <v-list class="py-0">
       <template v-if="runs">
-        <template v-for="(run, index) in runs.results" :key="index">
-          <v-divider />
+        <template v-for="run in runs.results">
+          <v-divider :key="run._id + '-divider'" />
           <run-list-item
+            :key="run._id + '-item'"
             :run="run"
             :link="true"
             :can-exec="canExec"
