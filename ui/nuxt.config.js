@@ -40,7 +40,7 @@ export default defineNuxtConfig({
     { src: 'plugins/dayjs' },
     { src: 'plugins/filters' },
     { src: 'plugins/session', ssr: false },
-    { src: 'plugins/v-iframe.js', ssr: false },
+    { src: 'plugins/v-iframe', ssr: false },
     { src: 'plugins/ws', ssr: false }
   ],
   router: {
@@ -53,7 +53,7 @@ export default defineNuxtConfig({
     'vuetify-nuxt-module'
   ],
   i18n: {
-    locales: [ 'en', 'fr' ],
+    locales: ['en', 'fr'],
     defaultLocale: config.i18n.defaultLocale,
     strategy: 'no_prefix',
     detectBrowserLanguage: {

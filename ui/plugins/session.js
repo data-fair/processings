@@ -4,6 +4,7 @@ import { ofetch } from 'ofetch'
 import { useRoute } from 'vue-router'
 import { useCookie } from '#app'
 import { useStore } from '~/store/index'
+import { watch } from 'vue'
 
 export default defineNuxtPlugin(nuxtApp => {
   const route = useRoute()
@@ -26,7 +27,7 @@ export default defineNuxtPlugin(nuxtApp => {
     store.init({
       cookies: Cookies,
       directoryUrl: directoryUrl.href,
-      httpLib: ofetch,
+      httpLib: ofetch
     })
 
     store.setAny({
@@ -36,27 +37,28 @@ export default defineNuxtPlugin(nuxtApp => {
         secondaryHost: currentHost !== new URL(runtimeConfig.public.mainPublicUrl).host,
         dataFairUrl: dataFairUrl.href,
         notifyUrl: notifyUrl.href,
-        directoryUrl: directoryUrl.href,
-      },
-      vuetify: nuxtApp.$vuetify,
+        directoryUrl: directoryUrl.href
+      }
     })
 
     if (!store.embed) {
       store.loop(Cookies)
     }
-  })
 
-  nuxtApp.hook('vuetify:ready', () => {
     if (themeCookie.value !== undefined) {
-      nuxtApp.vueApp.provide('theme', themeCookie.value === 'true' ? 'dark' : 'light')
-      nuxtApp.$vuetify.theme.dark = themeCookie.value === 'true'
+      nuxtApp.vueApp.provide('theme', themeCookie.value === true ? 'dark' : 'light')
+      nuxtApp.$vuetify.theme.dark = themeCookie.value === true
     }
 
     if (route.query.dark) {
-      nuxtApp.vueApp.provide('theme', route.query.dark === 'true' ? 'dark' : 'light')
-      nuxtApp.$vuetify.theme.dark = route.query.dark === 'true'
+      nuxtApp.vueApp.provide('theme', route.query.dark === true ? 'dark' : 'light')
+      nuxtApp.$vuetify.theme.dark = route.query.dark === true
     }
-    
+
     store.setAny({ vuetify: nuxtApp.$vuetify })
+  })
+
+  watch(() => store.vuetify, vuetify => {
+    nuxtApp.vueApp.provide('vuetify', vuetify)
   })
 })

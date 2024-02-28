@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app :theme="isDark ? 'dark' : 'light'">
     <client-only><AppBar v-if="!embed" /></client-only>
     <v-main>
       <NuxtPage />
@@ -16,6 +16,8 @@ import { computed } from 'vue'
 import { useStore } from '~/store/index'
 
 const store = useStore()
+const theme = useTheme()
+const isDark = computed(() => theme.dark)
 
 const embed = computed(() => store.embed)
 

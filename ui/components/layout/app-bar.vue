@@ -38,15 +38,6 @@ import { useStore } from '~/store/index'
 const store = useStore()
 
 const breadcrumbs = computed(() => store.breadcrumbs)
-const user = computed(() => store.user)
-const initialized = computed(() => store.initialized)
-const activeAccount = computed(() => store.activeAccount)
-
-const { logout, login, setAdminMode, switchOrganization } = store
-
-const reload = () => {
-  window.location.reload()
-}
 </script>
 
 <style lang="css">

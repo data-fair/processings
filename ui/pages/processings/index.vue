@@ -4,7 +4,7 @@
     style="min-height:500px;"
   >
     <v-row>
-      <v-col :style="$vuetify.breakpoint.lgAndUp ? 'padding-right:256px;' : ''">
+      <v-col :style="$vuetify.display.lgAndUp ? 'padding-right:256px;' : ''">
         <v-container>
           <v-list-subheader>{{ (processings && processings.count) || 0 }} traitements</v-list-subheader>
           <v-row v-if="processings">
@@ -24,7 +24,7 @@
           </v-row>
         </v-container>
       </v-col>
-      <layout-navigation-right v-if="$vuetify.breakpoint.lgAndUp">
+      <layout-navigation-right v-if="$vuetify.display.lgAndUp">
         <processings-actions
           v-if="canAdmin"
           :installed-plugins="installedPlugins"

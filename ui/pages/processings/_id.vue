@@ -4,7 +4,7 @@
     data-iframe-height
   >
     <v-row>
-      <v-col :style="$vuetify.breakpoint.lgAndUp ? 'padding-right:256px;' : ''">
+      <v-col :style="$vuetify.display.lgAndUp ? 'padding-right:256px;' : ''">
         <h2 class="text-h6">
           Traitement {{ processing.title }}
         </h2>
@@ -33,7 +33,7 @@
           :can-exec="canExecProcessing"
         />
       </v-col>
-      <layout-navigation-right v-if="$vuetify.breakpoint.lgAndUp">
+      <layout-navigation-right v-if="$vuetify.display.lgAndUp">
         <processing-actions
           :processing="processing"
           :can-admin="canAdminProcessing"
