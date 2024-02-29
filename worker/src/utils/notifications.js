@@ -1,4 +1,4 @@
-import config from 'config'
+import config from '../config.js'
 import axios from '@data-fair/lib/node/axios.js'
 import debug from 'debug'
 import { internalError } from '@data-fair/lib/node/observer.js'

@@ -14,29 +14,29 @@ const isSuperAdmin = async (req, res, next) => {
   if (!reqSession.user.adminMode) return res.status(403).send()
   next()
 }
+const isAccountMember = async (req, res, next) => {
+  const reqSession = await session.reqAuthenticated(req)
+  if (!reqSession.user) return res.status(401).send()
+  if (reqSession.user.adminMode) return next()
+  if (!['organization', 'user'].includes(req.params.type)) return res.status(400).send('Wrong consumer type')
+  if (req.params.type === 'user') {
+    if (reqSession.user.id !== req.params.id) return res.status(403).send()
+  }
+  if (reqSession.params.type === 'organization') {
+    const org = reqSession.user.organizations.find(o => o.id === req.params.id)
+    if (!org) return res.status(403).send()
+  }
+  next()
+}
 
 const isAdmin = (reqSession, resource) => {
   return (reqSession.user.adminMode || getOwnerRole(resource.owner, reqSession) === 'admin')
 }
-
 const isContrib = (reqSession, resource) => {
   return (reqSession.user.adminMode || getOwnerRole(resource.owner, reqSession) === 'admin' || getOwnerRole(resource.owner, reqSession) === 'contrib')
 }
 const isMember = (reqSession, resource) => {
   return (reqSession.user.adminMode || !!getOwnerRole(resource.owner, reqSession))
-}
-const isAccountMember = (req, res, next) => {
-  if (!req.user) return res.status(401).send()
-  if (req.user.adminMode) return next()
-  if (!['organization', 'user'].includes(req.params.type)) return res.status(400).send('Wrong consumer type')
-  if (req.params.type === 'user') {
-    if (req.user.id !== req.params.id) return res.status(403).send()
-  }
-  if (req.params.type === 'organization') {
-    const org = req.user.organizations.find(o => o.id === req.params.id)
-    if (!org) return res.status(403).send()
-  }
-  next()
 }
 
 const getOwnerPermissionFilter = (owner, reqSession) => {

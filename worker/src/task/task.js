@@ -1,5 +1,5 @@
 import axios from 'axios'
-import config from 'config'
+import config from '../config.js'
 import fs from 'fs-extra'
 import path from 'path'
 import resolvePath from 'resolve-path'

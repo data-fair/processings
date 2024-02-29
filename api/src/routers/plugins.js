@@ -1,5 +1,5 @@
 import semver from 'semver'
-import config from 'config'
+import config from '../config.js'
 import { Router } from 'express'
 import fs from 'fs-extra'
 import path from 'path'

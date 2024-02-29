@@ -1,4 +1,4 @@
-import config from 'config'
+import config from '../config.js'
 import fs from 'fs-extra'
 import path from 'path'
 import { Router } from 'express'

@@ -6,6 +6,7 @@ module.exports = {
   defaultLimits: {
     processingsSeconds: 'DEFAULT_LIMITS_PROCESSINGS_SECONDS'
   },
+  defaultTimeZone: 'DEFAULT_TIME_ZONE',
   mails: {
     transport: {
       port: 'MAILS_TRANSPORT_PORT',

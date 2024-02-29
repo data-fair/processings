@@ -23,6 +23,14 @@
     "dataDir": {
       "type": "string"
     },
+    "defaultLimits": {
+      "type": "object",
+      "properties": {
+        "processingsSeconds": {
+          "type": "number"
+        }
+      }
+    },
     "defaultTimeZone": {
       "type": "string"
     },

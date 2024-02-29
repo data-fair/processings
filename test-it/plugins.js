@@ -3,16 +3,8 @@ import childProcess from 'node:child_process'
 import { strict as assert } from 'node:assert'
 import { axiosAuth } from '@data-fair/lib/node/axios-auth.js'
 import { axiosBuilder } from '@data-fair/lib/node/axios.js'
-// import { DataFairWsClient } from '@data-fair/lib/node/ws.js'
-import * as testSpies from '@data-fair/lib/node/test-spies.js'
-
-testSpies.registerModuleHooks()
 
 process.env.SUPPRESS_NO_CONFIG_WARNING = '1'
-// process.env.NODE_CONFIG_DIR = 'worker/config/'
-// const workerServer = await import('../worker/src/server.js')
-// await workerServer.start()
-
 childProcess.execSync('docker compose restart -t 0 nginx')
 
 process.env.NODE_CONFIG_DIR = 'api/config/'
@@ -25,7 +17,6 @@ const axios = await axiosBuilder(axiosOpts)
 const adminAx = await axiosAuth({ email: 'superadmin@test.com', password: 'superpasswd', directoryUrl, adminMode: true, axiosOpts })
 const dmeadusAx = await axiosAuth({ email: 'dmeadus0@answers.com', password: 'passwd', directoryUrl, axiosOpts })
 const dmeadusOrgAx = await axiosAuth({ email: 'dmeadus0@answers.com', password: 'passwd', directoryUrl, org: 'KWqAGZ4mG', axiosOpts })
-// const adminWS = new DataFairWsClient({ url: 'http://127.0.0.1:5600/data-fair/', headers: { Cookie: /** @type {string} */(adminAx.defaults.headers.Cookie) } })
 
 try {
   await test('should install a new plugin then list and remove it', async function () {
@@ -70,9 +61,6 @@ try {
     assert.equal(res.data.count, 0)
   })
 } finally {
-  // adminWS.close()
   await apiServer.stop()
   process.exit(0)
-
-  // await workerServer.stop()
 }

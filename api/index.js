@@ -1,7 +1,7 @@
 import { start, stop } from './src/server.js'
 
 start().then(() => {}, err => {
-  console.error('while starting service', err)
+  console.error('Failure while starting service', err)
   process.exit(1)
 })
 

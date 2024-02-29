@@ -84,4 +84,4 @@ WORKDIR /app/worker
 
 USER node
 
-CMD ["node", "worker/index.mjs"]
+CMD ["node", "worker/index.js"]

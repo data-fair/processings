@@ -1,10 +1,10 @@
 import mongo from '@data-fair/lib/node/mongo.js'
 import limits from './utils/limits.js'
 import locks from './utils/locks.js'
-import config from 'config'
+import config from './config.js'
 import kill from 'tree-kill'
 import { startObserver, stopObserver, internalError } from '@data-fair/lib/node/observer.js'
-import { initPublisher } from '../../shared/ws.mjs'
+import { initPublisher } from '../../shared/ws.js'
 import { initMetrics } from './utils/metrics.js'
 import { finish, createNext } from './utils/runs.js'
 import { spawn } from 'child-process-promise'
@@ -43,7 +43,7 @@ export const start = async () => {
     await initMetrics(mongo.db)
     await startObserver()
   }
-  await limits.initLimits(mongo.db)
+  await limits.initLimits()
 
   // initialize empty promise pool
   for (let i = 0; i < config.worker.concurrency; i++) {
@@ -140,6 +140,7 @@ async function killRun (db, wsPublish, run) {
   // send SIGTERM for graceful stopping of the tasks
   debugLoop('send SIGTERM', run._id, pids[run._id])
   kill(pids[run._id])
+
   // grace period before sending SIGKILL
   // this is more than the internal grace period of the task, so it should never be used
   await new Promise(resolve => setTimeout(resolve, config.worker.gracePeriod * 1.2))
@@ -176,7 +177,8 @@ async function iter (db, wsPublish, run) {
     }
 
     // Run a task in a dedicated child process for extra resiliency to fatal memory exceptions
-    const spawnPromise = spawn('node', ['./src/task', run._id, processing._id], {
+
+    const spawnPromise = spawn('node', [process.env.NODE_ENV === 'test' ? './worker/src/task/index.js' : './src/task/index.js', run._id, processing._id], {
       env: process.env,
       stdio: ['ignore', 'inherit', 'pipe']
     })
@@ -248,7 +250,6 @@ async function acquireNext (db, wsPublish) {
     }, { $sample: { size: 100 } }])
   while (await cursor.hasNext()) {
     let run = await cursor.next()
-    // console.log('resource', resource)
     const ack = await locks.acquire(db, run.processing._id)
     debug('acquire lock for run ?', run, ack)
     if (ack) {

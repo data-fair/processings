@@ -1,8 +1,7 @@
 import { nanoid } from 'nanoid'
-import config from 'config'
+import config from '../config.js'
 
 const pid = nanoid()
-
 
 let interval
 export const init = async db => {
