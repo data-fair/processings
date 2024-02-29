@@ -1,4 +1,4 @@
-import { sessionPiniaStoreBuilder } from '../../../sd-vue/src/index'
+import { sessionPiniaStoreBuilder } from './pinia'
 
 const extension = {
   state: () => ({
