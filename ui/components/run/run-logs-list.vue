@@ -58,14 +58,14 @@
         class="text-caption pl-2"
         style="white-space: nowrap;"
       >
-        {{ log.date | date('lll') }}
+        {{ $filters.formatDate(log.date, 'lll') }}
       </span>
       <span
         v-if="log.progressDate"
         class="text-caption pl-2"
         style="white-space: nowrap;"
       >
-        - {{ log.progressDate | date('lll') }}
+        - {{ $filters.formatDate(log.progressDate, 'lll') }}
       </span>
     </v-list-item>
   </v-list>

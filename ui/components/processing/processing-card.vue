@@ -40,7 +40,7 @@
                   size="24"
                 />
               </template>
-              <span>Exécution en cours depuis {{ processing.lastRun.startedAt | fromNow }}</span>
+              <span>Exécution en cours depuis {{ $filters.fromNow(processing.lastRun.startedAt) }}</span>
             </v-list-item>
 
             <v-list-item v-if="processing.lastRun.status === 'finished'">
@@ -49,7 +49,7 @@
                   mdi-check-circle
                 </v-icon>
               </template>
-              <span>Dernière exécution terminée {{ processing.lastRun.finishedAt | fromNow }}</span>
+              <span>Dernière exécution terminée {{ $filters.fromNow(processing.lastRun.finishedAt) }}</span>
             </v-list-item>
 
             <v-list-item v-if="processing.lastRun.status === 'error'">
@@ -58,7 +58,7 @@
                   mdi-alert
                 </v-icon>
               </template>
-              <span>Dernière exécution en échec {{ processing.lastRun.finishedAt | fromNow }}</span>
+              <span>Dernière exécution en échec {{ $filters.fromNow(processing.lastRun.finishedAt) }}</span>
             </v-list-item>
           </template>
 
@@ -71,7 +71,7 @@
               <template #prepend>
                 <v-icon>mdi-clock</v-icon>
               </template>
-              <span>Prochaine exécution planifiée {{ processing.nextRun.scheduledAt | fromNow(true) }}</span>
+              <span>Prochaine exécution planifiée {{ $filters.fromNow(processing.nextRun.scheduledAt, true) }}</span>
             </v-list-item>
 
             <v-list-item v-if="processing.nextRun.status === 'triggered'">
@@ -79,8 +79,8 @@
                 <v-icon>mdi-play-circle</v-icon>
               </template>
               <span>
-                Prochaine exécution déclenchée manuellement {{ processing.nextRun.createdAt | fromNow }}
-                <template v-if="processing.nextRun.scheduledAt && processing.nextRun.scheduledAt !== processing.nextRun.createdAt"> - planifiée {{ processing.nextRun.scheduledAt | fromNow(true) }}</template>
+                Prochaine exécution déclenchée manuellement {{ $filters.fromNow(processing.nextRun.createdAt) }}
+                <template v-if="processing.nextRun.scheduledAt && processing.nextRun.scheduledAt !== processing.nextRun.createdAt"> - planifiée {{ $filters.fromNow(processing.nextRun.scheduledAt, true) }}</template>
               </span>
             </v-list-item>
           </template>

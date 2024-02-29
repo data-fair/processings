@@ -9,9 +9,9 @@
     <v-list class="py-0">
       <template v-if="runs">
         <template v-for="run in runs.results">
-          <v-divider :key="run._id + '-divider'" />
+          <v-divider :key="`${run._id}-divider`" />
           <run-list-item
-            :key="run._id + '-item'"
+            :key="`${run._id}-item`"
             :run="run"
             :link="true"
             :can-exec="canExec"

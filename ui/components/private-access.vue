@@ -10,9 +10,9 @@
     <v-autocomplete
       v-if="!patch.public"
       v-model="patch.privateAccess"
+      v-model:search="search"
       :items="suggestions"
       :loading="loading"
-      :search.sync="search"
       :custom-filter="() => true"
       :multiple="true"
       :clearable="true"

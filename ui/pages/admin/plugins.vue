@@ -101,9 +101,7 @@
 </template>
 
 <script setup>
-import '@koumoul/vjsf/lib/deps/third-party'
-import '@koumoul/vjsf/dist/main.css'
-import VJsf from '@koumoul/vjsf/lib/VJsf'
+import Vjsf from '@koumoul/vjsf'
 import { ref, computed } from 'vue'
 import { useStore } from '~/store/index'
 

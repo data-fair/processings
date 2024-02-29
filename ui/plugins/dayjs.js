@@ -13,22 +13,22 @@ dayjs.locale('fr')
 export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.provide('dayjs', dayjs)
 
-  nuxtApp.vueApp.config.globalProperties.$formatDate = (value, format = 'LLL') => {
-    if (!value) return
-    return dayjs(value).format(format)
-  }
-
-  nuxtApp.vueApp.config.globalProperties.$fromNow = (value, acceptFuture = false) => {
-    if (!value) return
-    let date = dayjs(value)
-    if (!acceptFuture) {
-      const now = dayjs()
-      date = date > now ? now : date
+  nuxtApp.vueApp.config.globalProperties.$filters = {
+    formatDate: (value, format = 'LLL') => {
+      if (!value) return
+      return dayjs(value).format(format)
+    },
+    fromNow: (value, acceptFuture = false) => {
+      if (!value) return
+      let date = dayjs(value)
+      if (!acceptFuture) {
+        const now = dayjs()
+        date = date > now ? now : date
+      }
+      return date.locale('fr').fromNow()
+    },
+    from: ([start, end]) => {
+      return dayjs(start).locale('fr').from(dayjs(end), true)
     }
-    return date.locale('fr').fromNow()
-  }
-
-  nuxtApp.vueApp.config.globalProperties.$from = ([start, end]) => {
-    return dayjs(start).locale('fr').from(dayjs(end), true)
   }
 })

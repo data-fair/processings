@@ -59,7 +59,7 @@
 </template>
 
 <script setup>
-import VJsf from '@koumoul/vjsf/lib/VJsf'
+import Vjsf from '@koumoul/vjsf'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from '~/store/index'
@@ -111,7 +111,7 @@ const vjsfOptions = computed(() => ({
     directoryUrl: env.value.directoryUrl
   },
   disableAll: !canAdminProcessing.value,
-  locale: 'fr',
+  // locale: 'fr',
   expansionPanelsProps: {
     value: 0,
     hover: true

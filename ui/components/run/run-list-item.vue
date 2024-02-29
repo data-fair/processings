@@ -6,14 +6,14 @@
         color="primary"
         size="24"
       />
-      démarrée {{ run.startedAt | fromNow }}
+      démarrée {{ $filters.fromNow(run.startedAt) }}
     </template>
 
     <template v-if="run.status === 'finished'">
       <v-icon color="success">
         mdi-check-circle
       </v-icon>
-      terminée - {{ run.finishedAt | date }}<br>
+      terminée - {{ $filters.date(run.finishedAt) }}<br>
       durée : {{ duration(run.startedAt, run.finishedAt) }}
     </template>
 
@@ -21,19 +21,19 @@
       <v-icon color="error">
         mdi-alert
       </v-icon>
-      en échec - {{ run.finishedAt | date }}<br>
+      en échec - {{ $filters.date(run.finishedAt) }}<br>
       durée : {{ duration(run.startedAt, run.finishedAt) }}
     </template>
 
     <template v-if="run.status === 'scheduled'">
       <v-icon>mdi-clock</v-icon>
-      planifiée - {{ run.scheduledAt | date }}
+      planifiée - {{ $filters.date(run.scheduledAt) }}
     </template>
 
     <template v-if="run.status === 'triggered'">
       <v-icon>mdi-play-circle</v-icon>
-      déclenchée manuellement {{ run.createdAt | fromNow }}<br>
-      planifiée {{ run.scheduledAt | fromNow(true) }}
+      déclenchée manuellement {{ $filters.fromNow(run.createdAt) }}<br>
+      planifiée {{ $filters.fromNow(run.scheduledAt, true) }}
     </template>
 
     <template v-if="run.status === 'kill'">
@@ -47,7 +47,7 @@
       <v-icon color="warning">
         mdi-stop
       </v-icon>
-      interrompue manuellement - {{ run.finishedAt | date }}<br>
+      interrompue manuellement - {{ $filters.date(run.finishedAt) }}<br>
       durée : {{ duration(run.startedAt, run.finishedAt) }}
     </template>
 
@@ -68,6 +68,9 @@
 </template>
 
 <script setup>
+const nuxtApp = useNuxtApp()
+
+const duration = nuxtApp.$dayjs.duration
 const props = defineProps({
   run: Object,
   link: Boolean,
