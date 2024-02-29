@@ -8,9 +8,7 @@ module.exports = {
   ],
   extends: [
     'eslint:recommended',
-    'standard'
-  ],
-  rules: {
-    'node/no-deprecated-api': 'off'
-  }
+    'standard',
+    'typescript'
+  ]
 }

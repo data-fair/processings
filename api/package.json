@@ -5,9 +5,7 @@
   "scripts": {
     "dev": "NODE_ENV=development DEBUG=scheduler,upgrade nodemon api"
   },
-  "devDependencies": {
-    "nodemon": "^1.19.3"
-  },
+  "devDependencies": {},
   "dependencies": {
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
@@ -19,7 +17,6 @@
     "jsonwebtoken": "9",
     "jwks-rsa": "3",
     "memoizee": "^0.4.15",
-    "nanoid": "^3.1.22",
     "prom-client": "15",
     "ws": "^8.9.0"
   }

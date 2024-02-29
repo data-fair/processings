@@ -1,5 +1,5 @@
-const { owner } = require('./owner')
-const permissions = require('./permissions')
+const { owner } = require('./owner.cjs')
+const permissions = require('./permissions.cjs')
 
 module.exports = {
   type: 'object',

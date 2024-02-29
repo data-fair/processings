@@ -8,7 +8,18 @@ module.exports = {
     // -1 for unlimited storage
     processingsSeconds: -1
   },
+  mails: {
+    // transport is a full configuration object for createTransport of nodemailer
+    // cf https://nodemailer.com/smtp/
+    transport: {
+      port: 1025,
+      ignoreTLS: true,
+      default: 'localhost'
+    }
+  },
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings',
+  notificationsKeys: null,
+  notifyUrl: null,
   locks: {
     // in seconds
     ttl: 60

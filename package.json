@@ -3,7 +3,11 @@
   "version": "1.23.5",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
+    "build-types": "df-build-types api && df-build-types worker",
+    "build-types-api": "df-build-types api",
+    "build-types-worker": "df-build-types worker",
     "dev-api": "npm -w api run dev",
     "dev-deps": "docker compose --profile dev up -d --wait",
     "dev-ui": "npm -w ui run dev",
@@ -12,7 +16,8 @@
     "i": "rimraf node_modules ui/node_modules api/node_modules worker/node_modules && npm i && cd api && npm i && cd ../ui && npm i && cd ../worker && npm i",
     "lint": "eslint --ext js,vue --ignore-path .gitignore .",
     "lint-fix": "eslint --ext js,vue --ignore-path .gitignore --fix .",
-    "test": "NODE_ENV=test mocha --exit --bail --timeout 10000 test/",
+    "test-outdated": "NODE_ENV=test mocha --exit --bail --timeout 10000 test/",
+    "test": "node test-it/index.js",
     "test-deps": "docker compose --profile test up -d --wait",
     "stop-dev-deps": "docker compose --profile dev stop"
   },
@@ -37,11 +42,9 @@
     ],
     "extends": [
       "eslint:recommended",
-      "standard"
-    ],
-    "rules": {
-      "vue/no-v-html": "off"
-    }
+      "standard",
+      "typescript"
+    ]
   },
   "bugs": {
     "url": "https://github.com/data-fair/processings/issues"
@@ -56,12 +59,12 @@
     "eslint-plugin-no-only-tests": "^2.6.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.1",
-    "mocha": "^8.2.1",
     "nock": "^13.0.6",
+    "nodemon": "^1.19.3",
     "rimraf": "^5.0.5"
   },
   "dependencies": {
-    "@data-fair/lib": "0.26.0",
+    "@data-fair/lib": "0.27.0",
     "agentkeepalive": "4",
     "ajv-i18n": "^4.2.0",
     "axios": "^1.6.0",
@@ -71,6 +74,8 @@
     "event-to-promise": "^0.8.0",
     "fs-extra": "^8.1.0",
     "gtfs-realtime-bindings": "0.0.5",
+    "nanoid": "^5.0.6",
+    "mongodb": "6",
     "pump": "^3.0.0",
     "resolve-path": "^1.4.0",
     "semver": "^7.3.4",

@@ -1,6 +1,6 @@
 import mongo from '@data-fair/lib/node/mongo.js'
 import limits from './utils/limits.js'
-import locks from './utils/locks.cjs'
+import locks from './utils/locks.js'
 import config from 'config'
 import kill from 'tree-kill'
 import { startObserver, stopObserver, internalError } from '@data-fair/lib/node/observer.js'
@@ -176,7 +176,7 @@ async function iter (db, wsPublish, run) {
     }
 
     // Run a task in a dedicated child process for extra resiliency to fatal memory exceptions
-    const spawnPromise = spawn('node', ['./src/task.js', run._id, processing._id], {
+    const spawnPromise = spawn('node', ['./src/task', run._id, processing._id], {
       env: process.env,
       stdio: ['ignore', 'inherit', 'pipe']
     })

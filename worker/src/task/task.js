@@ -5,42 +5,61 @@ import path from 'path'
 import resolvePath from 'resolve-path'
 import tmp from 'tmp-promise'
 import { DataFairWsClient } from '@data-fair/lib/node/ws.js'
-import { running } from './utils/runs.js'
+import { httpAgent, httpsAgent } from '@data-fair/lib/node/http-agents.js'
+import { running } from '../utils/runs.js'
 
 let pluginModule, _stopped
 const processingsDir = path.join(config.dataDir, 'processings')
 
-const axiosInstance = (config) => {
-  const headers = { 'x-apiKey': config.dataFairAPIKey }
+const axiosInstance = (processing) => {
+  const headers = {
+    'x-apiKey': config.dataFairAPIKey,
+    referer: config.publicUrl
+  }
+  if (config.dataFairAdminMode) headers['x-account'] = JSON.stringify(processing.owner)
+  headers['x-processing'] = JSON.stringify({ _id: processing._id, title: encodeURIComponent(processing.title) })
+
   const axiosInstance = axios.create({
     // this is necessary to prevent excessive memory usage during large file uploads, see https://github.com/axios/axios/issues/1045
-    maxRedirects: 0
+    maxRedirects: 0,
+    httpAgent,
+    httpsAgent
   })
   // apply default base url and send api key when relevant
   axiosInstance.interceptors.request.use(cfg => {
-    if (cfg.url && !/^https?:\/\//i.test(cfg.url)) {
+    if (!/^https?:\/\//i.test(cfg.url)) {
       if (cfg.url.startsWith('/')) cfg.url = config.dataFairUrl + cfg.url
       else cfg.url = config.dataFairUrl + '/' + cfg.url
     }
-    if (cfg.url && cfg.url.startsWith(config.dataFairUrl)) Object.assign(cfg.headers, headers)
+    if (cfg.url.startsWith(config.dataFairUrl)) Object.assign(cfg.headers, headers)
+
+    // no 'get' here so that it still appears in metrics
+    if (['post', 'put', 'delete', 'patch'].includes(cfg.method) && config.privateDataFairUrl && cfg.url.startsWith(config.dataFairUrl)) {
+      cfg.url = cfg.url.replace(config.dataFairUrl, config.privateDataFairUrl)
+      cfg.headers.host = new URL(config.dataFairUrl).host
+    }
     return cfg
   }, error => Promise.reject(error))
   // customize axios errors for shorter stack traces when a request fails
   axiosInstance.interceptors.response.use(response => response, error => {
-    if (!error.response) return Promise.reject(error)
-    delete error.response.request
+    const response = error.response ?? error.request?.res ?? error.res
+    if (!response) return Promise.reject(error)
+    delete response.request
     const headers = {}
-    if (error.response.headers.location) headers.location = error.response.headers.location
-    error.response.headers = headers
-    error.response.config = { method: error.response.config.method, url: error.response.config.url, data: error.response.config.data }
-    if (error.response.config.data && error.response.config.data._writableState) delete error.response.config.data
-    if (error.response.data && error.response.data._readableState) delete error.response.data
-    return Promise.reject(error.response)
+    if (response.headers?.location) headers.location = response.headers.location
+    response.headers = headers
+    response.config = response.config ?? error.config
+    if (response.config) {
+      response.config = { method: response.config.method, url: response.config.url, params: response.config.params, data: response.config.data }
+      if (response.config.data && response.config.data._writableState) delete response.config.data
+    }
+    if (response.data && response.data._readableState) delete response.data
+    return Promise.reject(response)
   })
   return axiosInstance
 }
 
-const wsInstance = (config, log) => {
+const wsInstance = (log) => {
   return new DataFairWsClient({
     url: config.dataFairUrl,
     apiKey: config.dataFairAPIKey,
@@ -50,7 +69,10 @@ const wsInstance = (config, log) => {
   })
 }
 
-const prepareLog = (db, wsPublish, processing) => {
+/**
+ * @returns {import('@data-fair/lib/processings/types.js').LogFunctions} Log functions.
+ */
+const prepareLog = (db, wsPublish, processing, run) => {
   const pushLog = async (log) => {
     log.date = new Date().toISOString()
     await db.collection('runs').updateOne({ _id: run._id }, { $push: { log } })
@@ -58,12 +80,12 @@ const prepareLog = (db, wsPublish, processing) => {
   }
 
   return {
-    step: async (msg) => pushLog({ type: 'step', msg }),
-    error: async (msg, extra) => pushLog({ type: 'error', msg, extra }),
-    warning: async (msg, extra) => pushLog({ type: 'warning', msg, extra }),
-    info: async (msg, extra) => pushLog({ type: 'info', msg, extra }),
-    debug: async (msg, extra) => { if (!processing.debug) pushLog({ type: 'debug', msg, extra }) },
-    task: async (msg) => pushLog({ type: 'task', msg }),
+    step: async (msg) => await pushLog({ type: 'step', msg }),
+    error: async (msg, extra) => await pushLog({ type: 'error', msg, extra }),
+    warning: async (msg, extra) => await pushLog({ type: 'warning', msg, extra }),
+    info: async (msg, extra) => await pushLog({ type: 'info', msg, extra }),
+    debug: async (msg, extra) => { if (!processing.debug) await pushLog({ type: 'debug', msg, extra }) },
+    task: async (msg) => await pushLog({ type: 'task', msg }),
     progress: async (msg, progress, total) => {
       const progressDate = new Date().toISOString()
       await db.collection('runs')
@@ -80,7 +102,8 @@ export const run = async ({ db, mailTransport, wsPublish }) => {
     db.collection('processings').findOne({ _id: process.argv[3] })
   ])
 
-  const log = prepareLog(db, wsPublish, processing)
+  const log = prepareLog(db, wsPublish, processing, run)
+  log.warn = log.warning // for compatibility with old plugins
   if (run.status === 'running') {
     await log.step('Reprise après interruption.')
   }
@@ -106,8 +129,8 @@ export const run = async ({ db, mailTransport, wsPublish }) => {
     dir,
     tmpDir: tmpDir.path,
     log,
-    axios: axiosInstance,
-    ws: wsInstance(config, log),
+    axios: axiosInstance(log),
+    ws: wsInstance(log),
     async patchConfig (patch) {
       await log.debug('patch config', patch)
       Object.assign(processingConfig, patch)
@@ -120,7 +143,7 @@ export const run = async ({ db, mailTransport, wsPublish }) => {
 
   const cwd = process.cwd()
   try {
-    pluginModule = require(pluginDir + '/index.js')
+    pluginModule = await import(path.join(pluginDir + '/index.js'))
     process.chdir(dir)
     await pluginModule.run(context)
     process.chdir(cwd)

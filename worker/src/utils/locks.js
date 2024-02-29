@@ -1,9 +1,11 @@
-const { nanoid } = require('nanoid')
-const config = require('config')
+import { nanoid } from 'nanoid'
+import config from 'config'
+
 const pid = nanoid()
 
+
 let interval
-exports.init = async db => {
+export const init = async db => {
   const locks = db.collection('locks')
   await locks.createIndex({ pid: 1 })
   try {
@@ -19,11 +21,11 @@ exports.init = async db => {
   }, (config.locks.ttl / 2) * 1000)
 }
 
-exports.stop = () => {
+export const stop = () => {
   clearInterval(interval)
 }
 
-exports.acquire = async (db, _id) => {
+export const acquire = async (db, _id) => {
   const locks = db.collection('locks')
   try {
     await locks.insertOne({ _id, pid })
@@ -43,7 +45,9 @@ exports.acquire = async (db, _id) => {
   }
 }
 
-exports.release = async (db, _id) => {
+export const release = async (db, _id) => {
   const locks = db.collection('locks')
   await locks.deleteOne({ _id, pid })
 }
+
+export default { init, stop, acquire, release }

@@ -1,4 +1,7 @@
 module.exports = {
-  dataDir: '../data/test',
-  directoryUrl: 'http://localhost:8080'
+  dataDir: './data/test',
+  mongoUrl: 'mongodb://localhost:27017/data-fair-processings-test',
+  prometheus: {
+    active: false
+  }
 }
