@@ -19,8 +19,15 @@ export default defineNuxtPlugin(nuxtApp => {
 
     const dataFairUrl = new URL(runtimeConfig.public.dataFairUrl)
     dataFairUrl.host = currentHost
-    const notifyUrl = new URL(runtimeConfig.public.notifyUrl)
-    notifyUrl.host = currentHost
+    let notifyUrl
+    if (runtimeConfig.public.notifyUrl !== null && runtimeConfig.public.notifyUrl !== '') {
+      notifyUrl = new URL(runtimeConfig.public.notifyUrl)
+      notifyUrl.host = currentHost
+    } else {
+      notifyUrl = {
+        href: null
+      }
+    }
     const directoryUrl = new URL(runtimeConfig.public.directoryUrl)
     directoryUrl.host = currentHost
 

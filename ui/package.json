@@ -4,7 +4,8 @@
   "scripts": {
     "analyze": "rm -rf nuxt-dist dist && nuxi analyze",
     "build": "rm -rf nuxt-dist dist && nuxi build",
-    "dev": "nuxi dev -p 3039",
+    "dev": "npm run build && nuxi start",
+    "dev-test": "nuxi dev -p 3039",
     "generate": "nuxi generate",
     "prepare": "nuxi prepare",
     "preview": "nuxi preview"
@@ -57,7 +58,6 @@
     "vuetify-nuxt-module": "^0.12.0"
   },
   "dependencies": {
-    "@koumoul/nuxt-config-inject": "^0.4.12",
     "dayjs": "^1.11.10",
     "timezones.json": "^1.7.1"
   }

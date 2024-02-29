@@ -8,10 +8,12 @@
     </v-card-title>
     <v-list class="py-0">
       <template v-if="runs">
-        <template v-for="run in runs.results">
-          <v-divider :key="`${run._id}-divider`" />
+        <template
+          v-for="run in runs.results"
+          :key="run._id"
+        >
+          <v-divider />
           <run-list-item
-            :key="`${run._id}-item`"
             :run="run"
             :link="true"
             :can-exec="canExec"
@@ -24,8 +26,8 @@
 
 <script setup>
 import RunListItem from '~/components/run/run-list-item.vue'
+import useEventBus from '~/composables/event-bus'
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { useEventBus } from '~/composables/event-bus'
 
 const props = defineProps({
   processing: Object,
