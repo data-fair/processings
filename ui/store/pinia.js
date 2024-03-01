@@ -198,8 +198,8 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
           console.error('No http client found to send keepalive action. You must use ofetch as init param.')
         }
       },
-      login() {
-        goTo(this.loginUrl())
+      login(redirect) {
+        goTo(this.loginUrl(redirect))
       },
       logout(redirect) {
         if (!this.httpLib) {
