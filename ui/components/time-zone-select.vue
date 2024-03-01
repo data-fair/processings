@@ -12,14 +12,26 @@
   />
 </template>
 
+<i18n lang="yaml">
+fr:
+  tz: Fuseau horaire
+  defaultTZ: Par défaut {defaultTimeZone}
+en:
+  tz: Time zone
+  defaultTZ: Default {defaultTimeZone}
+</i18n>
+
 <script setup>
 import timeZones from 'timezones.json'
 import { computed } from 'vue'
 
-const props = defineProps({
-  value: String,
-  disabled: Boolean
+defineEmits(['update:modelValue'])
+defineProps({
+  disabled: Boolean,
+  value: String
 })
+
+const runtimeConfig = useRuntimeConfig()
 
 const utcs = computed(() => {
   const utcs = []
@@ -30,19 +42,9 @@ const utcs = computed(() => {
 })
 
 const defaultTimeZone = computed(() => {
-  return process.env.VUE_APP_DEFAULT_TIME_ZONE || 'UTC'
+  return runtimeConfig.public.defaultTimeZone || 'UTC'
 })
 </script>
 
-<i18n lang="yaml">
-fr:
-  tz: Fuseau horaire
-  defaultTZ: Par défaut {defaultTimeZone}
-en:
-  tz: Time zone
-  defaultTZ: Default {defaultTimeZone}
-</i18n>
-
-<style scoped>
-
+<style>
 </style>

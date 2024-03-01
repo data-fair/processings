@@ -51,17 +51,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useEventBus } from '~/composables/event-bus'
-import { useRouter } from 'vue-router'
+import useEventBus from '~/composables/event-bus'
+import { emit, ref } from 'vue'
+import { useStore } from '~/store/index'
 
 const props = defineProps({
   processing: { type: Object, default: () => ({}) }
 })
 
+const store = useStore()
+
 const menu = ref(false)
-const router = useRouter()
-const { emitNotification } = useEventBus()
+const eventBus = useEventBus()
 
 const open = (e) => {
   menu.value = true
@@ -70,15 +71,17 @@ const open = (e) => {
 
 const confirm = async () => {
   try {
-    await $fetch(`api/v1/processings/${props.processing.id}`, {
+    await $fetch(`${store.env.publicUrl}/api/v1/processings/${props.processing.id}`, {
       method: 'DELETE'
     })
     emit('removed', { id: props.processing.id })
-    emitNotification({ msg: 'Traitement supprimé avec succès', type: 'success' })
   } catch (error) {
-    emitNotification({ error, msg: 'Erreur pendant la suppression du traitement', type: 'error' })
+    eventBus.emit('notification', { error, msg: 'Erreur pendant la suppression du traitement' })
   } finally {
     menu.value = false
   }
 }
 </script>
+
+<style>
+</style>

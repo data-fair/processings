@@ -93,7 +93,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useStore } from '~/store/index'
 
 const props = defineProps({
@@ -101,37 +101,21 @@ const props = defineProps({
 })
 
 const store = useStore()
-const menu = ref(false)
+const menu = ref(null)
 const vocabulary = ref([])
 const processingSchema = ref(null)
 
-const sourceType = computed(() => {
-  return processingSchema.value?.properties?.source?.oneOf.find(s => s.properties.type.const === props.processing.source.type)
-})
-
-const sourceTypeTitle = computed(() => {
-  return sourceType.value?.title || 'Non défini'
-})
-
-const sourceTypeDescription = computed(() => {
-  return sourceType.value?.description || 'Non défini'
-})
-
-const sourceTypeXOutput = computed(() => {
-  return sourceType.value?.['x-output'] || 'Non défini'
-})
-
+const env = computed(() => store.env)
 const datasetSchema = computed(() => {
-  try {
-    return require('../../sources/' + props.processing.source.type + '/schema.json')
-  } catch (err) {
-    console.error('No schema for processing type')
-    return null
-  }
-})
-
-const datasetSchemaFields = computed(() => {
-  return datasetSchema.value?.map(f => f.key).join(', ') || 'Non défini'
+  // eslint-disable-next-line vue/no-async-in-computed-properties
+  import('~/assets/sources/' + props.processing.source.type + '/schema.json')
+    .then((schema) => {
+      return schema
+    })
+    .catch(error => {
+      console.log('No schema for processing type', error)
+    })
+  return null
 })
 
 const datasetSchemaConcepts = computed(() => {
@@ -140,9 +124,29 @@ const datasetSchemaConcepts = computed(() => {
     .map(f => conceptLabel(f['x-refersTo'])) || []
 })
 
+const datasetSchemaFields = computed(() => {
+  return datasetSchema.value?.map(f => f.key).join(', ') || 'Non défini'
+})
+
+const sourceType = computed(() => {
+  return processingSchema.value?.properties?.source?.oneOf.find(s => s.properties.type.const === props.processing.source.type)
+})
+
+const sourceTypeDescription = computed(() => {
+  return sourceType.value?.description || 'Non défini'
+})
+
+const sourceTypeTitle = computed(() => {
+  return sourceType.value?.title || 'Non défini'
+})
+
+const sourceTypeXOutput = computed(() => {
+  return sourceType.value?.['x-output'] || 'Non défini'
+})
+
 onMounted(async () => {
-  vocabulary.value = await $fetch(store.env.dataFairUrl + '/api/v1/vocabulary')
-  processingSchema.value = await $fetch('api/v1/processings/_schema')
+  vocabulary.value = await $fetch(`${env.value.dataFairUrl}/api/v1/vocabulary`)
+  processingSchema.value = await $fetch(`${env.value.publicUrl}/api/v1/processings/_schema`)
 })
 
 function conceptLabel(uri) {
@@ -150,3 +154,6 @@ function conceptLabel(uri) {
   return concept?.title || 'Concept inconnu'
 }
 </script>
+
+<style>
+</style>

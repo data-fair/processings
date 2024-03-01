@@ -1,4 +1,4 @@
-<template>
+<template style="margin:0;padding:0">
   <v-app :theme="isDark ? 'dark' : 'light'">
     <ClientOnly><AppBar v-if="!embed" /></ClientOnly>
     <v-main>

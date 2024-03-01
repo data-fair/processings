@@ -1,4 +1,4 @@
-export default function (scheduling) {
+export default function format(scheduling) {
   if (scheduling.unit === 'trigger') return 'Déclenchement manuel'
   let str = (scheduling.unit === 'days' ? 'Tous' : 'Toutes') + ' les ' + (scheduling.interval > 1 ? (scheduling.interval + ' ') : '')
   if (scheduling.unit === 'seconds') str += 'secondes'

@@ -72,8 +72,8 @@
 </template>
 
 <script setup>
-const props = defineProps({
-  logs: Array
+defineProps({
+  logs: { type: Array, required: true }
 })
 
 const taskColor = (log) => {
@@ -81,3 +81,6 @@ const taskColor = (log) => {
   return 'primary'
 }
 </script>
+
+<style>
+</style>

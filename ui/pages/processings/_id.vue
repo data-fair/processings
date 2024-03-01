@@ -59,14 +59,15 @@
 </template>
 
 <script setup>
+import * as contractProcessing from '../../../contract/processing'
 import Vjsf from '@koumoul/vjsf'
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { useStore } from '~/store/index'
 
+const form = ref(null)
 const store = useStore()
 const route = useRoute()
-const router = useRouter()
 
 const processing = ref(null)
 const editProcessing = ref(null)
@@ -88,7 +89,7 @@ const canExecProcessing = computed(() => {
 
 const processingSchema = computed(() => {
   if (!plugin.value || !processing.value) return
-  const schema = JSON.parse(JSON.stringify(require('../../../contract/processing')))
+  const schema = JSON.parse(JSON.stringify(contractProcessing))
   schema.properties.config = {
     ...plugin.value.processingConfigSchema,
     title: 'Plugin ' + plugin.value.fullName,
@@ -103,29 +104,34 @@ const processingSchema = computed(() => {
   return schema
 })
 
-const vjsfOptions = computed(() => ({
-  context: {
-    owner: processing.value.owner,
-    ownerFilter: env.value.dataFairAdminMode ? `owner=${processing.value.owner.type}:${encodeURIComponent(processing.value.owner.id)}` : '',
-    dataFairUrl: env.value.dataFairUrl,
-    directoryUrl: env.value.directoryUrl
-  },
-  disableAll: !canAdminProcessing.value,
-  // locale: 'fr',
-  expansionPanelsProps: {
-    value: 0,
-    hover: true
-  },
-  dialogProps: {
-    maxWidth: 500,
-    overlayOpacity: 0 // better when inside an iframe
-  },
-  arrayItemCardProps: { outlined: true, tile: true },
-  dialogCardProps: { outlined: true },
-  deleteReadOnly: true,
-  editMode: 'inline',
-  disableSorting: true
-}))
+const vjsfOptions = computed(() => {
+  if (!processing.value) return
+  return {
+    context: {
+      owner: processing.value.owner,
+      ownerFilter: env.value.dataFairAdminMode ? `owner=${processing.value.owner.type}:${encodeURIComponent(processing.value.owner.id)}` : '',
+      dataFairUrl: env.value.dataFairUrl,
+      directoryUrl: env.value.directoryUrl
+    },
+    disableAll: !canAdminProcessing.value,
+    // locale: 'fr',
+    // rootDisplay: 'expansion-panels',
+    // rootDisplay: 'tabs',
+    expansionPanelsProps: {
+      value: 0,
+      hover: true
+    },
+    dialogProps: {
+      maxWidth: 500,
+      overlayOpacity: 0 // better when inside an iframe
+    },
+    arrayItemCardProps: { outlined: true, tile: true },
+    dialogCardProps: { outlined: true },
+    deleteReadOnly: true,
+    editMode: 'inline',
+    disableSorting: true
+  }
+})
 
 onMounted(async () => {
   if (route.query['back-link'] === 'true') {
@@ -136,8 +142,7 @@ onMounted(async () => {
 })
 
 async function fetchProcessing() {
-  const data = await $fetch(`api/v1/processings/${route.params.id}`)
-  processing.value = data
+  processing.value = await $fetch(`${env.value.publicUrl}/api/v1/processings/${route.params.id}`)
   store.setBreadcrumbs([{
     text: 'traitements',
     to: '/processings'
@@ -149,8 +154,7 @@ async function fetchProcessing() {
 
 async function fetchPlugin() {
   if (processing.value && processing.value.plugin) {
-    const data = await $fetch(`api/v1/plugins/${processing.value.plugin}`)
-    plugin.value = data
+    plugin.value = await $fetch(`${env.value.publicUrl}/api/v1/plugins/${processing.value.plugin}`)
     Object.keys(processingSchema.value.properties).forEach(key => {
       if (processingSchema.value.properties[key].readOnly) delete editProcessing.value[key]
     })
@@ -158,12 +162,12 @@ async function fetchPlugin() {
 }
 
 async function patch() {
-  if (!editProcessing.value) return
+  if (form.value && !form.value.validate()) return
   if (editProcessing.value.scheduling && editProcessing.value.scheduling.type === 'weekly') {
     if (editProcessing.value.scheduling.dayOfWeek === '*') editProcessing.value.scheduling.dayOfWeek = '1'
     renderVjsfKey.value += 1
   }
-  await $fetch(`api/v1/processings/${route.params.id}`, {
+  await $fetch(`${env.value.publicUrl}/api/v1/processings/${route.params.id}`, {
     method: 'PATCH',
     body: JSON.stringify(editProcessing.value)
   })

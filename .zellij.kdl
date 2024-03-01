@@ -7,7 +7,7 @@ layout {
       }
       pane name="deps" {
         command "${DEV_SHELL}"
-        args "-ic" "nvm use > /dev/null 2>&1 && npm run dev-deps && mkdir /tmp/processings; touch /tmp/processings/zjdfui /tmp/processings/zjdfapi /tmp/processings/zjdfworker && docker compose logs -f"
+        args "-ic" "nvm use > /dev/null 2>&1 && npm run dev-deps && mkdir -p /tmp/processings logs; touch /tmp/processings/zjdfui /tmp/processings/zjdfapi /tmp/processings/zjdfworker && docker compose logs -f | tee logs/docker_logs_$(date +%Y-%m-%d_%H-%M-%S).txt"
       }
     }
     pane {

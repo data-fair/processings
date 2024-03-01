@@ -101,14 +101,14 @@
 import OwnerShort from '~/components/owner/owner-short.vue'
 import { ref } from 'vue'
 
-const props = defineProps({
+defineProps({
+  plugin: Object,
   processing: Object,
-  showOwner: Boolean,
-  plugin: Object
+  showOwner: Boolean
 })
 
 const hover = ref(false)
 </script>
 
-<style scoped>
+<style>
 </style>

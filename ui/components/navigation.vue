@@ -18,7 +18,7 @@
         <v-list-item
           v-if="!user"
           color="primary"
-          @click="setAdminMode"
+          @click="setAdminMode(true)"
         >
           <v-list-item-title>Connexion</v-list-item-title>
         </v-list-item>
@@ -61,9 +61,9 @@ import { useStore } from '~/store/index'
 
 const store = useStore()
 
-const user = computed(() => store.user)
-const embed = computed(() => store.embed)
 const activeAccount = computed(() => store.activeAccount)
+const embed = computed(() => store.embed)
+const user = computed(() => store.user)
 
 const switchOrganization = (val) => {
   store.switchOrganization(val)
@@ -73,8 +73,8 @@ const logout = () => {
   store.logout()
 }
 
-const setAdminMode = () => {
-  store.setAdminMode()
+const setAdminMode = (val) => {
+  store.setAdminMode(val)
 }
 </script>
 

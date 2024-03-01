@@ -2,8 +2,8 @@
   "name": "ui",
   "type": "module",
   "scripts": {
-    "analyze": "rm -rf nuxt-dist dist && nuxi analyze",
-    "build": "rm -rf nuxt-dist dist && nuxi build",
+    "analyze": "rm -rf .output && nuxi analyze",
+    "build": "rm -rf .output && nuxi build",
     "dev": "npm run build && nuxi start",
     "dev-test": "nuxi dev -p 3039",
     "generate": "nuxi generate",

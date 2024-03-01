@@ -40,7 +40,7 @@ const store = useStore()
 const breadcrumbs = computed(() => store.breadcrumbs)
 </script>
 
-<style lang="css">
+<style>
 .main-app-bar .v-toolbar__content {
   padding-left: 0;
   padding-right: 0;

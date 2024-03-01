@@ -68,26 +68,30 @@
 </template>
 
 <script setup>
-const nuxtApp = useNuxtApp()
+import { computed } from 'vue'
+import { useStore } from '~/store/index'
 
+const nuxtApp = useNuxtApp()
 const duration = nuxtApp.$dayjs.duration
+
+const store = useStore()
+const env = computed(() => store.env)
+
+const emit = defineEmits(['update:run'])
 const props = defineProps({
-  run: Object,
+  canExec: Boolean,
   link: Boolean,
-  canExec: Boolean
+  run: Object
 })
 
-const kill = async () => {
-  try {
-    await $fetch(`api/v1/runs/${props.run._id}/_kill`, {
-      method: 'POST'
-    })
-    props.run.status = 'kill'
-  } catch (error) {
-    console.error('Failed to kill the run:', error)
-  }
+const kill = async (e) => {
+  e.preventDefault()
+  await $fetch(`${env.value.publicUrl}/api/v1/runs/${props.run._id}/_kill`, {
+    method: 'POST'
+  })
+  emit('update:run', { ...props.run, status: 'kill' })
 }
 </script>
 
-<style scoped>
+<style>
 </style>

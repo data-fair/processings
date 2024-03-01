@@ -62,18 +62,21 @@
 </template>
 
 <script setup>
-import useEventBus from '~/composables/event-bus'
 import RunListItem from '~/components/run/run-list-item.vue'
 import RunLogsList from '~/components/run/run-logs-list.vue'
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import useEventBus from '~/composables/event-bus'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStore } from '~/store/index.js'
 
+const eventBus = useEventBus()
 const store = useStore()
 const route = useRoute()
-const eventBus = useEventBus()
 
+const loading = ref(false)
 const run = ref(null)
+
+const env = computed(() => store.env)
 const runBackLink = computed(() => store.runBackLink)
 const user = computed(() => store.user)
 
@@ -82,8 +85,16 @@ const canExec = computed(() => {
   return ['admin', 'exec'].includes(run.value.userProfile)
 })
 
+const wsLogChannel = computed(() => {
+  return run.value && `processings/${run.value.processing._id}/run-log`
+})
+
+const wsPatchChannel = computed(() => {
+  return run.value && `processings/${run.value.processing._id}/run-patch`
+})
+
 const steps = computed(() => {
-  if (!run.value || !run.value.log) return []
+  if (!run.value) return
   const steps = []
   let lastStep
   for (const log of run.value.log) {
@@ -104,32 +115,37 @@ const steps = computed(() => {
 
 onMounted(async () => {
   await refresh()
-  eventBus.on('run-patch', onRunPatch)
-  eventBus.on('run-log', onRunLog)
 })
 
 onUnmounted(() => {
-  eventBus.off('run-patch', onRunPatch)
-  eventBus.off('run-log', onRunLog)
+  eventBus.emit('unsubscribe', wsLogChannel.value)
+  eventBus.emit('unsubscribe', wsPatchChannel.value)
+  eventBus.off(onRunLog)
+  eventBus.off(onRunPatch)
 })
 
 async function refresh() {
-  try {
-    const response = await $fetch(`api/v1/runs/${route.params.id}`)
-    run.value = await response
-    store.setBreadcrumbs([
-      { text: 'traitements', to: '/processings' },
-      { text: run.value.processing.title, to: `/processings/${run.value.processing._id}` },
-      { text: 'exécution' }
-    ])
-  } catch (error) {
-    console.error('Failed to fetch run details:', error)
-  }
+  loading.value = true
+  run.value = await $fetch(`${env.value.publicUrl}/api/v1/runs/${route.params.id}`)
+
+  eventBus.emit('subscribe', wsLogChannel.value)
+  eventBus.on(wsLogChannel.value, onRunLog)
+  eventBus.emit('subscribe', wsPatchChannel.value)
+  eventBus.on(wsPatchChannel.value, onRunPatch)
+
+  store.setBreadcrumbs([
+    { text: 'traitements', to: '/processings' },
+    { text: run.value.processing.title, to: `/processings/${run.value.processing._id}` },
+    { text: 'exécution' }
+  ])
+  loading.value = false
 }
 
 function onRunPatch(runPatch) {
   if (!run.value || run.value._id !== runPatch._id) return
-  run.value = { ...run.value, ...runPatch.patch }
+  for (const key of Object.keys(runPatch.patch)) {
+    run.value[key] = runPatch.patch[key]
+  }
 }
 
 function onRunLog(runLog) {
@@ -137,13 +153,12 @@ function onRunLog(runLog) {
   if (runLog.log.type === 'task') {
     const matchingTaskIndex = run.value.log.findIndex(l => l.type === 'task' && l.msg === runLog.log.msg)
     if (matchingTaskIndex !== -1) {
-      run.value.log[matchingTaskIndex] = { ...run.value.log[matchingTaskIndex], ...runLog.log }
-    } else {
-      run.value.log.push(runLog.log)
+      for (const key of Object.keys(runLog.log)) {
+        run.value.log[matchingTaskIndex][key] = runLog.log[key]
+      }
+      return
     }
-  } else {
-    run.value.log.push(runLog.log)
   }
-  run.value.log = [...run.value.log]
+  run.value.log.push(runLog.log)
 }
 </script>

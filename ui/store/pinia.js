@@ -136,6 +136,16 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
           console.error('No http client found to cancel deletion. You must use ofetch as init param.')
         }
       },
+      error(params) {
+        if (params.statusCode === 401) {
+          this.login()
+        } else {
+          console.error('Error', params.statusCode, params.message)
+          if (typeof window !== 'undefined') {
+            window.location.href = `${this.directoryUrl}/error?statusCode=${params.statusCode}`
+          }
+        }
+      },
       fetchActiveAccountDetails(forceRefresh = false) {
         if (!this.activeAccount) return
         if (
@@ -188,8 +198,8 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
           console.error('No http client found to send keepalive action. You must use ofetch as init param.')
         }
       },
-      login(redirect) {
-        goTo(this.loginUrl(redirect))
+      login() {
+        goTo(this.loginUrl())
       },
       logout(redirect) {
         if (!this.httpLib) {

@@ -102,8 +102,12 @@
 
 <script setup>
 import Vjsf from '@koumoul/vjsf'
-import { ref, computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useStore } from '~/store/index'
+
+definePageMeta({
+  middleware: ['superadmin-required']
+})
 
 const store = useStore()
 
@@ -112,6 +116,7 @@ const availablePlugins = ref({})
 const installedPlugins = ref({})
 const search = ref('')
 
+const env = computed(() => store.env)
 const filteredAvailablePlugins = computed(() => {
   if (!availablePlugins.value.results) return
   if (!search.value) return availablePlugins.value.results
@@ -131,18 +136,16 @@ onMounted(async () => {
 })
 
 async function fetchAvailablePlugins() {
-  const data = await $fetch('/api/v1/plugins-registry')
-  availablePlugins.value = data
+  availablePlugins.value = await $fetch(`${env.value.publicUrl}/api/v1/plugins-registry`)
 }
 
 async function fetchInstalledPlugins() {
-  const data = await $fetch('/api/v1/plugins')
-  installedPlugins.value = data
+  installedPlugins.value = await $fetch(`${env.value.publicUrl}/api/v1/plugins`)
 }
 
 async function install(plugin) {
   loading.value = true
-  await $fetch('/api/v1/plugins', {
+  await $fetch(`${env.value.publicUrl}/api/v1/plugins`, {
     method: 'POST',
     body: JSON.stringify(plugin)
   })
@@ -152,7 +155,7 @@ async function install(plugin) {
 
 async function uninstall(plugin) {
   loading.value = true
-  await $fetch('/api/v1/plugins/' + plugin.id, {
+  await $fetch(`${env.value.publicUrl}/api/v1/plugins/${plugin.id}`, {
     method: 'DELETE'
   })
   await fetchInstalledPlugins()
@@ -161,7 +164,7 @@ async function uninstall(plugin) {
 
 async function saveConfig(plugin) {
   loading.value = true
-  await $fetch(`/api/v1/plugins/${plugin.id}/config`, {
+  await $fetch(`${env.value.publicUrl}/api/v1/plugins/${plugin.id}/config`, {
     method: 'PUT',
     body: JSON.stringify(plugin.config)
   })
@@ -170,7 +173,7 @@ async function saveConfig(plugin) {
 
 async function saveAccess(plugin) {
   loading.value = true
-  await $fetch(`/api/v1/plugins/${plugin.id}/access`, {
+  await $fetch(`${env.value.publicUrl}/api/v1/plugins/${plugin.id}/access`, {
     method: 'PUT',
     body: JSON.stringify(plugin.access)
   })
@@ -178,5 +181,5 @@ async function saveAccess(plugin) {
 }
 </script>
 
-<style scoped>
+<style>
 </style>

@@ -65,36 +65,28 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useStore } from '~/store/index'
 import { useRouter } from 'vue-router'
+import { useStore } from '~/store/index'
 
-const props = defineProps({
+defineProps({
   installedPlugins: { type: Object, required: true }
 })
 
-const store = useStore()
 const router = useRouter()
+const store = useStore()
 
 const showCreateMenu = ref(false)
 const newProcessing = ref({})
 
-const user = computed(() => store.user)
-const activeAccount = computed(() => store.activeAccount)
-
 const createProcessing = async () => {
-  try {
-    const response = await $fetch('api/v1/processings', {
-      method: 'POST',
-      body: JSON.stringify(newProcessing.value)
-    })
-    router.push(`/processings/${response._id}`)
-  } catch (error) {
-    console.error('Failed to create processing:', error)
-  }
+  const response = await $fetch(`${store.env.publicUrl}/api/v1/processings`, {
+    method: 'POST',
+    body: JSON.stringify(newProcessing.value)
+  })
+  router.push(`/processings/${response._id}`)
   showCreateMenu.value = false
 }
 </script>
 
 <style>
-
 </style>

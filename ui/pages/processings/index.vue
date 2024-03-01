@@ -63,22 +63,23 @@
 </template>
 
 <script setup>
+import format from '~/assets/format'
 import useEventBus from '~/composables/event-bus'
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStore } from '~/store/index'
 
+const eventBus = useEventBus()
 const store = useStore()
 const route = useRoute()
-const eventBus = useEventBus()
 
-const processings = ref(null)
 const installedPlugins = ref({})
+const processings = ref(null)
 const showAll = ref(false)
 
+const activeAccount = computed(() => store.activeAccount)
 const env = computed(() => store.env)
 const user = computed(() => store.user)
-const activeAccount = computed(() => store.activeAccount)
 
 const owner = computed(() => {
   if (route.query.owner) {
@@ -113,23 +114,25 @@ onMounted(async () => {
 
 async function fetchInstalledPlugins() {
   if (!canAdmin.value) return
-  const data = await $fetch(`/api/v1/plugins?privateAccess=${ownerFilter.value}`)
-  installedPlugins.value = data
+  installedPlugins.value = await $fetch(`${env.value.publicUrl}/api/v1/plugins?privateAccess=${ownerFilter.value}`)
 }
 
 async function refresh() {
   try {
-    const params = new URLSearchParams({
+    const params = {
       size: '10000',
-      showAll: showAll.value ? 'true' : 'false',
+      showAll: showAll.value,
       sort: 'updated.date:-1',
-      select: '_id,title,plugin,lastRun,nextRun,owner',
-      owner: ownerFilter.value
-    }).toString()
-    const data = await $fetch(`api/v1/processings?${params}`)
-    processings.value = data
+      select: '_id,title,plugin,lastRun,nextRun,owner'
+    }
+    if (showAll.value) {
+      params.showAll = true
+    } else {
+      params.owner = ownerFilter.value
+    }
+    processings.value = await $fetch(`${env.value.publicUrl}/api/v1/processings`, { params })
   } catch (error) {
-    eventBus.$emit('notification', { error, msg: 'Erreur pendant la récupération de la liste des traitements' })
+    eventBus.emit('notification', { error, msg: 'Erreur pendant la récupération de la liste des traitements' })
   }
 }
 

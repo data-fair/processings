@@ -22,10 +22,10 @@
 </template>
 
 <script setup>
-const props = defineProps({
+defineProps({
   icon: { type: String, default: 'mdi-dots-vertical' }
 })
 </script>
 
-<style scoped>
+<style>
 </style>

@@ -47,7 +47,7 @@
           </v-btn>
           <v-btn
             color="primary"
-            @click="triggerExecution"
+            @click="triggerExecution, $emit('triggered')"
           >
             Déclencher manuellement
           </v-btn>
@@ -148,82 +148,85 @@
 </template>
 
 <script setup>
+import 'iframe-resizer/js/iframeResizer'
+import useEventBus from '~/composables/event-bus'
 import VIframe from '@koumoul/v-iframe'
-import { ref, computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from '~/store'
 
-const props = defineProps({
-  processing: Object,
+defineEmits(['triggered'])
+
+const properties = defineProps({
   canAdmin: Boolean,
-  canExec: Boolean
+  canExec: Boolean,
+  processing: Object
 })
 
-const store = useStore()
+const eventBus = useEventBus()
 const router = useRouter()
+const store = useStore()
 
-const showTriggerMenu = ref(false)
 const showDeleteMenu = ref(false)
 const showNotifMenu = ref(false)
+const showTriggerMenu = ref(false)
 const triggerDelay = ref(0)
 const webhookKey = ref(null)
 
-const env = computed(() => store.state.env)
-const activeAccount = computed(() => store.getters['session/activeAccount'])
+const activeAccount = computed(() => store.activeAccount)
+const env = computed(() => store.env)
 
 const notifUrl = computed(() => {
-  if (!env.value.notifyUrl || !props.processing.owner || props.processing.owner.type !== activeAccount.value.type || props.processing.owner.id !== activeAccount.value.id || activeAccount.value.department) return null
+  if (!env.value.notifyUrl) return null
   const topics = [
-    `processings:processing-finish-ok:${props.processing._id}`,
-    `processings:processing-finish-error:${props.processing._id}`,
-    `processings:processing-log-error:${props.processing._id}`
-  ].map(key => `${key},${props.processing.title}`).join(';')
-  return `${env.value.notifyUrl}/embed/subscribe?topics=${encodeURIComponent(topics)}`
+    { key: `processings:processing-finish-ok:${properties.processing._id}`, title: `Le traitement ${properties.processing.title} a terminé avec succès` },
+    { key: `processings:processing-finish-error:${properties.processing._id}`, title: `Le traitement ${properties.processing.title} a terminé en échec` },
+    { key: `processings:processing-log-error:${properties.processing._id}`, title: `Le traitement ${properties.processing.title} a terminé correctement mais son journal contient des erreurs` }
+  ]
+  const urlTemplate = window.parent.location.href
+  return `${env.value.notifyUrl}/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false`
 })
 
 const webhookLink = computed(() => {
-  return `${env.value.publicUrl}/api/v1/processings/${props.processing._id}/_trigger?key=${webhookKey.value}&delay=${triggerDelay.value}`
+  let link = `${env.value.publicUrl}/api/v1/processings/${properties.processing._id}/_trigger?key=${webhookKey.value}`
+  if (triggerDelay.value > 0) link += `&delay=${triggerDelay.value}`
+  return link
 })
+
+const confirmRemove = async () => {
+  showDeleteMenu.value = false
+  try {
+    await $fetch(`${env.value.publicUrl}/api/v1/processings/${properties.processing._id}`, {
+      method: 'DELETE'
+    })
+    router.push('/processings')
+  } catch (error) {
+    eventBus.emit('notification', { error, msg: 'Erreur pendant la suppression du traitement' })
+  }
+}
+
+const getWebhookKey = async () => {
+  webhookKey.value = await $fetch(`${env.value.publicUrl}/api/v1/processings/${properties.processing._id}/webhook-key`)
+}
 
 const triggerExecution = async () => {
   try {
-    await $fetch(`${env.value.publicUrl}/api/v1/processings/${props.processing._id}/_trigger`, {
+    await $fetch(`${env.value.publicUrl}/api/v1/processings/${properties.processing._id}/_trigger`, {
       method: 'POST',
       body: { delay: triggerDelay.value }
     })
     showTriggerMenu.value = false
   } catch (error) {
-    console.error('Error triggering processing:', error)
-  }
-}
-
-const confirmRemove = async () => {
-  try {
-    await $fetch(`${env.value.publicUrl}/api/v1/processings/${props.processing._id}`, {
-      method: 'DELETE'
-    })
-    router.push('/processings')
-    showDeleteMenu.value = false
-  } catch (error) {
-    console.error('Error deleting processing:', error)
-  }
-}
-
-const getWebhookKey = async () => {
-  try {
-    const response = await $fetch(`${env.value.publicUrl}/api/v1/processings/${props.processing._id}/webhook-key`)
-    webhookKey.value = response
-  } catch (error) {
-    console.error('Error fetching webhook key:', error)
+    eventBus.emit('notification', { error, msg: 'Erreur pendant le déclenchement du traitement' })
   }
 }
 
 watch(showTriggerMenu, async (newValue) => {
-  if (newValue && canAdmin.value) {
+  if (newValue && properties.canAdmin) {
     await getWebhookKey()
   }
 })
 </script>
 
-<style scoped>
+<style>
 </style>

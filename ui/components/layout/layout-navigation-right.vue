@@ -15,7 +15,7 @@
 <script setup>
 </script>
 
-<style lang="css" scoped>
+<style scoped>
 .main-logo img {
   width: 40px;
   height: auto;

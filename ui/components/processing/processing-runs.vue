@@ -27,21 +27,25 @@
 <script setup>
 import RunListItem from '~/components/run/run-list-item.vue'
 import useEventBus from '~/composables/event-bus'
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useStore } from '~/store/index'
 
 const props = defineProps({
-  processing: Object,
-  canExec: Boolean
+  canExec: Boolean,
+  processing: Object
 })
+
+const eventBus = useEventBus()
+const store = useStore()
 
 const loading = ref(false)
 const runs = ref(null)
 
-const eventBus = useEventBus()
-const wsChannel = `processings/${props.processing._id}/run-patch`
+const env = computed(() => store.env)
+const wsChannel = computed(() => `processings/${props.processing._id}/run-patch`)
 
 function onRunPatch(runPatch) {
-  console.log('message from', wsChannel, runPatch)
+  console.log('message from', wsChannel.value, runPatch)
   if (!runs.value) return
   const matchingRun = runs.value.results.find(run => run._id === runPatch._id)
   if (!matchingRun) {
@@ -55,35 +59,30 @@ function onRunPatch(runPatch) {
 
 async function refresh() {
   loading.value = true
-  try {
-    const response = await $fetch('api/v1/runs', {
-      body: {
-        params: { 
-          processing: props.processing._id, 
-          size: 1000, 
-          sort: 'createdAt:-1', 
-          owner: `${props.processing.owner.type}:${props.processing.owner.id}` 
-        } 
-      }
-    })
-    runs.value = response
-  } catch (error) {
-    console.error('Failed to refresh runs:', error)
-  }
+  runs.value = await $fetch(`${env.value.publicUrl}/api/v1/runs`, {
+    params: {
+      processing: props.processing._id,
+      size: 1000,
+      sort: 'createdAt:-1',
+      owner: `${props.processing.owner.type}:${props.processing.owner.id}`
+    }
+  })
   loading.value = false
 }
 
 onMounted(async () => {
-  eventBus.subscribe(wsChannel, onRunPatch)
+  eventBus.emit('subscribe', wsChannel.value)
+  eventBus.on(wsChannel.value, onRunPatch)
   await refresh()
 })
 
 onUnmounted(() => {
-  eventBus.unsubscribe(wsChannel)
+  eventBus.emit('unsubscribe', wsChannel.value)
+  eventBus.off(onRunPatch)
 })
 
 watch(props.processing, refresh, { deep: true })
 </script>
 
-<style scoped>
+<style>
 </style>

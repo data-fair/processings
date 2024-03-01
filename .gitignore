@@ -6,3 +6,4 @@ ui/nuxt-dist/
 ui/assets/css/
 ui/assets/fonts/
 .config/
+logs/

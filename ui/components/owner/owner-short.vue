@@ -21,11 +21,11 @@ const props = defineProps({
 
 const store = useStore()
 
-const env = computed(() => store.env)
-
 const avatarUrl = computed(() => {
   return `${env.value.directoryUrl}/api/avatars/${props.owner.type}/${props.owner.id}/avatar.png`
 })
+
+const env = computed(() => store.env)
 
 const label = computed(() => {
   let label = props.owner.name
@@ -34,5 +34,5 @@ const label = computed(() => {
 })
 </script>
 
-<style scoped>
+<style>
 </style>
