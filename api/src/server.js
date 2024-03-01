@@ -35,6 +35,9 @@ export const stop = async () => {
 }
 
 export const cleanDB = async () => {
-  await mongo.db.collection('processings').deleteMany({})
-  await mongo.db.collection('runs').deleteMany({})
+  if (process.env.NODE_ENV === 'test') {
+    await mongo.db.collection('processings').deleteMany({})
+    await mongo.db.collection('runs').deleteMany({})
+    await mongo.db.collection('limits').deleteMany({})
+  }
 }
