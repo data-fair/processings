@@ -14,6 +14,7 @@ services:
       - NO_UI=${NO_UI}
       - AUTHRATELIMIT_ATTEMPTS=200
       - PROMETHEUS_ACTIVE=false
+      - OBSERVER_ACTIVE=false
       - MANAGE_PARTNERS=true
     volumes:
       - ./test/resources/users.json:/webapp/data/users.json
@@ -39,7 +40,7 @@ services:
       - WS_PUBLIC_URL=ws://localhost:5600/data-fair
       - EXTRA_NAV_ITEMS=[{"id":"processings","can":"contrib","iframe":"http://localhost:5600/embed/processings","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
       - EXTRA_ADMIN_NAV_ITEMS=[{"id":"processings","iframe":"http://localhost:5600/","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
-      - OBSERVE_ACTIVE=false
+      - OBSERVER_ACTIVE=false
     volumes:
       - data-fair-data:/data
 
@@ -82,6 +83,7 @@ services:
       - SECRET_NOTIFICATIONS=secret-notifications
       - SECRET_SENDMAILS=secret-sendmails
       - PROMETHEUS_ACTIVE=false
+      - OBSERVER_ACTIVE=false
 
 volumes:
   elasticsearch-data:
