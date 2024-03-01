@@ -1,6 +1,8 @@
 module.exports = {
   mode: 'MODE',
   publicUrl: 'PUBLIC_URL',
+  dataDir: 'DATA_DIR',
+  tmpDir: 'TMP_DIR',
   port: 'PORT',
   sessionDomain: 'SESSION_DOMAIN',
   directoryUrl: 'DIRECTORY_URL',

@@ -97,7 +97,6 @@ ENV DEBUG db,upgrade*
 # unfortunately it is a problem to activate now that the service was already deployed
 # with volumes belonging to root
 #USER node
-VOLUME /webapp/data
 EXPOSE 8080
 
 # --single-child is necessary for worker to wait on its tasks

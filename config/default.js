@@ -4,6 +4,7 @@ module.exports = {
   sessionDomain: null,
   publicUrl: 'http://localhost:5600',
   dataDir: '/data',
+  tmpDir: null, // will be dataDir + '/tmp' if null
   directoryUrl: 'http://localhost:5600/simple-directory',
   privateDirectoryUrl: null,
   dataFairUrl: 'http://localhost:5600/data-fair',

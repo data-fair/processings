@@ -16,7 +16,7 @@ const router = module.exports = express.Router()
 
 const pluginsDir = path.join(config.dataDir, 'plugins')
 fs.ensureDirSync(pluginsDir)
-const tmpDir = path.join(config.dataDir, 'tmp')
+const tmpDir = config.tmpDir || path.join(config.dataDir, 'tmp')
 fs.ensureDirSync(tmpDir)
 
 const preparePluginInfo = (pluginInfo) => {

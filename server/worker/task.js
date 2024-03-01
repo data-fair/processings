@@ -193,7 +193,7 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
 
   const dir = resolvePath(processingsDir, processing._id)
   await fs.ensureDir(dir)
-  const tmpDir = await tmp.dir({ unsafeCleanup: true, dir: path.resolve(config.dataDir, 'tmp') })
+  const tmpDir = await tmp.dir({ unsafeCleanup: true, dir: config.tmpDir || path.resolve(config.dataDir, 'tmp') })
   const processingConfig = processing.config || {}
   const context = {
     pluginConfig,
