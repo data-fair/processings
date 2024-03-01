@@ -33,7 +33,6 @@ export const clear = () => {
 }
 
 /* eslint no-unmodified-loop-condition: 0 */
-// Run main loop !
 export const start = async () => {
   await mongo.connect(config.mongoUrl, { readPreference: 'primary' })
   const db = mongo.db
@@ -49,10 +48,24 @@ export const start = async () => {
   for (let i = 0; i < config.worker.concurrency; i++) {
     promisePool[i] = null
   }
-  let lastActivity = new Date().getTime()
 
   // non-blocking secondary kill loop
   killLoop(db, wsPublish)
+
+  runLoop(db, wsPublish)
+}
+
+// Stop and wait for all workers to finish their current task
+export const stop = async () => {
+  stopped = true
+  await mongo.client.close()
+  if (config.prometheus.active) await stopObserver()
+  await Promise.all(promisePool.filter(p => !!p))
+}
+
+// Main loop
+async function runLoop (db, wsPublish) {
+  let lastActivity = new Date().getTime()
 
   while (!stopped) {
     const now = new Date().getTime()
@@ -96,14 +109,6 @@ export const start = async () => {
 
     await new Promise(resolve => setTimeout(resolve, config.worker.interval))
   }
-}
-
-// Stop and wait for all workers to finish their current task
-export const stop = async () => {
-  stopped = true
-  await mongo.client.close()
-  if (config.prometheus.active) await stopObserver()
-  await Promise.all(promisePool.filter(p => !!p))
 }
 
 // a secondary loop to handle killing tasks
