@@ -9,9 +9,10 @@ const axiosOpts = { baseURL: 'http://localhost:5600' }
 const superadmin = await axiosAuth({ email: 'superadmin@test.com', password: 'superpasswd', directoryUrl, adminMode: true, axiosOpts })
 
 global.events = new EventEmitter() // For testing notifications
+console.log('Starting worker server...')
 process.env.NODE_CONFIG_DIR = 'worker/config/'
 const workerServer = await import('../worker/src/server.js')
-workerServer.start()
+await workerServer.start()
 
 const plugin = (await superadmin.post('/api/v1/plugins', {
   name: '@data-fair/processing-hello-world',

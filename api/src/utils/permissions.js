@@ -22,7 +22,7 @@ const isAccountMember = async (req, res, next) => {
   if (req.params.type === 'user') {
     if (reqSession.user.id !== req.params.id) return res.status(403).send()
   }
-  if (reqSession.params.type === 'organization') {
+  if (req.params.type === 'organization') {
     const org = reqSession.user.organizations.find(o => o.id === req.params.id)
     if (!org) return res.status(403).send()
   }
