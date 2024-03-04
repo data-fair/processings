@@ -52,7 +52,8 @@ export const start = async () => {
   // non-blocking secondary kill loop
   killLoop(db, wsPublish)
 
-  runLoop(db, wsPublish)
+  const lastActivity = new Date().getTime()
+  runLoop(db, wsPublish, lastActivity)
 }
 
 // Stop and wait for all workers to finish their current task
@@ -64,9 +65,7 @@ export const stop = async () => {
 }
 
 // Main loop
-async function runLoop (db, wsPublish) {
-  let lastActivity = new Date().getTime()
-
+async function runLoop (db, wsPublish, lastActivity) {
   while (!stopped) {
     const now = new Date().getTime()
     if ((now - lastActivity) > config.worker.inactivityDelay) {
@@ -171,6 +170,7 @@ async function iter (db, wsPublish, run) {
       if (hooks[processing._id]) hooks[processing._id].reject({ run, message: 'le traitement a été désactivé' })
       return
     }
+    // @test:spy("isTriggered")
     if (hooks[processing._id]) hooks[processing._id].resolve(run)
 
     debug(`run "${processing.title}" > ${run._id}`)
@@ -178,12 +178,11 @@ async function iter (db, wsPublish, run) {
     const remaining = await limits.remaining(db, processing.owner)
     if (remaining.processingsSeconds === 0) {
       await finish(db, wsPublish, run, 'le temps de traitement autorisé est épuisé', 'error')
-      if (hooks[processing._id]) hooks[processing._id].reject({ run, message: 'le temps de traitement autorisé est épuisé' })
+      // @test:spy("processingsSecondsExceeded")
       return
     }
 
     // Run a task in a dedicated child process for extra resiliency to fatal memory exceptions
-
     const spawnPromise = spawn('node', [process.env.NODE_ENV === 'test' ? './worker/src/task/index.js' : './src/task/index.js', run._id, processing._id], {
       env: process.env,
       stdio: ['ignore', 'inherit', 'pipe']
@@ -213,11 +212,11 @@ async function iter (db, wsPublish, run) {
       if (err.code === 143) {
         run.status = 'killed'
         await finish(db, wsPublish, run)
-        if (hooks[processing._id]) hooks[processing._id].resolve({ run, message: 'interrupted' })
+        // @test:spy("isKilled")
       } else {
         console.warn(`failure ${processing.title} > ${run._id}`, errorMessage.join('\n'))
         await finish(db, wsPublish, run, errorMessage.join('\n'))
-        if (hooks[processing._id]) hooks[processing._id].reject({ run, message: errorMessage.join('\n') })
+        // @test:spy("isFailure")
       }
     } else {
       internalError('worker', 'failure in worker', { error: err })

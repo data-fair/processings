@@ -3,6 +3,9 @@ import { test } from 'node:test'
 import { EventEmitter } from 'node:events'
 import event2promise from 'event-to-promise'
 import { axiosAuth } from '@data-fair/lib/node/axios-auth.js'
+import * as testSpies from '@data-fair/lib/node/test-spies.js'
+
+testSpies.registerModuleHooks()
 
 const directoryUrl = 'http://localhost:5600/simple-directory'
 const axiosOpts = { baseURL: 'http://localhost:5600' }
@@ -65,7 +68,7 @@ await test('should create a new processing, activate it and run it', async funct
   await superadmin.patch(`/api/v1/processings/${processing._id}`, { scheduling: { type: 'trigger' } })
   await Promise.all([
     superadmin.post(`/api/v1/processings/${processing._id}/_trigger`),
-    assert.doesNotReject(workerServer.hook(processing._id), (runs) => runs.status === 'triggered')
+    testSpies.waitFor('isTriggered', 10000)
   ])
   runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
   assert.equal(runs.count, 1)
@@ -74,7 +77,7 @@ await test('should create a new processing, activate it and run it', async funct
   // nothing, failure is normal we have no api key
   const notif = await event2promise(global.events, 'notification')
   assert.equal(notif.topic.key, `processings:processing-finish-error:${processing._id}`)
-  await assert.rejects(workerServer.hook(processing._id), () => true)
+  await testSpies.waitFor('isFailure', 10000)
 
   const run = (await superadmin.get('/api/v1/runs/' + runs.results[0]._id)).data
   assert.equal(run.status, 'error')
@@ -173,17 +176,14 @@ await test('should fail a run if processings_seconds limit is exceeded', async f
   })).data
 
   await superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
-  await assert.rejects(workerServer.hook(processing._id), () => true)
+  await testSpies.waitFor('isFailure', 10000)
 
   let limits = (await superadmin.get('/api/v1/limits/user/superadmin')).data
   const consumption = limits.processings_seconds.consumption
   assert.ok(consumption >= 1)
 
   superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
-  await assert.rejects(workerServer.hook(processing._id), (err) => {
-    assert.equal(err.message, 'le temps de traitement autorisé est épuisé')
-    return true
-  })
+  await testSpies.waitFor('processingsSecondsExceeded', 10000)
   limits = (await superadmin.get('/api/v1/limits/user/superadmin')).data
   assert.equal(limits.processings_seconds.consumption, consumption)
 })
