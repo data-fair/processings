@@ -90,7 +90,6 @@ await test('should create a new processing, activate it and run it', async funct
   assert.ok(!processing.webhookKey)
 })
 
-/*
 await test('should kill a long run with SIGTERM', async function () {
   const processing = (await superadmin.post('/api/v1/processings', {
     title: 'Hello processing',
@@ -106,7 +105,7 @@ await test('should kill a long run with SIGTERM', async function () {
 
   await Promise.all([
     superadmin.post(`/api/v1/processings/${processing._id}/_trigger`),
-    assert.doesNotReject(workerServer.hook(processing._id), (runs) => runs.status === 'triggered')
+    testSpies.waitFor('isTriggered', 10000) // We wait for the run to be triggered
   ])
   const runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
   assert.equal(runs.count, 1)
@@ -115,7 +114,7 @@ await test('should kill a long run with SIGTERM', async function () {
   await superadmin.post(`/api/v1/runs/${run._id}/_kill`)
   run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
   assert.equal(run.status, 'kill')
-  await workerServer.hook(processing._id)
+  await testSpies.waitFor('isKilled', 10000)
   run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
   assert.equal(run.status, 'killed')
   assert.equal(run.log.length, 4)
@@ -140,21 +139,23 @@ await test('should kill a long run with SIGTERM and wait for grace period', asyn
     }
   })).data
 
-  await superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
+  await Promise.all([
+    superadmin.post(`/api/v1/processings/${processing._id}/_trigger`),
+    testSpies.waitFor('isTriggered', 10000) // We wait for the run to be triggered
+  ])
+  await new Promise(resolve => setTimeout(resolve, 1000))
   const runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
   assert.equal(runs.count, 1)
   let run = runs.results[0]
-  assert.equal(run.status, 'triggered')
-  await new Promise(resolve => setTimeout(resolve, 1000))
+  assert.equal(run.status, 'running')
   await superadmin.post(`/api/v1/runs/${run._id}/_kill`)
   run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
   assert.equal(run.status, 'kill')
-  await workerServer.hook(processing._id)
+  await testSpies.waitFor('isKilled', 10000)
   run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
   assert.equal(run.status, 'killed')
   assert.equal(run.log.length, 2)
 })
-*/
 
 await test('should fail a run if processings_seconds limit is exceeded', async function () {
   await superadmin.post('/api/v1/limits/user/superadmin', {
@@ -188,4 +189,4 @@ await test('should fail a run if processings_seconds limit is exceeded', async f
   assert.equal(limits.processings_seconds.consumption, consumption)
 })
 
-process.exit(0)
+await workerServer.stop()

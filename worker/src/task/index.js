@@ -9,8 +9,7 @@ const mailTransport = nodemailer.createTransport(config.mails.transport)
 const db = mongo.db
 const wsPublish = await initPublisher(db)
 
-const err = await run({ db, mailTransport, wsPublish })
-if (err) process.exit(-1)
+run({ db, mailTransport, wsPublish }).catch(() => { process.exit(-1) })
 
 process.on('SIGTERM', function onSigterm () {
   console.info('Received SIGTERM signal, shutdown gracefully...')

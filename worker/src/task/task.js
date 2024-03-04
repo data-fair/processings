@@ -169,7 +169,7 @@ export const run = async ({ db, mailTransport, wsPublish }) => {
       await log.error(err.message)
       await log.debug(err.stack)
     }
-    return err
+    throw err
   } finally {
     await tmpDir.cleanup()
   }
