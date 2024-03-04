@@ -164,7 +164,6 @@ const properties = defineProps({
 })
 
 const eventBus = useEventBus()
-const router = useRouter()
 const store = useStore()
 
 const showDeleteMenu = ref(false)
@@ -199,7 +198,7 @@ const confirmRemove = async () => {
     await $fetch(`${env.value.publicUrl}/api/v1/processings/${properties.processing._id}`, {
       method: 'DELETE'
     })
-    router.push('/processings')
+    return navigateTo({ path: '/processings' })
   } catch (error) {
     eventBus.emit('notification', { error, msg: 'Erreur pendant la suppression du traitement' })
   }

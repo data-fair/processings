@@ -17,17 +17,7 @@ if (process.env.NODE_ENV === 'production') {
 
 export default defineNuxtConfig({
   app: {
-    baseURL: config.basePath,
-    head: {
-      title: 'Data Fair Processings',
-      meta: [
-        { charset: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { hid: 'application', name: 'application-name', content: 'data-fair-processings' },
-        { hid: 'description', name: 'description', content: 'Periodically import / export data between Data Fair and other services.' },
-        { hid: 'robots', name: 'robots', content: 'noindex' }
-      ]
-    }
+    baseURL: config.basePath
   },
   build: {
     transpile: ['@koumoul', '@data-fair']
@@ -70,8 +60,8 @@ export default defineNuxtConfig({
     'vuetify-nuxt-module'
   ],
   plugins: [
-    { src: 'plugins/dayjs' },
     { src: 'plugins/filters' },
+    { src: 'plugins/pinia' },
     { src: 'plugins/session', mode: 'client' },
     { src: 'plugins/v-iframe', mode: 'client' },
     { src: 'plugins/ws', mode: 'client' }
@@ -96,7 +86,9 @@ export default defineNuxtConfig({
   telemetry: false,
   vuetify: {
     moduleOptions: {
-      styles: { configFile: './assets/variables.scss' }
+      styles: {
+        configFile: './assets/variables.scss'
+      }
     },
     vuetifyOptions: './vuetify.config.js'
   }

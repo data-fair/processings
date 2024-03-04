@@ -84,7 +84,7 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
         return cookieOpts
       },
       isAccountAdmin() {
-        return this.accountRole === 'admin'
+        return this.user.adminMode === true
       },
       loginUrl() {
         return (redirect, noImmediate, extraParams = {}) => {
@@ -137,10 +137,10 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
         }
       },
       error(params) {
+        console.error('Error', params.statusCode, params.message)
         if (params.statusCode === 401) {
           this.login()
         } else {
-          console.error('Error', params.statusCode, params.message)
           if (typeof window !== 'undefined') {
             window.location.href = `${this.directoryUrl}/error?statusCode=${params.statusCode}`
           }

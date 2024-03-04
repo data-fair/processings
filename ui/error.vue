@@ -1,11 +1,13 @@
 <template>
   <div class="container">
-    <v-alert
-      v-if="error.statusCode !== 401"
-      type="error"
-    >
-      {{ error.message }}
-    </v-alert>
+    <NuxtLayout name="default">
+      <v-alert
+        v-if="error.statusCode !== 401"
+        type="error"
+      >
+        {{ error.message }}
+      </v-alert>
+    </NuxtLayout>
   </div>
 </template>
 

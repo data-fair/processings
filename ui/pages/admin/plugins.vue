@@ -105,9 +105,9 @@ import Vjsf from '@koumoul/vjsf'
 import { computed, onMounted, ref } from 'vue'
 import { useStore } from '~/store/index'
 
-/* definePageMeta({
+definePageMeta({
   middleware: ['superadmin-required']
-}) */
+})
 
 const store = useStore()
 

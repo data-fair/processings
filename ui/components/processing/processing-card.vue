@@ -6,7 +6,7 @@
     @mouseenter="hover = true"
     @mouseleave="hover = false"
   >
-    <nuxt-link
+    <NuxtLink
       :to="`/processings/${processing._id}`"
       style="text-decoration:none"
     >
@@ -86,7 +86,7 @@
           </template>
         </v-list>
       </v-card-text>
-    </nuxt-link>
+    </NuxtLink>
     <v-card-actions class="pl-3">
       <owner-short
         v-if="showOwner"

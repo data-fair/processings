@@ -83,8 +83,8 @@ const createProcessing = async () => {
     method: 'POST',
     body: JSON.stringify(newProcessing.value)
   })
-  router.push(`/processings/${response._id}`)
   showCreateMenu.value = false
+  return navigateTo({ path: `/processings/${response._id}` })
 }
 </script>
 
