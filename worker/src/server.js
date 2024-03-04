@@ -196,9 +196,7 @@ async function iter (db, wsPublish, run) {
     await spawnPromise
 
     await finish(db, wsPublish, run)
-    if (hooks[processing._id]) {
-      hooks[processing._id].resolve(await db.collection('runs').findOne({ _id: run._id }))
-    }
+    if (hooks[processing._id]) hooks[processing._id].resolve(await db.collection('runs').findOne({ _id: run._id }))
   } catch (err) {
     // Build back the original error message from the stderr of the child process
     const errorMessage = []
