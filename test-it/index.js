@@ -3,7 +3,7 @@ import fs from 'fs-extra'
 
 // Before tests
 process.env.SUPPRESS_NO_CONFIG_WARNING = '1'
-process.env.NODE_CONFIG_DIR_API = 'api/config/'
+process.env.NODE_CONFIG_DIR = 'api/config/'
 console.log('Starting API server...')
 const apiServer = await import('../api/src/server.js')
 await apiServer.start()

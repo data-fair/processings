@@ -13,7 +13,7 @@ const superadmin = await axiosAuth({ email: 'superadmin@test.com', password: 'su
 
 global.events = new EventEmitter() // For testing notifications
 console.log('Starting worker server...')
-process.env.NODE_CONFIG_DIR_WORKER = 'worker/config/'
+process.env.NODE_CONFIG_DIR = 'worker/config/'
 const workerServer = await import('../worker/src/server.js')
 await workerServer.start()
 
