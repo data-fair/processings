@@ -169,7 +169,7 @@ async function patch() {
   }
   await $fetch(`${env.value.publicUrl}/api/v1/processings/${route.params.id}`, {
     method: 'PATCH',
-    body: JSON.stringify(editProcessing.value)
+    body: { ...editProcessing.value }
   })
   await fetchProcessing()
 }

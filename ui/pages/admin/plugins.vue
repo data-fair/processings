@@ -105,10 +105,6 @@ import Vjsf from '@koumoul/vjsf'
 import { computed, onMounted, ref } from 'vue'
 import { useStore } from '~/store/index'
 
-definePageMeta({
-  middleware: ['superadmin-required']
-})
-
 const store = useStore()
 
 const loading = ref(false)
@@ -130,10 +126,39 @@ const filteredInstalledPlugins = computed(() => {
 })
 
 onMounted(async () => {
-  store.setBreadcrumbs([{ text: 'plugins' }])
-  await fetchAvailablePlugins()
-  await fetchInstalledPlugins()
+  const access = await checkAccess()
+  if (access === true) {
+    store.setBreadcrumbs([{ text: 'plugins' }])
+    await fetchInstalledPlugins()
+    await fetchAvailablePlugins()
+  }
 })
+
+window.onpopstate = async () => {
+  const access = await checkAccess()
+  if (access === true) {
+    store.setBreadcrumbs([{ text: 'plugins' }])
+    await fetchInstalledPlugins()
+    await fetchAvailablePlugins()
+  }
+}
+
+async function checkAccess() {
+  if (!store.user) {
+    return store.error({
+      message: 'Authentification nécessaire',
+      statusCode: 401
+    })
+  }
+  if (!store.isAccountAdmin) {
+    return store.error({
+      message: 'Vous n\'avez pas la permission d\'accéder à cette page, il faut avoir activé le mode super-administration.',
+      statusCode: 403
+    })
+  }
+
+  return true
+}
 
 async function fetchAvailablePlugins() {
   availablePlugins.value = await $fetch(`${env.value.publicUrl}/api/v1/plugins-registry`)
@@ -147,7 +172,7 @@ async function install(plugin) {
   loading.value = true
   await $fetch(`${env.value.publicUrl}/api/v1/plugins`, {
     method: 'POST',
-    body: JSON.stringify(plugin)
+    body: { ...plugin }
   })
   await fetchInstalledPlugins()
   loading.value = false
@@ -166,7 +191,7 @@ async function saveConfig(plugin) {
   loading.value = true
   await $fetch(`${env.value.publicUrl}/api/v1/plugins/${plugin.id}/config`, {
     method: 'PUT',
-    body: JSON.stringify(plugin.config)
+    body: { ...plugin.config }
   })
   loading.value = false
 }
@@ -175,7 +200,7 @@ async function saveAccess(plugin) {
   loading.value = true
   await $fetch(`${env.value.publicUrl}/api/v1/plugins/${plugin.id}/access`, {
     method: 'PUT',
-    body: JSON.stringify(plugin.access)
+    body: { ...plugin.access }
   })
   loading.value = false
 }

@@ -1,11 +1,13 @@
 <template>
-  <v-app :theme="isDark ? 'dark' : 'light'">
-    <ClientOnly><AppBar v-if="!embed" /></ClientOnly>
-    <v-main class="v-app">
-      <NuxtPage />
-      <Notifications />
-    </v-main>
-  </v-app>
+  <div class="v-app">
+    <v-app :theme="isDark ? 'dark' : 'light'">
+      <ClientOnly><AppBar v-if="!embed" /></ClientOnly>
+      <v-main>
+        <NuxtPage />
+        <Notifications />
+      </v-main>
+    </v-app>
+  </div>
 </template>
 
 <script setup>

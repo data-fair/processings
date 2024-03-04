@@ -61,7 +61,6 @@ export default defineNuxtConfig({
   ],
   plugins: [
     { src: 'plugins/filters' },
-    { src: 'plugins/pinia' },
     { src: 'plugins/session', mode: 'client' },
     { src: 'plugins/v-iframe', mode: 'client' },
     { src: 'plugins/ws', mode: 'client' }

@@ -65,14 +65,12 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useStore } from '~/store/index'
 
 defineProps({
   installedPlugins: { type: Object, required: true }
 })
 
-const router = useRouter()
 const store = useStore()
 
 const showCreateMenu = ref(false)
@@ -81,7 +79,7 @@ const newProcessing = ref({})
 const createProcessing = async () => {
   const response = await $fetch(`${store.env.publicUrl}/api/v1/processings`, {
     method: 'POST',
-    body: JSON.stringify(newProcessing.value)
+    body: { ...newProcessing.value }
   })
   showCreateMenu.value = false
   return navigateTo({ path: `/processings/${response._id}` })

@@ -1,7 +1,7 @@
 import { jwtDecode } from 'jwt-decode'
 import { defineStore } from 'pinia'
 
-function goTo (url) {
+function goTo(url) {
   try {
     window.top.location.href = url
   } catch (err) {
@@ -10,10 +10,14 @@ function goTo (url) {
   }
 }
 
-function jwtDecodeAlive (jwt) {
-  if (!jwt) return null
+function jwtDecodeAlive(jwt) {
+  if (!jwt) {
+    return null
+  }
   const decoded = jwtDecode(jwt)
-  if (!decoded) return null
+  if (!decoded) {
+    return null
+  }
   const now = Math.ceil(Date.now().valueOf() / 1000)
   if (typeof decoded.exp !== 'undefined' && decoded.exp < now) {
     console.error(`token expired: ${decoded.exp}<${now},  ${JSON.stringify(decoded)}`)
@@ -51,12 +55,18 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
     }),
     getters: {
       accountRole() {
-        if (!this.user) return null
-        if (this.user.organization) return this.user.organization.role
-        else return 'admin'
+        if (!this.user) {
+          return null
+        }
+        if (this.user.organization) {
+          return this.user.organization.role
+        }
+        return 'admin'
       },
       activeAccount() {
-        if (!this.user) return null
+        if (!this.user) {
+          return null
+        }
         if (this.user.organization) {
           const account = {
             type: 'organization',
@@ -70,18 +80,15 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
             account.departmentName = this.user.organization.departmentName
           }
           return account
-        } else {
-          return {
-            type: 'user',
-            id: this.user.id,
-            name: this.user.name
-          }
+        }
+        return {
+          type: 'user',
+          id: this.user.id,
+          name: this.user.name
         }
       },
       cookieOpts() {
-        const cookieOpts = { path: '/', sameSite: this.sameSite }
-        if (this.sameSite) cookieOpts.sameSite = this.sameSite
-        return cookieOpts
+        return { path: '/', sameSite: this.sameSite }
       },
       isAccountAdmin() {
         return this.user.adminMode === true
@@ -90,9 +97,11 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
         return (redirect, noImmediate, extraParams = {}) => {
           // Login can also be used to redirect user immediately if he is already logged
           // shorter than "logIfNecessaryOrRedirect"
-          if (redirect && this.user && !noImmediate) return redirect
+          if (redirect && this.user && !noImmediate) {
+            return redirect
+          }
           if (!redirect || typeof redirect !== 'string') {
-            redirect = globalThis.location ? `${globalThis.location.href}` : ''
+            redirect = window.location ? `${window.location.href}` : ''
           }
           let url = `${this.directoryUrl}/login?redirect=${encodeURIComponent(redirect)}`
           Object.keys(extraParams).filter(key => ![null, undefined, ''].includes(extraParams[key])).forEach(key => {
@@ -109,7 +118,7 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
           if (user) {
             this.httpLib(`${this.directoryUrl}/api/auth/asadmin`, {
               method: 'POST',
-              body: { user }
+              body: { ...user }
             }).then(() => {
               this.readCookie()
               goTo(this.logoutRedirectUrl || '/')
@@ -122,7 +131,9 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
               goTo(this.logoutRedirectUrl || '/')
             })
           }
-        } else console.error('No http client found to send keepalive action. You must use ofetch as init param.')
+        } else {
+          console.error('No http client found to send keepalive action. You must use ofetch as init param.')
+        }
       },
       cancelDeletion() {
         if (this.httpLib) {
@@ -138,16 +149,12 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
       },
       error(params) {
         console.error('Error', params.statusCode, params.message)
-        if (params.statusCode === 401) {
-          this.login()
-        } else {
-          if (typeof window !== 'undefined') {
-            window.location.href = `${this.directoryUrl}/error?statusCode=${params.statusCode}`
-          }
-        }
+        window.location.href = `${this.env.publicUrl}/error?statusCode=${params.statusCode}&message=${encodeURIComponent(params.message)}`
       },
       fetchActiveAccountDetails(forceRefresh = false) {
-        if (!this.activeAccount) return
+        if (!this.activeAccount) {
+          return
+        }
         if (
           !forceRefresh &&
           this.activeAccountDetails &&
@@ -158,35 +165,44 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
         }
         if (this.httpLib) {
           return this.httpLib(`${this.directoryUrl}/api/${this.activeAccount.type}s/${this.activeAccount.id}`).then(res => {
-            const data = { res, type: this.activeAccount.type }
-            this.setAny({ activeAccountDetails: data })
+            const data = { ...res, type: this.activeAccount.type }
+            this.activeAccountDetails = data
             return data
           })
-        } else {
-          console.error('No http client found to fetch active account details. You must use ofetch as init param.')
         }
+        console.error('No http client found to fetch active account details. You must use ofetch as init param.')
       },
       init(params) {
         if (!params.cookies) {
-          throw new Error('You must init @data-fair/sd-vue with a "cookies" wrapper with simple get and set methods like js-cookie, cookie-universal-nuxt or other')
+          throw new Error('You must init the store with a "cookies" wrapper with simple get and set methods like js-cookie, cookie-universal-nuxt or other')
         }
         if (!params.httpLib) {
-          throw new Error('You must init @data-fair/sd-vue with ofetch')
+          throw new Error('You must init the store with ofetch')
         }
         this.cookies = params.cookies
         delete params.cookies
         this.httpLib = params.httpLib
         delete params.httpLib
-        if (params.baseUrl) throw new Error('baseUrl param is deprecated, replaced with directoryUrl')
-        if (params.cookieDomain) throw new Error('cookieDomain param is deprecated, replaced with directoryUrl')
-        if (params.sessionDomain) throw new Error('sessionDomain param is deprecated, replaced with directoryUrl')
-        if (!params.directoryUrl && params.directoryUrl !== '') throw new Error('directoryUrl param is required')
-        const directoryUrl = params.directoryUrl.endsWith('/') ? params.directoryUrl.slice(0, -1) : params.directoryUrl
-        this.setAny({ ...params, directoryUrl })
+        if (params.baseUrl) {
+          throw new Error('baseUrl param is deprecated, replaced with directoryUrl')
+        }
+        if (params.cookieDomain) {
+          throw new Error('cookieDomain param is deprecated, replaced with directoryUrl')
+        }
+        if (params.sessionDomain) {
+          throw new Error('sessionDomain param is deprecated, replaced with directoryUrl')
+        }
+        if (!params.directoryUrl && params.directoryUrl !== '') {
+          throw new Error('directoryUrl param is required')
+        }
+        params.directoryUrl = params.directoryUrl.endsWith('/') ? params.directoryUrl.slice(0, -1) : params.directoryUrl
+        this.setAny({ ...params })
         this.readCookie()
       },
       keepalive() {
-        if (!this.user) return
+        if (!this.user) {
+          return
+        }
         if (this.httpLib) {
           return this.httpLib(`${this.directoryUrl}/api/auth/keepalive`, {
             method: 'POST'
@@ -194,9 +210,8 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
             this.readCookie()
             return res
           })
-        } else {
-          console.error('No http client found to send keepalive action. You must use ofetch as init param.')
         }
+        console.error('No http client found to send keepalive action. You must use ofetch as init param.')
       },
       login(redirect) {
         goTo(this.loginUrl(redirect))
@@ -207,7 +222,9 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
           return
         }
         // prevents breaking change when the logout action is called with a click event as parameter
-        if (typeof redirect === 'object') redirect = null
+        if (typeof redirect === 'object') {
+          redirect = null
+        }
         return this.httpLib(`${this.directoryUrl}/api/auth`, {
           method: 'DELETE'
         }).then(() => {
@@ -217,28 +234,25 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
           this.cookies.set(`${this.cookieName}_org`, '', this.cookieOpts)
           this.cookies.set(`${this.cookieName}_dep`, '', this.cookieOpts)
 
-          if (redirect) {
+          this.user = null
+          if (redirect && redirect !== false) {
             return goTo(redirect)
-          } else if (redirect === false) {
-            // nothing
           } else if (this.logoutRedirectUrl) {
             return goTo(this.logoutRedirectUrl)
           } else if (this.reloadAfterLogout && typeof window !== 'undefined') {
             window.location.reload()
           }
-          this.user = null
         })
       },
       loop(cookies) {
         if (!this.cookies && !cookies) {
-          throw new Error('You must init @data-fair/sd-vue vith a "cookies" wrapper with simple get and set methods like js-cookie, cookie-universal-nuxt or other')
+          throw new Error('You must init the store vith a "cookies" wrapper with simple get and set methods like js-cookie, cookie-universal-nuxt or other')
         }
         if (!this.httpLib) {
-          throw new Error('You must init @data-fair/sd-vue with ofetch')
+          throw new Error('You must init the store with ofetch')
         }
 
         this.cookies = this.cookies || cookies
-
         setTimeout(() => {
           // always start by a keepalive to fetch latest session info on page load
           this.keepalive()
@@ -248,12 +262,10 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
             this.readCookie()
 
             // also check if the token is getting a little bit old, and renew it
-            if (this.user && this.user.exp) {
-              // console.log('JWT token from cookie is set to expire on', new Date(this.user.exp * 1000))
+            if (this.user?.exp) {
               const timestamp = Date.now() / 1000
               const tooOld = timestamp > (this.user.iat + ((this.user.exp - this.user.iat) / 3))
               if (tooOld) {
-                // console.log('The token has lived more than a third of its lifetime, renew it')
                 this.keepalive()
               }
             }
@@ -269,7 +281,9 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
       },
       readCookie() {
         let cookie = this.cookies.get(this.cookieName, { fromRes: true })
-        if (cookie === undefined) cookie = this.cookies.get(this.cookieName)
+        if (cookie === undefined) {
+          cookie = this.cookies.get(this.cookieName)
+        }
         if (cookie) {
           const user = jwtDecodeAlive(cookie)
           if (user) {
@@ -299,12 +313,16 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
           }
           this.updateUser(user)
         } else {
-          this.setAny({ user: null })
+          this.user = null
         }
-        if (this.activeAccountDetails && (!this.activeAccount || this.activeAccount.type !== this.activeAccountDetails.type || this.activeAccount.id !== this.activeAccountDetails.id)) {
-          this.setAny({ activeAccountDetails: null })
+        if (this.activeAccountDetails && (
+          !this.activeAccount ||
+          this.activeAccount.type !== this.activeAccountDetails.type ||
+          this.activeAccount.id !== this.activeAccountDetails.id
+        )) {
+          this.activeAccountDetails = null
         }
-        this.setAny({ initialized: true })
+        this.initialized = true
       },
       setAdminMode(params) {
         let adminMode, redirect, extraParams
@@ -331,6 +349,7 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
             goTo(redirect || this.logoutRedirectUrl || '/')
           })
         }
+        this.user.adminMode = adminMode
       },
       setAny(params) {
         // Replace undefined with null to prevent breaking reactivity
