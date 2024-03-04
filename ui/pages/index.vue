@@ -1,5 +1,5 @@
 <template>
-  <p />
+  <div class="v-app" />
 </template>
 
 <script setup>

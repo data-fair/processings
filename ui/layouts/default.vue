@@ -1,7 +1,7 @@
 <template>
   <v-app :theme="isDark ? 'dark' : 'light'">
     <ClientOnly><AppBar v-if="!embed" /></ClientOnly>
-    <v-main>
+    <v-main class="v-app">
       <NuxtPage />
       <Notifications />
     </v-main>
@@ -39,7 +39,9 @@ useHead({
 
 <components :AppBar="AppBar" :Notifications="Notifications" />
 
-<style>
+<style lang="scss">
+@import '~/assets/main.scss';
+
 .v-list.list-actions .v-list-item .v-list-item__icon {
   margin-right: 16px;
 }

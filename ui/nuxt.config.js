@@ -25,7 +25,7 @@ export default defineNuxtConfig({
   buildDir: 'nuxt-dist',
   css: [
     '@mdi/font/css/materialdesignicons.min.css',
-    './assets/variables.scss'
+    './assets/main.scss'
   ],
   devtools: {
     enabled: true,
@@ -87,7 +87,7 @@ export default defineNuxtConfig({
   vuetify: {
     moduleOptions: {
       styles: {
-        configFile: './assets/variables.scss'
+        configFile: './assets/settings.scss'
       }
     },
     vuetifyOptions: './vuetify.config.js'
