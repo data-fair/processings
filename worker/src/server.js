@@ -17,12 +17,6 @@ const promisePool = []
 let mainLoopPromise
 let killLoopPromise
 
-// Hooks for testing
-const hooks = {}
-export const hook = (key) => new Promise((resolve, reject) => {
-  hooks[key] = { resolve, reject }
-})
-
 // clear also for testing
 export const clear = () => {
   for (let i = 0; i < config.worker.concurrency; i++) {
@@ -178,11 +172,9 @@ async function iter (db, wsPublish, run) {
     }
     if (!processing.active) {
       await finish(db, wsPublish, run, 'le traitement a été désactivé', 'error')
-      if (hooks[processing._id]) hooks[processing._id].reject({ run, message: 'le traitement a été désactivé' })
       return
     }
     // @test:spy("isTriggered")
-    if (hooks[processing._id]) hooks[processing._id].resolve(run)
 
     debug(`run "${processing.title}" > ${run._id}`)
 
@@ -206,7 +198,6 @@ async function iter (db, wsPublish, run) {
     await spawnPromise
 
     await finish(db, wsPublish, run)
-    if (hooks[processing._id]) hooks[processing._id].resolve(await db.collection('runs').findOne({ _id: run._id }))
   } catch (err) {
     // Build back the original error message from the stderr of the child process
     const errorMessage = []
