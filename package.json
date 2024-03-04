@@ -32,19 +32,6 @@
     "api",
     "worker"
   ],
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "plugins": [
-      "no-only-tests"
-    ],
-    "extends": [
-      "eslint:recommended",
-      "standard"
-    ]
-  },
   "bugs": {
     "url": "https://github.com/data-fair/processings/issues"
   },
