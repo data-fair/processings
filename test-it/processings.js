@@ -23,167 +23,167 @@ const plugin = (await superadmin.post('/api/v1/plugins', {
 })).data
 await superadmin.put(`/api/v1/plugins/${plugin.id}/access`, { public: true })
 
-try {
-  await test('should create a new processing, activate it and run it', async function () {
-    let processing = (await superadmin.post('/api/v1/processings', {
-      title: 'Hello processing',
-      plugin: plugin.id
-    })).data
-    assert.ok(processing._id)
-    assert.equal(processing.scheduling.type, 'trigger')
-    assert.ok(!processing.webhookKey)
+await test('should create a new processing, activate it and run it', async function () {
+  let processing = (await superadmin.post('/api/v1/processings', {
+    title: 'Hello processing',
+    plugin: plugin.id
+  })).data
+  assert.ok(processing._id)
+  assert.equal(processing.scheduling.type, 'trigger')
+  assert.ok(!processing.webhookKey)
 
-    const processings = (await superadmin.get('/api/v1/processings')).data
-    assert.equal(processings.count, 1)
-    assert.equal(processings.results[0]._id, processing._id)
-    assert.ok(!processings.results[0].webhookKey)
+  const processings = (await superadmin.get('/api/v1/processings')).data
+  assert.equal(processings.count, 1)
+  assert.equal(processings.results[0]._id, processing._id)
+  assert.ok(!processings.results[0].webhookKey)
 
-    // no run at first
-    let runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
-    assert.equal(runs.count, 0)
+  // no run at first
+  let runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+  assert.equal(runs.count, 0)
 
-    // active but without scheduling = still no run
-    await superadmin.patch(`/api/v1/processings/${processing._id}`, {
-      active: true,
-      config: {
-        datasetMode: 'create',
-        dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
-        overwrite: false,
-        message: 'Hello world test processing'
-      }
-    })
-    runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
-    assert.equal(runs.count, 0)
+  // active but without scheduling = still no run
+  await superadmin.patch(`/api/v1/processings/${processing._id}`, {
+    active: true,
+    config: {
+      datasetMode: 'create',
+      dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
+      overwrite: false,
+      message: 'Hello world test processing'
+    }
+  })
+  runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+  assert.equal(runs.count, 0)
 
-    // active and with scheduling = a scheduled run
-    await superadmin.patch(`/api/v1/processings/${processing._id}`, {
-      scheduling: { type: 'monthly', dayOfWeek: '*', dayOfMonth: 1, month: '*', hour: 0, minute: 0 }
-    })
-    runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
-    assert.equal(runs.count, 1)
-    assert.equal(runs.results[0].status, 'scheduled')
+  // active and with scheduling = a scheduled run
+  await superadmin.patch(`/api/v1/processings/${processing._id}`, {
+    scheduling: { type: 'monthly', dayOfWeek: '*', dayOfMonth: 1, month: '*', hour: 0, minute: 0 }
+  })
+  runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+  assert.equal(runs.count, 1)
+  assert.equal(runs.results[0].status, 'scheduled')
 
-    await superadmin.patch(`/api/v1/processings/${processing._id}`, { scheduling: { type: 'trigger' } })
-    await superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
-    runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
-    assert.equal(runs.count, 1)
-    assert.equal(runs.results[0].status, 'triggered')
+  await superadmin.patch(`/api/v1/processings/${processing._id}`, { scheduling: { type: 'trigger' } })
+  await Promise.all([
+    superadmin.post(`/api/v1/processings/${processing._id}/_trigger`),
+    assert.doesNotReject(workerServer.hook(processing._id), (runs) => runs.status === 'triggered')
+  ])
+  runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+  assert.equal(runs.count, 1)
+  assert.equal(runs.results[0].status, 'running')
 
-    // nothing, failure is normal we have no api key
-    const notif = await event2promise(global.events, 'notification')
-    assert.equal(notif.topic.key, `processings:processing-finish-error:${processing._id}`)
-    await assert.rejects(workerServer.hook(processing._id), () => true)
+  // nothing, failure is normal we have no api key
+  const notif = await event2promise(global.events, 'notification')
+  assert.equal(notif.topic.key, `processings:processing-finish-error:${processing._id}`)
+  await assert.rejects(workerServer.hook(processing._id), () => true)
 
-    const run = (await superadmin.get('/api/v1/runs/' + runs.results[0]._id)).data
-    assert.equal(run.status, 'error')
-    assert.equal(run.log[0].type, 'step')
-    assert.equal(run.log[1].type, 'error')
+  const run = (await superadmin.get('/api/v1/runs/' + runs.results[0]._id)).data
+  assert.equal(run.status, 'error')
+  assert.equal(run.log[0].type, 'step')
+  assert.equal(run.log[1].type, 'error')
 
-    processing = (await superadmin.get(`/api/v1/processings/${processing._id}`)).data
-    assert.ok(processing.lastRun)
-    assert.equal(processing.lastRun.status, 'error')
-    assert.ok(!processing.webhookKey)
+  processing = (await superadmin.get(`/api/v1/processings/${processing._id}`)).data
+  assert.ok(processing.lastRun)
+  assert.equal(processing.lastRun.status, 'error')
+  assert.ok(!processing.webhookKey)
+})
+
+await test('should kill a long run with SIGTERM', async function () {
+  const processing = (await superadmin.post('/api/v1/processings', {
+    title: 'Hello processing',
+    plugin: plugin.id,
+    active: true,
+    config: {
+      datasetMode: 'create',
+      dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
+      message: 'Hello world test processing long',
+      delay: 4
+    }
+  })).data
+
+  await superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
+  const runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+  assert.equal(runs.count, 1)
+  let run = runs.results[0]
+  assert.equal(run.status, 'triggered')
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  await superadmin.post(`/api/v1/runs/${run._id}/_kill`)
+  run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
+  assert.equal(run.status, 'kill')
+  await workerServer.hook(processing._id)
+  run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
+  assert.equal(run.status, 'killed')
+  assert.equal(run.log.length, 4)
+
+  // limits were updated
+  const limits = (await superadmin.get('/api/v1/limits/user/superadmin')).data
+  assert.ok(limits.processings_seconds.consumption >= 1)
+  assert.equal(limits.processings_seconds.limit, -1)
+})
+
+/*
+await test('should kill a long run with SIGTERM and wait for grace period', async function () {
+  const processing = (await superadmin.post('/api/v1/processings', {
+    title: 'Hello processing',
+    plugin: plugin.id,
+    active: true,
+    config: {
+      datasetMode: 'create',
+      dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
+      message: 'Hello world test processing long',
+      delay: 10000,
+      ignoreStop: true
+    }
+  })).data
+
+  await superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
+  const runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+  assert.equal(runs.count, 1)
+  let run = runs.results[0]
+  assert.equal(run.status, 'triggered')
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  await superadmin.post(`/api/v1/runs/${run._id}/_kill`)
+  run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
+  assert.equal(run.status, 'kill')
+  await workerServer.hook(processing._id)
+  run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
+  assert.equal(run.status, 'killed')
+  assert.equal(run.log.length, 2)
+})
+*/
+
+await test('should fail a run if processings_seconds limit is exceeded', async function () {
+  await superadmin.post('/api/v1/limits/user/superadmin', {
+    processings_seconds: { limit: 1 },
+    lastUpdate: new Date().toISOString()
   })
 
-  /*
-  await test('should kill a long run with SIGTERM', async function () {
-    const processing = (await superadmin.post('/api/v1/processings', {
-      title: 'Hello processing',
-      plugin: plugin.id,
-      active: true,
-      config: {
-        datasetMode: 'create',
-        dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
-        message: 'Hello world test processing long',
-        delay: 4
-      }
-    })).data
+  const processing = (await superadmin.post('/api/v1/processings', {
+    title: 'Hello processing',
+    plugin: plugin.id,
+    active: true,
+    config: {
+      datasetMode: 'create',
+      dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
+      message: 'Hello world test processing long',
+      delay: 1,
+      ignoreStop: true
+    }
+  })).data
 
-    await superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
-    const runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
-    assert.equal(runs.count, 1)
-    let run = runs.results[0]
-    assert.equal(run.status, 'triggered')
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    await superadmin.post(`/api/v1/runs/${run._id}/_kill`)
-    run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
-    assert.equal(run.status, 'kill')
-    await workerServer.hook(processing._id)
-    run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
-    assert.equal(run.status, 'killed')
-    assert.equal(run.log.length, 4)
+  await superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
+  await assert.rejects(workerServer.hook(processing._id), () => true)
 
-    // limits were updated
-    const limits = (await superadmin.get('/api/v1/limits/user/superadmin')).data
-    assert.ok(limits.processings_seconds.consumption >= 1)
-    assert.equal(limits.processings_seconds.limit, -1)
+  let limits = (await superadmin.get('/api/v1/limits/user/superadmin')).data
+  const consumption = limits.processings_seconds.consumption
+  assert.ok(consumption >= 1)
+
+  superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
+  await assert.rejects(workerServer.hook(processing._id), (err) => {
+    assert.equal(err.message, 'le temps de traitement autorisé est épuisé')
+    return true
   })
+  limits = (await superadmin.get('/api/v1/limits/user/superadmin')).data
+  assert.equal(limits.processings_seconds.consumption, consumption)
+})
 
-  await test('should kill a long run with SIGTERM and wait for grace period', async function () {
-    const processing = (await superadmin.post('/api/v1/processings', {
-      title: 'Hello processing',
-      plugin: plugin.id,
-      active: true,
-      config: {
-        datasetMode: 'create',
-        dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
-        message: 'Hello world test processing long',
-        delay: 10000,
-        ignoreStop: true
-      }
-    })).data
-
-    await superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
-    const runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
-    assert.equal(runs.count, 1)
-    let run = runs.results[0]
-    assert.equal(run.status, 'triggered')
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    await superadmin.post(`/api/v1/runs/${run._id}/_kill`)
-    run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
-    assert.equal(run.status, 'kill')
-    await workerServer.hook(processing._id)
-    run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
-    assert.equal(run.status, 'killed')
-    assert.equal(run.log.length, 2)
-  })
-  */
-
-  await test('should fail a run if processings_seconds limit is exceeded', async function () {
-    await superadmin.post('/api/v1/limits/user/superadmin', {
-      processings_seconds: { limit: 1 },
-      lastUpdate: new Date().toISOString()
-    })
-
-    const processing = (await superadmin.post('/api/v1/processings', {
-      title: 'Hello processing',
-      plugin: plugin.id,
-      active: true,
-      config: {
-        datasetMode: 'create',
-        dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
-        message: 'Hello world test processing long',
-        delay: 1,
-        ignoreStop: true
-      }
-    })).data
-
-    await superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
-    await assert.rejects(workerServer.hook(processing._id), () => true)
-
-    let limits = (await superadmin.get('/api/v1/limits/user/superadmin')).data
-    const consumption = limits.processings_seconds.consumption
-    assert.ok(consumption >= 1)
-
-    await superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
-    await assert.rejects(workerServer.hook(processing._id), (err) => {
-      assert.equal(err.message, 'le temps de traitement autorisé est épuisé')
-      return true
-    })
-    limits = (await superadmin.get('/api/v1/limits/user/superadmin')).data
-    assert.equal(limits.processings_seconds.consumption, consumption)
-  })
-} finally {
-  await superadmin.delete(`/api/v1/plugins/${plugin.id}`)
-  process.exit(0)
-}
+process.exit(0)

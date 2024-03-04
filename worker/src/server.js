@@ -171,6 +171,7 @@ async function iter (db, wsPublish, run) {
       if (hooks[processing._id]) hooks[processing._id].reject({ run, message: 'le traitement a été désactivé' })
       return
     }
+    if (hooks[processing._id]) hooks[processing._id].resolve(run)
 
     debug(`run "${processing.title}" > ${run._id}`)
 
