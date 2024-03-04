@@ -1,15 +1,14 @@
 <template>
   <v-autocomplete
-    :value="value"
+    :model-value="value"
     :items="utcs"
     :label="$t('tz')"
     :clearable="true"
     persistent-hint
     :disabled="disabled"
     menu-props="auto"
-    :hint="$t('defaultTZ', {defaultTimeZone})"
-    @input="v => $emit('input', v)"
-    @change="$emit('change')"
+    :hint="$t('defaultTZ', { defaultTimeZone })"
+    @update:model-value="$emit('update:modelValue', $event)"
   />
 </template>
 
@@ -19,31 +18,33 @@ fr:
   defaultTZ: Par défaut {defaultTimeZone}
 en:
   tz: Time zone
+  defaultTZ: Default {defaultTimeZone}
 </i18n>
 
-<script>
-const timeZones = require('timezones.json')
+<script setup>
+import timeZones from 'timezones.json'
+import { computed } from 'vue'
 
-export default {
-  props: ['value', 'disabled'],
-  data () {
-    return { timeZones }
-  },
-  computed: {
-    utcs () {
-      const utcs = []
-      for (const tz of timeZones) {
-        for (const utc of tz.utc) utcs.push(utc)
-      }
-      return utcs
-    },
-    defaultTimeZone () {
-      return process.env.defaultTimeZone
-    }
-  }
-}
+defineEmits(['update:modelValue'])
+defineProps({
+  disabled: Boolean,
+  value: String
+})
+
+const runtimeConfig = useRuntimeConfig()
+
+const utcs = computed(() => {
+  const utcs = []
+  timeZones.forEach(tz => {
+    utcs.push(...tz.utc)
+  })
+  return utcs.sort()
+})
+
+const defaultTimeZone = computed(() => {
+  return runtimeConfig.public.defaultTimeZone || 'UTC'
+})
 </script>
 
 <style>
-
 </style>

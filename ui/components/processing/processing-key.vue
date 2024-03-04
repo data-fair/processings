@@ -1,21 +1,21 @@
-<template lang="html">
+<template>
   <v-menu
     v-if="processing"
     v-model="menu"
     :max-width="1000"
     :close-on-content-click="false"
   >
-    <template #activator="{ on: onMenu, attrs }">
-      <v-tooltip bottom>
-        <template #activator="{ on: onTooltip }">
+    <template #activator="{ props }">
+      <v-tooltip location="bottom">
+        <template #activator="{ props: tooltipProps }">
           <v-btn
-            text
-            v-bind="attrs"
-            v-on="{ ...onTooltip, ...onMenu }"
+            variant="text"
+            v-bind="props"
+            v-on="tooltipProps.on"
           >
             <v-icon
               color="primary"
-              small
+              size="small"
             >
               mdi-help
             </v-icon>
@@ -26,10 +26,10 @@
     </template>
     <v-card>
       <v-card-title>
-        Vous pouvez déclencher une éxécution du traitement avec l'appel suivant :
+        Vous pouvez déclencher une exécution du traitement avec l'appel suivant :
       </v-card-title>
       <v-card-text>
-        <code style="width:100%">
+        <code style="width: 100%;">
           {{ curl }}
         </code>
       </v-card-text>
@@ -37,22 +37,23 @@
   </v-menu>
 </template>
 
-<script>
-import { mapState } from 'vuex'
-export default {
-  props: {
-    processing: { type: Object, required: true }
-  },
-  data () {
-    return {
-      menu: null
-    }
-  },
-  computed: {
-    ...mapState(['env']),
-    curl () {
-      return `curl -X POST ${this.env.publicUrl}/api/v1/processings/${this.processing.id}/_run -H 'x-apikey: ${this.processing.webhookKey}'`
-    }
-  }
-}
+<script setup>
+import { computed, ref } from 'vue'
+import { useStore } from '~/store/index'
+
+const properties = defineProps({
+  processing: { type: Object, required: true }
+})
+
+const store = useStore()
+
+const menu = ref(null)
+
+const env = computed(() => store.env)
+const curl = computed(() => {
+  return `curl -X POST ${env.value.publicUrl}/api/v1/processings/${properties.processing.id}/_run -H 'x-apikey: ${properties.processing.webhookKey}'`
+})
 </script>
+
+<style>
+</style>

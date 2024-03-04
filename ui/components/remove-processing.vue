@@ -2,15 +2,14 @@
   <v-menu
     v-model="menu"
     width="500"
-    :close-on-click="false"
+    persistent
     :close-on-content-click="false"
   >
-    <template #activator="{ on }">
+    <template #activator>
       <v-btn
         icon
         color="warning"
-        text
-        v-on="on"
+        variant="text"
         @click="open"
       >
         <v-icon>mdi-delete</v-icon>
@@ -21,30 +20,28 @@
       <v-card-title class="text-h6">
         Suppression d'un élément
       </v-card-title>
-
       <v-card-text>
         <p>
-          Voulez vous vraiment supprimer le traitement <span
+          Voulez vous vraiment supprimer le traitement
+          <span
             v-if="processing.title"
-            class="accent--text"
+            class="text-accent"
           >{{ processing.title }}</span> ?
         </p>
         <p>La suppression est définitive.</p>
       </v-card-text>
-
       <v-divider />
-
       <v-card-actions>
         <v-spacer />
         <v-btn
-          text
-          @click.native="menu = false"
+          variant="text"
+          @click="menu = false"
         >
           Annuler
         </v-btn>
         <v-btn
           color="warning"
-          @click.native="confirm"
+          @click="confirm"
         >
           Oui
         </v-btn>
@@ -53,31 +50,38 @@
   </v-menu>
 </template>
 
-<script>
-import eventBus from '../event-bus'
+<script setup>
+import useEventBus from '~/composables/event-bus'
+import { emit, ref } from 'vue'
+import { useStore } from '~/store/index'
 
-export default {
-  props: {
-    processing: { type: Object, default: null }
-  },
-  data: () => ({
-    menu: false
-  }),
-  methods: {
-    open (e) {
-      this.menu = true
-      e.stopPropagation()
-    },
-    async confirm () {
-      try {
-        await this.$axios.$delete('api/v1/processings/' + this.processing.id)
-        this.$emit('removed', { id: this.processing.id })
-      } catch (error) {
-        eventBus.$emit('notification', { error, msg: 'Erreur pendant la suppression du traitement' })
-      } finally {
-        this.menu = false
-      }
-    }
+const props = defineProps({
+  processing: { type: Object, default: () => ({}) }
+})
+
+const store = useStore()
+
+const menu = ref(false)
+const eventBus = useEventBus()
+
+const open = (e) => {
+  menu.value = true
+  e.stopPropagation()
+}
+
+const confirm = async () => {
+  try {
+    await $fetch(`${store.env.publicUrl}/api/v1/processings/${props.processing.id}`, {
+      method: 'DELETE'
+    })
+    emit('removed', { id: props.processing.id })
+  } catch (error) {
+    eventBus.emit('notification', { error, msg: 'Erreur pendant la suppression du traitement' })
+  } finally {
+    menu.value = false
   }
 }
 </script>
+
+<style>
+</style>

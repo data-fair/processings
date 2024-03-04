@@ -10,7 +10,7 @@ ADD /ui/package.json ui/
 
 RUN npm i -g clean-modules@3.0.4
 RUN npm -w ui --include-workspace-root ci --no-audit --no-fund && \
-    clean-modules --yes "!exceljs/lib/doc/" "!mocha/lib/test.js" "!**/*.mustache"
+    clean-modules --yes
 
 ADD /ui/ ui/
 ADD /contract/ contract/
@@ -30,7 +30,7 @@ ENV PORT 3039
 WORKDIR /webapp/
 
 COPY --from=builder /webapp/ui/node_modules ui/node_modules/
-COPY --from=builder /webapp/ui/dist ui/dist/
+COPY --from=builder /webapp/ui/.output ui/.output/
 COPY --from=builder /webapp/ui/nuxt-dist ui/nuxt-dist/
 
 ADD /ui/nuxt.config.js ui/
@@ -45,4 +45,4 @@ EXPOSE 3039
 
 USER node
 
-CMD ["node", "--max-http-header-size", "64000", "nuxt start"]
+CMD ["node", "--max-http-header-size", "64000", "PORT=3039 node /webapp/ui/.output/server/index.mjs"]

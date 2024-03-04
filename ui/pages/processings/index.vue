@@ -4,9 +4,9 @@
     style="min-height:500px;"
   >
     <v-row>
-      <v-col :style="$vuetify.breakpoint.lgAndUp ? 'padding-right:256px;' : ''">
+      <v-col :style="$vuetify.display.lgAndUp ? 'padding-right:256px;' : ''">
         <v-container>
-          <v-subheader>{{ (processings && processings.count) || 0 }} traitements</v-subheader>
+          <v-list-subheader>{{ (processings && processings.count) || 0 }} traitements</v-list-subheader>
           <v-row v-if="processings">
             <v-col
               v-for="processing in processings.results"
@@ -24,7 +24,7 @@
           </v-row>
         </v-container>
       </v-col>
-      <layout-navigation-right v-if="$vuetify.breakpoint.lgAndUp">
+      <layout-navigation-right v-if="$vuetify.display.lgAndUp">
         <processings-actions
           v-if="canAdmin"
           :installed-plugins="installedPlugins"
@@ -41,9 +41,9 @@
               v-model="showAll"
               label="voir tous les traitements"
               hide-details
-              dense
+              density="compact"
               class="mt-0"
-              @change="refresh"
+              @update:model-value="refresh"
             />
           </v-card-text>
         </v-card>
@@ -62,82 +62,78 @@
   </v-container>
 </template>
 
-<script>
-import { mapState, mapGetters } from 'vuex'
-import format from '~/assets/format.js'
-import eventBus from '~/event-bus'
+<script setup>
+import format from '~/assets/format'
+import useEventBus from '~/composables/event-bus'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { useStore } from '~/store/index'
 
-export default {
-  components: {},
-  data: () => ({
-    processings: null,
-    installedPlugins: {},
-    showAll: false
-  }),
-  computed: {
-    ...mapState(['env']),
-    ...mapState('session', ['user']),
-    ...mapGetters('session', ['activeAccount']),
-    owner () {
-      if (this.$route.query.owner) {
-        const parts = this.$route.query.owner.split(':')
-        return { type: parts[0], id: parts[1] }
-      } else {
-        return this.activeAccount
-      }
-    },
-    ownerRole () {
-      if (this.owner.type === 'user') {
-        if (this.owner.id === this.user.id) return 'admin'
-        else return 'anonymous'
-      }
-      const userOrg = this.user.organizations.find(o => o.id === this.owner.id)
-      return userOrg ? userOrg.role : 'anonymous'
-    },
-    ownerFilter () {
-      return `${this.owner.type}:${this.owner.id}`
-    },
-    canAdmin () {
-      if (this.env.secondaryHost) return false
-      return this.ownerRole === 'admin' || this.user.adminMode
+const eventBus = useEventBus()
+const store = useStore()
+const route = useRoute()
+
+const installedPlugins = ref({})
+const processings = ref(null)
+const showAll = ref(false)
+
+const activeAccount = computed(() => store.activeAccount)
+const env = computed(() => store.env)
+const user = computed(() => store.user)
+
+const owner = computed(() => {
+  if (route.query.owner) {
+    const parts = route.query.owner.split(':')
+    return { type: parts[0], id: parts[1] }
+  } else {
+    return activeAccount.value
+  }
+})
+
+const ownerRole = computed(() => {
+  if (owner.value.type === 'user') {
+    if (owner.value.id === user.value.id) return 'admin'
+    else return 'anonymous'
+  }
+  const userOrg = user.value.organizations.find(o => o.id === owner.value.id)
+  return userOrg ? userOrg.role : 'anonymous'
+})
+
+const ownerFilter = computed(() => `${owner.value.type}:${owner.value.id}`)
+
+const canAdmin = computed(() => {
+  if (env.value.secondaryHost) return false
+  return ownerRole.value === 'admin' || user.value.adminMode
+})
+
+onMounted(async () => {
+  store.setBreadcrumbs([{ text: 'traitements' }])
+  await refresh()
+  await fetchInstalledPlugins()
+})
+
+async function fetchInstalledPlugins() {
+  if (!canAdmin.value) return
+  installedPlugins.value = await $fetch(`${env.value.publicUrl}/api/v1/plugins?privateAccess=${ownerFilter.value}`)
+}
+
+async function refresh() {
+  try {
+    const params = {
+      size: '10000',
+      showAll: showAll.value,
+      sort: 'updated.date:-1',
+      select: '_id,title,plugin,lastRun,nextRun,owner'
     }
-  },
-  watch: {},
-  created () {
-    this.$store.dispatch('setBreadcrumbs', [{
-      text: 'traitements'
-    }])
-    this.refresh()
-    this.fetchInstalledPlugins()
-  },
-  methods: {
-    async fetchInstalledPlugins () {
-      if (!this.canAdmin) return
-      this.installedPlugins = await this.$axios.$get('/api/v1/plugins', {
-        params: {
-          privateAccess: this.ownerFilter
-        }
-      })
-    },
-    async refresh () {
-      try {
-        const params = {
-          size: 10000,
-          showAll: this.showAll,
-          sort: 'updated.date:-1',
-          select: '_id,title,plugin,lastRun,nextRun,owner'
-        }
-        if (this.showAll) {
-          params.showAll = true
-        } else {
-          params.owner = this.ownerFilter
-        }
-        this.processings = await this.$axios.$get('api/v1/processings', { params })
-      } catch (error) {
-        eventBus.$emit('notification', { error, msg: 'Erreur pendant la récupération de la liste des traitements' })
-      }
-    },
-    format
+    if (showAll.value) {
+      params.showAll = true
+    } else {
+      params.owner = ownerFilter.value
+    }
+    processings.value = await $fetch(`${env.value.publicUrl}/api/v1/processings`, { params })
+  } catch (error) {
+    eventBus.emit('notification', { error, msg: 'Erreur pendant la récupération de la liste des traitements' })
   }
 }
+
 </script>

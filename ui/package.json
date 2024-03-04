@@ -1,35 +1,64 @@
 {
   "name": "ui",
+  "type": "module",
   "scripts": {
-    "analyze": "rm -rf nuxt-dist dist && nuxt build --analyze",
-    "build": "rm -rf nuxt-dist dist && nuxt build",
-    "dev": "NODE_ENV=development nuxt -p 3039",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview"
+    "analyze": "rm -rf .output && nuxi analyze",
+    "build": "rm -rf .output && nuxi build",
+    "dev": "npm run build && nuxi start",
+    "dev-test": "nuxi dev -p 3039",
+    "generate": "nuxi generate",
+    "prepare": "nuxi prepare",
+    "preview": "nuxi preview"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "plugins": [
+      "no-only-tests"
+    ],
+    "extends": [
+      "eslint:recommended",
+      "plugin:vue/vue3-recommended",
+      "plugin:vuetify/base",
+      "standard"
+    ],
+    "rules": {
+      "space-before-function-paren": "off",
+      "node/no-deprecated-api": "off",
+      "vue/multi-word-component-names": "off",
+      "vue/no-v-for-template-key-on-child": "off",
+      "vue/require-prop-types": "off"
+    }
   },
   "devDependencies": {
-    "@data-fair/sd-vue": "^2.6.1",
-    "@koumoul/v-iframe": "^1.1.0",
-    "@koumoul/vjsf": "^2.22.1",
-    "@mdi/font": "^6.5.95",
-    "@nuxtjs/google-fonts": "^1.3.0",
-    "@nuxtjs/vuetify": "^1.11.3",
-    "babel-eslint": "^10.0.2",
-    "clean-modules": "^2.0.4",
-    "eslint-plugin-vue": "^8.5.0",
-    "iframe-resizer": "^4.3.1",
-    "marked": "^0.8.2",
-    "nuxt": "^2.15.8",
-    "nuxt-webpack-optimisations": "^2.2.0",
+    "@babel/eslint-parser": "^7.23.10",
+    "@data-fair/sd-vue": "^2.7.0",
+    "@koumoul/v-iframe": "^2.4.1",
+    "@koumoul/vjsf": "^3.0.0-beta.3",
+    "@mdi/font": "^7.4.47",
+    "@nuxtjs/google-fonts": "^3.1.3",
+    "@nuxtjs/i18n": "^8.1.1",
+    "@pinia/nuxt": "^0.5.1",
+    "clean-modules": "^3.0.4",
+    "eslint-plugin-vue": "^9.22.0",
+    "eslint-plugin-vuetify": "^2.1.1",
+    "iframe-resizer": "^4.3.9",
+    "js-cookie": "^3.0.5",
+    "jwt-decode": "^4.0.0",
+    "nuxt": "^3.10.3",
+    "ofetch": "^1.3.3",
+    "pinia": "^2.1.7",
     "reconnecting-websocket": "^4.4.0",
-    "vue-truncate-filter": "^1.1.7"
+    "sass": "^1.71.1",
+    "vite": "^5.1.4",
+    "vue": "^3.4.21",
+    "vue-i18n": "^9.9.1",
+    "vuetify-nuxt-module": "^0.12.0"
   },
   "dependencies": {
-    "@koumoul/nuxt-config-inject": "^0.4.10",
-    "@nuxtjs/axios": "^5.12.5",
-    "@nuxtjs/i18n": "^7.2.2",
-    "cookie-universal-nuxt": "^2.1.4",
-    "dayjs": "^1.10.7",
-    "timezones.json": "^1.6.1"
+    "dayjs": "^1.11.10",
+    "timezones.json": "^1.7.1"
   }
 }

@@ -1,5 +1,6 @@
-import '@koumoul/v-iframe/content-window.js'
+import '@koumoul/v-iframe/content-window'
+import { defineNuxtPlugin } from 'nuxt/app'
 
-export default ({ app }) => {
-  window.vIframeOptions = { router: app.router }
-}
+export default defineNuxtPlugin(nuxtApp => {
+  window.vIframeOptions = { router: nuxtApp.$router }
+})

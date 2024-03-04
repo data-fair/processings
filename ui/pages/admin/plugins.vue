@@ -1,16 +1,16 @@
-<template lang="html">
+<template>
   <v-container data-iframe-height>
     <v-text-field
       v-model="search"
       placeholder="rechercher"
-      outlined
-      dense
+      variant="outlined"
+      density="compact"
       hide-details
       clearable
       style="max-width:400px;"
       append-icon="mdi-magnify"
     />
-    <v-subheader>Plugins Installés</v-subheader>
+    <v-list-subheader>Plugins Installés</v-list-subheader>
     <v-progress-linear
       v-if="!installedPlugins.results"
       indeterminate
@@ -23,8 +23,8 @@
         v-if="result.pluginConfigSchema"
         :key="'installed-' + result.id"
         class="my-1"
-        outlined
-        tile
+        variant="outlined"
+        rounded="0"
       >
         <v-toolbar
           dense
@@ -67,7 +67,7 @@
       </v-card>
     </template>
     <v-list>
-      <v-subheader>Plugins disponibles</v-subheader>
+      <v-list-subheader>Plugins disponibles</v-list-subheader>
       <v-progress-linear
         v-if="!availablePlugins.results"
         indeterminate
@@ -77,15 +77,13 @@
         v-else
         :key="'available-' + result.name + '-' + result.version"
       >
-        <v-list-item-content>
-          <v-list-item-title v-if="result.distTag === 'latest'">
-            {{ result.name }} ({{ result.version }})
-          </v-list-item-title>
-          <v-list-item-title v-else>
-            {{ result.name }} ({{ result.distTag }} - {{ result.version }})
-          </v-list-item-title>
-          <v-list-item-subtitle>{{ result.description }}</v-list-item-subtitle>
-        </v-list-item-content>
+        <v-list-item-title v-if="result.distTag === 'latest'">
+          {{ result.name }} ({{ result.version }})
+        </v-list-item-title>
+        <v-list-item-title v-else>
+          {{ result.name }} ({{ result.distTag }} - {{ result.version }})
+        </v-list-item-title>
+        <v-list-item-subtitle>{{ result.description }}</v-list-item-subtitle>
         <v-list-item-action>
           <v-btn
             title="Installer"
@@ -102,69 +100,86 @@
   </v-container>
 </template>
 
-<script>
-import VJsf from '@koumoul/vjsf/lib/VJsf.js'
-import '@koumoul/vjsf/lib/deps/third-party.js'
-import '@koumoul/vjsf/dist/main.css'
+<script setup>
+import Vjsf from '@koumoul/vjsf'
+import { computed, onMounted, ref } from 'vue'
+import { useStore } from '~/store/index'
 
-export default {
-  components: { VJsf },
-  middleware: 'superadmin-required',
-  data: () => ({
-    loading: false,
-    availablePlugins: {},
-    installedPlugins: {},
-    search: ''
-  }),
-  computed: {
-    filteredAvailablePlugins () {
-      if (!this.availablePlugins.results) return
-      if (!this.search) return this.availablePlugins.results
-      return this.availablePlugins.results.filter(r => r.name.includes(this.search) || (r.description && r.description.includes(this.search)))
-    },
-    filteredInstalledPlugins () {
-      if (!this.installedPlugins.results) return
-      if (!this.search) return this.installedPlugins.results
-      return this.installedPlugins.results.filter(r => r.name.includes(this.search) || (r.description && r.description.includes(this.search)))
-    }
-  },
-  created () {
-    this.$store.dispatch('setBreadcrumbs', [{ text: 'plugins' }])
-    this.fetchAvailablePlugins()
-    this.fetchInstalledPlugins()
-  },
-  methods: {
-    async fetchAvailablePlugins () {
-      this.availablePlugins = await this.$axios.$get('/api/v1/plugins-registry')
-    },
-    async fetchInstalledPlugins () {
-      this.installedPlugins = await this.$axios.$get('/api/v1/plugins')
-    },
-    async install (plugin) {
-      this.loading = true
-      await this.$axios.$post('/api/v1/plugins', plugin)
-      await this.fetchInstalledPlugins()
-      this.loading = false
-    },
-    async uninstall (plugin) {
-      this.loading = true
-      await this.$axios.$delete('/api/v1/plugins/' + plugin.id)
-      await this.fetchInstalledPlugins()
-      this.loading = false
-    },
-    async saveConfig (plugin) {
-      this.loading = true
-      await this.$axios.$put(`/api/v1/plugins/${plugin.id}/config`, plugin.config)
-      this.loading = false
-    },
-    async saveAccess (plugin) {
-      this.loading = true
-      await this.$axios.$put(`/api/v1/plugins/${plugin.id}/access`, plugin.access)
-      this.loading = false
-    }
-  }
+definePageMeta({
+  middleware: ['superadmin-required']
+})
+
+const store = useStore()
+
+const loading = ref(false)
+const availablePlugins = ref({})
+const installedPlugins = ref({})
+const search = ref('')
+
+const env = computed(() => store.env)
+const filteredAvailablePlugins = computed(() => {
+  if (!availablePlugins.value.results) return
+  if (!search.value) return availablePlugins.value.results
+  return availablePlugins.value.results.filter(r => r.name.includes(search.value) || (r.description && r.description.includes(search.value)))
+})
+
+const filteredInstalledPlugins = computed(() => {
+  if (!installedPlugins.value.results) return
+  if (!search.value) return installedPlugins.value.results
+  return installedPlugins.value.results.filter(r => r.name.includes(search.value) || (r.description && r.description.includes(search.value)))
+})
+
+onMounted(async () => {
+  store.setBreadcrumbs([{ text: 'plugins' }])
+  await fetchAvailablePlugins()
+  await fetchInstalledPlugins()
+})
+
+async function fetchAvailablePlugins() {
+  availablePlugins.value = await $fetch(`${env.value.publicUrl}/api/v1/plugins-registry`)
+}
+
+async function fetchInstalledPlugins() {
+  installedPlugins.value = await $fetch(`${env.value.publicUrl}/api/v1/plugins`)
+}
+
+async function install(plugin) {
+  loading.value = true
+  await $fetch(`${env.value.publicUrl}/api/v1/plugins`, {
+    method: 'POST',
+    body: JSON.stringify(plugin)
+  })
+  await fetchInstalledPlugins()
+  loading.value = false
+}
+
+async function uninstall(plugin) {
+  loading.value = true
+  await $fetch(`${env.value.publicUrl}/api/v1/plugins/${plugin.id}`, {
+    method: 'DELETE'
+  })
+  await fetchInstalledPlugins()
+  loading.value = false
+}
+
+async function saveConfig(plugin) {
+  loading.value = true
+  await $fetch(`${env.value.publicUrl}/api/v1/plugins/${plugin.id}/config`, {
+    method: 'PUT',
+    body: JSON.stringify(plugin.config)
+  })
+  loading.value = false
+}
+
+async function saveAccess(plugin) {
+  loading.value = true
+  await $fetch(`${env.value.publicUrl}/api/v1/plugins/${plugin.id}/access`, {
+    method: 'PUT',
+    body: JSON.stringify(plugin.access)
+  })
+  loading.value = false
 }
 </script>
 
-<style lang="css" scoped>
+<style>
 </style>

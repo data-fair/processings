@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   publicUrl: 'http://localhost:5600',
   directoryUrl: 'http://localhost:5600/simple-directory',
   dataFairUrl: 'http://localhost:5600/data-fair',

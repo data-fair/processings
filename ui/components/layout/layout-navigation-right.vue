@@ -1,11 +1,10 @@
 <template>
   <v-navigation-drawer
     class="navigation-right pl-2"
-    right
+    location="right"
     permanent
-    clipped
     floating
-    fixed
+    position="fixed"
     style="padding-top: 60px"
     color="transparent"
   >
@@ -13,11 +12,10 @@
   </v-navigation-drawer>
 </template>
 
-<script>
-export default {}
+<script setup>
 </script>
 
-<style lang="css" scoped>
+<style scoped>
 .main-logo img {
   width: 40px;
   height: auto;

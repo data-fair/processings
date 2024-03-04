@@ -12,8 +12,8 @@
     "dev-deps": "docker compose --profile dev up -d --wait",
     "dev-ui": "npm -w ui run dev",
     "dev-worker": "npm -w worker run dev",
-    "dev-zellij": "export DEV_SHELL=$(basename \"$SHELL\") && zellij --layout .zellij.kdl",
-    "i": "rimraf node_modules ui/node_modules api/node_modules worker/node_modules && npm i --force && cd api && npm i --force && cd ../ui && npm i --force && cd ../worker && npm i --force",
+    "dev-zellij": "export DEV_SHELL=$(basename \"$SHELL\") && zellij --layout .zellij.kdl && npm run stop-dev-deps",
+    "i": "rimraf node_modules ui/node_modules api/node_modules worker/node_modules && npm i && cd api && npm i && cd ../ui && npm i && cd ../worker && npm i",
     "lint": "eslint --ext js,vue --ignore-path .gitignore .",
     "lint-fix": "eslint --ext js,vue --ignore-path .gitignore --fix .",
     "test-outdated": "NODE_ENV=test mocha --exit --bail --timeout 10000 test/",
@@ -41,19 +41,10 @@
       "no-only-tests"
     ],
     "extends": [
-      "plugin:vue/essential",
       "eslint:recommended",
       "standard",
-      "plugin:vue/recommended"
-    ],
-    "rules": {
-      "vue/no-v-html": "off",
-      "vue/multi-word-component-names": "off",
-      "node/no-deprecated-api": "off",
-      "vue/no-mutating-props": "off",
-      "vue/require-prop-types": "off",
-      "vue/no-useless-template-attributes": "off"
-    }
+      "typescript"
+    ]
   },
   "bugs": {
     "url": "https://github.com/data-fair/processings/issues"
@@ -74,7 +65,7 @@
     "rimraf": "^5.0.5"
   },
   "dependencies": {
-    "@data-fair/lib": "0.26.0",
+    "@data-fair/lib": "0.27.0",
     "agentkeepalive": "4",
     "ajv": "^8.12.0",
     "ajv-errors": "^3.0.0",

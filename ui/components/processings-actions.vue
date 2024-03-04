@@ -1,6 +1,6 @@
 <template>
   <v-list
-    dense
+    density="compact"
     class="list-actions"
   >
     <v-menu
@@ -9,17 +9,14 @@
       min-width="500px"
       max-width="500px"
     >
-      <template #activator="{ on, attrs }">
-        <v-list-item
-          v-bind="attrs"
-          v-on="on"
-        >
-          <v-list-item-icon>
+      <template #activator="{ props }">
+        <v-list-item v-bind="props">
+          <template #prepend>
             <v-icon color="primary">
               mdi-plus-circle
             </v-icon>
-          </v-list-item-icon>
-          <v-list-item-title>Créer un nouveau traitement</v-list-item-title>
+          </template>
+          Créer un nouveau traitement
         </v-list-item>
       </template>
       <v-card v-if="newProcessing">
@@ -40,7 +37,7 @@
               label="Plugin"
               :loading="!installedPlugins.results"
               :items="installedPlugins.results"
-              :item-text="item => item.name + ' - ' + item.version"
+              :item-title="item => `${item.name} - ${item.version}`"
               item-value="id"
             />
           </v-form>
@@ -48,7 +45,7 @@
         <v-card-actions>
           <v-spacer />
           <v-btn
-            text
+            variant="text"
             @click="showCreateMenu = false"
           >
             Annuler
@@ -56,7 +53,7 @@
           <v-btn
             :disabled="!newProcessing.title || !newProcessing.plugin"
             color="primary"
-            @click="createProcessing(newProcessing); showCreateMenu = false"
+            @click="createProcessing"
           >
             Enregistrer
           </v-btn>
@@ -66,30 +63,30 @@
   </v-list>
 </template>
 
-<script>
-import { mapState, mapGetters } from 'vuex'
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useStore } from '~/store/index'
 
-export default {
-  props: {
-    installedPlugins: { type: Object, required: true }
-  },
-  data: () => ({
-    showCreateMenu: false,
-    newProcessing: {}
-  }),
-  computed: {
-    ...mapState('session', ['user']),
-    ...mapGetters('session', ['activeAccount'])
-  },
-  methods: {
-    async createProcessing (processing) {
-      const newProcessing = await this.$axios.$post('api/v1/processings', processing)
-      this.$router.push(`/processings/${newProcessing._id}`)
-    }
-  }
+defineProps({
+  installedPlugins: { type: Object, required: true }
+})
+
+const router = useRouter()
+const store = useStore()
+
+const showCreateMenu = ref(false)
+const newProcessing = ref({})
+
+const createProcessing = async () => {
+  const response = await $fetch(`${store.env.publicUrl}/api/v1/processings`, {
+    method: 'POST',
+    body: JSON.stringify(newProcessing.value)
+  })
+  showCreateMenu.value = false
+  return navigateTo({ path: `/processings/${response._id}` })
 }
 </script>
 
 <style>
-
 </style>

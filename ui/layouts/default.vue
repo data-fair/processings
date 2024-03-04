@@ -1,31 +1,43 @@
 <template>
-  <v-app>
-    <client-only><app-bar v-if="!embed" /></client-only>
+  <v-app :theme="isDark ? 'dark' : 'light'">
+    <ClientOnly><AppBar v-if="!embed" /></ClientOnly>
     <v-main>
-      <nuxt-child />
-      <notifications />
+      <NuxtPage />
+      <Notifications />
     </v-main>
   </v-app>
 </template>
 
-<script>
+<script setup>
 import 'iframe-resizer/js/iframeResizer.contentWindow'
-import { mapGetters } from 'vuex'
-import Notifications from '../components/notifications.vue'
+import Notifications from '~/components/notifications.vue'
 import AppBar from '~/components/layout/app-bar.vue'
+import { computed } from 'vue'
+import { useStore } from '~/store/index'
 
-global.iFrameResizer = {
+const store = useStore()
+const theme = useTheme()
+const isDark = computed(() => theme.dark)
+
+const embed = computed(() => store.embed)
+
+globalThis.iFrameResizer = {
   heightCalculationMethod: 'taggedElement'
 }
 
-export default {
-  components: { AppBar, Notifications },
-  computed: {
-    ...mapGetters(['embed'])
-  }
-}
-
+useHead({
+  title: 'Data Fair Processings',
+  meta: [
+    { charset: 'utf-8' },
+    { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+    { hid: 'application', name: 'application-name', content: 'data-fair-processings' },
+    { hid: 'description', name: 'description', content: 'Periodically import / export data between Data Fair and other services.' },
+    { hid: 'robots', name: 'robots', content: 'noindex' }
+  ]
+})
 </script>
+
+<components :AppBar="AppBar" :Notifications="Notifications" />
 
 <style>
 .v-list.list-actions .v-list-item .v-list-item__icon {

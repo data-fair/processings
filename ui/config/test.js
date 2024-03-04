@@ -1,3 +1,3 @@
-module.exports = {
+export default {
   directoryUrl: 'http://localhost:8080'
 }

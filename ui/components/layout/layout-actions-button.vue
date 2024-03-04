@@ -1,21 +1,19 @@
 <template>
   <div
     class="actions-buttons"
-    style="position:absolute;right:20px;"
+    style="position: absolute; right: 20px;"
   >
     <v-menu
-      bottom
-      left
+      location="bottom left"
       :close-on-content-click="false"
     >
-      <template #activator="{on}">
+      <template #activator>
         <v-btn
-          fab
-          small
+          size="small"
           color="accent"
-          v-on="on"
+          class=".rounded-circle"
         >
-          <v-icon v-text="icon" />
+          <v-icon>{{ icon }}</v-icon>
         </v-btn>
       </template>
       <slot name="actions" />
@@ -23,13 +21,11 @@
   </div>
 </template>
 
-<script>
-export default {
-  props: {
-    icon: { type: String, default: 'mdi-dots-vertical' }
-  }
-}
+<script setup>
+defineProps({
+  icon: { type: String, default: 'mdi-dots-vertical' }
+})
 </script>
 
-<style lang="css" scoped>
+<style>
 </style>

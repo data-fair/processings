@@ -1,6 +1,6 @@
 <template>
   <v-list
-    dense
+    density="compact"
     class="py-0"
   >
     <v-list-item
@@ -10,7 +10,7 @@
     >
       <span
         v-if="log.type === 'error'"
-        class="text-body-2 error--text"
+        class="text-body-2 text-error"
       >
         <template v-if="log.msg.status">
           <template v-if="typeof log.msg.data === 'string'">{{ log.msg.data }}</template>
@@ -22,7 +22,7 @@
       </span>
       <span
         v-if="log.type === 'warning'"
-        class="text-body-2 warning--text"
+        class="text-body-2 text-warning"
       >
         {{ log.msg }}
       </span>
@@ -50,39 +50,37 @@
           rounded
           :color="taskColor(log)"
           :indeterminate="!log.progress || !log.total"
-          :query="true"
-          :value="log.total ? ((log.progress || 0) / log.total) * 100 : 0"
+          :model-value="log.total ? ((log.progress || 0) / log.total) * 100 : 0"
         />
-
       </span>
       <v-spacer />
       <span
         class="text-caption pl-2"
         style="white-space: nowrap;"
-      >{{ log.date | date('lll') }}</span>
+      >
+        {{ $filters.formatDate(log.date, 'lll') }}
+      </span>
       <span
         v-if="log.progressDate"
         class="text-caption pl-2"
         style="white-space: nowrap;"
-      >- {{ log.progressDate | date('lll') }}</span>
+      >
+        - {{ $filters.formatDate(log.progressDate, 'lll') }}
+      </span>
     </v-list-item>
   </v-list>
 </template>
 
-<script>
-export default {
-  props: {
-    logs: { type: Array, required: true }
-  },
-  methods: {
-    taskColor (log) {
-      if (log.progress && log.progress === log.total) return 'success'
-      return 'primary'
-    }
-  }
+<script setup>
+defineProps({
+  logs: { type: Array, required: true }
+})
+
+const taskColor = (log) => {
+  if (log.progress && log.progress === log.total) return 'success'
+  return 'primary'
 }
 </script>
 
 <style>
-
 </style>

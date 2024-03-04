@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   publicUrl: 'PUBLIC_URL',
   directoryUrl: 'DIRECTORY_URL',
   dataFairUrl: 'DATA_FAIR_URL',

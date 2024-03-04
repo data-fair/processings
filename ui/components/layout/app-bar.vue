@@ -1,20 +1,19 @@
 <template>
   <v-app-bar
-    app
     flat
     dense
     class="px-0 main-app-bar"
   >
     <v-toolbar-items>
       <v-btn
-        text
-        :to="{name: 'processings'}"
+        variant="text"
+        :to="{ name: 'processings' }"
       >
         Traitements
       </v-btn>
       <v-btn
-        text
-        :to="{name: 'admin-plugins'}"
+        variant="text"
+        :to="{ name: 'admin-plugins' }"
         color="admin"
       >
         Plugins
@@ -25,33 +24,23 @@
       :items="breadcrumbs"
     />
     <v-spacer />
-    <lang-switcher />
-    <personal-menu />
+    <LangSwitcher />
+    <PersonalMenu />
   </v-app-bar>
 </template>
 
-<script>
-import PersonalMenu from '@data-fair/sd-vue/src/vuetify/personal-menu.vue'
-import LangSwitcher from '@data-fair/sd-vue/src/vuetify/lang-switcher.vue'
-import { mapState, mapGetters, mapActions } from 'vuex'
+<script setup>
+import LangSwitcher from '@data-fair/sd-vue/src/vuetify/pinia/lang-switcher.vue'
+import PersonalMenu from '@data-fair/sd-vue/src/vuetify/pinia/personal-menu.vue'
+import { computed } from 'vue'
+import { useStore } from '~/store/index'
 
-export default {
-  components: { PersonalMenu, LangSwitcher },
-  computed: {
-    ...mapState(['breadcrumbs']),
-    ...mapState('session', ['user', 'initialized']),
-    ...mapGetters('session', ['activeAccount'])
-  },
-  methods: {
-    ...mapActions('session', ['logout', 'login', 'setAdminMode', 'switchOrganization']),
-    reload () {
-      window.location.reload()
-    }
-  }
-}
+const store = useStore()
+
+const breadcrumbs = computed(() => store.breadcrumbs)
 </script>
 
-<style lang="css">
+<style>
 .main-app-bar .v-toolbar__content {
   padding-left: 0;
   padding-right: 0;

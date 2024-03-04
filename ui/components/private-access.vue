@@ -1,30 +1,29 @@
 <template>
   <v-row class="ma-0">
     <v-checkbox
-      v-model="patch.public"
+      v-model="localPatch.value.public"
       :label="$t('public')"
       hide-details
       class="ml-2 mb-2 mr-4"
-      dense
-      @change="$emit('change')"
+      @update:model-value="onChange"
     />
     <v-autocomplete
-      v-if="!patch.public"
-      v-model="patch.privateAccess"
+      v-if="!localPatch.value.public"
+      v-model="localPatch.value.privateAccess"
+      v-model:search="search"
       :items="suggestions"
       :loading="loading"
-      :search-input.sync="search"
-      :filter="() => true"
+      :custom-filter="() => true"
       :multiple="true"
       :clearable="true"
-      :item-text="(item) => item && `${item.name || item.id} (${item.type})`"
+      :item-title="(item) => item && `${item.name || item.id} (${item.type})`"
       :item-value="(item) => item && `${item.type}:${item.id}`"
       :label="$t('privateAccess')"
       :placeholder="$t('searchName')"
       return-object
       style="max-width:400px;"
       hide-details
-      @change="onChange"
+      @update:model-value="onChange"
     />
   </v-row>
 </template>
@@ -40,53 +39,55 @@ en:
   searchName: Search an organization name
 </i18n>
 
-<script>
-import { mapState } from 'vuex'
+<script setup>
+import { computed, onMounted, ref, watch } from 'vue'
+import { useStore } from '~/store/index'
 
-export default {
-  props: ['patch'],
-  data () {
-    return {
-      loading: false,
-      search: '',
-      suggestions: []
-    }
-  },
-  computed: {
-    ...mapState(['env'])
-  },
-  watch: {
-    search () {
-      this.listSuggestions()
-    }
-  },
-  created () {
-    this.patch.privateAccess = this.patch.privateAccess || []
-    this.listSuggestions()
-  },
-  methods: {
-    listSuggestions: async function () {
-      if (!this.search || this.search.length < 3) {
-        this.suggestions = this.patch.privateAccess
-        return
-      }
+const props = defineProps(['patch'])
+const emit = defineEmits(['change'])
 
-      this.loading = true
-      const orgs = (await this.$axios.$get(this.env.directoryUrl + '/api/organizations', { params: { q: this.search } }))
-        .results.map(r => ({ ...r, type: 'organization' }))
-      const users = (await this.$axios.$get(this.env.directoryUrl + '/api/users', { params: { q: this.search } }))
-        .results.map(r => ({ ...r, type: 'user' }))
-      this.suggestions = this.patch.privateAccess.concat(orgs).concat(users)
-      this.loading = false
-    },
-    onChange () {
-      this.search = ''
-      this.$emit('change')
-    }
+const store = useStore()
+const env = computed(() => store.env)
+const loading = ref(false)
+const localPatch = ref({ ...props.patch })
+const search = ref('')
+const suggestions = ref([])
+
+watch(search, async () => {
+  await listSuggestions()
+})
+
+onMounted(async () => {
+  if (!props.patch.privateAccess) {
+    emit('change', { ...props.patch, privateAccess: [] })
   }
+  await listSuggestions()
+})
+
+async function listSuggestions() {
+  if (!search.value || search.value.length < 3) {
+    suggestions.value = props.patch.privateAccess
+    return
+  }
+
+  loading.value = true
+  const orgsResponse = await $fetch(`${env.value.directoryUrl}/api/organizations`, {
+    params: { q: search.value }
+  })
+  const orgs = orgsResponse.map(r => ({ ...r, type: 'organization' }))
+  const usersResponse = await $fetch(`${env.value.directoryUrl}/api/users`, {
+    params: { q: search.value }
+  })
+  const users = usersResponse.map(r => ({ ...r, type: 'user' }))
+  suggestions.value = [...new Set([...props.patch.privateAccess, ...orgs, ...users])]
+  loading.value = false
+}
+
+function onChange() {
+  search.value = ''
+  emit('change', localPatch.value)
 }
 </script>
 
 <style>
-
 </style>

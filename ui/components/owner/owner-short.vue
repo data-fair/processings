@@ -1,12 +1,9 @@
 <template>
-  <v-tooltip top>
-    <template #activator="{on}">
-      <span
-        class="text-body-2"
-        v-on="on"
-      >
+  <v-tooltip location="top">
+    <template #activator>
+      <span class="text-body-2">
         <v-avatar :size="28">
-          <img :src="`${env.directoryUrl}/api/avatars/${owner.type}/${owner.id}/avatar.png`">
+          <img :src="avatarUrl">
         </v-avatar>
       </span>
     </template>
@@ -14,22 +11,28 @@
   </v-tooltip>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue'
+import { useStore } from '~/store/index'
 
-import { mapState } from 'vuex'
+const props = defineProps({
+  owner: Object
+})
 
-export default {
-  props: ['owner'],
-  computed: {
-    ...mapState(['env']),
-    label () {
-      let label = this.owner.name
-      if (this.owner.role) label += ` (${this.owner.role})`
-      return label
-    }
-  }
-}
+const store = useStore()
+
+const avatarUrl = computed(() => {
+  return `${env.value.directoryUrl}/api/avatars/${props.owner.type}/${props.owner.id}/avatar.png`
+})
+
+const env = computed(() => store.env)
+
+const label = computed(() => {
+  let label = props.owner.name
+  if (props.owner.role) label += ` (${props.owner.role})`
+  return label
+})
 </script>
 
-<style lang="css" scoped>
+<style>
 </style>

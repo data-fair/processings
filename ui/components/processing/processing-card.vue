@@ -1,19 +1,19 @@
 <template>
   <v-card
-    outlined
-    tile
+    variant="outlined"
+    rounded="0"
     :elevation="hover ? 4 : 0"
     @mouseenter="hover = true"
     @mouseleave="hover = false"
   >
-    <nuxt-link
+    <NuxtLink
       :to="`/processings/${processing._id}`"
       style="text-decoration:none"
     >
       <v-card-title>
         <span
           class="font-weight-bold"
-          style="white-space: nowrap;overflow: hidden;text-overflow: ellipsis;"
+          style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
         >
           {{ processing.title || processing._id }}
         </span>
@@ -23,69 +23,70 @@
         style="min-height: 96px;"
         class="pa-0"
       >
-        <v-list dense>
+        <v-list density="compact">
           <v-list-item>
-            <v-list-item-avatar>
+            <template #prepend>
               <v-icon>mdi-power-plug</v-icon>
-            </v-list-item-avatar>
+            </template>
             <span>{{ plugin ? plugin.fullName : processing.plugin }}</span>
           </v-list-item>
+
           <template v-if="processing.lastRun">
             <v-list-item v-if="processing.lastRun.status === 'running'">
-              <v-list-item-avatar>
+              <template #prepend>
                 <v-progress-circular
                   indeterminate
                   color="primary"
                   size="24"
                 />
-              </v-list-item-avatar>
-              <span>Exécution en cours depuis {{ processing.lastRun.startedAt | fromNow }}</span>
+              </template>
+              <span>Exécution en cours depuis {{ $filters.fromNow(processing.lastRun.startedAt) }}</span>
             </v-list-item>
 
             <v-list-item v-if="processing.lastRun.status === 'finished'">
-              <v-list-item-avatar>
+              <template #prepend>
                 <v-icon color="success">
                   mdi-check-circle
                 </v-icon>
-              </v-list-item-avatar>
-              <span>Dernière exécution terminée {{ processing.lastRun.finishedAt | fromNow }}</span>
+              </template>
+              <span>Dernière exécution terminée {{ $filters.fromNow(processing.lastRun.finishedAt) }}</span>
             </v-list-item>
 
             <v-list-item v-if="processing.lastRun.status === 'error'">
-              <v-list-item-avatar>
+              <template #prepend>
                 <v-icon color="error">
                   mdi-alert
                 </v-icon>
-              </v-list-item-avatar>
-              <span>Dernière exécution en échec {{ processing.lastRun.finishedAt | fromNow }}</span>
+              </template>
+              <span>Dernière exécution en échec {{ $filters.fromNow(processing.lastRun.finishedAt) }}</span>
             </v-list-item>
           </template>
+
           <v-list-item v-else>
-            <v-list-item-avatar />
             <span>Aucune exécution dans l'historique</span>
           </v-list-item>
 
           <template v-if="processing.nextRun">
             <v-list-item v-if="processing.nextRun.status === 'scheduled'">
-              <v-list-item-avatar>
+              <template #prepend>
                 <v-icon>mdi-clock</v-icon>
-              </v-list-item-avatar>
-              <span>Prochaine exécution planifiée {{ processing.nextRun.scheduledAt | fromNow(true) }}</span>
+              </template>
+              <span>Prochaine exécution planifiée {{ $filters.fromNow(processing.nextRun.scheduledAt, true) }}</span>
             </v-list-item>
 
             <v-list-item v-if="processing.nextRun.status === 'triggered'">
-              <v-list-item-avatar>
+              <template #prepend>
                 <v-icon>mdi-play-circle</v-icon>
-              </v-list-item-avatar>
+              </template>
               <span>
-                Prochaine exécution déclenchée manuellement {{ processing.nextRun.createdAt | fromNow }}
-                <template v-if="processing.nextRun.scheduledAt && processing.nextRun.scheduledAt !== processing.nextRun.createdAt"> - planifiée {{ processing.nextRun.scheduledAt | fromNow(true) }}</template>
+                Prochaine exécution déclenchée manuellement {{ $filters.fromNow(processing.nextRun.createdAt) }}
+                <template v-if="processing.nextRun.scheduledAt && processing.nextRun.scheduledAt !== processing.nextRun.createdAt"> - planifiée {{ $filters.fromNow(processing.nextRun.scheduledAt, true) }}</template>
               </span>
             </v-list-item>
           </template>
         </v-list>
       </v-card-text>
-    </nuxt-link>
+    </NuxtLink>
     <v-card-actions class="pl-3">
       <owner-short
         v-if="showOwner"
@@ -96,17 +97,18 @@
   </v-card>
 </template>
 
-<script>
-const marked = require('marked/lib/marked')
+<script setup>
+import OwnerShort from '~/components/owner/owner-short.vue'
+import { ref } from 'vue'
 
-export default {
-  props: ['processing', 'showOwner', 'plugin'],
-  data: () => ({
-    marked,
-    hover: false
-  })
-}
+defineProps({
+  plugin: Object,
+  processing: Object,
+  showOwner: Boolean
+})
+
+const hover = ref(false)
 </script>
 
-<style lang="css" scoped>
+<style>
 </style>

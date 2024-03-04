@@ -1,40 +1,34 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
-import { sessionStoreBuilder } from '@data-fair/sd-vue'
+import { sessionPiniaStoreBuilder } from './pinia'
 
-Vue.use(Vuex)
-
-export default () => {
-  return new Vuex.Store({
-    modules: {
-      session: sessionStoreBuilder()
-    },
-    state: {
-      embed: false,
-      breadcrumbs: null,
-      env: null,
-      runBackLink: false
-    },
-    getters: {
-      embed () {
-        try {
-          return window.self !== window.top
-        } catch (e) {
-          return true
-        }
-      }
-    },
-    mutations: {
-      setAny (state, params) {
-        Object.assign(state, params)
-      }
-    },
-    actions: {
-      setBreadcrumbs ({ commit }, breadcrumbs) {
-        breadcrumbs.forEach(b => { b.exact = true })
-        commit('setAny', { breadcrumbs })
-        if (global.parent) parent.postMessage({ breadcrumbs }, '*')
+const extension = {
+  state: () => ({
+    embed: false,
+    breadcrumbs: null,
+    env: null,
+    runBackLink: false
+  }),
+  getters: {
+    getEmbed() {
+      try {
+        return window.self !== window.top
+      } catch (e) {
+        return true
       }
     }
-  })
+  },
+  actions: {
+    setBreadcrumbs(breadcrumbs) {
+      breadcrumbs.forEach(b => { b.exact = true })
+      this.setAny(breadcrumbs)
+      if (globalThis.parent) {
+        globalThis.parent.postMessage({ breadcrumbs }, '*')
+      }
+    }
+  }
 }
+
+const storeDefinition = sessionPiniaStoreBuilder(extension)
+
+export const useStore = storeDefinition
+
+export default useStore
