@@ -38,19 +38,18 @@
   "homepage": "https://github.com/data-fair/processings#readme",
   "devDependencies": {
     "@bcherny/json-schema-ref-parser": "^10.0.5-fork",
-    "babel-eslint": "^10.0.2",
     "clean-modules": "^3.0.4",
-    "event-to-promise": "^0.8.0",
-    "eslint": "^8.55.0",
-    "eslint-config-standard": "^16.0.3",
+    "eslint": "^8.57.0",
+    "eslint-config-standard": "^17.1.0",
     "eslint-config-typescript": "^3.0.0",
     "fast-json-stringify": "^5.12.0",
     "json-schema-to-typescript": "^11.0.5",
     "nock": "^13.0.6",
-    "nodemon": "^1.19.3",
+    "nodemon": "^3.1.0",
     "rimraf": "^5.0.5"
   },
   "dependencies": {
+    "@babel/eslint-parser": "^7.23.10",
     "@data-fair/lib": "0.27.0",
     "agentkeepalive": "4",
     "ajv": "^8.12.0",
