@@ -1,8 +1,11 @@
 import { Router } from 'express'
 import { asyncHandler } from '@data-fair/lib/express/index.js'
+import { getLimits } from '../../../shared/limits.js'
+import mongo from '@data-fair/lib/node/mongo.js'
 import permissions from '../utils/permissions.js'
 import Ajv from 'ajv'
 import ajvFormats from 'ajv-formats'
+import config from '../config.js'
 
 const ajv = ajvFormats(new Ajv({ strict: false }))
 
@@ -36,14 +39,14 @@ router.post('/:type/:id', permissions.isSuperAdmin, asyncHandler(async (req, res
   req.body.id = req.params.id
   const valid = validate(req.body)
   if (!valid) return res.status(400).send(validate.errors)
-  await req.app.get('db').collection('limits')
+  await mongo.db.collection('limits')
     .replaceOne({ type: req.params.type, id: req.params.id }, req.body, { upsert: true })
   res.send(req.body)
 }))
 
 // A user can get limits information for himself only
 router.get('/:type/:id', permissions.isAccountMember, asyncHandler(async (req, res) => {
-  const limits = await exports.getLimits(req.app.get('db'), { type: req.params.type, id: req.params.id })
+  const limits = await getLimits(mongo.db, { type: req.params.type, id: req.params.id }, config.defaultLimits.processingsSeconds)
   if (!limits) return res.status(404).send()
   delete limits._id
   res.send(limits)
@@ -53,7 +56,7 @@ router.get('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
   const filter = {}
   if (req.query.type) filter.type = req.query.type
   if (req.query.id) filter.id = req.query.id
-  const results = await req.app.get('db').collection('limits')
+  const results = await mongo.db.collection('limits')
     .find(filter)
     .sort({ lastUpdate: -1 })
     .project({ _id: 0 })

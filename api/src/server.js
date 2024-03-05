@@ -1,6 +1,6 @@
 import http from 'http'
 import { createHttpTerminator } from 'http-terminator'
-import config from 'config'
+import config from './config.js'
 import { session } from '@data-fair/lib/express/index.js'
 import { startObserver, stopObserver } from '@data-fair/lib/node/observer.js'
 import mongo from '@data-fair/lib/node/mongo.js'
@@ -32,4 +32,12 @@ export const stop = async () => {
   if (config.prometheus.active) await stopObserver()
   await mongo.client.close()
   await stopWSServer()
+}
+
+export const cleanDB = async () => {
+  if (process.env.NODE_ENV === 'test') {
+    await mongo.db.collection('processings').deleteMany({})
+    await mongo.db.collection('runs').deleteMany({})
+    await mongo.db.collection('limits').deleteMany({})
+  }
 }

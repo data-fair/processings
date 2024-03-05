@@ -13,7 +13,7 @@ Downstream examples:
 {type: 'error', data: {...}}
 */
 import { nanoid } from 'nanoid'
-import { channel } from '../../../shared/ws.mjs'
+import { channel } from '../../../shared/ws.js'
 import { WebSocketServer } from 'ws'
 import permissions from './permissions.js'
 

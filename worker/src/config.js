@@ -4,7 +4,6 @@ import config from 'config'
 // we reload the config instead of using the singleton from the config module for testing purposes
 // @ts-ignore
 const workerConfig = process.env.NODE_ENV === 'test' ? config.util.loadFileConfigs(process.env.NODE_CONFIG_DIR, { skipConfigSources: true }) : config
-
 assertValid(workerConfig, 'en', 'config', true)
 
 config.util.makeImmutable(workerConfig)

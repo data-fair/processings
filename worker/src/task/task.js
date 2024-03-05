@@ -1,5 +1,5 @@
 import axios from 'axios'
-import config from 'config'
+import config from '../config.js'
 import fs from 'fs-extra'
 import path from 'path'
 import resolvePath from 'resolve-path'
@@ -169,7 +169,7 @@ export const run = async ({ db, mailTransport, wsPublish }) => {
       await log.error(err.message)
       await log.debug(err.stack)
     }
-    return err
+    throw err
   } finally {
     await tmpDir.cleanup()
   }

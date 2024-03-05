@@ -1,10 +1,11 @@
+/* eslint-disable no-async-promise-executor */
 import mongo from '@data-fair/lib/node/mongo.js'
 import limits from './utils/limits.js'
 import locks from './utils/locks.js'
-import config from 'config'
+import config from './config.js'
 import kill from 'tree-kill'
 import { startObserver, stopObserver, internalError } from '@data-fair/lib/node/observer.js'
-import { initPublisher } from '../../shared/ws.mjs'
+import { initPublisher } from '../../shared/ws.js'
 import { initMetrics } from './utils/metrics.js'
 import { finish, createNext } from './utils/runs.js'
 import { spawn } from 'child-process-promise'
@@ -13,12 +14,8 @@ const debugLoop = debug('loop')
 
 let stopped = false
 const promisePool = []
-
-// Hooks for testing
-const hooks = {}
-export const hook = (key) => new Promise((resolve, reject) => {
-  hooks[key] = { resolve, reject }
-})
+let mainLoopPromise
+let killLoopPromise
 
 // clear also for testing
 export const clear = () => {
@@ -33,7 +30,6 @@ export const clear = () => {
 }
 
 /* eslint no-unmodified-loop-condition: 0 */
-// Run main loop !
 export const start = async () => {
   await mongo.connect(config.mongoUrl, { readPreference: 'primary' })
   const db = mongo.db
@@ -43,87 +39,100 @@ export const start = async () => {
     await initMetrics(mongo.db)
     await startObserver()
   }
-  await limits.initLimits(mongo.db)
+  await limits.initLimits()
 
   // initialize empty promise pool
   for (let i = 0; i < config.worker.concurrency; i++) {
     promisePool[i] = null
   }
-  let lastActivity = new Date().getTime()
 
   // non-blocking secondary kill loop
   killLoop(db, wsPublish)
 
-  while (!stopped) {
-    const now = new Date().getTime()
-    if ((now - lastActivity) > config.worker.inactivityDelay) {
-      // inactive polling interval
-      debugLoop('the worker is inactive wait extra delay', config.worker.inactiveInterval)
-      await new Promise(resolve => setTimeout(resolve, config.worker.inactiveInterval))
-    } else {
-      // base polling interval
-      await new Promise(resolve => setTimeout(resolve, config.worker.interval))
-    }
-
-    // wait for an available spot in the promise pool
-    if (!promisePool.includes(null)) {
-      debugLoop('pool is full, wait for a free spot')
-      await Promise.any(promisePool)
-    }
-    const freeSlot = promisePool.findIndex(p => !p)
-    debugLoop('free slot', freeSlot)
-
-    const run = await acquireNext(db, wsPublish)
-
-    if (!run) {
-      continue
-    } else {
-      debugLoop('work on run', run._id, run.title)
-      lastActivity = new Date().getTime()
-    }
-
-    if (stopped) continue
-
-    promisePool[freeSlot] = iter(db, wsPublish, run)
-    promisePool[freeSlot].catch(err => {
-      internalError('worker-iter, error in worker iter', { error: err })
-      console.error('(worker-iter) error in worker iter', err)
-    })
-    // always empty the slot after the promise is finished
-    promisePool[freeSlot].finally(() => {
-      promisePool[freeSlot] = null
-    })
-
-    await new Promise(resolve => setTimeout(resolve, config.worker.interval))
-  }
+  const lastActivity = new Date().getTime()
+  runLoop(db, wsPublish, lastActivity)
 }
 
 // Stop and wait for all workers to finish their current task
 export const stop = async () => {
   stopped = true
+  locks.stop()
+  await Promise.all(promisePool.filter(p => !!p))
+  await Promise.all([mainLoopPromise, killLoopPromise])
   await mongo.client.close()
   if (config.prometheus.active) await stopObserver()
-  await Promise.all(promisePool.filter(p => !!p))
+}
+
+// Main loop
+async function runLoop (db, wsPublish, lastActivity) {
+  mainLoopPromise = new Promise(async (resolve) => {
+    while (!stopped) {
+      const now = new Date().getTime()
+      if ((now - lastActivity) > config.worker.inactivityDelay) {
+        // inactive polling interval
+        debugLoop('the worker is inactive wait extra delay', config.worker.inactiveInterval)
+        await new Promise(resolve => setTimeout(resolve, config.worker.inactiveInterval))
+      } else {
+        // base polling interval
+        await new Promise(resolve => setTimeout(resolve, config.worker.interval))
+      }
+
+      // wait for an available spot in the promise pool
+      if (!promisePool.includes(null)) {
+        debugLoop('pool is full, wait for a free spot')
+        await Promise.any(promisePool)
+      }
+      const freeSlot = promisePool.findIndex(p => !p)
+      debugLoop('free slot', freeSlot)
+
+      const run = await acquireNext(db, wsPublish)
+
+      if (!run) {
+        continue
+      } else {
+        debugLoop('work on run', run._id, run.title)
+        lastActivity = new Date().getTime()
+      }
+
+      if (stopped) continue
+
+      promisePool[freeSlot] = iter(db, wsPublish, run)
+      promisePool[freeSlot].catch(err => {
+        internalError('worker-iter, error in worker iter', { error: err })
+        console.error('(worker-iter) error in worker iter', err)
+      })
+      // always empty the slot after the promise is finished
+      promisePool[freeSlot].finally(() => {
+        promisePool[freeSlot] = null
+      })
+
+      await new Promise(resolve => setTimeout(resolve, config.worker.interval))
+    }
+    resolve()
+  })
 }
 
 // a secondary loop to handle killing tasks
 const pids = {}
 async function killLoop (db, wsPublish) {
-  while (!stopped) {
-    await new Promise(resolve => setTimeout(resolve, config.worker.killInterval))
-    try {
-      const runs = await db.collection('runs').find({ status: 'kill' }).toArray()
-      for (const run of runs) {
-        killRun(db, wsPublish, run).catch(err => {
-          internalError('worker-task-kill', 'error while killing task', { error: err })
-          console.error('(task-kill) error while killing task', err)
-        })
+  killLoopPromise = new Promise(async (resolve) => {
+    while (!stopped) {
+      await new Promise(resolve => setTimeout(resolve, config.worker.killInterval))
+      try {
+        const runs = await db.collection('runs').find({ status: 'kill' }).toArray()
+        for (const run of runs) {
+          killRun(db, wsPublish, run).catch(err => {
+            internalError('worker-task-kill', 'error while killing task', { error: err })
+            console.error('(task-kill) error while killing task', err)
+          })
+        }
+      } catch (err) {
+        internalError('worker-loop-kill', 'error while killing task loop', { error: err })
+        console.error('(loop-kill) error while killing task loop', err)
       }
-    } catch (err) {
-      internalError('worker-loop-kill', 'error while killing task loop', { error: err })
-      console.error('(loop-kill) error while killing task loop', err)
     }
-  }
+    resolve()
+  })
 }
 
 async function killRun (db, wsPublish, run) {
@@ -140,6 +149,7 @@ async function killRun (db, wsPublish, run) {
   // send SIGTERM for graceful stopping of the tasks
   debugLoop('send SIGTERM', run._id, pids[run._id])
   kill(pids[run._id])
+
   // grace period before sending SIGKILL
   // this is more than the internal grace period of the task, so it should never be used
   await new Promise(resolve => setTimeout(resolve, config.worker.gracePeriod * 1.2))
@@ -162,21 +172,21 @@ async function iter (db, wsPublish, run) {
     }
     if (!processing.active) {
       await finish(db, wsPublish, run, 'le traitement a été désactivé', 'error')
-      if (hooks[processing._id]) hooks[processing._id].reject({ run, message: 'le traitement a été désactivé' })
       return
     }
+    // @test:spy("isTriggered")
 
     debug(`run "${processing.title}" > ${run._id}`)
 
     const remaining = await limits.remaining(db, processing.owner)
     if (remaining.processingsSeconds === 0) {
       await finish(db, wsPublish, run, 'le temps de traitement autorisé est épuisé', 'error')
-      if (hooks[processing._id]) hooks[processing._id].reject({ run, message: 'le temps de traitement autorisé est épuisé' })
+      // @test:spy("processingsSecondsExceeded")
       return
     }
 
     // Run a task in a dedicated child process for extra resiliency to fatal memory exceptions
-    const spawnPromise = spawn('node', ['./src/task', run._id, processing._id], {
+    const spawnPromise = spawn('node', [process.env.NODE_ENV === 'test' ? './worker/src/task/' : './src/task/', run._id, processing._id], {
       env: process.env,
       stdio: ['ignore', 'inherit', 'pipe']
     })
@@ -188,9 +198,6 @@ async function iter (db, wsPublish, run) {
     await spawnPromise
 
     await finish(db, wsPublish, run)
-    if (hooks[processing._id]) {
-      hooks[processing._id].resolve(await db.collection('runs').findOne({ _id: run._id }))
-    }
   } catch (err) {
     // Build back the original error message from the stderr of the child process
     const errorMessage = []
@@ -207,11 +214,11 @@ async function iter (db, wsPublish, run) {
       if (err.code === 143) {
         run.status = 'killed'
         await finish(db, wsPublish, run)
-        if (hooks[processing._id]) hooks[processing._id].resolve({ run, message: 'interrupted' })
+        // @test:spy("isKilled")
       } else {
         console.warn(`failure ${processing.title} > ${run._id}`, errorMessage.join('\n'))
         await finish(db, wsPublish, run, errorMessage.join('\n'))
-        if (hooks[processing._id]) hooks[processing._id].reject({ run, message: errorMessage.join('\n') })
+        // @test:spy("isFailure")
       }
     } else {
       internalError('worker', 'failure in worker', { error: err })
@@ -248,7 +255,6 @@ async function acquireNext (db, wsPublish) {
     }, { $sample: { size: 100 } }])
   while (await cursor.hasNext()) {
     let run = await cursor.next()
-    // console.log('resource', resource)
     const ack = await locks.acquire(db, run.processing._id)
     debug('acquire lock for run ?', run, ack)
     if (ack) {

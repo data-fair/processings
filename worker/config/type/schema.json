@@ -43,6 +43,9 @@
         }
       }
     },
+    "defaultTimeZone": {
+      "type": "string"
+    },
     "mails": {
       "type": "object",
       "properties": {
@@ -69,8 +72,7 @@
       "type": "string"
     },
     "notifyUrl": {
-      "type": "string",
-      "pattern": "^https?://"
+      "type": "string"
     },
     "locks": {
       "type": "object",

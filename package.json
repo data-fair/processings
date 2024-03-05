@@ -17,7 +17,7 @@
     "lint": "eslint --ext js,vue --ignore-path .gitignore .",
     "lint-fix": "eslint --ext js,vue --ignore-path .gitignore --fix .",
     "test-outdated": "NODE_ENV=test mocha --exit --bail --timeout 10000 test/",
-    "test": "node test-it/index.js",
+    "test": "NODE_ENV=test node test-it/index.js",
     "test-deps": "docker compose --profile test up -d --wait",
     "stop-dev-deps": "docker compose --profile dev stop"
   },
@@ -32,33 +32,20 @@
     "api",
     "worker"
   ],
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "plugins": [
-      "no-only-tests"
-    ],
-    "extends": [
-      "eslint:recommended",
-      "standard",
-      "typescript"
-    ]
-  },
   "bugs": {
     "url": "https://github.com/data-fair/processings/issues"
   },
   "homepage": "https://github.com/data-fair/processings#readme",
   "devDependencies": {
+    "@bcherny/json-schema-ref-parser": "^10.0.5-fork",
     "babel-eslint": "^10.0.2",
     "clean-modules": "^3.0.4",
-    "eslint": "^7.32.0",
+    "event-to-promise": "^0.8.0",
+    "eslint": "^8.55.0",
     "eslint-config-standard": "^16.0.3",
-    "eslint-plugin-import": "^2.25.4",
-    "eslint-plugin-no-only-tests": "^2.6.0",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^5.1.1",
+    "eslint-config-typescript": "^3.0.0",
+    "fast-json-stringify": "^5.12.0",
+    "json-schema-to-typescript": "^11.0.5",
     "nock": "^13.0.6",
     "nodemon": "^1.19.3",
     "rimraf": "^5.0.5"
@@ -66,16 +53,18 @@
   "dependencies": {
     "@data-fair/lib": "0.27.0",
     "agentkeepalive": "4",
+    "ajv": "^8.12.0",
+    "ajv-errors": "^3.0.0",
+    "ajv-formats": "^2.1.1",
     "ajv-i18n": "^4.2.0",
     "axios": "^1.6.0",
     "config": "^3.3.6",
     "crypto-random-string": "^3.3.0",
     "debug": "^4.3.1",
-    "event-to-promise": "^0.8.0",
     "fs-extra": "^8.1.0",
     "gtfs-realtime-bindings": "0.0.5",
-    "nanoid": "^5.0.6",
     "mongodb": "6",
+    "nanoid": "^5.0.6",
     "pump": "^3.0.0",
     "resolve-path": "^1.4.0",
     "semver": "^7.3.4",

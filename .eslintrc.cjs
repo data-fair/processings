@@ -10,5 +10,6 @@ module.exports = {
     'eslint:recommended',
     'standard',
     'typescript'
-  ]
+  ],
+  parser: '@typescript-eslint/parser'
 }
