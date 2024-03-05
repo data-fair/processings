@@ -15,14 +15,15 @@ if (process.env.NODE_ENV === 'production') {
   process.env.NUXT_CONFIG = JSON.stringify(config)
 }
 
+// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   app: {
     baseURL: config.basePath
   },
+  // https://vuetifyjs.com/en/getting-started/installation/#using-nuxt-3
   build: {
     transpile: ['@koumoul', '@data-fair']
   },
-  buildDir: 'nuxt-dist',
   css: [
     '@mdi/font/css/materialdesignicons.min.css',
     './assets/main.scss'
@@ -33,29 +34,19 @@ export default defineNuxtConfig({
       enabled: true
     }
   },
-  googleFonts: {
-    preconnect: true,
-    preload: true,
-    display: 'swap',
-    download: true,
-    inject: true,
-    families: {
-      Nunito: [100, 300, 400, 500, 700, 900]
-    }
-  },
-  i18n: {
-    locales: ['en', 'fr'],
-    defaultLocale: config.i18n.defaultLocale,
-    strategy: 'no_prefix',
-    detectBrowserLanguage: {
-      useCookie: true,
-      cookieKey: 'i18n_lang'
-    },
-    vueI18n: './i18n.config.js'
-  },
   modules: [
-    '@nuxtjs/google-fonts',
-    '@nuxtjs/i18n',
+    ['@nuxtjs/google-fonts', {
+      families: { Nunito: true }
+    }],
+    ['@nuxtjs/i18n', {
+      locales: ['fr', 'en'],
+      defaultLocale: 'fr',
+      strategy: 'no_prefix',
+      detectBrowserLanguage: {
+        useCookie: true,
+        cookieKey: 'i18n_lang'
+      }
+    }],
     '@pinia/nuxt',
     'vuetify-nuxt-module'
   ],
@@ -80,7 +71,6 @@ export default defineNuxtConfig({
       defaultTimeZone: config.defaultTimeZone
     }
   },
-  srcDir: './',
   ssr: false,
   telemetry: false,
   vuetify: {

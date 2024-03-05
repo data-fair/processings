@@ -16,7 +16,6 @@
     "i": "rimraf node_modules ui/node_modules api/node_modules worker/node_modules && npm i && cd api && npm i && cd ../ui && npm i && cd ../worker && npm i",
     "lint": "eslint --ext js,vue --ignore-path .gitignore .",
     "lint-fix": "eslint --ext js,vue --ignore-path .gitignore --fix .",
-    "test-outdated": "NODE_ENV=test mocha --exit --bail --timeout 10000 test/",
     "test": "NODE_ENV=test node test-it/index.js",
     "test-deps": "docker compose --profile test up -d --wait",
     "stop-dev-deps": "docker compose --profile dev stop"
@@ -49,7 +48,6 @@
     "rimraf": "^5.0.5"
   },
   "dependencies": {
-    "@babel/eslint-parser": "^7.23.10",
     "@data-fair/lib": "0.27.0",
     "agentkeepalive": "4",
     "ajv": "^8.12.0",

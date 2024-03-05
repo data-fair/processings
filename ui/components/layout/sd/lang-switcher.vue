@@ -14,11 +14,11 @@
 
       <v-list>
         <v-list-item
-          v-for="locale in filteredLocales"
-          :key="locale"
-          @click="setLocale(locale)"
+          v-for="filteredLocale in filteredLocales"
+          :key="filteredLocale"
+          @click="setLocale(filteredLocale)"
         >
-          <v-list-item-title>{{ locale }}</v-list-item-title>
+          <v-list-item-title>{{ filteredLocale }}</v-list-item-title>
         </v-list-item>
       </v-list>
     </v-menu>

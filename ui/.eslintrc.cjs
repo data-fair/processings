@@ -1,20 +1,18 @@
 module.exports = {
-  root: true,
   env: {
-    node: true
+    browser: true
   },
-  plugins: [
-    'no-only-tests'
-  ],
   extends: [
-    'eslint:recommended',
-    'plugin:vue/vue3-recommended',
-    'plugin:vuetify/base',
-    'standard'
+    'standard',
+    '@nuxt/eslint-config',
+    'plugin:vuetify/base'
   ],
+  parser: 'vue-eslint-parser',
+  parserOptions: {
+    parser: '@typescript-eslint/parser'
+  },
   rules: {
     'space-before-function-paren': 'off',
-    'node/no-deprecated-api': 'off',
     'vue/multi-word-component-names': 'off'
   }
 }
