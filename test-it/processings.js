@@ -1,7 +1,5 @@
 import { strict as assert } from 'node:assert'
 import { test } from 'node:test'
-import { EventEmitter } from 'node:events'
-import event2promise from 'event-to-promise'
 import { axiosAuth } from '@data-fair/lib/node/axios-auth.js'
 import * as testSpies from '@data-fair/lib/node/test-spies.js'
 
@@ -11,7 +9,6 @@ const directoryUrl = 'http://localhost:5600/simple-directory'
 const axiosOpts = { baseURL: 'http://localhost:5600' }
 const superadmin = await axiosAuth({ email: 'superadmin@test.com', password: 'superpasswd', directoryUrl, adminMode: true, axiosOpts })
 
-global.events = new EventEmitter() // For testing notifications
 console.log('Starting worker server...')
 process.env.NODE_CONFIG_DIR = 'worker/config/'
 const workerServer = await import('../worker/src/server.js')
@@ -75,7 +72,7 @@ await test('should create a new processing, activate it and run it', async funct
   assert.equal(runs.results[0].status, 'running')
 
   // nothing, failure is normal we have no api key
-  const notif = await event2promise(global.events, 'notification')
+  const notif = await testSpies.waitFor('notificationSend', 10000)
   assert.equal(notif.topic.key, `processings:processing-finish-error:${processing._id}`)
   await testSpies.waitFor('isFailure', 10000)
 
