@@ -30,8 +30,8 @@
 </template>
 
 <script setup>
-import LangSwitcher from '@data-fair/sd-vue/src/vuetify/pinia/lang-switcher.vue'
-import PersonalMenu from '@data-fair/sd-vue/src/vuetify/pinia/personal-menu.vue'
+import LangSwitcher from '~/components/layout/sd/lang-switcher.vue'
+import PersonalMenu from '~/components/layout/sd/personal-menu.vue'
 import { computed } from 'vue'
 import { useStore } from '~/store/index'
 

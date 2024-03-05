@@ -4,7 +4,7 @@
     data-iframe-height
   >
     <v-row>
-      <v-col :style="$vuetify.display.lgAndUp ? 'padding-right:256px;' : ''">
+      <v-col>
         <h2 class="text-h6">
           Traitement {{ processing.title }}
         </h2>
