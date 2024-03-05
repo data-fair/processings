@@ -1,10 +1,6 @@
 data/
 node_modules/
 config/local-*
-ui/.output
-ui/nuxt-dist/
-ui/assets/css/
-ui/assets/fonts/
 .config/
 .type/
 logs/

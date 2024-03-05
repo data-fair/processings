@@ -28,8 +28,8 @@ services:
       - PROMETHEUS_ACTIVE=false
       - MANAGE_PARTNERS=true
     volumes:
-      - ./test/resources/users.json:/webapp/data/users.json
-      - ./test/resources/organizations.json:/webapp/data/organizations.json
+      - ./test-it/resources/users.json:/webapp/data/users.json
+      - ./test-it/resources/organizations.json:/webapp/data/organizations.json
 
   data-fair:
     profiles:
