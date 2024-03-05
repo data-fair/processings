@@ -24,7 +24,7 @@
         :key="'installed-' + result.id"
         class="my-1"
         variant="outlined"
-        rounded="0"
+        rounded="lg"
       >
         <v-toolbar
           dense

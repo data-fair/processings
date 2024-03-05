@@ -60,7 +60,7 @@
           <v-alert
             :value="true"
             type="warning"
-            rounded="0"
+            rounded="lg"
             :variant="$vuetify.theme.dark && 'outlined'"
             style="max-width:440px;"
           >

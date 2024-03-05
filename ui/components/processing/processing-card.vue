@@ -1,7 +1,7 @@
 <template>
   <v-card
     variant="outlined"
-    rounded="0"
+    rounded="lg"
     :elevation="hover ? 4 : 0"
     @mouseenter="hover = true"
     @mouseleave="hover = false"
@@ -12,7 +12,7 @@
     >
       <v-card-title>
         <span
-          class="font-weight-bold"
+          class="font-weight-bold text-primary"
           style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
         >
           {{ processing.title || processing._id }}

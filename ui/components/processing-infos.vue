@@ -27,7 +27,10 @@
           <span>Description du traitement</span>
         </v-tooltip>
       </template>
-      <v-card class="py-3">
+      <v-card
+        rounded="lg"
+        class="py-3"
+      >
         <v-table>
           <thead>
             <tr>

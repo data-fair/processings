@@ -20,6 +20,9 @@ const { error } = toRefs(props)
 onMounted(() => {
   const params = new URLSearchParams(location.search)
   history.replaceState({}, document.title, location.pathname)
+  if (!params.has('statusCode') && !params.has('message')) {
+    navigateTo({ path: '/' })
+  }
   const state = {}
   if (!params.has('statusCode')) {
     state.statusCode = 401

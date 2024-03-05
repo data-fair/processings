@@ -3,9 +3,6 @@ module.exports = {
   env: {
     node: true
   },
-  plugins: [
-    'no-only-tests'
-  ],
   extends: [
     'eslint:recommended',
     'plugin:vue/vue3-recommended',

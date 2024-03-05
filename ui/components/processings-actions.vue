@@ -19,7 +19,10 @@
           Créer un nouveau traitement
         </v-list-item>
       </template>
-      <v-card v-if="newProcessing">
+      <v-card
+        v-if="newProcessing"
+        rounded="lg"
+      >
         <v-card-title primary-title>
           <h3 class="text-h5 mb-0">
             Créer un nouveau traitement
@@ -35,7 +38,7 @@
             <v-select
               v-model="newProcessing.plugin"
               label="Plugin"
-              :loading="!installedPlugins.results"
+              :loading="!installedPlugins.results ? 'primary' : false"
               :items="installedPlugins.results"
               :item-title="item => `${item.name} - ${item.version}`"
               item-value="id"
