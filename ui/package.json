@@ -4,44 +4,21 @@
   "scripts": {
     "analyze": "rm -rf .output && nuxi analyze",
     "build": "rm -rf .output && nuxi build",
-    "dev": "npm run build && nuxi start",
+    "dev": "npm run build && PORT=3039 nuxi start",
     "dev-test": "nuxi dev -p 3039",
     "generate": "nuxi generate",
     "prepare": "nuxi prepare",
     "preview": "nuxi preview"
   },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "plugins": [
-      "no-only-tests"
-    ],
-    "extends": [
-      "eslint:recommended",
-      "plugin:vue/vue3-recommended",
-      "plugin:vuetify/base",
-      "standard"
-    ],
-    "rules": {
-      "space-before-function-paren": "off",
-      "node/no-deprecated-api": "off",
-      "vue/multi-word-component-names": "off",
-      "vue/no-v-for-template-key-on-child": "off",
-      "vue/require-prop-types": "off"
-    }
-  },
   "devDependencies": {
-    "@data-fair/sd-vue": "^2.7.0",
     "@koumoul/v-iframe": "^2.4.1",
     "@koumoul/vjsf": "^3.0.0-beta.3",
     "@mdi/font": "^7.4.47",
+    "@nuxt/eslint-config": "^0.2.0",
     "@nuxtjs/google-fonts": "^3.1.3",
     "@nuxtjs/i18n": "^8.1.1",
     "@pinia/nuxt": "^0.5.1",
     "clean-modules": "^3.0.4",
-    "eslint-plugin-vue": "^9.22.0",
     "eslint-plugin-vuetify": "^2.1.1",
     "iframe-resizer": "^4.3.9",
     "js-cookie": "^3.0.5",

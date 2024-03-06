@@ -1,7 +1,7 @@
 <template>
   <v-card
-    rounded="0"
-    :loading="loading"
+    rounded="lg"
+    :loading="loading ? 'primary' : false"
   >
     <v-card-title>
       Exécutions

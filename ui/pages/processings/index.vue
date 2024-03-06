@@ -4,7 +4,7 @@
     style="min-height:500px;"
   >
     <v-row>
-      <v-col :style="$vuetify.display.lgAndUp ? 'padding-right:256px;' : ''">
+      <v-col>
         <v-container>
           <v-list-subheader>{{ (processings && processings.count) || 0 }} traitements</v-list-subheader>
           <v-row v-if="processings">
@@ -36,7 +36,7 @@
           flat
           class="mt-2"
         >
-          <v-card-text class="pa-1">
+          <v-card-text class="pa-3">
             <v-switch
               v-model="showAll"
               label="voir tous les traitements"

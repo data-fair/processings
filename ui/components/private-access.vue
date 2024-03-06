@@ -12,7 +12,7 @@
       v-model="localPatch.value.privateAccess"
       v-model:search="search"
       :items="suggestions"
-      :loading="loading"
+      :loading="loading ? 'primary' : false"
       :custom-filter="() => true"
       :multiple="true"
       :clearable="true"

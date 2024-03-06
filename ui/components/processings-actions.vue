@@ -19,7 +19,10 @@
           Créer un nouveau traitement
         </v-list-item>
       </template>
-      <v-card v-if="newProcessing">
+      <v-card
+        v-if="newProcessing"
+        rounded="lg"
+      >
         <v-card-title primary-title>
           <h3 class="text-h5 mb-0">
             Créer un nouveau traitement
@@ -35,7 +38,7 @@
             <v-select
               v-model="newProcessing.plugin"
               label="Plugin"
-              :loading="!installedPlugins.results"
+              :loading="!installedPlugins.results ? 'primary' : false"
               :items="installedPlugins.results"
               :item-title="item => `${item.name} - ${item.version}`"
               item-value="id"
@@ -65,14 +68,12 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useStore } from '~/store/index'
 
 defineProps({
   installedPlugins: { type: Object, required: true }
 })
 
-const router = useRouter()
 const store = useStore()
 
 const showCreateMenu = ref(false)
@@ -81,7 +82,7 @@ const newProcessing = ref({})
 const createProcessing = async () => {
   const response = await $fetch(`${store.env.publicUrl}/api/v1/processings`, {
     method: 'POST',
-    body: JSON.stringify(newProcessing.value)
+    body: { ...newProcessing.value }
   })
   showCreateMenu.value = false
   return navigateTo({ path: `/processings/${response._id}` })

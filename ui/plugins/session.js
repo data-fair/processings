@@ -63,6 +63,8 @@ export default defineNuxtPlugin(nuxtApp => {
     }
 
     store.setAny({ vuetify: nuxtApp.$vuetify })
+    nuxtApp.vueApp.provide('store', store)
+    nuxtApp.provide('store', store)
   })
 
   watch(() => store.vuetify, vuetify => {

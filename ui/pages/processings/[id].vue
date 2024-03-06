@@ -4,7 +4,7 @@
     data-iframe-height
   >
     <v-row>
-      <v-col :style="$vuetify.display.lgAndUp ? 'padding-right:256px;' : ''">
+      <v-col>
         <h2 class="text-h6">
           Traitement {{ processing.title }}
         </h2>
@@ -169,7 +169,7 @@ async function patch() {
   }
   await $fetch(`${env.value.publicUrl}/api/v1/processings/${route.params.id}`, {
     method: 'PATCH',
-    body: JSON.stringify(editProcessing.value)
+    body: { ...editProcessing.value }
   })
   await fetchProcessing()
 }

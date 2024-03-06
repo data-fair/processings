@@ -1,0 +1,5 @@
+@forward 'vuetify/settings' with (
+  $body-font-family: 'Nunito' sans-serif
+);
+
+@import url('https://cdn.jsdelivr.net/npm/vuetify@latest/lib/styles/main.css');

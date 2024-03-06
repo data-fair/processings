@@ -6,6 +6,5 @@ module.exports = {
   extends: [
     'standard',
     'typescript'
-  ],
-  parser: '@typescript-eslint/parser'
+  ]
 }

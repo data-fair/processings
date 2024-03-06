@@ -22,7 +22,10 @@
           <span>Exécuter</span>
         </v-list-item>
       </template>
-      <v-card variant="outlined">
+      <v-card
+        rounded="lg"
+        variant="elevated"
+      >
         <v-card-title primary-title>
           Exécution du traitement
         </v-card-title>
@@ -71,7 +74,10 @@
           Supprimer
         </v-list-item>
       </template>
-      <v-card variant="outlined">
+      <v-card
+        rounded="lg"
+        variant="elevated"
+      >
         <v-card-title primary-title>
           Suppression du traitement
         </v-card-title>
@@ -126,7 +132,10 @@
           Notifications
         </v-list-item>
       </template>
-      <v-card variant="outlined">
+      <v-card
+        rounded="lg"
+        variant="elevated"
+      >
         <v-card-title primary-title>
           Notifications
         </v-card-title>
@@ -152,7 +161,6 @@ import 'iframe-resizer/js/iframeResizer'
 import useEventBus from '~/composables/event-bus'
 import VIframe from '@koumoul/v-iframe'
 import { computed, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import { useStore } from '~/store'
 
 defineEmits(['triggered'])
