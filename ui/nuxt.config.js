@@ -36,6 +36,7 @@ export default defineNuxtConfig({
   },
   modules: [
     ['@nuxtjs/google-fonts', {
+      display: 'swap',
       families: { Nunito: true }
     }],
     ['@nuxtjs/i18n', {

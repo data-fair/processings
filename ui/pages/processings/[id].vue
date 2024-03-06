@@ -64,6 +64,7 @@ import Vjsf from '@koumoul/vjsf'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStore } from '~/store/index'
+import { v2compat } from '@koumoul/vjsf/compat/v2'
 
 const form = ref(null)
 const store = useStore()
@@ -89,7 +90,7 @@ const canExecProcessing = computed(() => {
 
 const processingSchema = computed(() => {
   if (!plugin.value || !processing.value) return
-  const schema = JSON.parse(JSON.stringify(contractProcessing))
+  const schema = v2compat(JSON.parse(JSON.stringify(contractProcessing)))
   schema.properties.config = {
     ...plugin.value.processingConfigSchema,
     title: 'Plugin ' + plugin.value.fullName,
@@ -107,29 +108,26 @@ const processingSchema = computed(() => {
 const vjsfOptions = computed(() => {
   if (!processing.value) return
   return {
+    arrayItemCardProps: { outlined: true, tile: true },
     context: {
       owner: processing.value.owner,
       ownerFilter: env.value.dataFairAdminMode ? `owner=${processing.value.owner.type}:${encodeURIComponent(processing.value.owner.id)}` : '',
       dataFairUrl: env.value.dataFairUrl,
       directoryUrl: env.value.directoryUrl
     },
-    disableAll: !canAdminProcessing.value,
-    // locale: 'fr',
-    // rootDisplay: 'expansion-panels',
-    // rootDisplay: 'tabs',
-    expansionPanelsProps: {
-      value: 0,
-      hover: true
-    },
+    deleteReadOnly: true,
+    dialogCardProps: { outlined: true },
     dialogProps: {
       maxWidth: 500,
       overlayOpacity: 0 // better when inside an iframe
     },
-    arrayItemCardProps: { outlined: true, tile: true },
-    dialogCardProps: { outlined: true },
-    deleteReadOnly: true,
+    disableSorting: true,
     editMode: 'inline',
-    disableSorting: true
+    expansionPanelsProps: {
+      value: 0,
+      hover: true
+    },
+    readOnly: !canAdminProcessing.value
   }
 })
 

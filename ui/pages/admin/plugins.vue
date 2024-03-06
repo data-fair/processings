@@ -102,8 +102,9 @@
 
 <script setup>
 import Vjsf from '@koumoul/vjsf'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useStore } from '~/store/index'
+import { v2compat } from '@koumoul/vjsf/compat/v2'
 
 const store = useStore()
 
@@ -204,6 +205,12 @@ async function saveAccess(plugin) {
   })
   loading.value = false
 }
+
+watch(filteredInstalledPlugins, (value) => {
+  for (const result of value) {
+    result.pluginConfigSchema = v2compat(result.pluginConfigSchema)
+  }
+})
 </script>
 
 <style>
