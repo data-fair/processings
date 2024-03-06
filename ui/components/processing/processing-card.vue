@@ -2,6 +2,7 @@
   <v-card
     variant="outlined"
     rounded="lg"
+    border="primary md"
     :elevation="hover ? 4 : 0"
     @mouseenter="hover = true"
     @mouseleave="hover = false"

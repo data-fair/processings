@@ -2,12 +2,12 @@
   <v-autocomplete
     :model-value="value"
     :items="utcs"
-    :label="$t('tz')"
+    :label="t('tz')"
     :clearable="true"
     persistent-hint
     :disabled="disabled"
     menu-props="auto"
-    :hint="$t('defaultTZ', { defaultTimeZone })"
+    :hint="t('defaultTZ', { defaultTimeZone })"
     @update:model-value="$emit('update:modelValue', $event)"
   />
 </template>
@@ -24,6 +24,7 @@ en:
 <script setup>
 import timeZones from 'timezones.json'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 defineEmits(['update:modelValue'])
 defineProps({
@@ -31,6 +32,7 @@ defineProps({
   value: String
 })
 
+const { t } = useI18n()
 const runtimeConfig = useRuntimeConfig()
 
 const utcs = computed(() => {

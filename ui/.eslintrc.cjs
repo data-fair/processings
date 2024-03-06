@@ -13,6 +13,7 @@ module.exports = {
   },
   rules: {
     'space-before-function-paren': 'off',
-    'vue/multi-word-component-names': 'off'
+    'vue/multi-word-component-names': 'off',
+    'vue/no-mutating-props': 'off'
   }
 }

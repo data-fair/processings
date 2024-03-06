@@ -14,6 +14,7 @@
     <v-progress-linear
       v-if="!installedPlugins.results"
       indeterminate
+      color="primary"
     />
     <template
       v-for="result in filteredInstalledPlugins"
@@ -22,8 +23,9 @@
       <v-card
         v-if="result.pluginConfigSchema"
         :key="'installed-' + result.id"
-        class="my-1"
+        class="my-2"
         variant="outlined"
+        border="primary md"
         rounded="lg"
       >
         <v-toolbar
@@ -45,7 +47,7 @@
           </v-btn>
         </v-toolbar>
 
-        <v-card-text class="pt-0 pb-2">
+        <v-card-text class="py-2">
           <p class="mb-0">
             {{ result.description }}
           </p>
@@ -54,7 +56,7 @@
             @change="saveAccess(result)"
           />
           <v-form
-            v-if="result.pluginConfigSchema && result.pluginConfigSchema.properties && Object.keys(result.pluginConfigSchema.properties).length"
+            v-if="result.pluginConfigSchema?.properties && Object.keys(result.pluginConfigSchema.properties).length"
             :ref="'form-' + result.id"
           >
             <v-jsf
@@ -66,25 +68,30 @@
         </v-card-text>
       </v-card>
     </template>
-    <v-list>
-      <v-list-subheader>Plugins disponibles</v-list-subheader>
-      <v-progress-linear
-        v-if="!availablePlugins.results"
-        indeterminate
-      />
-      <v-list-item
-        v-for="result in filteredAvailablePlugins"
-        v-else
-        :key="'available-' + result.name + '-' + result.version"
+    <v-list-subheader>Plugins disponibles</v-list-subheader>
+    <v-progress-linear
+      v-if="!availablePlugins.results"
+      indeterminate
+      color="primary"
+    />
+    <template
+      v-for="result in filteredAvailablePlugins"
+      v-else
+      :key="'available-' + result.name + '-' + result.version"
+    >
+      <v-card
+        class="my-2"
+        variant="elevated"
+        rounded="lg"
       >
-        <v-list-item-title v-if="result.distTag === 'latest'">
-          {{ result.name }} ({{ result.version }})
-        </v-list-item-title>
-        <v-list-item-title v-else>
-          {{ result.name }} ({{ result.distTag }} - {{ result.version }})
-        </v-list-item-title>
-        <v-list-item-subtitle>{{ result.description }}</v-list-item-subtitle>
-        <v-list-item-action>
+        <v-toolbar
+          dense
+          flat
+        >
+          <v-toolbar-title>
+            {{ result.distTag === 'latest' ? result.name + ' (' + result.version + ')' : result.name + ' (' + result.distTag + ' - ' + result.version + ')' }}
+          </v-toolbar-title>
+          <v-spacer />
           <v-btn
             title="Installer"
             icon
@@ -94,9 +101,14 @@
           >
             <v-icon>mdi-download</v-icon>
           </v-btn>
-        </v-list-item-action>
-      </v-list-item>
-    </v-list>
+        </v-toolbar>
+        <v-card-text class="py-2">
+          <p class="mb-0">
+            {{ result.description }}
+          </p>
+        </v-card-text>
+      </v-card>
+    </template>
   </v-container>
 </template>
 

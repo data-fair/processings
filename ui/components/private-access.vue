@@ -1,15 +1,16 @@
 <template>
   <v-row class="ma-0">
     <v-checkbox
-      v-model="localPatch.value.public"
-      :label="$t('public')"
+      v-model="patch.public"
+      :label="t('public')"
       hide-details
       class="ml-2 mb-2 mr-4"
+      color="primary"
       @update:model-value="onChange"
     />
     <v-autocomplete
-      v-if="!localPatch.value.public"
-      v-model="localPatch.value.privateAccess"
+      v-if="!patch.public"
+      v-model="patch.privateAccess"
       v-model:search="search"
       :items="suggestions"
       :loading="loading ? 'primary' : false"
@@ -18,8 +19,8 @@
       :clearable="true"
       :item-title="(item) => item && `${item.name || item.id} (${item.type})`"
       :item-value="(item) => item && `${item.type}:${item.id}`"
-      :label="$t('privateAccess')"
-      :placeholder="$t('searchName')"
+      :label="t('privateAccess')"
+      :placeholder="t('searchName')"
       return-object
       style="max-width:400px;"
       hide-details
@@ -41,15 +42,19 @@ en:
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useStore } from '~/store/index'
 
-const props = defineProps(['patch'])
+const props = defineProps({
+  patch: { type: Object }
+})
 const emit = defineEmits(['change'])
+
+const { t } = useI18n()
 
 const store = useStore()
 const env = computed(() => store.env)
 const loading = ref(false)
-const localPatch = ref({ ...props.patch })
 const search = ref('')
 const suggestions = ref([])
 
@@ -59,7 +64,8 @@ watch(search, async () => {
 
 onMounted(async () => {
   if (!props.patch.privateAccess) {
-    emit('change', { ...props.patch, privateAccess: [] })
+    props.patch.privateAccess = []
+    emit('change', props.patch)
   }
   await listSuggestions()
 })
@@ -74,18 +80,19 @@ async function listSuggestions() {
   const orgsResponse = await $fetch(`${env.value.directoryUrl}/api/organizations`, {
     params: { q: search.value }
   })
-  const orgs = orgsResponse.map(r => ({ ...r, type: 'organization' }))
+  const orgs = orgsResponse.results.map(r => ({ ...r, type: 'organization' }))
   const usersResponse = await $fetch(`${env.value.directoryUrl}/api/users`, {
     params: { q: search.value }
   })
-  const users = usersResponse.map(r => ({ ...r, type: 'user' }))
-  suggestions.value = [...new Set([...props.patch.privateAccess, ...orgs, ...users])]
+  const users = usersResponse.results.map(r => ({ ...r, type: 'user' }))
+  suggestions.value = props.patch.privateAccess.concat(orgs, users)
+  emit('change', props.patch)
   loading.value = false
 }
 
 function onChange() {
   search.value = ''
-  emit('change', localPatch.value)
+  emit('change', props.patch)
 }
 </script>
 
