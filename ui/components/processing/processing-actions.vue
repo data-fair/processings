@@ -12,7 +12,7 @@
       <template #activator="{ props }">
         <v-list-item
           v-bind="props"
-          :disabled="!processing.active"
+          :disabled="!processing?.active"
         >
           <template #prepend>
             <v-icon color="primary">
@@ -82,7 +82,7 @@
           Suppression du traitement
         </v-card-title>
         <v-card-text>
-          Voulez-vous vraiment supprimer le traitement "{{ processing.title }}" et tout son historique ? La suppression est définitive et les données ne pourront pas être récupérées.
+          Voulez-vous vraiment supprimer le traitement "{{ processing?.title }}" et tout son historique ? La suppression est définitive et les données ne pourront pas être récupérées.
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -103,7 +103,7 @@
     </v-menu>
 
     <v-list-item
-      v-if="processing.config && processing.config.dataset && processing.config.dataset.id"
+      v-if="processing?.config && processing.config.dataset && processing.config.dataset.id"
       :href="`${env.dataFairUrl}/dataset/${processing.config.dataset.id}`"
       target="_blank"
     >
@@ -116,7 +116,7 @@
     </v-list-item>
 
     <v-menu
-      v-if="notifUrl && processing.owner.type === activeAccount.type && processing.owner.id === activeAccount.id && !activeAccount.department"
+      v-if="notifUrl && processing?.owner.type === activeAccount.type && processing?.owner.id === activeAccount.id && !activeAccount.department"
       v-model="showNotifMenu"
       max-width="500"
       min-width="500"
@@ -186,16 +186,16 @@ const env = computed(() => store.env)
 const notifUrl = computed(() => {
   if (!env.value.notifyUrl) return null
   const topics = [
-    { key: `processings:processing-finish-ok:${properties.processing._id}`, title: `Le traitement ${properties.processing.title} a terminé avec succès` },
-    { key: `processings:processing-finish-error:${properties.processing._id}`, title: `Le traitement ${properties.processing.title} a terminé en échec` },
-    { key: `processings:processing-log-error:${properties.processing._id}`, title: `Le traitement ${properties.processing.title} a terminé correctement mais son journal contient des erreurs` }
+    { key: `processings:processing-finish-ok:${properties.processing?._id ?? ''}`, title: `Le traitement ${properties.processing?.title ?? ''} a terminé avec succès` },
+    { key: `processings:processing-finish-error:${properties.processing?._id}`, title: `Le traitement ${properties.processing?.title} a terminé en échec` },
+    { key: `processings:processing-log-error:${properties.processing?._id}`, title: `Le traitement ${properties.processing?.title} a terminé correctement mais son journal contient des erreurs` }
   ]
   const urlTemplate = window.parent.location.href
   return `${env.value.notifyUrl}/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false`
 })
 
 const webhookLink = computed(() => {
-  let link = `${env.value.publicUrl}/api/v1/processings/${properties.processing._id}/_trigger?key=${webhookKey.value}`
+  let link = `${env.value.publicUrl}/api/v1/processings/${properties.processing?._id}/_trigger?key=${webhookKey.value}`
   if (triggerDelay.value > 0) link += `&delay=${triggerDelay.value}`
   return link
 })
@@ -203,7 +203,7 @@ const webhookLink = computed(() => {
 const confirmRemove = async () => {
   showDeleteMenu.value = false
   try {
-    await $fetch(`${env.value.publicUrl}/api/v1/processings/${properties.processing._id}`, {
+    await $fetch(`${env.value.publicUrl}/api/v1/processings/${properties.processing?._id}`, {
       method: 'DELETE'
     })
     return navigateTo({ path: '/processings' })
@@ -213,12 +213,12 @@ const confirmRemove = async () => {
 }
 
 const getWebhookKey = async () => {
-  webhookKey.value = await $fetch(`${env.value.publicUrl}/api/v1/processings/${properties.processing._id}/webhook-key`)
+  webhookKey.value = await $fetch(`${env.value.publicUrl}/api/v1/processings/${properties.processing?._id}/webhook-key`)
 }
 
 const triggerExecution = async () => {
   try {
-    await $fetch(`${env.value.publicUrl}/api/v1/processings/${properties.processing._id}/_trigger`, {
+    await $fetch(`${env.value.publicUrl}/api/v1/processings/${properties.processing?._id}/_trigger`, {
       method: 'POST',
       body: { delay: triggerDelay.value }
     })

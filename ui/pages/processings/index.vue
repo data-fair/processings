@@ -38,7 +38,7 @@
             <v-switch
               v-model="showAll"
               color="admin"
-              label="voir tous les traitements"
+              label="Voir tous les traitements"
               hide-details
               density="compact"
               class="mt-0"
@@ -72,7 +72,9 @@ const eventBus = useEventBus()
 const store = useStore()
 const route = useRoute()
 
+/** @type {any} */
 const installedPlugins = ref({})
+/** @type {any} */
 const processings = ref(null)
 const showAll = ref(false)
 
@@ -118,6 +120,7 @@ async function fetchInstalledPlugins() {
 
 async function refresh() {
   try {
+    /** @type {any} */
     const params = {
       size: '10000',
       showAll: showAll.value,

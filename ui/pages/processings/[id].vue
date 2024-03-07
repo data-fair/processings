@@ -70,9 +70,13 @@ import { v2compat } from '@koumoul/vjsf/compat/v2'
 const store = useStore()
 const route = useRoute()
 
+/** @type {any} */
 const form = ref(null)
+/** @type {any} */
 const processing = ref(null)
+/** @type {any} */
 const editProcessing = ref(null)
+/** @type {any} */
 const plugin = ref(null)
 const renderVjsfKey = ref(0)
 
