@@ -33,25 +33,30 @@
 <script setup>
 import LangSwitcher from '~/components/layout/sd/lang-switcher.vue'
 import PersonalMenu from '~/components/layout/sd/personal-menu.vue'
-import { computed } from 'vue'
+import { computed, getCurrentInstance, watch } from 'vue'
 import { useStore } from '~/store/index'
 
+const instance = getCurrentInstance()
 const store = useStore()
 
 const breadcrumbs = computed(() => store.breadcrumbs)
+
+watch(breadcrumbs, () => {
+  instance?.proxy?.$forceUpdate()
+})
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .main-app-bar .v-toolbar__content {
   padding-left: 0;
   padding-right: 0;
 }
 
-.v-breadcrumbs-item--link {
+:deep(.v-breadcrumbs-item--link) {
   color: rgb(var(--v-theme-primary));
 }
 
-.v-breadcrumbs-divider {
+:deep(.v-breadcrumbs-divider) {
   color: rgba(var(--v-theme-on-background), 0.5);
 }
 </style>
