@@ -41,7 +41,7 @@ export default defineNuxtConfig({
     }],
     ['@nuxtjs/i18n', {
       locales: ['fr', 'en'],
-      defaultLocale: 'fr',
+      defaultLocale: config.i18nDefaultLocale,
       strategy: 'no_prefix',
       detectBrowserLanguage: {
         useCookie: true,
@@ -67,8 +67,6 @@ export default defineNuxtConfig({
       dataFairAdminMode: config.dataFairAdminMode,
       notifyUrl: config.notifyUrl,
       datasetsUrlTemplate: config.datasetsUrlTemplate,
-      adminRole: config.adminRole,
-      contribRole: config.contribRole,
       defaultTimeZone: config.defaultTimeZone
     }
   },

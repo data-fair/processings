@@ -1,16 +1,9 @@
 export default {
-  publicUrl: 'http://localhost:5600',
-  directoryUrl: 'http://localhost:5600/simple-directory',
   dataFairUrl: 'http://localhost:5600/data-fair',
-  privateDataFairUrl: null,
   dataFairAdminMode: false,
+  defaultTimeZone: 'Europe/Paris',
+  directoryUrl: 'http://localhost:5600/simple-directory',
+  i18nDefaultLocale: 'fr',
   notifyUrl: null,
-  adminRole: 'admin',
-  contribRole: 'contrib',
-  i18n: {
-    locales: 'fr,en',
-    defaultLocale: 'fr'
-  },
-  proxyNuxt: false,
-  defaultTimeZone: 'Europe/Paris'
+  publicUrl: 'http://localhost:5600'
 }
