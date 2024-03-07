@@ -62,5 +62,8 @@ module.exports = {
       __format: 'json'
     }
   },
-  defaultTimeZone: 'DEFAULT_TIME_ZONE'
+  defaultTimeZone: 'DEFAULT_TIME_ZONE',
+  npm: {
+    httpsProxy: 'NPM_HTTPS_PROXY'
+  }
 }

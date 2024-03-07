@@ -67,5 +67,8 @@ module.exports = {
     // -1 for unlimited storage
     processingsSeconds: -1
   },
-  defaultTimeZone: 'Europe/Paris'
+  defaultTimeZone: 'Europe/Paris',
+  npm: {
+    httpsProxy: null
+  }
 }

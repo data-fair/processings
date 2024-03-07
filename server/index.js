@@ -29,7 +29,8 @@ async function start () {
     await prometheus.start(db)
   }
 
-  if (process.env.HTTPS_PROXY || process.env.https_proxy) await exec('npm config set https-proxy ' + (process.env.HTTPS_PROXY || process.env.https_proxy))
+  const npmHttpsProxy = config.npm.httpsProxy || process.env.HTTPS_PROXY || process.env.https_proxy
+  if (npmHttpsProxy) await exec('npm config set https-proxy ' + npmHttpsProxy)
 
   if (config.mode.includes('worker')) {
     await require('../upgrade')(db)
