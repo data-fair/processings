@@ -160,7 +160,7 @@
 import 'iframe-resizer/js/iframeResizer'
 import useEventBus from '~/composables/event-bus'
 import VIframe from '@koumoul/v-iframe'
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useStore } from '~/store'
 
 defineEmits(['triggered'])
@@ -169,6 +169,26 @@ const properties = defineProps({
   canAdmin: Boolean,
   canExec: Boolean,
   processing: Object
+})
+
+const observer = new MutationObserver((mutationsList, observer) => {
+  for (const mutation of mutationsList) {
+    if (mutation.type === 'childList') {
+      const vIframeDiv = document.querySelector('.v-iframe')
+      if (vIframeDiv) {
+        const realIframe = vIframeDiv.querySelector('iframe')
+        if (realIframe) {
+          const iframeDocument = realIframe.contentDocument || realIframe.contentWindow?.document
+          if (iframeDocument) {
+            const appDiv = iframeDocument.querySelector('#app')
+            if (appDiv) {
+              appDiv.removeAttribute('style')
+            }
+          }
+        }
+      }
+    }
+  }
 })
 
 const eventBus = useEventBus()
@@ -227,6 +247,14 @@ const triggerExecution = async () => {
     eventBus.emit('notification', { error, msg: 'Erreur pendant le déclenchement du traitement' })
   }
 }
+
+onMounted(() => {
+  observer.observe(document.body, { attributes: true, childList: true, subtree: true })
+})
+
+onUnmounted(() => {
+  observer.disconnect()
+})
 
 watch(showTriggerMenu, async (newValue) => {
   if (newValue && properties.canAdmin) {
