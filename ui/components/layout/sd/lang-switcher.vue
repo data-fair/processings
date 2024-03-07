@@ -18,7 +18,7 @@
           :key="filteredLocale"
           @click="setLocale(filteredLocale)"
         >
-          <v-list-item-title>{{ filteredLocale }}</v-list-item-title>
+          <v-list-item-title>{{ filteredLocale.toUpperCase() }}</v-list-item-title>
         </v-list-item>
       </v-list>
     </v-menu>
