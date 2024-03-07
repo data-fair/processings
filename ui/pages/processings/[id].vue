@@ -38,7 +38,7 @@
           :processing="processing"
           :can-admin="canAdminProcessing"
           :can-exec="canExecProcessing"
-          @triggered="$refs.runs.refresh()"
+          @triggered="runs.refresh()"
         />
       </layout-navigation-right>
       <layout-actions-button
@@ -50,7 +50,7 @@
             :processing="processing"
             :can-admin="canAdminProcessing"
             :can-exec="canExecProcessing"
-            @triggered="$refs.runs.refresh()"
+            @triggered="runs.refresh()"
           />
         </template>
       </layout-actions-button>
@@ -60,7 +60,7 @@
 
 <script setup>
 import '@koumoul/vjsf-markdown'
-import * as contractProcessing from '../../../contract/processing'
+import contractProcessing from '../../../contract/processing'
 import Vjsf from '@koumoul/vjsf'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -71,13 +71,15 @@ const store = useStore()
 const route = useRoute()
 
 /** @type {any} */
+const editProcessing = ref(null)
+/** @type {any} */
 const form = ref(null)
 /** @type {any} */
 const processing = ref(null)
 /** @type {any} */
-const editProcessing = ref(null)
-/** @type {any} */
 const plugin = ref(null)
+/** @type {any} */
+const runs = ref(null)
 const renderVjsfKey = ref(0)
 
 const env = computed(() => store.env)
@@ -96,12 +98,18 @@ const canExecProcessing = computed(() => {
 const processingSchema = computed(() => {
   if (!plugin.value || !processing.value) return
   const schema = JSON.parse(JSON.stringify(contractProcessing))
+  Object.keys(schema.properties).forEach(key => {
+    if (schema.properties[key].readOnly) {
+      schema.required = schema.required.filter(k => k !== key)
+      delete schema.properties[key]
+    }
+  })
   schema.properties.config = {
     ...plugin.value.processingConfigSchema,
     title: 'Plugin ' + plugin.value.fullName,
     'x-options': { deleteReadOnly: false }
   }
-  if (user.value.adminMode) delete schema.properties.debug.readOnly
+  if (user.value.adminMode) delete schema.properties.debug?.readOnly
   if (!canAdminProcessing.value) {
     delete schema.properties.permissions
     delete schema.properties.config

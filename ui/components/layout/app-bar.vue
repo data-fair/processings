@@ -33,16 +33,12 @@
 <script setup>
 import LangSwitcher from '~/components/layout/sd/lang-switcher.vue'
 import PersonalMenu from '~/components/layout/sd/personal-menu.vue'
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import { useStore } from '~/store/index'
 
 const store = useStore()
 
 const breadcrumbs = computed(() => store.breadcrumbs)
-
-watch(breadcrumbs, (newVal) => {
-  breadcrumbs.value = newVal
-})
 </script>
 
 <style lang="scss">
@@ -56,6 +52,6 @@ watch(breadcrumbs, (newVal) => {
 }
 
 .v-breadcrumbs-divider {
-  color: rgb(var(--v-theme-primary));
+  color: rgba(var(--v-theme-on-background), 0.5);
 }
 </style>
