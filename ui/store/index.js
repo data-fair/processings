@@ -18,8 +18,7 @@ const extension = {
   },
   actions: {
     setBreadcrumbs(breadcrumbs) {
-      breadcrumbs.forEach(b => { b.exact = true })
-      this.setAny(breadcrumbs)
+      this.breadcrumbs = breadcrumbs
       if (globalThis.parent) {
         globalThis.parent.postMessage({ breadcrumbs }, '*')
       }

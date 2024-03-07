@@ -1,4 +1,4 @@
-module.exports = {
+const scheduling = {
   title: 'Planification du traitement',
   type: 'object',
   oneOf: [
@@ -219,3 +219,5 @@ module.exports = {
     }
   ]
 }
+
+export default scheduling

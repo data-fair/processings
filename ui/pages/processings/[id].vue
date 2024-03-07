@@ -144,10 +144,11 @@ onMounted(async () => {
 async function fetchProcessing() {
   processing.value = await $fetch(`${env.value.publicUrl}/api/v1/processings/${route.params.id}`)
   store.setBreadcrumbs([{
-    text: 'traitements',
-    to: '/processings'
+    title: 'traitements',
+    href: '/processings'
   }, {
-    text: processing.value.title
+    title: processing.value.title,
+    disabled: false
   }])
   editProcessing.value = { ...processing.value }
 }

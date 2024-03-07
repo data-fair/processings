@@ -4,11 +4,11 @@
   "scripts": {
     "analyze": "rm -rf .output && nuxi analyze",
     "build": "rm -rf .output && nuxi build",
-    "dev": "npm run build && PORT=3039 nuxi start",
-    "dev-test": "nuxi dev -p 3039",
+    "dev": "nuxi dev -p 3039",
     "generate": "nuxi generate",
     "prepare": "nuxi prepare",
-    "preview": "nuxi preview"
+    "preview": "nuxi preview",
+    "start": "npm run build && PORT=3039 nuxi start"
   },
   "devDependencies": {
     "@koumoul/v-iframe": "^2.4.1",

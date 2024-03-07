@@ -1,4 +1,4 @@
-module.exports.toCRON = (scheduling) => {
+export const toCRON = (scheduling) => {
   if (!scheduling || scheduling.type === 'manual') return
   const minute = scheduling.minute + (scheduling.minuteStep ? `/${scheduling.minuteStep}` : '')
   const hour = scheduling.hour + (scheduling.hourStep ? `/${scheduling.hourStep}` : '')

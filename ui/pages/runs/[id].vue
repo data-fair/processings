@@ -134,9 +134,9 @@ async function refresh() {
   eventBus.on(wsPatchChannel.value, onRunPatch)
 
   store.setBreadcrumbs([
-    { text: 'traitements', to: '/processings' },
-    { text: run.value.processing.title, to: `/processings/${run.value.processing._id}` },
-    { text: 'exécution' }
+    { title: 'traitements', href: '/processings' },
+    { title: run.value.processing.title, href: `/processings/${run.value.processing._id}` },
+    { title: 'exécution', disabled: false }
   ])
   loading.value = false
 }

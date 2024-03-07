@@ -5,8 +5,8 @@ import { nanoid } from 'nanoid'
 import config from '../config.js'
 import moment from 'moment'
 import { CronJob } from 'cron'
-import schedulingUtils from '../../../api/src/utils/scheduling.cjs'
-import runSchema from '../../../contract/run.cjs'
+import { toCRON } from '../../../api/src/utils/scheduling.js'
+import runSchema from '../../../contract/run.js'
 
 import Ajv from 'ajv'
 import ajvFormats from 'ajv-formats'
@@ -130,7 +130,7 @@ export const createNext = async (db, processing, triggered, delaySeconds = 0) =>
   } else {
     await db.collection('runs')
       .deleteMany({ 'processing._id': processing._id, status: 'scheduled' })
-    const cron = schedulingUtils.toCRON(processing.scheduling)
+    const cron = toCRON(processing.scheduling)
     const timeZone = processing.scheduling.timeZone || config.defaultTimeZone
     const job = new CronJob(cron, () => {}, () => {}, false, timeZone)
     const nextDate = job.nextDates()

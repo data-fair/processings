@@ -1,4 +1,4 @@
-module.exports = {
+const permissions = {
   type: 'array',
   title: 'Permissions',
   'x-class': 'mb-8',
@@ -72,3 +72,5 @@ module.exports = {
     }
   }
 }
+
+export default permissions

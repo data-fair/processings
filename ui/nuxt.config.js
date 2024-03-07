@@ -1,5 +1,6 @@
 import * as baseConfig from './config/default'
 import * as devConfig from './config/development'
+import { commonjsDeps } from '@koumoul/vjsf/utils/build.js'
 import { defineNuxtConfig } from 'nuxt/config'
 import { URL } from 'url'
 
@@ -72,6 +73,16 @@ export default defineNuxtConfig({
   },
   ssr: false,
   telemetry: false,
+  vite: {
+    build: {
+      commonjsOptions: {
+        include: commonjsDeps
+      }
+    },
+    optimizeDeps: {
+      include: commonjsDeps
+    }
+  },
   vuetify: {
     moduleOptions: {
       styles: {

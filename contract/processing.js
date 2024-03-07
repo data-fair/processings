@@ -1,14 +1,15 @@
-const { owner } = require('./owner.cjs')
-const scheduling = require('./scheduling.cjs')
-const permissions = require('./permissions.cjs')
-const run = JSON.parse(JSON.stringify(require('./run.cjs')))
+import { owner } from './owner.js'
+import permissions from './permissions.js'
+import scheduling from './scheduling.js'
+import run from './run.js'
+
 delete run.required
 delete run.properties.log
 delete run.properties.processing
 delete run.properties.owner
 run.readOnly = true
 
-module.exports = {
+const processing = {
   type: 'object',
   additionalProperties: false,
   required: ['_id', 'owner', 'title', 'plugin', 'scheduling'],
@@ -96,3 +97,5 @@ module.exports = {
     }
   }
 }
+
+export default processing

@@ -142,7 +142,7 @@ const filteredInstalledPlugins = computed(() => {
 onMounted(async () => {
   const access = await checkAccess()
   if (access === true) {
-    store.setBreadcrumbs([{ text: 'plugins' }])
+    store.setBreadcrumbs([{ title: 'plugins', disabled: false }])
     await fetchInstalledPlugins()
     await fetchAvailablePlugins()
   }
@@ -151,7 +151,7 @@ onMounted(async () => {
 window.onpopstate = async () => {
   const access = await checkAccess()
   if (access === true) {
-    store.setBreadcrumbs([{ text: 'plugins' }])
+    store.setBreadcrumbs([{ title: 'plugins', disabled: false }])
     await fetchInstalledPlugins()
     await fetchAvailablePlugins()
   }

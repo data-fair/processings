@@ -106,7 +106,7 @@ const canAdmin = computed(() => {
 })
 
 onMounted(async () => {
-  store.setBreadcrumbs([{ text: 'traitements' }])
+  store.setBreadcrumbs([{ title: 'traitements', disabled: false }])
   await refresh()
   await fetchInstalledPlugins()
 })

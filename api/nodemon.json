@@ -1,6 +1,6 @@
 {
   "verbose": false,
-  "ext": "js, json, cjs",
+  "ext": "js, json",
   "watch": [
     "./src/**/*",
     "../contract/",
