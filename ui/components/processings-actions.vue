@@ -28,6 +28,11 @@
             Créer un nouveau traitement
           </h3>
         </v-card-title>
+        <v-progress-linear
+          v-if="inCreate"
+          indeterminate
+          color="primary"
+        />
         <v-card-text>
           <v-form>
             <v-text-field
@@ -54,7 +59,7 @@
             Annuler
           </v-btn>
           <v-btn
-            :disabled="!newProcessing.title || !newProcessing.plugin"
+            :disabled="!newProcessing.title || !newProcessing.plugin || inCreate"
             color="primary"
             @click="createProcessing"
           >
@@ -76,15 +81,18 @@ defineProps({
 
 const store = useStore()
 
+const inCreate = ref(false)
 const showCreateMenu = ref(false)
 const newProcessing = ref({})
 
 const createProcessing = async () => {
+  inCreate.value = true
   const response = await $fetch(`${store.env.publicUrl}/api/v1/processings`, {
     method: 'POST',
     body: { ...newProcessing.value }
   })
   showCreateMenu.value = false
+  inCreate.value = false
   return navigateTo({ path: `/processings/${response._id}` })
 }
 </script>

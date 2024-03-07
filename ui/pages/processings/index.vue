@@ -31,14 +31,13 @@
         />
         <v-card
           v-if="user.adminMode"
-          color="admin"
-          dark
           flat
-          class="mt-2"
+          class="mt-2 adminSwitch"
         >
           <v-card-text class="pa-3">
             <v-switch
               v-model="showAll"
+              color="admin"
               label="voir tous les traitements"
               hide-details
               density="compact"
@@ -137,3 +136,32 @@ async function refresh() {
 }
 
 </script>
+
+<style scoped>
+.adminSwitch {
+  background-color: rgb(var(--v-theme-background)) !important;
+}
+
+:deep(.adminSwitch) {
+  color: rgb(var(--v-theme-admin)) !important;
+}
+
+:deep(.adminSwitch .v-switch__thumb) {
+  background-color: rgb(var(--v-theme-admin)) !important;
+}
+
+:deep(.adminSwitch .v-switch__track) {
+  background-color: rgb(var(--v-theme-admin)) !important;
+  filter: saturate(100%);
+}
+
+:deep(.adminSwitch .v-switch__track:not(.bg-admin)) {
+  filter: saturate(50%);
+}
+
+:deep(.adminSwitch label) {
+  color: rgb(var(--v-theme-admin)) !important;
+  font-weight: bold !important;
+  padding-inline-start: 30px !important;
+}
+</style>

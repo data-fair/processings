@@ -59,7 +59,7 @@
             v-if="result.pluginConfigSchema?.properties && Object.keys(result.pluginConfigSchema.properties).length"
             :ref="'form-' + result.id"
           >
-            <v-jsf
+            <vjsf
               v-model="result.config"
               :schema="result.pluginConfigSchema"
               @change="saveConfig(result)"
@@ -113,6 +113,7 @@
 </template>
 
 <script setup>
+import '@koumoul/vjsf-markdown'
 import Vjsf from '@koumoul/vjsf'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useStore } from '~/store/index'

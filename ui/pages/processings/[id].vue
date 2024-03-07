@@ -9,7 +9,7 @@
           Traitement {{ processing.title }}
         </h2>
         <v-form ref="form">
-          <v-jsf
+          <vjsf
             v-if="processingSchema"
             :key="renderVjsfKey"
             v-model="editProcessing"
@@ -24,7 +24,7 @@
                 v-on="on"
               />
             </template>
-          </v-jsf>
+          </vjsf>
         </v-form>
         <processing-runs
           ref="runs"
@@ -59,6 +59,7 @@
 </template>
 
 <script setup>
+import '@koumoul/vjsf-markdown'
 import * as contractProcessing from '../../../contract/processing'
 import Vjsf from '@koumoul/vjsf'
 import { computed, onMounted, ref } from 'vue'
@@ -66,10 +67,10 @@ import { useRoute } from 'vue-router'
 import { useStore } from '~/store/index'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 
-const form = ref(null)
 const store = useStore()
 const route = useRoute()
 
+const form = ref(null)
 const processing = ref(null)
 const editProcessing = ref(null)
 const plugin = ref(null)
@@ -90,7 +91,7 @@ const canExecProcessing = computed(() => {
 
 const processingSchema = computed(() => {
   if (!plugin.value || !processing.value) return
-  const schema = v2compat(JSON.parse(JSON.stringify(contractProcessing)))
+  const schema = JSON.parse(JSON.stringify(contractProcessing))
   schema.properties.config = {
     ...plugin.value.processingConfigSchema,
     title: 'Plugin ' + plugin.value.fullName,
@@ -102,11 +103,11 @@ const processingSchema = computed(() => {
     delete schema.properties.config
     delete schema.properties.webhookKey
   }
-  return schema
+  return v2compat(schema)
 })
 
 const vjsfOptions = computed(() => {
-  if (!processing.value) return
+  if (!processing.value) return {}
   return {
     arrayItemCardProps: { outlined: true, tile: true },
     context: {
@@ -116,6 +117,7 @@ const vjsfOptions = computed(() => {
       directoryUrl: env.value.directoryUrl
     },
     deleteReadOnly: true,
+    density: 'compact',
     dialogCardProps: { outlined: true },
     dialogProps: {
       maxWidth: 500,
