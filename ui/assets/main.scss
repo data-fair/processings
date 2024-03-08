@@ -1,6 +1,8 @@
 @use '~/assets/css/fonts.css';
 @use '~/assets/settings.scss';
 
+// CSS Hack : Remove the default margin and padding from the body (added by the browser)
+// Source : https://www.joshwcomeau.com/css/custom-css-reset/
 * {
   margin: 0;
 }
@@ -9,20 +11,22 @@ body {
   font-family: 'Nunito', sans-serif;
 }
 
+// Allows to theme the links as we want
 a {
   color: inherit;
   text-decoration: none;
 }
 
+// Force the font used
 .v-application {
   font-family: 'Nunito', sans-serif;
 }
 
+// Originally meant to fix a bug where hovering over buttons would cause the overlay to have 100% opacity
 .v-theme--light {
   --v-hover-opacity: 0.04;
   --v-theme-overlay-multiplier: 1;
 }
-
 .v-theme--dark {
   --v-hover-opacity: 0.04;
   --v-theme-overlay-multiplier: 1;

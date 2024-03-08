@@ -31,6 +31,7 @@ function jwtDecodeAlive(jwt) {
   return decoded
 }
 
+// Allows to create a store with custom config (can override existing one)
 export function sessionPiniaStoreBuilder(overrideConfig = {}) {
   overrideConfig = {
     state: overrideConfig.state ? overrideConfig.state : () => ({}),
@@ -147,6 +148,7 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
           console.error('No http client found to cancel deletion. You must use ofetch as init param.')
         }
       },
+      // Sends the user to the error page with the given status code and message
       error(params) {
         console.error('Error', params.statusCode, params.message)
         window.location.href = `${this.env.publicUrl}/error?statusCode=${params.statusCode}&message=${encodeURIComponent(params.message)}`

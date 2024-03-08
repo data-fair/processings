@@ -171,6 +171,9 @@ const properties = defineProps({
   processing: Object
 })
 
+// The iframe have by default a style="background: transparent;" that causes issues in dark mode
+// Basically none of the text is visible and the background is pure white
+// Each time the iframe loads, we remove the style attribute
 const observer = new MutationObserver((mutationsList, observer) => {
   for (const mutation of mutationsList) {
     if (mutation.type === 'childList') {
@@ -249,10 +252,12 @@ const triggerExecution = async () => {
 }
 
 onMounted(() => {
+  // Load the observer on childList changes
   observer.observe(document.body, { attributes: true, childList: true, subtree: true })
 })
 
 onUnmounted(() => {
+  // Remove the observer when the component is unmounted to avoid running it on unnecessary pages
   observer.disconnect()
 })
 

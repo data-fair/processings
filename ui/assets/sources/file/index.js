@@ -1,13 +1,26 @@
-const axios = require('axios')
-const path = require('path')
-const fs = require('fs')
-const pump = require('util').promisify(require('pump'))
-const { file } = require('tmp-promise')
+import fs from 'fs'
+import pump from 'pump'
+import { file } from 'tmp-promise'
+import { ofetch } from 'ofetch'
+import { promisify } from 'util'
+import { parse } from 'path'
 
-exports.run = async function (config) {
-  const res = await axios.get(config.url, { responseType: 'stream' })
+const pumpPromise = promisify(pump)
+
+export async function run(config) {
+  const response = await ofetch.raw(config.url, { responseType: 'arrayBuffer' })
   const tmpFile = await file()
-  await pump(res.data, fs.createWriteStream(tmpFile.path))
-  const fileName = res.headers['content-disposition'] ? res.headers['content-disposition'].match(/filename="(.*)"/)[1] : decodeURIComponent(path.parse(config.url).base)
+
+  await pumpPromise(response._data, fs.createWriteStream(tmpFile.path))
+
+  const contentDisposition = response.headers.get('Content-Disposition')
+  let fileName
+  if (contentDisposition) {
+    const matches = contentDisposition.match(/filename="(.*)"/)
+    fileName = matches && matches[1] ? matches[1] : decodeURIComponent(parse(config.url).base)
+  } else {
+    fileName = decodeURIComponent(parse(config.url).base)
+  }
+
   return { fileName, tmpFile }
 }

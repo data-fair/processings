@@ -52,9 +52,10 @@
 
 <script setup>
 import useEventBus from '~/composables/event-bus'
-import { emit, ref } from 'vue'
+import { ref } from 'vue'
 import { useStore } from '~/store/index'
 
+const emit = defineEmits(['removed'])
 const props = defineProps({
   processing: { type: Object, default: () => ({}) }
 })

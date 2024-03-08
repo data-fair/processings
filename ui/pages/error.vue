@@ -12,7 +12,13 @@
 import { onMounted, toRefs } from 'vue'
 
 const props = defineProps({
-  error: Object
+  error: {
+    type: Object,
+    default: () => ({
+      statusCode: 500,
+      message: 'Erreur inconnue'
+    })
+  }
 })
 
 const { error } = toRefs(props)

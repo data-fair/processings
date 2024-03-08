@@ -41,6 +41,9 @@ const store = useStore()
 
 const breadcrumbs = computed(() => store.breadcrumbs)
 
+// breadcrumbs is a computed value so it should auto update when the store.breadcrumbs changes
+// However it doesn't work as the full window isn't reloaded and we're only transitioning between pages
+// So we force a component update
 watch(breadcrumbs, () => {
   instance?.proxy?.$forceUpdate()
 })
@@ -52,10 +55,12 @@ watch(breadcrumbs, () => {
   padding-right: 0;
 }
 
+// Changes the color of clickable links
 :deep(.v-breadcrumbs-item--link) {
   color: rgb(var(--v-theme-primary));
 }
 
+// Makes the divider less visible
 :deep(.v-breadcrumbs-divider) {
   color: rgba(var(--v-theme-on-background), 0.5);
 }

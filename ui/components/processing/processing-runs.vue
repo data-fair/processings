@@ -78,7 +78,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   eventBus.emit('unsubscribe', wsChannel.value)
-  eventBus.off(onRunPatch)
+  eventBus.off(wsChannel.value, onRunPatch)
 })
 
 watch(props.processing, refresh, { deep: true })

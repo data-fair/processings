@@ -2,14 +2,14 @@
 //
 // Le flux GBFS, mis à disposition par Smoove, présente la liste des stations du réseau
 // de vélos en libre-service (VLS) Vélocéo de Vannes
-const axios = require('axios')
+import { ofetch } from 'ofetch'
 
-exports.run = async function (config) {
-  const infos = await axios.get(config.infosUrl)
-  const status = await axios.get(config.statusUrl)
-  const stations = Object.assign({}, ...infos.data.data.stations.map(s => ({ [s.station_id]: s })))
-  const updateDate = new Date(status.data.last_updated * 1000).toISOString()
-  const bulkLines = status.data.data.stations
+export async function run(config) {
+  const infos = await ofetch(config.infosUrl)
+  const status = await ofetch(config.statusUrl)
+  const stations = Object.assign({}, ...infos.data.stations.map(s => ({ [s.station_id]: s })))
+  const updateDate = new Date(status.last_updated * 1000).toISOString()
+  const bulkLines = status.data.stations
     .map(s => Object.assign({ update_date: updateDate }, s, stations[s.station_id])).filter(s => s.is_installed === 1)
   bulkLines.forEach(s => {
     s._id = s.station_id

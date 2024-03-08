@@ -61,15 +61,18 @@ export default defineNuxtPlugin((nuxtApp) => {
   store.setAny({ vuetify })
 
   if (themeCookie.value !== undefined) {
+    // @ts-ignore : themeCookie.value is a boolean
     storeVuetify.value.theme.global.name = themeCookie.value === true ? 'dark' : 'light'
   }
 
   if (route.query.dark) {
+    // @ts-ignore : themeCookie.value is a boolean
     storeVuetify.value.theme.global.name = themeCookie.value === true ? 'dark' : 'light'
   }
   nuxtApp.vueApp.use(vuetify)
   nuxtApp.$vuetify = vuetify
 
+  // Change the used vuetify instance when the store's vuetify changes
   watch(() => store.vuetify, vuetify => {
     nuxtApp.vueApp.use(vuetify)
     nuxtApp.vueApp.provide('vuetify', vuetify)

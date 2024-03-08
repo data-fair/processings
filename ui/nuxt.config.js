@@ -22,12 +22,13 @@ export default defineNuxtConfig({
     baseURL: config.basePath
   },
   build: {
-    transpile: ['@koumoul', '@data-fair', 'vuetify'],
+    transpile: ['@koumoul', '@data-fair', 'vuetify']
   },
   css: [
     '@mdi/font/css/materialdesignicons.min.css',
     './assets/main.scss'
   ],
+  // Force enabling the dev tools on nuxi dev as the shortcut (Shift + Alt + D) is not working on non QWERTY keyboards, see https://github.com/nuxt/devtools/issues/601
   devtools: {
     enabled: true,
     timeline: {
@@ -80,6 +81,11 @@ export default defineNuxtConfig({
       datasetsUrlTemplate: config.datasetsUrlTemplate,
       defaultTimeZone: config.defaultTimeZone
     }
+  },
+  // Avoids getting "WARN Sourcemap for "x" points to missing source files", see https://github.com/nuxt/nuxt/issues/14124#issuecomment-1517258360
+  sourcemap: {
+    client: false,
+    server: true
   },
   ssr: false,
   telemetry: false,

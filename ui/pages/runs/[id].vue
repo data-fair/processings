@@ -123,8 +123,8 @@ onMounted(async () => {
 onUnmounted(() => {
   eventBus.emit('unsubscribe', wsLogChannel.value)
   eventBus.emit('unsubscribe', wsPatchChannel.value)
-  eventBus.off(onRunLog)
-  eventBus.off(onRunPatch)
+  eventBus.off(wsLogChannel.value, onRunLog)
+  eventBus.off(wsPatchChannel.value, onRunPatch)
 })
 
 async function refresh() {
