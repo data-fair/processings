@@ -9,23 +9,15 @@
 </template>
 
 <script setup>
-import { onMounted, toRefs } from 'vue'
+import { onMounted, ref } from 'vue'
 
-const props = defineProps({
-  error: {
-    type: Object,
-    default: () => ({
-      statusCode: 500,
-      message: 'Erreur inconnue'
-    })
-  }
+const error = ref({
+  statusCode: 500,
+  message: 'Unknown error'
 })
-
-const { error } = toRefs(props)
 
 onMounted(() => {
   const params = new URLSearchParams(location.search)
-  history.replaceState({}, document.title, location.pathname)
   if (!params.has('statusCode') && !params.has('message')) {
     navigateTo({ path: '/' })
   }
@@ -41,5 +33,6 @@ onMounted(() => {
     state.message = params.get('message')
   }
   error.value = { ...state }
+  history.replaceState({}, document.title, location.pathname)
 })
 </script>

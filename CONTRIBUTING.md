@@ -43,7 +43,7 @@ npm run dev-api
 
 ## Working on @data-fair/processings/ui
 
-The UI is a [Nuxt 3](https://nuxt.com/) project that uses [Vuetify 3](https://vuetifyjs.com/).
+The UI is a [Nuxt 3](https://nuxt.com/) project that uses [Vuetify 3](https://vuetifyjs.com/).  
 Run a development server (access it at http://localhost:3039/) :
 
 ```sh
