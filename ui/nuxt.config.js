@@ -1,5 +1,6 @@
 import * as baseConfig from './config/default'
 import * as devConfig from './config/development'
+import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import { commonjsDeps } from '@koumoul/vjsf/utils/build.js'
 import { defineNuxtConfig } from 'nuxt/config'
 import { URL } from 'url'
@@ -16,14 +17,12 @@ if (process.env.NODE_ENV === 'production') {
   process.env.NUXT_CONFIG = JSON.stringify(config)
 }
 
-// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   app: {
     baseURL: config.basePath
   },
-  // https://vuetifyjs.com/en/getting-started/installation/#using-nuxt-3
   build: {
-    transpile: ['@koumoul', '@data-fair']
+    transpile: ['@koumoul', '@data-fair', 'vuetify'],
   },
   css: [
     '@mdi/font/css/materialdesignicons.min.css',
@@ -50,12 +49,23 @@ export default defineNuxtConfig({
       }
     }],
     '@pinia/nuxt',
-    'vuetify-nuxt-module'
+    (_options, nuxt) => {
+      nuxt.hooks.hook('vite:extendConfig', (config) => {
+        // @ts-expect-error
+        config.plugins.push(vuetify({
+          autoImport: true,
+          styles: {
+            configFile: './assets/settings.scss'
+          }
+        }))
+      })
+    }
   ],
   plugins: [
     { src: 'plugins/filters' },
     { src: 'plugins/session', mode: 'client' },
     { src: 'plugins/v-iframe', mode: 'client' },
+    { src: 'plugins/vuetify' },
     { src: 'plugins/ws', mode: 'client' }
   ],
   port: 3039,
@@ -81,14 +91,11 @@ export default defineNuxtConfig({
     },
     optimizeDeps: {
       include: commonjsDeps
-    }
-  },
-  vuetify: {
-    moduleOptions: {
-      styles: {
-        configFile: './assets/settings.scss'
-      }
     },
-    vuetifyOptions: './vuetify.config.js'
+    vue: {
+      template: {
+        transformAssetUrls
+      }
+    }
   }
 })

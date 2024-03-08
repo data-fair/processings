@@ -1,14 +1,9 @@
 import Cookies from 'js-cookie'
-import { defineNuxtPlugin } from 'nuxt/app'
+import { defineNuxtPlugin } from '#app'
 import { ofetch } from 'ofetch'
-import { useRoute } from 'vue-router'
-import { useCookie } from '#app'
 import { useStore } from '~/store/index'
-import { watch } from 'vue'
 
 export default defineNuxtPlugin(nuxtApp => {
-  const route = useRoute()
-  const themeCookie = useCookie('theme_dark')
   const store = useStore()
   const runtimeConfig = useRuntimeConfig()
 
@@ -52,22 +47,7 @@ export default defineNuxtPlugin(nuxtApp => {
       store.loop(Cookies)
     }
 
-    if (themeCookie.value !== undefined) {
-      nuxtApp.vueApp.provide('theme', themeCookie.value === true ? 'dark' : 'light')
-      nuxtApp.$vuetify.theme.dark = themeCookie.value === true
-    }
-
-    if (route.query.dark) {
-      nuxtApp.vueApp.provide('theme', route.query.dark === true ? 'dark' : 'light')
-      nuxtApp.$vuetify.theme.dark = route.query.dark === true
-    }
-
-    store.setAny({ vuetify: nuxtApp.$vuetify })
     nuxtApp.vueApp.provide('store', store)
     nuxtApp.provide('store', store)
-  })
-
-  watch(() => store.vuetify, vuetify => {
-    nuxtApp.vueApp.provide('vuetify', vuetify)
   })
 })

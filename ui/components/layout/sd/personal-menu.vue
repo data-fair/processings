@@ -61,7 +61,7 @@
             :value="true"
             type="warning"
             rounded="lg"
-            :variant="$vuetify.theme.dark && 'outlined'"
+            :variant="$vuetify.theme.global.name === 'dark' ? 'outlined' : 'flat'"
             style="max-width:440px;"
           >
             {{ t('plannedDeletion', {name: user.name, plannedDeletion: d(new Date(user.pd))}) }}
@@ -235,7 +235,7 @@ const initialized = computed(() => store.initialized)
 const directoryUrl = computed(() => store.directoryUrl)
 const activeAccount = computed(() => store.activeAccount)
 
-const isDark = ref(store.vuetify.theme.dark)
+const isDark = ref(store.vuetify.theme.global.name === 'dark')
 
 function login() {
   store.login()
@@ -264,8 +264,6 @@ function setAdminMode(value) {
 
 function toggleDarkMode(value) {
   store.setDarkMode(value)
-  store.vuetify.theme.dark = value
-  window.location.reload()
 }
 </script>
 

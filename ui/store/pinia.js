@@ -361,7 +361,7 @@ export function sessionPiniaStoreBuilder(overrideConfig = {}) {
       setDarkMode(value) {
         const maxAge = 60 * 60 * 24 * 100 // 100 days
         this.cookies.set('theme_dark', '' + value, { expires: maxAge, path: '/' })
-        this.vuetify.theme.dark = value
+        this.vuetify.theme.global.name = value ? 'dark' : 'light'
       },
       switchOrganization(organizationId) {
         if (organizationId) {
