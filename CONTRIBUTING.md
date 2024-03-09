@@ -72,17 +72,17 @@ npm run build-types
 Build the images :
 
 ```sh
-docker build -f api/Dockerfile -t data-fair/metrics/api:dev .
-docker build -f ui/Dockerfile -t data-fair/metrics/ui:dev .
-docker build -f worker/Dockerfile -t data-fair/metrics/worker:dev .
+docker build -f api/Dockerfile -t data-fair/processings/api:dev .
+docker build -f ui/Dockerfile -t data-fair/processings/ui:dev .
+docker build -f worker/Dockerfile -t data-fair/processings/worker:dev .
 ```
 
 Run the images :
 
 ```sh
-docker run --network host docker.io/data-fair/api:dev
-docker run --network host docker.io/data-fair/ui:dev
-docker run --network host docker.io/data-fair/worker:dev
+docker run --network host docker.io/data-fair/processings/api:dev
+docker run --network host docker.io/data-fair/processings/ui:dev
+docker run --network host docker.io/data-fair/processings/worker:dev
 ```
 
 ## Running the tests
