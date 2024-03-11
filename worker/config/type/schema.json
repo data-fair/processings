@@ -18,11 +18,14 @@
     "defaultLimits",
     "mongoUrl",
     "locks",
-    "prometheus",
+    "observer",
     "worker"
   ],
   "properties": {
     "dataDir": {
+      "type": "string"
+    },
+    "tmpDir": {
       "type": "string"
     },
     "dataFairAPIKey": {
@@ -82,11 +85,14 @@
         }
       }
     },
-    "prometheus": {
+    "observer": {
       "type": "object",
       "properties": {
         "active": {
           "type": "boolean"
+        },
+        "port": {
+          "type": "number"
         }
       }
     },

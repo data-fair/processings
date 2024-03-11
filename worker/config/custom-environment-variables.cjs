@@ -20,8 +20,9 @@ module.exports = {
   locks: {
     ttl: 'LOCKS_TTL'
   },
-  prometheus: {
-    active: 'PROMETHEUS_ACTIVE'
+  observer: {
+    active: 'OBSERVER_ACTIVE',
+    port: 'OBSERVER_PORT'
   },
   worker: {
     interval: 'WORKER_INTERVAL',

@@ -17,10 +17,13 @@
     "mongoUrl",
     "origin",
     "port",
-    "prometheus"
+    "observer"
   ],
   "properties": {
     "dataDir": {
+      "type": "string"
+    },
+    "tmpDir": {
       "type": "string"
     },
     "defaultLimits": {
@@ -48,11 +51,14 @@
     "port": {
       "type": "number"
     },
-    "prometheus": {
+    "observer": {
       "type": "object",
       "properties": {
         "active": {
           "type": "boolean"
+        },
+        "port": {
+          "type": "number"
         }
       }
     },
