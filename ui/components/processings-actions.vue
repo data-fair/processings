@@ -73,13 +73,10 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useStore } from '~/store/index'
 
 defineProps({
   installedPlugins: { type: Object, required: true }
 })
-
-const store = useStore()
 
 const inCreate = ref(false)
 const showCreateMenu = ref(false)
@@ -87,7 +84,7 @@ const newProcessing = ref({})
 
 const createProcessing = async () => {
   inCreate.value = true
-  const response = await $fetch(`${store.env.publicUrl}/api/v1/processings`, {
+  const response = await $fetch('/api/v1/processings', {
     method: 'POST',
     body: { ...newProcessing.value }
   })

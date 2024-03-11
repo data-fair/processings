@@ -8,16 +8,6 @@
         Exécution du traitement {{ run.processing.title }}
       </h2>
       <v-spacer />
-      <v-btn
-        v-if="runBackLink"
-        variant="text"
-        :to="`/processings/${run.processing._id}`"
-      >
-        <v-icon style="transform: scale(-1, 1)">
-          mdi-share
-        </v-icon>
-        revenir
-      </v-btn>
     </v-row>
     <v-row>
       <v-col>
@@ -67,19 +57,17 @@ import RunLogsList from '~/components/run/run-logs-list.vue'
 import useEventBus from '~/composables/event-bus'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { useStore } from '~/store/index.js'
+import { useSession } from '@data-fair/lib/vue/session.js'
 
 const eventBus = useEventBus()
-const store = useStore()
 const route = useRoute()
+const session = useSession()
 
 const loading = ref(false)
 /** @type {any} */
 const run = ref(null)
 
-const env = computed(() => store.env)
-const runBackLink = computed(() => store.runBackLink)
-const user = computed(() => store.user)
+const user = computed(() => session.state.user)
 
 const canExec = computed(() => {
   if (!run.value) return false
@@ -136,11 +124,6 @@ async function refresh() {
   eventBus.emit('subscribe', wsPatchChannel.value)
   eventBus.on(wsPatchChannel.value, onRunPatch)
 
-  store.setBreadcrumbs([
-    { title: 'traitements', href: '/processings' },
-    { title: run.value.processing.title, href: `/processings/${run.value.processing._id}` },
-    { title: 'exécution', disabled: false }
-  ])
   loading.value = false
 }
 

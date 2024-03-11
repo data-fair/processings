@@ -67,13 +67,9 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useStore } from '~/store/index'
 
 const nuxtApp = useNuxtApp()
 const duration = nuxtApp.$dayjs.duration
-
-const store = useStore()
-const env = computed(() => store.env)
 
 const emit = defineEmits(['update:run'])
 const props = defineProps({
@@ -84,7 +80,7 @@ const props = defineProps({
 
 const kill = async (e) => {
   e.preventDefault()
-  await $fetch(`${env.value.publicUrl}/api/v1/runs/${props.run._id}/_kill`, {
+  await $fetch(`/api/v1/runs/${props.run._id}/_kill`, {
     method: 'POST'
   })
   emit('update:run', { ...props.run, status: 'kill' })

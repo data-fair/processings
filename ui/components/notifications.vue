@@ -7,7 +7,7 @@
     :timeout="notification.type === 'error' ? 0 : 300000"
     class="notification"
     location="right bottom"
-    :variant="$vuetify.theme.global.name === 'dark' ? 'outlined' : 'elevated'"
+    :variant="$vuetify.theme.current.dark ? 'outlined' : 'elevated'"
   >
     <p v-text="notification.msg" />
     <p

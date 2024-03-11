@@ -161,7 +161,7 @@ import 'iframe-resizer/js/iframeResizer'
 import useEventBus from '~/composables/event-bus'
 import VIframe from '@koumoul/v-iframe'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useStore } from '~/store'
+import { useSession } from '@data-fair/lib/vue/session.js'
 
 defineEmits(['triggered'])
 
@@ -195,7 +195,6 @@ const observer = new MutationObserver((mutationsList, observer) => {
 })
 
 const eventBus = useEventBus()
-const store = useStore()
 
 const showDeleteMenu = ref(false)
 const showNotifMenu = ref(false)
@@ -203,22 +202,21 @@ const showTriggerMenu = ref(false)
 const triggerDelay = ref(0)
 const webhookKey = ref(null)
 
-const activeAccount = computed(() => store.activeAccount)
-const env = computed(() => store.env)
+const session = useSession()
+const activeAccount = computed(() => session.state.account)
 
 const notifUrl = computed(() => {
-  if (!env.value.notifyUrl) return null
   const topics = [
     { key: `processings:processing-finish-ok:${properties.processing?._id ?? ''}`, title: `Le traitement ${properties.processing?.title ?? ''} a terminé avec succès` },
     { key: `processings:processing-finish-error:${properties.processing?._id}`, title: `Le traitement ${properties.processing?.title} a terminé en échec` },
     { key: `processings:processing-log-error:${properties.processing?._id}`, title: `Le traitement ${properties.processing?.title} a terminé correctement mais son journal contient des erreurs` }
   ]
   const urlTemplate = window.parent.location.href
-  return `${env.value.notifyUrl}/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false`
+  return `/notify/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false`
 })
 
 const webhookLink = computed(() => {
-  let link = `${env.value.publicUrl}/api/v1/processings/${properties.processing?._id}/_trigger?key=${webhookKey.value}`
+  let link = `/api/v1/processings/${properties.processing?._id}/_trigger?key=${webhookKey.value}`
   if (triggerDelay.value > 0) link += `&delay=${triggerDelay.value}`
   return link
 })

@@ -64,11 +64,11 @@ import contractProcessing from '../../../contract/processing'
 import Vjsf from '@koumoul/vjsf'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { useStore } from '~/store/index'
+import { useSession } from '@data-fair/lib/vue/session.js'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 
-const store = useStore()
 const route = useRoute()
+const session = useSession()
 
 /** @type {any} */
 const editProcessing = ref(null)
@@ -82,8 +82,7 @@ const plugin = ref(null)
 const runs = ref(null)
 const renderVjsfKey = ref(0)
 
-const env = computed(() => store.env)
-const user = computed(() => store.user)
+const user = computed(() => session.state.user)
 
 const canAdminProcessing = computed(() => {
   if (!processing.value) return false
@@ -109,7 +108,7 @@ const processingSchema = computed(() => {
     title: 'Plugin ' + plugin.value.fullName,
     'x-options': { deleteReadOnly: false }
   }
-  if (user.value.adminMode) delete schema.properties.debug?.readOnly
+  if (user?.adminMode) delete schema.properties.debug?.readOnly
   if (!canAdminProcessing.value) {
     delete schema.properties.permissions
     delete schema.properties.config
@@ -136,10 +135,11 @@ const vjsfOptions = computed(() => {
     },
     */
     context: {
-      owner: processing.value.owner,
-      ownerFilter: env.value.dataFairAdminMode ? `owner=${processing.value.owner.type}:${encodeURIComponent(processing.value.owner.id)}` : '',
-      dataFairUrl: env.value.dataFairUrl,
-      directoryUrl: env.value.directoryUrl
+      owner: processing.value.owner
+      // TODO
+      // ownerFilter: env.value.dataFairAdminMode ? `owner=${processing.value.owner.type}:${encodeURIComponent(processing.value.owner.id)}` : '',
+      // dataFairUrl: env.value.dataFairUrl,
+      // directoryUrl: env.value.directoryUrl
     },
     density: 'compact',
     readOnly: !canAdminProcessing.value,
@@ -148,28 +148,22 @@ const vjsfOptions = computed(() => {
 })
 
 onMounted(async () => {
-  if (route.query['back-link'] === 'true') {
-    store.setAny({ runBackLink: true })
-  }
+  // TODO
+  // if (route.query['back-link'] === 'true') {
+  //   store.setAny({ runBackLink: true })
+  // }
   await fetchProcessing()
   await fetchPlugin()
 })
 
 async function fetchProcessing() {
-  processing.value = await $fetch(`${env.value.publicUrl}/api/v1/processings/${route.params.id}`)
-  store.setBreadcrumbs([{
-    title: 'traitements',
-    href: '/processings'
-  }, {
-    title: processing.value.title,
-    disabled: false
-  }])
+  processing.value = await $fetch(`/api/v1/processings/${route.params.id}`)
   editProcessing.value = { ...processing.value }
 }
 
 async function fetchPlugin() {
   if (processing.value && processing.value.plugin) {
-    plugin.value = await $fetch(`${env.value.publicUrl}/api/v1/plugins/${processing.value.plugin}`)
+    plugin.value = await $fetch(`/api/v1/plugins/${processing.value.plugin}`)
     Object.keys(processingSchema.value.properties).forEach(key => {
       if (processingSchema.value.properties[key].readOnly) delete editProcessing.value[key]
     })
@@ -182,7 +176,7 @@ async function patch() {
     if (editProcessing.value.scheduling.dayOfWeek === '*') editProcessing.value.scheduling.dayOfWeek = '1'
     renderVjsfKey.value += 1
   }
-  await $fetch(`${env.value.publicUrl}/api/v1/processings/${route.params.id}`, {
+  await $fetch(`/api/v1/processings/${route.params.id}`, {
     method: 'PATCH',
     body: { ...editProcessing.value }
   })

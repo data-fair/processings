@@ -79,11 +79,11 @@ import format from '~/assets/format'
 import useEventBus from '~/composables/event-bus'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { useStore } from '~/store/index'
+import { useSession } from '@data-fair/lib/vue/session.js'
 
 const eventBus = useEventBus()
-const store = useStore()
 const route = useRoute()
+const session = useSession()
 
 /** @type {any} */
 const installedPlugins = ref({})
@@ -91,9 +91,8 @@ const installedPlugins = ref({})
 const processings = ref(null)
 const showAll = ref(false)
 
-const activeAccount = computed(() => store.activeAccount)
-const env = computed(() => store.env)
-const user = computed(() => store.user)
+const activeAccount = computed(() => session.state.account)
+const user = computed(() => session.state.user)
 
 const owner = computed(() => {
   if (route.query.owner) {
@@ -116,19 +115,19 @@ const ownerRole = computed(() => {
 const ownerFilter = computed(() => `${owner.value.type}:${owner.value.id}`)
 
 const canAdmin = computed(() => {
-  if (env.value.secondaryHost) return false
+  // TODO
+  // if (env.value.secondaryHost) return false
   return ownerRole.value === 'admin' || user.value.adminMode
 })
 
 onMounted(async () => {
-  store.setBreadcrumbs([{ title: 'traitements', disabled: false }])
   await refresh()
   await fetchInstalledPlugins()
 })
 
 async function fetchInstalledPlugins() {
   if (!canAdmin.value) return
-  installedPlugins.value = await $fetch(`${env.value.publicUrl}/api/v1/plugins?privateAccess=${ownerFilter.value}`)
+  installedPlugins.value = await $fetch(`/api/v1/plugins?privateAccess=${ownerFilter.value}`)
 }
 
 async function refresh() {
@@ -145,7 +144,7 @@ async function refresh() {
     } else {
       params.owner = ownerFilter.value
     }
-    processings.value = await $fetch(`${env.value.publicUrl}/api/v1/processings`, { params })
+    processings.value = await $fetch('/api/v1/processings', { params })
   } catch (error) {
     eventBus.emit('notification', { error, msg: 'Erreur pendant la récupération de la liste des traitements' })
   }

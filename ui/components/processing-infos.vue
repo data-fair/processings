@@ -97,18 +97,15 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useStore } from '~/store/index'
 
 const props = defineProps({
   processing: { type: Object, required: true }
 })
 
-const store = useStore()
 const menu = ref(null)
 const vocabulary = ref([])
 const processingSchema = ref(null)
 
-const env = computed(() => store.env)
 const datasetSchema = computed(() => {
   // eslint-disable-next-line vue/no-async-in-computed-properties
   import('~/assets/sources/' + props.processing.source.type + '/schema.json')
@@ -148,8 +145,8 @@ const sourceTypeXOutput = computed(() => {
 })
 
 onMounted(async () => {
-  vocabulary.value = await $fetch(`${env.value.dataFairUrl}/api/v1/vocabulary`)
-  processingSchema.value = await $fetch(`${env.value.publicUrl}/api/v1/processings/_schema`)
+  vocabulary.value = await $fetch(`/data-fair/api/v1/vocabulary`)
+  processingSchema.value = await $fetch(`/api/v1/processings/_schema`)
 })
 
 function conceptLabel(uri) {

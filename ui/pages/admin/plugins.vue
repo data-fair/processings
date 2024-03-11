@@ -112,10 +112,10 @@
 import '@koumoul/vjsf-markdown'
 import Vjsf from '@koumoul/vjsf'
 import { computed, onMounted, ref, watch } from 'vue'
-import { useStore } from '~/store/index'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
+import { useSession } from '@data-fair/lib/vue/session.js'
 
-const store = useStore()
+const session = useSession()
 
 const loading = ref(false)
 /** @type {any} */
@@ -124,7 +124,6 @@ const availablePlugins = ref({})
 const installedPlugins = ref({})
 const search = ref('')
 
-const env = computed(() => store.env)
 const filteredAvailablePlugins = computed(() => {
   if (!availablePlugins.value.results) return
   if (!search.value) return availablePlugins.value.results
@@ -140,7 +139,6 @@ const filteredInstalledPlugins = computed(() => {
 onMounted(async () => {
   const access = await checkAccess()
   if (access === true) {
-    store.setBreadcrumbs([{ title: 'plugins', disabled: false }])
     await fetchInstalledPlugins()
     await fetchAvailablePlugins()
   }
@@ -149,35 +147,36 @@ onMounted(async () => {
 window.onpopstate = async () => {
   const access = await checkAccess()
   if (access === true) {
-    store.setBreadcrumbs([{ title: 'plugins', disabled: false }])
     await fetchInstalledPlugins()
     await fetchAvailablePlugins()
   }
 }
 
 async function checkAccess() {
-  if (!store.user) {
-    return store.error({
-      message: 'Authentification nécessaire',
-      statusCode: 401
-    })
+  if (!session.state.user) {
+    // TODO: show an error message
+    // return store.error({
+    //   message: 'Authentification nécessaire',
+    //   statusCode: 401
+    // })
   }
-  if (!store.isAccountAdmin) {
-    return store.error({
-      message: 'Vous n\'avez pas la permission d\'accéder à cette page, il faut avoir activé le mode super-administration.',
-      statusCode: 403
-    })
+  if (!session.state.user?.adminMode) {
+    // TODO: show an error message
+    // return store.error({
+    //   message: 'Vous n\'avez pas la permission d\'accéder à cette page, il faut avoir activé le mode super-administration.',
+    //   statusCode: 403
+    // })
   }
 
   return true
 }
 
 async function fetchAvailablePlugins() {
-  availablePlugins.value = await $fetch(`${env.value.publicUrl}/api/v1/plugins-registry`)
+  availablePlugins.value = await $fetch('/api/v1/plugins-registry')
 }
 
 async function fetchInstalledPlugins() {
-  installedPlugins.value = await $fetch(`${env.value.publicUrl}/api/v1/plugins`)
+  installedPlugins.value = await $fetch('/api/v1/plugins')
 }
 
 /**
@@ -185,7 +184,7 @@ async function fetchInstalledPlugins() {
  */
 async function install(plugin) {
   loading.value = true
-  await $fetch(`${env.value.publicUrl}/api/v1/plugins`, {
+  await $fetch('/api/v1/plugins', {
     method: 'POST',
     body: { ...plugin }
   })
@@ -198,7 +197,7 @@ async function install(plugin) {
  */
 async function uninstall(plugin) {
   loading.value = true
-  await $fetch(`${env.value.publicUrl}/api/v1/plugins/${plugin.id}`, {
+  await $fetch(`/api/v1/plugins/${plugin.id}`, {
     method: 'DELETE'
   })
   await fetchInstalledPlugins()
@@ -210,7 +209,7 @@ async function uninstall(plugin) {
  */
 async function saveConfig(plugin) {
   loading.value = true
-  await $fetch(`${env.value.publicUrl}/api/v1/plugins/${plugin.id}/config`, {
+  await $fetch(`/api/v1/plugins/${plugin.id}/config`, {
     method: 'PUT',
     body: { ...plugin.config }
   })
@@ -222,7 +221,7 @@ async function saveConfig(plugin) {
  */
 async function saveAccess(plugin) {
   loading.value = true
-  await $fetch(`${env.value.publicUrl}/api/v1/plugins/${plugin.id}/access`, {
+  await $fetch(`/api/v1/plugins/${plugin.id}/access`, {
     method: 'PUT',
     body: { ...plugin.access }
   })

@@ -52,14 +52,11 @@
 <script setup>
 import useEventBus from '~/composables/event-bus'
 import { ref } from 'vue'
-import { useStore } from '~/store/index'
 
 const emit = defineEmits(['removed'])
 const processingProps = defineProps({
   processing: { type: Object, default: () => ({}) }
 })
-
-const store = useStore()
 
 const menu = ref(false)
 const eventBus = useEventBus()
@@ -71,7 +68,7 @@ const open = (e) => {
 
 const confirm = async () => {
   try {
-    await $fetch(`${store.env.publicUrl}/api/v1/processings/${processingProps.processing.id}`, {
+    await $fetch(`/api/v1/processings/${processingProps.processing.id}`, {
       method: 'DELETE'
     })
     emit('removed', { id: processingProps.processing.id })

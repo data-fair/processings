@@ -28,7 +28,6 @@
 import RunListItem from '~/components/run/run-list-item.vue'
 import useEventBus from '~/composables/event-bus'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useStore } from '~/store/index'
 
 const props = defineProps({
   canExec: Boolean,
@@ -36,12 +35,10 @@ const props = defineProps({
 })
 
 const eventBus = useEventBus()
-const store = useStore()
 
 const loading = ref(false)
 const runs = ref(null)
 
-const env = computed(() => store.env)
 const wsChannel = computed(() => `processings/${props.processing._id}/run-patch`)
 
 function onRunPatch(runPatch) {
@@ -59,7 +56,7 @@ function onRunPatch(runPatch) {
 
 async function refresh() {
   loading.value = true
-  runs.value = await $fetch(`${env.value.publicUrl}/api/v1/runs`, {
+  runs.value = await $fetch('/api/v1/runs', {
     params: {
       processing: props.processing._id,
       size: 1000,

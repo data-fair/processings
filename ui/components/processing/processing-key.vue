@@ -39,19 +39,15 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { useStore } from '~/store/index'
 
 const properties = defineProps({
   processing: { type: Object, required: true }
 })
 
-const store = useStore()
-
 const menu = ref(null)
 
-const env = computed(() => store.env)
 const curl = computed(() => {
-  return `curl -X POST ${env.value.publicUrl}/api/v1/processings/${properties.processing.id}/_run -H 'x-apikey: ${properties.processing.webhookKey}'`
+  return `curl -X POST /api/v1/processings/${properties.processing.id}/_run -H 'x-apikey: ${properties.processing.webhookKey}'`
 })
 </script>
 

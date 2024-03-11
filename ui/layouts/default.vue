@@ -1,7 +1,6 @@
 <template>
   <div class="v-app">
-    <v-app :theme="isDark">
-      <ClientOnly><AppBar v-if="!embed" /></ClientOnly>
+    <v-app>
       <v-main>
         <NuxtPage />
         <Notifications />
@@ -13,20 +12,10 @@
 <script setup>
 import 'iframe-resizer/js/iframeResizer.contentWindow'
 import Notifications from '~/components/notifications.vue'
-import AppBar from '~/components/layout/app-bar.vue'
-import { computed } from 'vue'
-import { useStore } from '~/store/index'
-
-const store = useStore()
-const isDark = computed(() => store.vuetify.theme.global.name)
-
-const embed = computed(() => store.getEmbed)
 
 globalThis.iFrameResizer = {
   heightCalculationMethod: 'taggedElement'
 }
-
-store.setAny({ embed })
 
 useHead({
   title: 'Data Fair Processings',
@@ -40,12 +29,7 @@ useHead({
 })
 </script>
 
-<components :AppBar="AppBar" :Notifications="Notifications" />
+<components :Notifications="Notifications" />
 
-<style lang="scss">
-@import '~/assets/main.scss';
-
-.v-list.list-actions .v-list-item .v-list-item__icon {
-  margin-right: 16px;
-}
+<style>
 </style>

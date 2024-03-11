@@ -41,9 +41,8 @@ en:
 </i18n>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useStore } from '~/store/index'
 
 const props = defineProps({
   patch: { type: Object }
@@ -52,8 +51,6 @@ const emit = defineEmits(['change'])
 
 const { t } = useI18n()
 
-const store = useStore()
-const env = computed(() => store.env)
 const loading = ref(false)
 const search = ref('')
 const suggestions = ref([])
@@ -77,11 +74,11 @@ async function listSuggestions() {
   }
 
   loading.value = true
-  const orgsResponse = await $fetch(`${env.value.directoryUrl}/api/organizations`, {
+  const orgsResponse = await $fetch('/simple-directory/api/organizations', {
     params: { q: search.value }
   })
   const orgs = orgsResponse.results.map(r => ({ ...r, type: 'organization' }))
-  const usersResponse = await $fetch(`${env.value.directoryUrl}/api/users`, {
+  const usersResponse = await $fetch('/simple-directory/api/users', {
     params: { q: search.value }
   })
   const users = usersResponse.results.map(r => ({ ...r, type: 'user' }))

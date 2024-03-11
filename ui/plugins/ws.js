@@ -46,13 +46,12 @@ function configureWS(wsUrl, suffix = '', eventBus) {
 
 export default defineNuxtPlugin(nuxtApp => {
   const eventBus = useEventBus()
-  const runtimeConfig = useRuntimeConfig()
-  const wsPublicUrl = (window.location.origin + runtimeConfig.public.basePath)
-    .replace('http:', 'ws:').replace('https:', 'wss:')
-  configureWS(`${wsPublicUrl}api/`, '', eventBus)
+  const wsPublicUrl = (window.location.origin + '/api/').replace('http:', 'ws:').replace('https:', 'wss:')
+  configureWS(wsPublicUrl, '', eventBus)
 
   // Only configure notify websocket in main back-office mode, not multi-domain embeds
-  if (runtimeConfig.public.notifyWSUrl && new URL(runtimeConfig.public.notifyWSUrl).hostname === window.location.hostname) {
-    configureWS(runtimeConfig.public.notifyWSUrl, '-notify', eventBus)
-  }
+  // TODO
+  // if (runtimeConfig.public.notifyWSUrl && new URL(runtimeConfig.public.notifyWSUrl).hostname === window.location.hostname) {
+  //   configureWS(runtimeConfig.public.notifyWSUrl, '-notify', eventBus)
+  // }
 })

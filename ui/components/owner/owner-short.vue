@@ -16,19 +16,14 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useStore } from '~/store/index'
 
 const ownerProps = defineProps({
   owner: Object
 })
 
-const store = useStore()
-
 const avatarUrl = computed(() => {
-  return `${env.value.directoryUrl}/api/avatars/${ownerProps.owner?.type}/${ownerProps.owner?.id}/avatar.png`
+  return `simple-directory/api/avatars/${ownerProps.owner?.type}/${ownerProps.owner?.id}/avatar.png`
 })
-
-const env = computed(() => store.env)
 
 const label = computed(() => {
   let label = ownerProps.owner?.name

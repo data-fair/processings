@@ -36,9 +36,12 @@
     "vuetify": "^3.5.8"
   },
   "dependencies": {
+    "@vueuse/integrations": "^10.9.0",
     "dayjs": "^1.11.10",
+    "debug": "^4.3.4",
     "gtfs-realtime-bindings": "1.1.1",
     "pump": "^3.0.0",
-    "timezones.json": "^1.7.1"
+    "timezones.json": "^1.7.1",
+    "universal-cookie": "^6.1.3"
   }
 }

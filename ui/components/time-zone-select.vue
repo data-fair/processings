@@ -33,7 +33,6 @@ defineProps({
 })
 
 const { t } = useI18n()
-const runtimeConfig = useRuntimeConfig()
 
 const utcs = computed(() => {
   const utcs = []
@@ -43,9 +42,7 @@ const utcs = computed(() => {
   return utcs.sort()
 })
 
-const defaultTimeZone = computed(() => {
-  return runtimeConfig.public.defaultTimeZone || 'UTC'
-})
+const defaultTimeZone = 'fr'
 </script>
 
 <style>
