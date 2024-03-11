@@ -35,9 +35,9 @@ export const start = async () => {
   const db = mongo.db
   await locks.init(db)
   const wsPublish = await initPublisher(db)
-  if (config.prometheus.active) {
+  if (config.observer.active) {
     await initMetrics(mongo.db)
-    await startObserver()
+    await startObserver(config.observer.port)
   }
   await limits.initLimits()
 
@@ -60,7 +60,7 @@ export const stop = async () => {
   await Promise.all(promisePool.filter(p => !!p))
   await Promise.all([mainLoopPromise, killLoopPromise])
   await mongo.client.close()
-  if (config.prometheus.active) await stopObserver()
+  if (config.observer.active) await stopObserver()
 }
 
 // Main loop

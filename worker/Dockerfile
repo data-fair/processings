@@ -34,33 +34,22 @@ RUN test -f /usr/lib/libproj.so
 RUN apk add --no-cache python3 make g++
 
 ######################################
-# Stage: nodejs dependencies and build
+# Stage: install root dev deps and build types
 FROM nativedeps AS builder
 
-WORKDIR /app/
-
-ADD /package.json .
-ADD /package-lock.json .
-
-RUN npm ci --workspaces=false --no-audit --no-fund --omit=optional
-
-ADD /worker/ worker/
-ADD /contract/ contract/
-
-##########################
-# install worker prod deps
-FROM node:20.11.1-alpine3.19 AS installer
+RUN npm i -g clean-modules@3.0.4
 
 WORKDIR /app/
-
 ADD /package.json .
 ADD /package-lock.json .
 ADD /worker/package.json worker/
 
-RUN npm pkg set scripts.prepare="echo 'skip prepare'"
-RUN npm i -g clean-modules@3.0.4
-RUN npm ci -w worker --no-audit --no-fund --omit=optional --omit=dev &&\
-    clean-modules --yes
+RUN npm -w worker --include-workspace-root ci --no-audit --no-fund
+
+ADD /shared shared
+ADD /contract contract
+ADD /worker worker
+RUN npm run build-types-worker
 
 ##############################################
 # copy deps and build and assemble actual dist
@@ -71,17 +60,18 @@ ENV NODE_ENV production
 
 WORKDIR /app/
 
-COPY --from=builder /app/worker/ worker/
 COPY --from=nativedeps /usr/lib/libproj.so /usr/lib/libproj.so
-COPY --from=installer /app/node_modules/ node_modules/
+COPY --from=builder /app/contract /app/contract
+COPY --from=builder /app/shared /app/shared
+COPY --from=builder /app/worker /app/worker
+COPY --from=builder /app/node_modules /app/node_modules
 
-ADD /contract/ contract/
-ADD /README.md .
-ADD /package.json .
-ADD /LICENSE .
+ADD README.md .
+ADD package.json .
+ADD LICENSE .
 
 WORKDIR /app/worker
 
 USER node
 
-CMD ["node", "worker/index.js"]
+CMD ["node", "index.js"]

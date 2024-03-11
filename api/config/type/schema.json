@@ -17,7 +17,7 @@
     "mongoUrl",
     "origin",
     "port",
-    "prometheus"
+    "observer"
   ],
   "properties": {
     "dataDir": {
@@ -48,7 +48,7 @@
     "port": {
       "type": "number"
     },
-    "prometheus": {
+    "observer": {
       "type": "object",
       "properties": {
         "active": {

@@ -7,7 +7,7 @@ module.exports = {
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings-development',
   notificationsKeys: 'secret-notifications',
   notifyUrl: 'http://localhost:5600/notify',
-  prometheus: {
-    active: false
+  observer: {
+    port: 9091
   }
 }
