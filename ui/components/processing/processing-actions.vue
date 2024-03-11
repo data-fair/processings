@@ -2,6 +2,7 @@
   <v-list
     density="compact"
     class="list-actions"
+    style="background-color: transparent;"
   >
     <v-menu
       v-if="canAdmin || canExec"
@@ -102,7 +103,7 @@
       </v-card>
     </v-menu>
     <v-list-item
-      v-if="processing?.config.dataset.id"
+      v-if="processing && processing.config && processing.config.dataset && processing.config.dataset.id"
       :href="`/data-fair/dataset/${processing.config.dataset.id}`"
       target="_blank"
     >

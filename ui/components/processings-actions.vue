@@ -2,6 +2,7 @@
   <v-list
     density="compact"
     class="list-actions"
+    style="background-color: transparent;"
   >
     <v-menu
       v-model="showCreateMenu"

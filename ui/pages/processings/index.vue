@@ -155,12 +155,8 @@ async function refresh() {
  * Instead of having a white string on a red background, we have a red string on the actual page's background
  * Plus the button is also red, and the text is bold so it's easier to read
  */
-
-.adminSwitch {
-  background-color: rgb(var(--v-theme-background)) !important;
-}
-
 :deep(.adminSwitch) {
+  background-color: transparent !important;
   color: rgb(var(--v-theme-admin)) !important;
 }
 
