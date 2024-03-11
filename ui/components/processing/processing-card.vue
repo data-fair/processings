@@ -2,7 +2,7 @@
   <v-card
     variant="outlined"
     rounded="lg"
-    border="primary md"
+    border="md"
     :elevation="hover ? 4 : 0"
     @mouseenter="hover = true"
     @mouseleave="hover = false"
@@ -24,7 +24,10 @@
         style="min-height: 96px;"
         class="pa-0"
       >
-        <v-list density="compact">
+        <v-list
+          bg-color="transparent"
+          density="compact"
+        >
           <v-list-item>
             <template #prepend>
               <v-icon>mdi-power-plug</v-icon>
@@ -64,6 +67,9 @@
           </template>
 
           <v-list-item v-else>
+            <template #prepend>
+              <v-icon>mdi-information</v-icon>
+            </template>
             <span>Aucune exécution dans l'historique</span>
           </v-list-item>
 
@@ -88,9 +94,11 @@
         </v-list>
       </v-card-text>
     </NuxtLink>
-    <v-card-actions class="pl-3">
+    <v-card-actions
+      v-if="showOwner"
+      class="pl-3"
+    >
       <owner-short
-        v-if="showOwner"
         :owner="processing.owner"
       />
       <v-spacer />

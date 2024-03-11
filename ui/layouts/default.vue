@@ -20,11 +20,13 @@ import { useStore } from '~/store/index'
 const store = useStore()
 const isDark = computed(() => store.vuetify.theme.global.name)
 
-const embed = computed(() => store.embed)
+const embed = computed(() => store.getEmbed)
 
 globalThis.iFrameResizer = {
   heightCalculationMethod: 'taggedElement'
 }
+
+store.setAny({ embed })
 
 useHead({
   title: 'Data Fair Processings',

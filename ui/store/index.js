@@ -20,7 +20,15 @@ const extension = {
     setBreadcrumbs(breadcrumbs) {
       this.breadcrumbs = breadcrumbs
       if (globalThis.parent) {
-        globalThis.parent.postMessage({ breadcrumbs }, '*')
+        const parentBreadcrumb = breadcrumbs.map(b => {
+          const newB = { text: b.title }
+          if (b.href !== undefined) {
+            newB.to = b.href
+          }
+          newB.exact = true
+          return newB
+        })
+        globalThis.parent.postMessage({ parentBreadcrumb }, '*')
       }
     }
   }
