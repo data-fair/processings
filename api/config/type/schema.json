@@ -23,6 +23,9 @@
     "dataDir": {
       "type": "string"
     },
+    "tmpDir": {
+      "type": "string"
+    },
     "defaultLimits": {
       "type": "object",
       "properties": {
@@ -53,6 +56,9 @@
       "properties": {
         "active": {
           "type": "boolean"
+        },
+        "port": {
+          "type": "number"
         }
       }
     },

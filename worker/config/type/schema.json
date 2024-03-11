@@ -25,6 +25,9 @@
     "dataDir": {
       "type": "string"
     },
+    "tmpDir": {
+      "type": "string"
+    },
     "dataFairAPIKey": {
       "type": "string"
     },
@@ -87,6 +90,9 @@
       "properties": {
         "active": {
           "type": "boolean"
+        },
+        "port": {
+          "type": "number"
         }
       }
     },
