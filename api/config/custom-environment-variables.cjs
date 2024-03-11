@@ -1,5 +1,6 @@
 module.exports = {
   dataDir: 'DATA_DIR',
+  tmpDir: 'TMP_DIR',
   defaultTimeZone: 'DEFAULT_TIME_ZONE',
   defaultLimits: {
     processingsSeconds: 'DEFAULT_LIMITS_PROCESSINGS_SECONDS'
@@ -8,7 +9,8 @@ module.exports = {
   mongoUrl: 'MONGO_URL',
   origin: 'ORIGIN',
   port: 'PORT',
-  prometheus: {
-    active: 'PROMETHEUS_ACTIVE'
+  observer: {
+    active: 'OBSERVER_ACTIVE',
+    port: 'OBSERVER_PORT'
   }
 }

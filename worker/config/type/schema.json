@@ -18,7 +18,7 @@
     "defaultLimits",
     "mongoUrl",
     "locks",
-    "prometheus",
+    "observer",
     "worker"
   ],
   "properties": {
@@ -82,7 +82,7 @@
         }
       }
     },
-    "prometheus": {
+    "observer": {
       "type": "object",
       "properties": {
         "active": {

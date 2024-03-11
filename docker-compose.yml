@@ -29,7 +29,7 @@ services:
       - STORAGE_TYPE=file
       - NO_UI=${NO_UI}
       - AUTHRATELIMIT_ATTEMPTS=200
-      - PROMETHEUS_ACTIVE=false
+      - OBSERVER_ACTIVE=false
       - MANAGE_PARTNERS=true
     volumes:
       - ./dev/resources/users.json:/webapp/data/users.json
@@ -106,7 +106,7 @@ services:
       - DIRECTORY_URL=http://localhost:5600/simple-directory
       - SECRET_NOTIFICATIONS=secret-notifications
       - SECRET_SENDMAILS=secret-sendmails
-      - PROMETHEUS_ACTIVE=false
+      - OBSERVER_ACTIVE=false
 
 volumes:
   elasticsearch-data:

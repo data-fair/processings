@@ -25,8 +25,9 @@ module.exports = {
     // in seconds
     ttl: 60
   },
-  prometheus: {
-    active: true
+  observer: {
+    active: true,
+    port: 9090
   },
   worker: {
     // base interval for polling the database for new resources to work on

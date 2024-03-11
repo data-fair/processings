@@ -17,7 +17,7 @@ server.keepAliveTimeout = (60 * 1000) + 1000
 server.headersTimeout = (60 * 1000) + 2000
 
 export const start = async () => {
-  if (config.prometheus.active) await startObserver()
+  if (config.observer.active) await startObserver(config.observer.port)
   await session.init(config.directoryUrl)
   await mongo.connect(config.mongoUrl, { readPreference: 'nearest', maxPoolSize: 1 })
   server.listen(config.port)
@@ -29,7 +29,7 @@ export const start = async () => {
 
 export const stop = async () => {
   await httpTerminator.terminate()
-  if (config.prometheus.active) await stopObserver()
+  if (config.observer.active) await stopObserver()
   await mongo.client.close()
   await stopWSServer()
 }
