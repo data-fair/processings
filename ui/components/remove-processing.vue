@@ -5,15 +5,14 @@
     persistent
     :close-on-content-click="false"
   >
-    <template #activator>
+    <template #activator="{ props }">
       <v-btn
-        icon
+        v-bind="props"
+        icon="mdi-delete"
         color="warning"
         variant="text"
         @click="open"
-      >
-        <v-icon>mdi-delete</v-icon>
-      </v-btn>
+      />
     </template>
 
     <v-card>
@@ -56,7 +55,7 @@ import { ref } from 'vue'
 import { useStore } from '~/store/index'
 
 const emit = defineEmits(['removed'])
-const props = defineProps({
+const processingProps = defineProps({
   processing: { type: Object, default: () => ({}) }
 })
 
@@ -72,10 +71,10 @@ const open = (e) => {
 
 const confirm = async () => {
   try {
-    await $fetch(`${store.env.publicUrl}/api/v1/processings/${props.processing.id}`, {
+    await $fetch(`${store.env.publicUrl}/api/v1/processings/${processingProps.processing.id}`, {
       method: 'DELETE'
     })
-    emit('removed', { id: props.processing.id })
+    emit('removed', { id: processingProps.processing.id })
   } catch (error) {
     eventBus.emit('notification', { error, msg: 'Erreur pendant la suppression du traitement' })
   } finally {

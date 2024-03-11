@@ -54,14 +54,12 @@
     <template v-if="!run.finishedAt && run.status !== 'kill' && canExec">
       <v-list-item-action>
         <v-btn
-          class=".rounded-circle"
           color="warning"
+          icon="mdi-stop"
           size="x-small"
           title="interrompre"
           @click.prevent="kill"
-        >
-          <v-icon>mdi-stop</v-icon>
-        </v-btn>
+        />
       </v-list-item-action>
     </template>
   </v-list-item>

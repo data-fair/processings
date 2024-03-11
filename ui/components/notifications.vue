@@ -15,13 +15,11 @@
       class="ml-3"
       v-text="notification.errorMsg"
     />
-    <template #action>
+    <template #actions>
       <v-btn
-        icon
+        icon="mdi-close"
         @click="showSnackbar = false"
-      >
-        <v-icon>mdi-close</v-icon>
-      </v-btn>
+      />
     </template>
   </v-snackbar>
 </template>

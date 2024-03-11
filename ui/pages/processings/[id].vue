@@ -121,15 +121,8 @@ const processingSchema = computed(() => {
 const vjsfOptions = computed(() => {
   if (!processing.value) return {}
   return {
+    /*
     arrayItemCardProps: { outlined: true, tile: true },
-    context: {
-      owner: processing.value.owner,
-      ownerFilter: env.value.dataFairAdminMode ? `owner=${processing.value.owner.type}:${encodeURIComponent(processing.value.owner.id)}` : '',
-      dataFairUrl: env.value.dataFairUrl,
-      directoryUrl: env.value.directoryUrl
-    },
-    deleteReadOnly: true,
-    density: 'compact',
     dialogCardProps: { outlined: true },
     dialogProps: {
       maxWidth: 500,
@@ -141,7 +134,16 @@ const vjsfOptions = computed(() => {
       value: 0,
       hover: true
     },
-    readOnly: !canAdminProcessing.value
+    */
+    context: {
+      owner: processing.value.owner,
+      ownerFilter: env.value.dataFairAdminMode ? `owner=${processing.value.owner.type}:${encodeURIComponent(processing.value.owner.id)}` : '',
+      dataFairUrl: env.value.dataFairUrl,
+      directoryUrl: env.value.directoryUrl
+    },
+    density: 'compact',
+    readOnly: !canAdminProcessing.value,
+    readOnlyPropertiesMode: 'remove'
   }
 })
 

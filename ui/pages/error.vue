@@ -21,15 +21,14 @@ onMounted(() => {
   if (!params.has('statusCode') && !params.has('message')) {
     navigateTo({ path: '/' })
   }
-  const state = {}
-  if (!params.has('statusCode')) {
-    state.statusCode = 401
-  } else {
+  const state = {
+    statusCode: 401,
+    message: 'Authentification nécessaire'
+  }
+  if (params.has('statusCode')) {
     state.statusCode = params.get('statusCode')
   }
-  if (!params.has('message')) {
-    state.message = 'Authentification nécessaire'
-  } else {
+  if (params.has('message')) {
     state.message = params.get('message')
   }
   error.value = { ...state }

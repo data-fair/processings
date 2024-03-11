@@ -1,7 +1,10 @@
 <template>
   <v-tooltip location="top">
-    <template #activator>
-      <span class="text-body-2">
+    <template #activator="{ props }">
+      <span
+        v-bind="props"
+        class="text-body-2"
+      >
         <v-avatar :size="28">
           <img :src="avatarUrl">
         </v-avatar>
@@ -15,21 +18,21 @@
 import { computed } from 'vue'
 import { useStore } from '~/store/index'
 
-const props = defineProps({
+const ownerProps = defineProps({
   owner: Object
 })
 
 const store = useStore()
 
 const avatarUrl = computed(() => {
-  return `${env.value.directoryUrl}/api/avatars/${props.owner?.type}/${props.owner?.id}/avatar.png`
+  return `${env.value.directoryUrl}/api/avatars/${ownerProps.owner?.type}/${ownerProps.owner?.id}/avatar.png`
 })
 
 const env = computed(() => store.env)
 
 const label = computed(() => {
-  let label = props.owner?.name
-  if (props.owner?.role) label += ` (${props.owner?.role})`
+  let label = ownerProps.owner?.name
+  if (ownerProps.owner?.role) label += ` (${ownerProps.owner?.role})`
   return label
 })
 </script>

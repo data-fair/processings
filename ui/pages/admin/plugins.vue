@@ -38,13 +38,11 @@
           <v-spacer />
           <v-btn
             title="Désinstaller"
-            icon
+            icon="mdi-delete"
             color="warning"
             :disabled="loading"
             @click="uninstall(result)"
-          >
-            <v-icon>mdi-delete</v-icon>
-          </v-btn>
+          />
         </v-toolbar>
 
         <v-card-text class="py-2">
@@ -94,13 +92,11 @@
           <v-spacer />
           <v-btn
             title="Installer"
-            icon
+            icon="mdi-download"
             color="primary"
             :disabled="loading || !installedPlugins.results || !!installedPlugins.results.find(r => r.name === result.name && r.version === result.version)"
             @click="install(result)"
-          >
-            <v-icon>mdi-download</v-icon>
-          </v-btn>
+          />
         </v-toolbar>
         <v-card-text class="py-2">
           <p class="mb-0">

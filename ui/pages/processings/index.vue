@@ -32,19 +32,17 @@
         <v-card
           v-if="user.adminMode"
           flat
-          class="mt-2 adminSwitch"
+          class="mt-2 pa-3 adminSwitch"
         >
-          <v-card-text class="pa-3">
-            <v-switch
-              v-model="showAll"
-              color="admin"
-              label="Voir tous les traitements"
-              hide-details
-              density="compact"
-              class="mt-0"
-              @update:model-value="refresh"
-            />
-          </v-card-text>
+          <v-switch
+            v-model="showAll"
+            color="admin"
+            label="Voir tous les traitements"
+            hide-details
+            density="compact"
+            class="mt-0 adminSwitch"
+            @update:model-value="refresh"
+          />
         </v-card>
       </layout-navigation-right>
       <layout-actions-button
@@ -55,6 +53,21 @@
           <processings-actions
             :installed-plugins="installedPlugins"
           />
+          <v-card
+            v-if="user.adminMode"
+            variant="text"
+            class="mt-0 pa-3 adminSwitch"
+          >
+            <v-switch
+              v-model="showAll"
+              color="admin"
+              label="Voir tous les traitements"
+              hide-details
+              density="compact"
+              class="mt-0 adminSwitch"
+              @update:model-value="refresh"
+            />
+          </v-card>
         </template>
       </layout-actions-button>
     </v-row>

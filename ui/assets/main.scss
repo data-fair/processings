@@ -25,9 +25,11 @@ a {
 // Originally meant to fix a bug where hovering over buttons would cause the overlay to have 100% opacity
 .v-theme--light {
   --v-hover-opacity: 0.04;
+  --v-medium-emphasis-opacity: 1 !important;
   --v-theme-overlay-multiplier: 1;
 }
 .v-theme--dark {
   --v-hover-opacity: 0.04;
+  --v-medium-emphasis-opacity: 1 !important;
   --v-theme-overlay-multiplier: 1;
 }
