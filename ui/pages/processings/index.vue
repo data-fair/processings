@@ -115,8 +115,6 @@ const ownerRole = computed(() => {
 const ownerFilter = computed(() => `${owner.value.type}:${owner.value.id}`)
 
 const canAdmin = computed(() => {
-  // TODO
-  // if (env.value.secondaryHost) return false
   return ownerRole.value === 'admin' || user.value.adminMode
 })
 

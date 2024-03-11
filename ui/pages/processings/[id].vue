@@ -148,10 +148,6 @@ const vjsfOptions = computed(() => {
 })
 
 onMounted(async () => {
-  // TODO
-  // if (route.query['back-link'] === 'true') {
-  //   store.setAny({ runBackLink: true })
-  // }
   await fetchProcessing()
   await fetchPlugin()
 })

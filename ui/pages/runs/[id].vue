@@ -117,7 +117,7 @@ onUnmounted(() => {
 
 async function refresh() {
   loading.value = true
-  run.value = await $fetch(`${env.value.publicUrl}/api/v1/runs/${route.params.id}`)
+  run.value = await $fetch(`/api/v1/runs/${route.params.id}`)
 
   eventBus.emit('subscribe', wsLogChannel.value)
   eventBus.on(wsLogChannel.value, onRunLog)

@@ -101,10 +101,9 @@
         </v-card-actions>
       </v-card>
     </v-menu>
-
     <v-list-item
       v-if="processing?.config.dataset.id"
-      :href="`${env.dataFairUrl}/dataset/${processing.config.dataset.id}`"
+      :href="`/data-fair/dataset/${processing.config.dataset.id}`"
       target="_blank"
     >
       <template #prepend>
@@ -224,7 +223,7 @@ const webhookLink = computed(() => {
 const confirmRemove = async () => {
   showDeleteMenu.value = false
   try {
-    await $fetch(`${env.value.publicUrl}/api/v1/processings/${properties.processing?._id}`, {
+    await $fetch(`/api/v1/processings/${properties.processing?._id}`, {
       method: 'DELETE'
     })
     return navigateTo({ path: '/processings' })
@@ -234,12 +233,12 @@ const confirmRemove = async () => {
 }
 
 const getWebhookKey = async () => {
-  webhookKey.value = await $fetch(`${env.value.publicUrl}/api/v1/processings/${properties.processing?._id}/webhook-key`)
+  webhookKey.value = await $fetch(`/api/v1/processings/${properties.processing?._id}/webhook-key`)
 }
 
 const triggerExecution = async () => {
   try {
-    await $fetch(`${env.value.publicUrl}/api/v1/processings/${properties.processing?._id}/_trigger`, {
+    await $fetch(`/api/v1/processings/${properties.processing?._id}/_trigger`, {
       method: 'POST',
       body: { delay: triggerDelay.value }
     })
