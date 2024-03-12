@@ -64,7 +64,6 @@ const route = useRoute()
 const session = useSession()
 
 const loading = ref(false)
-/** @type {any} */
 const run = ref(null)
 
 const user = computed(() => session.state.user)
@@ -82,10 +81,8 @@ const wsPatchChannel = computed(() => {
   return run.value && `processings/${run.value.processing._id}/run-patch`
 })
 
-/** @return {any[]} */
 const steps = computed(() => {
   if (!run.value) return
-  /** @type {any[]} */
   const steps = []
   let lastStep
   for (const log of run.value.log) {
@@ -127,7 +124,6 @@ async function refresh() {
   loading.value = false
 }
 
-/** @param {any} runPatch */
 function onRunPatch(runPatch) {
   if (!run.value || run.value._id !== runPatch._id) return
   for (const key of Object.keys(runPatch.patch)) {
@@ -135,7 +131,6 @@ function onRunPatch(runPatch) {
   }
 }
 
-/** @param {any} runLog */
 function onRunLog(runLog) {
   if (!run.value || run.value._id !== runLog._id) return
   if (runLog.log.type === 'task') {

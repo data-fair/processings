@@ -168,7 +168,10 @@ defineEmits(['triggered'])
 const properties = defineProps({
   canAdmin: Boolean,
   canExec: Boolean,
-  processing: Object
+  processing: {
+    type: Object,
+    default: null
+  }
 })
 
 // The iframe have by default a style="background: transparent;" that causes issues in dark mode

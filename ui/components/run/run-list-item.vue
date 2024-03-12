@@ -66,8 +66,6 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-
 const nuxtApp = useNuxtApp()
 const duration = nuxtApp.$dayjs.duration
 
@@ -75,7 +73,10 @@ const emit = defineEmits(['update:run'])
 const props = defineProps({
   canExec: Boolean,
   link: Boolean,
-  run: Object
+  run: {
+    type: Object,
+    default: null
+  }
 })
 
 const kill = async (e) => {

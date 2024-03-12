@@ -111,8 +111,14 @@ import OwnerShort from '~/components/owner/owner-short.vue'
 import { ref } from 'vue'
 
 defineProps({
-  plugin: Object,
-  processing: Object,
+  plugin: {
+    type: Object,
+    default: null
+  },
+  processing: {
+    type: Object,
+    default: null
+  },
   showOwner: Boolean
 })
 

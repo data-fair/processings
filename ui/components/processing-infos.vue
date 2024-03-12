@@ -145,10 +145,14 @@ const sourceTypeXOutput = computed(() => {
 })
 
 onMounted(async () => {
-  vocabulary.value = await $fetch(`/data-fair/api/v1/vocabulary`)
-  processingSchema.value = await $fetch(`/api/v1/processings/_schema`)
+  vocabulary.value = await $fetch('/data-fair/api/v1/vocabulary')
+  processingSchema.value = await $fetch('/api/v1/processings/_schema')
 })
 
+/**
+ * @param {string} uri the URI of the concept
+ * @returns {string} the label of the concept
+ */
 function conceptLabel(uri) {
   const concept = vocabulary.value.find(t => t.identifiers?.includes(uri))
   return concept?.title || 'Concept inconnu'

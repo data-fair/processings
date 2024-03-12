@@ -85,13 +85,14 @@ const newProcessing = ref({})
 
 const createProcessing = async () => {
   inCreate.value = true
-  const response = await $fetch('/api/v1/processings', {
+  /** @type import('../../shared/types/index.js').processingType */
+  const processing = await $fetch('/api/v1/processings', {
     method: 'POST',
     body: { ...newProcessing.value }
   })
   showCreateMenu.value = false
   inCreate.value = false
-  return navigateTo({ path: `/processings/${response._id}` })
+  return navigateTo({ path: `/processings/${processing._id}` })
 }
 </script>
 
