@@ -14,6 +14,7 @@ const isSuperAdmin = async (req, res, next) => {
   if (!reqSession.user.adminMode) return res.status(403).send()
   next()
 }
+
 const isAccountMember = async (req, res, next) => {
   const reqSession = await session.reqAuthenticated(req)
   if (!reqSession.user) return res.status(401).send()

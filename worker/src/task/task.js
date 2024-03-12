@@ -25,6 +25,7 @@ const axiosInstance = (processing) => {
     httpAgent,
     httpsAgent
   })
+
   // apply default base url and send api key when relevant
   axiosInstance.interceptors.request.use(cfg => {
     if (!/^https?:\/\//i.test(cfg.url)) {
@@ -129,7 +130,7 @@ export const run = async ({ db, mailTransport, wsPublish }) => {
     dir,
     tmpDir: tmpDir.path,
     log,
-    axios: axiosInstance(log),
+    axios: axiosInstance(processing),
     ws: wsInstance(log),
     async patchConfig (patch) {
       await log.debug('patch config', patch)

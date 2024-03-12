@@ -8,6 +8,10 @@ const runsMetrics = new Histogram({
   labelNames: ['status', 'owner']
 })
 
+/**
+ * @param {import('mongodb').Db} db the database
+ * @returns {Promise<void>} nothing
+ */
 const initMetrics = async db => {
   // eslint-disable-next-line no-new
   new Gauge({

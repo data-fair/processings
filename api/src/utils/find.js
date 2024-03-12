@@ -2,26 +2,26 @@ import createError from 'http-errors'
 import permissions from './permissions.js'
 
 // Util functions shared accross the main find (GET on collection) endpoints
-const query = (req, reqSession, fieldsMap = {}) => {
+const query = (reqQuery, reqSession, fieldsMap = {}) => {
   const query = {}
 
-  if (req.query.q) query.$text = { $search: req.query.q }
+  if (reqQuery.q) query.$text = { $search: reqQuery.q }
 
-  const showAll = req.query.showAll === 'true'
+  const showAll = reqQuery.showAll === 'true'
   if (showAll && !reqSession.user.adminMode) {
     throw createError(400, 'Only super admins can override permissions filter with showAll parameter')
   }
   if (!showAll) {
     let owner = reqSession.account
-    if (req.query.owner) {
-      const ownerParts = req.query.owner.split(':')
+    if (reqQuery.owner) {
+      const ownerParts = reqQuery.owner.split(':')
       owner = { type: ownerParts[0], id: ownerParts[1], department: ownerParts[2] }
     }
     Object.assign(query, permissions.getOwnerPermissionFilter(owner, reqSession))
   }
 
-  Object.keys(fieldsMap).filter(name => req.query[name] !== undefined).forEach(name => {
-    query[fieldsMap[name]] = { $in: req.query[name].split(',') }
+  Object.keys(fieldsMap).filter(name => reqQuery[name] !== undefined).forEach(name => {
+    query[fieldsMap[name]] = { $in: reqQuery[name].split(',') }
   })
   return query
 }
