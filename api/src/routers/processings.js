@@ -1,20 +1,21 @@
-import config from '../config.js'
-import fs from 'fs-extra'
-import path from 'path'
+import { createNext, applyProcessing, deleteProcessing } from '../utils/runs.js'
+import { session, asyncHandler } from '@data-fair/lib/express/index.js'
 import { Router } from 'express'
 import { nanoid } from 'nanoid'
-import cryptoRandomString from 'crypto-random-string'
-import createError from 'http-errors'
-import resolvePath from 'resolve-path'
 import processingSchema from '../../../contract/processing.js'
+import config from '../config.js'
 import findUtils from '../utils/find.js'
 import permissions from '../utils/permissions.js'
-import { createNext, applyProcessing, deleteProcessing } from '../utils/runs.js'
 import mongo from '@data-fair/lib/node/mongo.js'
-import { session, asyncHandler } from '@data-fair/lib/express/index.js'
 import Ajv from 'ajv'
 import ajvFormats from 'ajv-formats'
+import cryptoRandomString from 'crypto-random-string'
+import fs from 'fs-extra'
+import createError from 'http-errors'
+import path from 'path'
+import resolvePath from 'resolve-path'
 
+// @ts-ignore
 const ajv = ajvFormats(new Ajv({ strict: false }))
 const pluginsDir = path.join(config.dataDir, 'plugins')
 
@@ -23,6 +24,10 @@ const sensitiveParts = ['permissions', 'webhookKey', 'config']
 const router = Router()
 export default router
 
+/**
+ * @param {import('../../../shared/types/processing/index.js').Processing} processing
+ * @returns {Promise<void>}
+ */
 const validateFullProcessing = async (processing) => {
   // config is required only after the processing was activated
   const schema = processing.active
@@ -39,10 +44,16 @@ const validateFullProcessing = async (processing) => {
   if (!configValid) throw createError(400, JSON.stringify(configValidate.errors))
 }
 
+/**
+ * @param {import('../../../shared/types/processing/index.js').Processing} processing
+ * @param {import('@data-fair/lib/express/index.js').SessionState} reqSession
+ * @returns {import('../../../shared/types/processing/index.js').Processing}
+ */
 const cleanProcessing = (processing, reqSession) => {
   delete processing.webhookKey
   processing.userProfile = permissions.getUserResourceProfile(processing, reqSession)
   if (processing.userProfile !== 'admin') {
+    // @ts-ignore
     for (const part of sensitiveParts) delete processing[part]
   }
   return processing
@@ -69,7 +80,7 @@ router.post('', asyncHandler(async (req, res) => {
   req.body._id = nanoid()
   if (req.body.owner && !reqSession.user.adminMode) return res.status(403).send('owner can only be set for superadmin')
   req.body.owner = req.body.owner || reqSession.account
-  if (!permissions.isAdmin(reqSession, req.body)) return res.status(403).send()
+  if (!permissions.isAdmin(reqSession, req.body.owner)) return res.status(403).send()
   req.body.scheduling = req.body.scheduling || { type: 'trigger' }
   req.body.webhookKey = cryptoRandomString({ length: 16, type: 'url-safe' })
   req.body.created = req.body.updated = {

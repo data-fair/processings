@@ -1,6 +1,6 @@
 import moment from 'moment'
 
-export const getLimits = async (db, consumer, processingsSeconds) => {
+export const getLimits = async (db, consumer, processingsSeconds = -1) => {
   const coll = db.collection('limits')
   const now = moment()
   let limits = await coll.findOne({ type: consumer.type, id: consumer.id })

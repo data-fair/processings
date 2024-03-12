@@ -1,10 +1,15 @@
 import { session } from '@data-fair/lib/express/index.js'
 
+/**
+ * @param {import('@data-fair/lib/express/index.js').Account} owner
+ * @param {import('@data-fair/lib/express/index.js').SessionState} reqSession
+ * @returns {string|undefined}
+ */
 const getOwnerRole = (owner, reqSession) => {
-  if (!reqSession) return null
-  if (reqSession.account.department) return null
-  if (reqSession.account.type !== owner.type || reqSession.account.id !== owner.id) return null
-  if (reqSession.account.type === 'user') return 'admin'
+  if (!reqSession) return
+  if (reqSession.account?.department) return 'admin'
+  if (reqSession.account?.type !== owner.type || reqSession.account?.id !== owner.id) return
+  if (reqSession.account?.type === 'user') return 'admin'
   return reqSession.accountRole
 }
 
@@ -30,24 +35,46 @@ const isAccountMember = async (req, res, next) => {
   next()
 }
 
-const isAdmin = (reqSession, resource) => {
-  return (reqSession.user.adminMode || getOwnerRole(resource.owner, reqSession) === 'admin')
+/**
+ * @param {import('@data-fair/lib/express/index.js').SessionState} reqSession
+ * @param {import('@data-fair/lib/express/index.js').Account} owner
+ * @returns {boolean | number}
+ */
+const isAdmin = (reqSession, owner) => {
+  return (reqSession.user?.adminMode || getOwnerRole(owner, reqSession) === 'admin')
 }
-const isContrib = (reqSession, resource) => {
-  return (reqSession.user.adminMode || getOwnerRole(resource.owner, reqSession) === 'admin' || getOwnerRole(resource.owner, reqSession) === 'contrib')
+/**
+ * @param {import('@data-fair/lib/express/index.js').SessionState} reqSession
+ * @param {import('@data-fair/lib/express/index.js').Account} owner
+ * @returns {boolean | number}
+ */
+const isContrib = (reqSession, owner) => {
+  return (reqSession.user?.adminMode || getOwnerRole(owner, reqSession) === 'admin' || getOwnerRole(owner, reqSession) === 'contrib')
 }
-const isMember = (reqSession, resource) => {
-  return (reqSession.user.adminMode || !!getOwnerRole(resource.owner, reqSession))
+/**
+ * @param {import('@data-fair/lib/express/index.js').SessionState} reqSession
+ * @param {import('@data-fair/lib/express/index.js').Account} owner
+ * @returns {boolean | number}
+ */
+const isMember = (reqSession, owner) => {
+  return (reqSession.user?.adminMode || !!getOwnerRole(owner, reqSession))
 }
 
+/**
+ * @param {import('@data-fair/lib/express/index.js').Account} owner
+ * @param {import('@data-fair/lib/express/index.js').SessionState} reqSession
+ * @returns {any}
+ */
 const getOwnerPermissionFilter = (owner, reqSession) => {
+  /** @type {any} */
   const filter = {
     'owner.type': owner.type,
     'owner.id': owner.id
   }
-  if (reqSession.user.adminMode || ['admin', 'contrib'].includes(getOwnerRole(owner, reqSession))) return filter
-  const or = [{ 'target.type': 'userEmail', 'target.email': reqSession.user.email }]
-  if (reqSession.account.type === 'organization') {
+  if (reqSession.user?.adminMode || ['admin', 'contrib'].includes(getOwnerRole(owner, reqSession))) return filter
+  /** @type {any[]} */
+  const or = [{ 'target.type': 'userEmail', 'target.email': reqSession.user?.email }]
+  if (reqSession.account?.type === 'organization') {
     or.push({ 'target.type': 'partner', 'target.organization.id': reqSession.account.id, 'target.roles': reqSession.accountRole })
   }
   filter.permissions = {
@@ -59,14 +86,24 @@ const getOwnerPermissionFilter = (owner, reqSession) => {
   return filter
 }
 
+/**
+ * @param {any} target
+ * @param {import('@data-fair/lib/express/index.js').SessionState} reqSession
+ * @returns {boolean}
+ */
 const matchPermissionTarget = (target, reqSession) => {
-  if (target.type === 'userEmail' && target.email === reqSession.user.email) return true
-  if (target.type === 'partner' && reqSession.account.type === 'organization' && reqSession.account.id === target.organization.id && target.roles.includes(reqSession.accountRole)) return true
+  if (target.type === 'userEmail' && target.email === reqSession.user?.email) return true
+  if (target.type === 'partner' && reqSession.account?.type === 'organization' && reqSession.account?.id === target.organization.id && target.roles.includes(reqSession.accountRole)) return true
   return false
 }
 
+/**
+ * @param {import('../../../shared/types/processing/index.js').Processing} processing
+ * @param {import('@data-fair/lib/express/index.js').SessionState} reqSession
+ * @returns {string|undefined}
+ */
 const getUserResourceProfile = (processing, reqSession) => {
-  if (!reqSession.user) return null
+  if (!reqSession.user) return
 
   // this line is first, a manual permission cannot demote an admin
   const ownerRole = getOwnerRole(processing.owner, reqSession)
@@ -81,7 +118,6 @@ const getUserResourceProfile = (processing, reqSession) => {
     }
   }
   if (ownerRole === 'contrib') return 'read'
-  return null
 }
 
 export default {

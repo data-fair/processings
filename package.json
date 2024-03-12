@@ -39,6 +39,8 @@
     "@bcherny/json-schema-ref-parser": "^10.0.5-fork",
     "@types/config": "^3.3.3",
     "@types/debug": "^4.1.12",
+    "@types/fs-extra": "^11.0.4",
+    "@types/resolve-path": "^1.4.2",
     "clean-modules": "^3.0.4",
     "eslint": "^8.57.0",
     "eslint-config-standard": "^17.1.0",

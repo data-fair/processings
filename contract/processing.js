@@ -1,4 +1,4 @@
-import { owner } from './owner.js'
+import owner from './owner.js'
 import permissions from './permissions.js'
 import scheduling from './scheduling.js'
 import run from './run.js'

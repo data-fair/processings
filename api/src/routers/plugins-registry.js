@@ -1,12 +1,12 @@
-import { Router } from 'express'
-import memoize from 'memoizee'
-import axios from '@data-fair/lib/node/axios.js'
 import { asyncHandler } from '@data-fair/lib/express/index.js'
+import { Router } from 'express'
+import axios from '@data-fair/lib/node/axios.js'
+import memoize from 'memoizee'
 
 const router = Router()
 export default router
 
-const search = memoize(async (q) => {
+const search = memoize(async (/** @type {any} */q) => {
   // see https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md#get-v1search
   const res = await axios.get('https://registry.npmjs.org/-/v1/search', {
     params: {
