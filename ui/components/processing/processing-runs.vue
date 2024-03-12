@@ -31,15 +31,19 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 const props = defineProps({
   canExec: Boolean,
-  processing: Object
+  processing: {
+    type: Object,
+    default: null
+  }
 })
 
 const eventBus = useEventBus()
 
 const loading = ref(false)
+// TODO type
 const runs = ref(null)
 
-const wsChannel = computed(() => `processings/${props.processing._id}/run-patch`)
+const wsChannel = computed(() => `/processings/${props.processing._id}/run-patch`)
 
 function onRunPatch(runPatch) {
   console.log('message from', wsChannel.value, runPatch)

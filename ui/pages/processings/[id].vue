@@ -70,15 +70,12 @@ import { v2compat } from '@koumoul/vjsf/compat/v2'
 const route = useRoute()
 const session = useSession()
 
-/** @type {any} */
+/** @type {import('vue').Ref<import('../../../shared/types/index.js').processingType>} */
 const editProcessing = ref(null)
-/** @type {any} */
 const form = ref(null)
-/** @type {any} */
+/** @type {import('vue').Ref<import('../../../shared/types/index.js').processingType>} */
 const processing = ref(null)
-/** @type {any} */
 const plugin = ref(null)
-/** @type {any} */
 const runs = ref(null)
 const renderVjsfKey = ref(0)
 

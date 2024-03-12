@@ -1,0 +1,81 @@
+{
+  "$id": "https://github.com/data-fair/processings/processing",
+  "x-exports": [
+    "types",
+    "validate"
+  ],
+  "title": "processing",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "_id",
+    "title",
+    "plugin",
+    "owner",
+    "scheduling",
+    "created",
+    "config"
+  ],
+  "properties": {
+    "_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "plugin": {
+      "type": "string"
+    },
+    "owner": {
+      "$ref": "https://github.com/data-fair/lib/account#/$defs/accountKeys"
+    },
+    "updated": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "date"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "created": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "date"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "config": {
+      "type": "object"
+    },
+    "userProfile": {
+      "type": "string"
+    }
+  }
+}

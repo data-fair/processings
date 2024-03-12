@@ -118,9 +118,7 @@ import { useSession } from '@data-fair/lib/vue/session.js'
 const session = useSession()
 
 const loading = ref(false)
-/** @type {any} */
 const availablePlugins = ref({})
-/** @type {any} */
 const installedPlugins = ref({})
 const search = ref('')
 
@@ -179,9 +177,6 @@ async function fetchInstalledPlugins() {
   installedPlugins.value = await $fetch('/api/v1/plugins')
 }
 
-/**
- * @param {any} plugin
- */
 async function install(plugin) {
   loading.value = true
   await $fetch('/api/v1/plugins', {
@@ -192,9 +187,6 @@ async function install(plugin) {
   loading.value = false
 }
 
-/**
- * @param {any} plugin
- */
 async function uninstall(plugin) {
   loading.value = true
   await $fetch(`/api/v1/plugins/${plugin.id}`, {
@@ -204,9 +196,6 @@ async function uninstall(plugin) {
   loading.value = false
 }
 
-/**
- * @param {any} plugin
- */
 async function saveConfig(plugin) {
   loading.value = true
   await $fetch(`/api/v1/plugins/${plugin.id}/config`, {
@@ -216,9 +205,6 @@ async function saveConfig(plugin) {
   loading.value = false
 }
 
-/**
- * @param {any} plugin
- */
 async function saveAccess(plugin) {
   loading.value = true
   await $fetch(`/api/v1/plugins/${plugin.id}/access`, {

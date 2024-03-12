@@ -6,7 +6,7 @@
     :clearable="true"
     persistent-hint
     :disabled="disabled"
-    menu-props="auto"
+    :menu-props="{ origin: 'auto' }"
     :hint="t('defaultTZ', { defaultTimeZone })"
     @update:model-value="$emit('update:modelValue', $event)"
   />
@@ -29,12 +29,16 @@ import { useI18n } from 'vue-i18n'
 defineEmits(['update:modelValue'])
 defineProps({
   disabled: Boolean,
-  value: String
+  value: {
+    type: String,
+    default: 'fr'
+  }
 })
 
 const { t } = useI18n()
 
 const utcs = computed(() => {
+  /** @type {string[]} */
   const utcs = []
   timeZones.forEach(tz => {
     utcs.push(...tz.utc)

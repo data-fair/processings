@@ -75,7 +75,6 @@
 </template>
 
 <script setup>
-import format from '~/assets/format'
 import useEventBus from '~/composables/event-bus'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'

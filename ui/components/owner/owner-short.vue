@@ -18,7 +18,10 @@
 import { computed } from 'vue'
 
 const ownerProps = defineProps({
-  owner: Object
+  owner: {
+    type: Object,
+    default: null
+  }
 })
 
 const avatarUrl = computed(() => {
