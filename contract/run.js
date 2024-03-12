@@ -3,7 +3,7 @@ import permissions from './permissions.js'
 
 const run = {
   type: 'object',
-  additionalProperties: false,
+  additionalProperties: true,
   required: ['_id', 'owner', 'processing', 'createdAt', 'status', 'log'],
   properties: {
     _id: { type: 'string' },

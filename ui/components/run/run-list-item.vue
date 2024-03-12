@@ -67,7 +67,7 @@
 
 <script setup>
 const nuxtApp = useNuxtApp()
-const duration = nuxtApp.$dayjs.duration
+const dayjs = nuxtApp.$dayjs
 
 const emit = defineEmits(['update:run'])
 const props = defineProps({
@@ -78,6 +78,10 @@ const props = defineProps({
     default: null
   }
 })
+
+function duration(start, end) {
+  return dayjs.duration(dayjs(end).diff(dayjs(start))).humanize()
+}
 
 const kill = async (e) => {
   e.preventDefault()

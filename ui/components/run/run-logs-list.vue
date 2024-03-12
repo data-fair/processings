@@ -1,74 +1,72 @@
 <template>
-  <v-list
-    density="compact"
-    class="py-0"
-  >
-    <v-list-item
+  <div>
+    <v-card
       v-for="log in logs"
       :key="log.date"
-      style="min-height: 26px;"
+      class="mb-2"
+      variant="text"
     >
-      <span
-        v-if="log.type === 'error'"
-        class="text-body-2 text-error"
-      >
-        <template v-if="log.msg.status">
-          <template v-if="typeof log.msg.data === 'string'">{{ log.msg.data }}</template>
-          <template v-else>{{ log.msg.statusText || 'Erreur HTTP' }} - {{ log.msg.status }}</template>
-        </template>
-        <template v-else>
-          {{ log.msg }}
-        </template>
-      </span>
-      <span
-        v-if="log.type === 'warning'"
-        class="text-body-2 text-warning"
-      >
-        {{ log.msg }}
-      </span>
-      <span
-        v-if="log.type === 'info'"
-        class="text-body-2"
-      >
-        {{ log.msg }}
-      </span>
-      <span
-        v-if="log.type === 'debug'"
-        class="text-caption"
-      >
-        {{ log.msg }}
-      </span>
-      <span
-        v-if="log.type === 'task'"
-        class="text-body-2"
-        :class="`${taskColor(log)}--text`"
-      >
-        {{ log.msg }}
-        <span v-if="log.progress && !log.total">({{ log.progress.toLocaleString() }})</span>
-        <span v-if="log.total">({{ (log.progress || 0).toLocaleString() }} / {{ log.total.toLocaleString() }})</span>
-        <v-progress-linear
-          rounded
-          :color="taskColor(log)"
-          :indeterminate="!log.progress || !log.total"
-          :model-value="log.total ? ((log.progress || 0) / log.total) * 100 : 0"
-        />
-      </span>
-      <v-spacer />
-      <span
-        class="text-caption pl-2"
-        style="white-space: nowrap;"
-      >
-        {{ $filters.formatDate(log.date, 'lll') }}
-      </span>
-      <span
-        v-if="log.progressDate"
-        class="text-caption pl-2"
-        style="white-space: nowrap;"
-      >
-        - {{ $filters.formatDate(log.progressDate, 'lll') }}
-      </span>
-    </v-list-item>
-  </v-list>
+      <v-card-text class="py-0">
+        <div
+          class="d-flex align-center"
+          style="min-height: 26px;"
+        >
+          <div class="flex-grow-1">
+            <span
+              v-if="log.type === 'error'"
+              class="text-error"
+            >
+              <template v-if="log.msg.status">
+                <template v-if="typeof log.msg.data === 'string'">{{ log.msg.data }}</template>
+                <template v-else>{{ log.msg.statusText || 'Erreur HTTP' }} - {{ log.msg.status }}</template>
+              </template>
+              <template v-else>
+                {{ log.msg }}
+              </template>
+            </span>
+            <span
+              v-if="log.type === 'warning'"
+              class="text-warning"
+            >
+              {{ log.msg }}
+            </span>
+            <span v-if="log.type === 'info'">
+              {{ log.msg }}
+            </span>
+            <span v-if="log.type === 'debug'">
+              {{ log.msg }}
+            </span>
+            <span
+              v-if="log.type === 'task'"
+              :class="`${taskColor(log)}--text`"
+            >
+              {{ log.msg }}
+              <span v-if="log.progress && !log.total">({{ log.progress.toLocaleString() }})</span>
+              <span v-if="log.total">({{ (log.progress || 0).toLocaleString() }} / {{ log.total.toLocaleString() }})</span>
+              <v-progress-linear
+                rounded
+                :color="taskColor(log)"
+                :indeterminate="!log.progress || !log.total"
+                :model-value="log.total ? ((log.progress || 0) / log.total) * 100 : 0"
+              />
+            </span>
+          </div>
+          <v-spacer />
+          <div style="white-space: nowrap;">
+            <span class="pl-2">
+              {{ $filters.date(log.date, 'lll') }}
+            </span>
+            <span
+              v-if="log.progressDate"
+              class="pl-2"
+            >
+              - {{ $filters.date(log.progressDate, 'lll') }}
+            </span>
+          </div>
+        </div>
+      </v-card-text>
+    </v-card>
+  </div>
 </template>
 
 <script setup>
@@ -82,5 +80,8 @@ const taskColor = (log) => {
 }
 </script>
 
-<style>
+<style scoped>
+.flex-grow-1 {
+  flex-grow: 1;
+}
 </style>

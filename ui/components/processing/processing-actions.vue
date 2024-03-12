@@ -11,9 +11,14 @@
       max-width="800"
     >
       <template #activator="{ props }">
+        <v-progress-linear
+          v-if="edited"
+          indeterminate
+          color="primary"
+        />
         <v-list-item
           v-bind="props"
-          :disabled="!processing?.active"
+          :disabled="!processing?.active || edited"
         >
           <template #prepend>
             <v-icon color="primary">
@@ -30,13 +35,19 @@
         <v-card-title primary-title>
           Exécution du traitement
         </v-card-title>
+        <v-progress-linear
+          v-if="hasTriggered"
+          indeterminate
+          color="primary"
+        />
         <v-card-text>
           <p v-if="canAdmin">
             Vous pouvez déclencher une exécution sans être connecté à la plateforme en envoyant une requête HTTP POST à cette URL sécurisée :
-            <br>{{ webhookLink }}
+            <br><code>{{ webhookLink }}</code>
           </p>
           <v-text-field
             v-model="triggerDelay"
+            class="py-2"
             type="number"
             label="Appliquer un délai en secondes"
           />
@@ -45,13 +56,15 @@
           <v-spacer />
           <v-btn
             variant="text"
+            :disabled="hasTriggered"
             @click="showTriggerMenu = false"
           >
             Annuler
           </v-btn>
           <v-btn
             color="primary"
-            @click="triggerExecution(); $emit('triggered')"
+            :disabled="hasTriggered"
+            @click="triggerExecution()"
           >
             Déclencher manuellement
           </v-btn>
@@ -82,6 +95,11 @@
         <v-card-title primary-title>
           Suppression du traitement
         </v-card-title>
+        <v-progress-linear
+          v-if="inDelete"
+          indeterminate
+          color="warning"
+        />
         <v-card-text>
           Voulez-vous vraiment supprimer le traitement "{{ processing?.title }}" et tout son historique ? La suppression est définitive et les données ne pourront pas être récupérées.
         </v-card-text>
@@ -89,12 +107,14 @@
           <v-spacer />
           <v-btn
             variant="text"
+            :disabled="inDelete"
             @click="showDeleteMenu = false"
           >
             Non
           </v-btn>
           <v-btn
             color="warning"
+            :disabled="inDelete"
             @click="confirmRemove()"
           >
             Oui
@@ -163,11 +183,12 @@ import VIframe from '@koumoul/v-iframe'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useSession } from '@data-fair/lib/vue/session.js'
 
-defineEmits(['triggered'])
+const emit = defineEmits(['triggered'])
 
 const properties = defineProps({
   canAdmin: Boolean,
   canExec: Boolean,
+  edited: Boolean,
   processing: {
     type: Object,
     default: null
@@ -199,6 +220,8 @@ const observer = new MutationObserver((mutationsList, observer) => {
 
 const eventBus = useEventBus()
 
+const inDelete = ref(false)
+const hasTriggered = ref(false)
 const showDeleteMenu = ref(false)
 const showNotifMenu = ref(false)
 const showTriggerMenu = ref(false)
@@ -225,7 +248,7 @@ const webhookLink = computed(() => {
 })
 
 const confirmRemove = async () => {
-  showDeleteMenu.value = false
+  inDelete.value = true
   try {
     await $fetch(`/api/v1/processings/${properties.processing?._id}`, {
       method: 'DELETE'
@@ -233,6 +256,9 @@ const confirmRemove = async () => {
     return navigateTo({ path: '/processings' })
   } catch (error) {
     eventBus.emit('notification', { error, msg: 'Erreur pendant la suppression du traitement' })
+  } finally {
+    showDeleteMenu.value = false
+    inDelete.value = false
   }
 }
 
@@ -241,14 +267,18 @@ const getWebhookKey = async () => {
 }
 
 const triggerExecution = async () => {
+  hasTriggered.value = true
   try {
     await $fetch(`/api/v1/processings/${properties.processing?._id}/_trigger`, {
       method: 'POST',
       body: { delay: triggerDelay.value }
     })
+    emit('triggered')
     showTriggerMenu.value = false
   } catch (error) {
     eventBus.emit('notification', { error, msg: 'Erreur pendant le déclenchement du traitement' })
+  } finally {
+    hasTriggered.value = false
   }
 }
 

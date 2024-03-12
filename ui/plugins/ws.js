@@ -48,10 +48,4 @@ export default defineNuxtPlugin(nuxtApp => {
   const eventBus = useEventBus()
   const wsPublicUrl = (window.location.origin + '/api/').replace('http:', 'ws:').replace('https:', 'wss:')
   configureWS(wsPublicUrl, '', eventBus)
-
-  // Only configure notify websocket in main back-office mode, not multi-domain embeds
-  // TODO
-  // if (runtimeConfig.public.notifyWSUrl && new URL(runtimeConfig.public.notifyWSUrl).hostname === window.location.hostname) {
-  //   configureWS(runtimeConfig.public.notifyWSUrl, '-notify', eventBus)
-  // }
 })

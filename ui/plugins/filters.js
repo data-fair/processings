@@ -42,7 +42,7 @@ export default defineNuxtPlugin((nuxtApp) => {
      * @param {String} format the format to use
      * @returns {String | undefined} the formatted date
      */
-    formatDate: (value, format = 'LLL') => {
+    date: (value, format = 'LLL') => {
       if (!value) return
       return dayjs(value).format(format)
     },

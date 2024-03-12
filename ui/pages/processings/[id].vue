@@ -15,7 +15,7 @@
             v-model="editProcessing"
             :schema="processingSchema"
             :options="vjsfOptions"
-            @change="patch"
+            @change="patch()"
           >
             <template #custom-time-zone="{value, disabled, on}">
               <time-zone-select
@@ -38,6 +38,7 @@
           :processing="processing"
           :can-admin="canAdminProcessing"
           :can-exec="canExecProcessing"
+          :edited="edited"
           @triggered="runs.refresh()"
         />
       </layout-navigation-right>
@@ -50,6 +51,7 @@
             :processing="processing"
             :can-admin="canAdminProcessing"
             :can-exec="canExecProcessing"
+            :edited="edited"
             @triggered="runs.refresh()"
           />
         </template>
@@ -70,6 +72,7 @@ import { v2compat } from '@koumoul/vjsf/compat/v2'
 const route = useRoute()
 const session = useSession()
 
+const edited = ref(false)
 /** @type {import('vue').Ref<import('../../../shared/types/index.js').processingType>} */
 const editProcessing = ref(null)
 const form = ref(null)
@@ -169,10 +172,12 @@ async function patch() {
     if (editProcessing.value.scheduling.dayOfWeek === '*') editProcessing.value.scheduling.dayOfWeek = '1'
     renderVjsfKey.value += 1
   }
+  edited.value = true
   await $fetch(`/api/v1/processings/${route.params.id}`, {
     method: 'PATCH',
     body: { ...editProcessing.value }
   })
   await fetchProcessing()
+  edited.value = false
 }
 </script>

@@ -7,11 +7,11 @@
       <h2 class="text-h6">
         Exécution du traitement {{ run.processing.title }}
       </h2>
-      <v-spacer />
     </v-row>
     <v-row>
       <v-col>
         <run-list-item
+          class="mb-4"
           :run="run"
           :can-exec="canExec"
         />
@@ -30,7 +30,7 @@
             :key="step.date"
           >
             <v-expansion-panel-title>
-              <span class="text-body-1">
+              <span>
                 <v-progress-circular
                   v-if="i === steps.length-1 && run.status === 'running'"
                   indeterminate
