@@ -152,18 +152,12 @@ window.onpopstate = async () => {
 
 async function checkAccess() {
   if (!session.state.user) {
-    // TODO: show an error message
-    // return store.error({
-    //   message: 'Authentification nécessaire',
-    //   statusCode: 401
-    // })
+    window.location.href = '/error?statusCode=401&message=' + encodeURIComponent('Authentification nécessaire')
+    return false
   }
   if (!session.state.user?.adminMode) {
-    // TODO: show an error message
-    // return store.error({
-    //   message: 'Vous n\'avez pas la permission d\'accéder à cette page, il faut avoir activé le mode super-administration.',
-    //   statusCode: 403
-    // })
+    window.location.href = '/error?statusCode=403&message=' + encodeURIComponent('Vous n\'avez pas la permission d\'accéder à cette page, il faut avoir activé le mode super-administration.')
+    return false
   }
 
   return true

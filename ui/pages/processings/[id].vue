@@ -135,11 +135,9 @@ const vjsfOptions = computed(() => {
     },
     */
     context: {
-      owner: processing.value.owner
-      // TODO
-      // ownerFilter: env.value.dataFairAdminMode ? `owner=${processing.value.owner.type}:${encodeURIComponent(processing.value.owner.id)}` : '',
-      // dataFairUrl: env.value.dataFairUrl,
-      // directoryUrl: env.value.directoryUrl
+      owner: processing.value.owner,
+      dataFairUrl: window.location.origin + '/data-fair',
+      directoryUrl: window.location.origin + '/simple-directory'
     },
     density: 'compact',
     readOnly: !canAdminProcessing.value,

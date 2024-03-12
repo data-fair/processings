@@ -102,6 +102,10 @@ const owner = computed(() => {
   }
 })
 
+if (!user.value || !owner.value) {
+  window.location.href = '/error?statusCode=401&message=' + encodeURIComponent('Authentification nécessaire')
+}
+
 const ownerRole = computed(() => {
   if (owner.value.type === 'user') {
     if (owner.value.id === user.value.id) return 'admin'
