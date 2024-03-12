@@ -41,7 +41,7 @@
             hide-details
             density="compact"
             class="mt-0 adminSwitch"
-            @update:model-value="refresh"
+            @update:model-value="refresh()"
           />
         </v-card>
       </layout-navigation-right>
@@ -65,7 +65,7 @@
               hide-details
               density="compact"
               class="mt-0 adminSwitch"
-              @update:model-value="refresh"
+              @update:model-value="refresh()"
             />
           </v-card>
         </template>

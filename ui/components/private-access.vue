@@ -6,7 +6,7 @@
       hide-details
       class="ml-2 mb-2 mr-4"
       color="primary"
-      @update:model-value="onChange"
+      @update:model-value="onChange()"
     />
     <v-autocomplete
       v-if="!patch.public"
@@ -24,7 +24,7 @@
       return-object
       style="max-width:400px;"
       hide-details
-      @update:model-value="onChange"
+      @update:model-value="onChange()"
     />
   </v-row>
 </template>

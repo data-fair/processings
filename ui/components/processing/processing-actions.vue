@@ -51,7 +51,7 @@
           </v-btn>
           <v-btn
             color="primary"
-            @click="triggerExecution, $emit('triggered')"
+            @click="triggerExecution(); $emit('triggered')"
           >
             Déclencher manuellement
           </v-btn>
@@ -95,7 +95,7 @@
           </v-btn>
           <v-btn
             color="warning"
-            @click="confirmRemove"
+            @click="confirmRemove()"
           >
             Oui
           </v-btn>
@@ -216,7 +216,7 @@ const notifUrl = computed(() => {
 })
 
 const webhookLink = computed(() => {
-  let link = `/api/v1/processings/${properties.processing?._id}/_trigger?key=${webhookKey.value}`
+  let link = `${window.location.origin}/api/v1/processings/${properties.processing?._id}/_trigger?key=${webhookKey.value}`
   if (triggerDelay.value > 0) link += `&delay=${triggerDelay.value}`
   return link
 })

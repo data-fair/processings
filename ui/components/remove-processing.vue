@@ -11,7 +11,7 @@
         icon="mdi-delete"
         color="warning"
         variant="text"
-        @click="open"
+        @click="open()"
       />
     </template>
 
@@ -40,7 +40,7 @@
         </v-btn>
         <v-btn
           color="warning"
-          @click="confirm"
+          @click="confirm()"
         >
           Oui
         </v-btn>

@@ -62,7 +62,7 @@
           <v-btn
             :disabled="!newProcessing.title || !newProcessing.plugin || inCreate"
             color="primary"
-            @click="createProcessing"
+            @click="createProcessing()"
           >
             Enregistrer
           </v-btn>

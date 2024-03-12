@@ -58,7 +58,7 @@
           icon="mdi-stop"
           size="x-small"
           title="interrompre"
-          @click.prevent="kill"
+          @click.prevent="kill()"
         />
       </v-list-item-action>
     </template>

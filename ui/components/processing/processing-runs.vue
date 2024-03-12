@@ -79,6 +79,8 @@ onUnmounted(() => {
 })
 
 watch(props.processing, refresh, { deep: true })
+
+defineExpose({ refresh })
 </script>
 
 <style>
