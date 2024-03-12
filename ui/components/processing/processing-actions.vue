@@ -40,14 +40,14 @@
           indeterminate
           color="primary"
         />
-        <v-card-text>
+        <v-card-text class="py-0">
           <p v-if="canAdmin">
             Vous pouvez déclencher une exécution sans être connecté à la plateforme en envoyant une requête HTTP POST à cette URL sécurisée :
             <br><code>{{ webhookLink }}</code>
           </p>
           <v-text-field
             v-model="triggerDelay"
-            class="py-2"
+            class="py-4"
             type="number"
             label="Appliquer un délai en secondes"
           />

@@ -1,1 +1,7 @@
 // Optional global scss settings
+.v-theme--light {
+  --v-medium-emphasis-opacity: 1 !important;
+}
+.v-theme--dark {
+  --v-medium-emphasis-opacity: 1 !important;
+}

@@ -51,6 +51,11 @@ export default defineNuxtConfig({
     { src: 'plugins/vuetify' },
     { src: 'plugins/ws', mode: 'client' }
   ],
+  runtimeConfig: {
+    public: {
+      isDev: process.env.NODE_ENV === 'development'
+    }
+  },
   // Avoids getting "WARN Sourcemap for "x" points to missing source files", see https://github.com/nuxt/nuxt/issues/14124#issuecomment-1517258360
   sourcemap: {
     client: false,
