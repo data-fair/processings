@@ -17,7 +17,9 @@ import { channel } from '../../../shared/ws.js'
 import { WebSocketServer } from 'ws'
 import permissions from './permissions.js'
 
+/** @type any */
 let cursor
+/** @type {WebSocketServer} */
 let wss
 const subscribers = {}
 const clients = {}
@@ -100,9 +102,13 @@ export const stopWSServer = async () => {
 
 // Listen to pubsub channel based on mongodb to support scaling on multiple processes
 let startDate = new Date().toISOString()
-const initCursor = (db, mongoChannel) => {
-  cursor = mongoChannel.find({}, { tailable: true, awaitData: true })
-  cursor.forEach(doc => {
+/**
+ * @param {import('mongodb').Db} db
+ * @param {import('mongodb').Collection} mongoChannel
+ */
+const initCursor = async (db, mongoChannel) => {
+  cursor = await mongoChannel.find({}, { tailable: true, awaitData: true }).toArray()
+  cursor.forEach((/** @type {import('mongodb').Document} */ doc) => {
     if (stopped) return
     if (doc && doc.type === 'message') {
       if (doc.data.date && doc.data.date < startDate) return
@@ -111,7 +117,7 @@ const initCursor = (db, mongoChannel) => {
         if (clients[sub]) clients[sub].send(JSON.stringify(doc))
       })
     }
-  }, async (err) => {
+  }, async (/** @type {any} */ err) => {
     if (stopped) return
     startDate = new Date().toISOString()
     await new Promise(resolve => setTimeout(resolve, 1000))

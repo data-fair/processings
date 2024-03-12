@@ -5,7 +5,7 @@ import { nanoid } from 'nanoid'
 import config from '../config.js'
 import moment from 'moment'
 import { CronJob } from 'cron'
-import { toCRON } from '../../../api/src/utils/scheduling.js'
+import { toCRON } from '../../../shared/scheduling.js'
 import runSchema from '../../../contract/run.js'
 
 import Ajv from 'ajv'

@@ -16,6 +16,7 @@
     "dataFairAdminMode",
     "dataFairUrl",
     "defaultLimits",
+    "mails",
     "mongoUrl",
     "locks",
     "observer",
@@ -79,6 +80,9 @@
     },
     "locks": {
       "type": "object",
+      "required": [
+        "ttl"
+      ],
       "properties": {
         "ttl": {
           "type": "number"

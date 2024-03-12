@@ -3,6 +3,7 @@ import config from '../config.js'
 
 const pid = nanoid()
 
+/** @type {NodeJS.Timeout} */
 let interval
 export const init = async db => {
   const locks = db.collection('locks')

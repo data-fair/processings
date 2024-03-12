@@ -5,7 +5,7 @@ import { CronJob } from 'cron'
 import { nanoid } from 'nanoid'
 import resolvePath from 'resolve-path'
 import runSchema from '../../../contract/run.js'
-import { toCRON } from './scheduling.js'
+import { toCRON } from '../../../shared/scheduling.js'
 import moment from 'moment'
 import Ajv from 'ajv'
 import ajvFormats from 'ajv-formats'
@@ -15,6 +15,11 @@ const validate = ajv.compile(runSchema)
 
 const processingsDir = path.resolve(config.dataDir, 'processings')
 
+/**
+ * @param {import('mongodb').Db} db
+ * @param {import('../../../shared/types/processing/index.js').Processing} processing
+ * @returns {Promise<void>} nothing
+ */
 export const applyProcessing = async (db, processing) => {
   // if processing is deactivated, cancel pending runs
   if (!processing.active) {
@@ -33,12 +38,24 @@ export const applyProcessing = async (db, processing) => {
   await createNext(db, processing)
 }
 
+/**
+ * @param {import('mongodb').Db} db
+ * @param {import('../../../shared/types/processing/index.js').Processing} processing
+ * @returns {Promise<void>} nothing
+ */
 export const deleteProcessing = async (db, processing) => {
   await db.collection('runs').deleteMany({ 'processing._id': processing._id })
   await fs.remove(resolvePath(processingsDir, processing._id))
 }
 
-export const createNext = async (db, processing, triggered, delaySeconds = 0) => {
+/**
+ * @param {import('mongodb').Db} db
+ * @param {import('../../../shared/types/processing/index.js').Processing} processing
+ * @param {boolean} triggered
+ * @returns {Promise<void>} nothing
+ */
+// TODO a tester avec triggered = false par defaut
+export const createNext = async (db, processing, triggered = false, delaySeconds = 0) => {
   const run = {
     _id: nanoid(),
     owner: processing.owner,
