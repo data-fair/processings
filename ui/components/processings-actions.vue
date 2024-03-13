@@ -47,8 +47,9 @@
               label="Plugin"
               :loading="!installedPlugins.results ? 'primary' : false"
               :items="installedPlugins.results"
-              :item-title="item => `${item.fullName}`"
+              item-title="fullName"
               item-value="id"
+              clearable
             />
           </v-form>
         </v-card-text>
