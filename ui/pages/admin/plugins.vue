@@ -23,9 +23,9 @@
       <v-card
         v-if="result.pluginConfigSchema"
         :key="'installed-' + result.id"
-        class="my-2"
+        class="my-4"
         variant="outlined"
-        border="primary md"
+        border="md"
         rounded="lg"
       >
         <v-toolbar
@@ -88,7 +88,7 @@
     >
       <v-card
         v-if="installedPlugins.results && !installedPlugins.results.find(r => r.name === result.name && r.distTag === result.distTag)"
-        class="my-2"
+        class="my-4"
         variant="elevated"
         rounded="lg"
       >
@@ -109,7 +109,10 @@
             @click="install(result)"
           />
         </v-toolbar>
-        <v-card-text class="py-2">
+        <v-card-text
+          v-if="result.description"
+          class="py-2"
+        >
           <p class="mb-0">
             {{ result.description }}
           </p>
