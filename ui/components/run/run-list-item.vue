@@ -105,8 +105,7 @@ function duration(start, end) {
   return dayjs.duration(dayjs(end).diff(dayjs(start))).humanize()
 }
 
-const kill = async (e) => {
-  e.preventDefault()
+const kill = async () => {
   await $fetch(`/api/v1/runs/${props.run._id}/_kill`, {
     method: 'POST'
   })

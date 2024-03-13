@@ -8,10 +8,10 @@ await mongo.connect(config.mongoUrl, { readPreference: 'primary' })
 const mailTransport = nodemailer.createTransport(config.mails.transport)
 const wsPublish = await initPublisher(mongo.db)
 
-await run(mongo.db, mailTransport, wsPublish).then(async () => {
-  await mongo.client.close()
-  process.exit(0)
-}).catch(() => { process.exit(-1) })
+await run(mongo.db, mailTransport, wsPublish).catch(() => { process.exit(-1) })
+
+await mongo.client.close()
+mailTransport.close()
 
 process.on('SIGTERM', function onSigterm () {
   console.info('Received SIGTERM signal, shutdown gracefully...')
