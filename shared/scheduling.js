@@ -1,21 +1,7 @@
 /**
- * @typedef {Object} Scheduling
- * @property {string} type The type of scheduling.
- * @property {number} minute The minute.
- * @property {number} minuteStep The minute step.
- * @property {number} hour The hour.
- * @property {number} hourStep The hour step.
- * @property {number} dayOfMonth The day of month.
- * @property {number} dayOfMonthStep The day of month step.
- * @property {number} month The month.
- * @property {number} monthStep The month step.
- * @property {number} dayOfWeek The day of week.
- */
-
-/**
  * Converts scheduling object to a CRON expression.
  *
- * @param {Scheduling} scheduling The scheduling object.
+ * @param {any} scheduling The scheduling object.
  * @returns {string} The CRON expression.
  */
 export const toCRON = (scheduling) => {

@@ -56,6 +56,7 @@ export const deleteProcessing = async (db, processing) => {
  * @returns {Promise<import('../../../shared/types/run/index.js').Run>}
  */
 export const createNext = async (db, processing, triggered = false, delaySeconds = 0) => {
+  /** @type {import('../../../shared/types/run/index.js').Run} */
   const run = {
     _id: nanoid(),
     owner: processing.owner,
