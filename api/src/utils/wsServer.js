@@ -16,6 +16,7 @@ import { nanoid } from 'nanoid'
 import { channel } from '../../../shared/ws.js'
 import { WebSocketServer } from 'ws'
 import permissions from './permissions.js'
+import c from 'config'
 
 /** @type any */
 let cursor
@@ -107,7 +108,7 @@ let startDate = new Date().toISOString()
  * @param {import('mongodb').Collection} mongoChannel
  */
 const initCursor = async (db, mongoChannel) => {
-  cursor = await mongoChannel.find({}, { tailable: true, awaitData: true }).toArray()
+  cursor = mongoChannel.find({}, { tailable: true, awaitData: true })
   cursor.forEach((/** @type {import('mongodb').Document} */ doc) => {
     if (stopped) return
     if (doc && doc.type === 'message') {

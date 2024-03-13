@@ -8,13 +8,21 @@ import { DataFairWsClient } from '@data-fair/lib/node/ws.js'
 import { httpAgent, httpsAgent } from '@data-fair/lib/node/http-agents.js'
 import { running } from '../utils/runs.js'
 
-let pluginModule, _stopped
+/** @type {any} */
+let pluginModule
+/** @type {boolean} */
+let _stopped
 const processingsDir = path.join(config.dataDir, 'processings')
 
+/**
+ * Create an Axios instance.
+ * @param {import('../../../shared/types/processing/index.js').Processing} processing
+ * @returns {import('axios').AxiosInstance} Axios instance.
+ */
 const axiosInstance = (processing) => {
+  /** @type {any} */
   const headers = {
-    'x-apiKey': config.dataFairAPIKey,
-    referer: config.publicUrl
+    'x-apiKey': config.dataFairAPIKey
   }
   if (config.dataFairAdminMode) headers['x-account'] = JSON.stringify(processing.owner)
   headers['x-processing'] = JSON.stringify({ _id: processing._id, title: encodeURIComponent(processing.title) })
@@ -29,16 +37,12 @@ const axiosInstance = (processing) => {
   // apply default base url and send api key when relevant
   axiosInstance.interceptors.request.use(cfg => {
     if (!/^https?:\/\//i.test(cfg.url)) {
-      if (cfg.url.startsWith('/')) cfg.url = config.dataFairUrl + cfg.url
+      if (cfg.url?.startsWith('/')) cfg.url = config.dataFairUrl + cfg.url
       else cfg.url = config.dataFairUrl + '/' + cfg.url
     }
-    if (cfg.url.startsWith(config.dataFairUrl)) Object.assign(cfg.headers, headers)
+    const isDataFairUrl = cfg.url?.startsWith(config.dataFairUrl)
+    if (isDataFairUrl) Object.assign(cfg.headers, headers)
 
-    // no 'get' here so that it still appears in metrics
-    if (['post', 'put', 'delete', 'patch'].includes(cfg.method) && config.privateDataFairUrl && cfg.url.startsWith(config.dataFairUrl)) {
-      cfg.url = cfg.url.replace(config.dataFairUrl, config.privateDataFairUrl)
-      cfg.headers.host = new URL(config.dataFairUrl).host
-    }
     return cfg
   }, error => Promise.reject(error))
   // customize axios errors for shorter stack traces when a request fails
@@ -57,23 +61,38 @@ const axiosInstance = (processing) => {
     if (response.data && response.data._readableState) delete response.data
     return Promise.reject(response)
   })
+
   return axiosInstance
 }
 
-const wsInstance = (log) => {
+/**
+ * Create a WebSocket instance.
+ * @param {import('@data-fair/lib/processings/types.js').LogFunctions} log - Log functions.
+ * @param {import('@data-fair/lib/express/index.js').Account} owner - Owner account.
+ * @returns {DataFairWsClient} WebSocket instance.
+ */
+const wsInstance = (log, owner) => {
   return new DataFairWsClient({
     url: config.dataFairUrl,
     apiKey: config.dataFairAPIKey,
     log,
     adminMode: config.dataFairAdminMode,
-    account: config.account
+    account: owner
   })
 }
 
 /**
+ * Prepare log functions.
+ * @param {import('mongodb').Db} db - Database.
+ * @param {(channel: string, data: any) => void} wsPublish - Publish function.
+ * @param {import('../../../shared/types/processing/index.js').Processing} processing - Processing.
+ * @param {import('../../../shared/types/run/index.js').Run} run - Run.
  * @returns {import('@data-fair/lib/processings/types.js').LogFunctions} Log functions.
  */
 const prepareLog = (db, wsPublish, processing, run) => {
+  /**
+   * @param {any} log - Log.
+   */
   const pushLog = async (log) => {
     log.date = new Date().toISOString()
     await db.collection('runs').updateOne({ _id: run._id }, { $push: { log } })
@@ -97,19 +116,26 @@ const prepareLog = (db, wsPublish, processing, run) => {
   }
 }
 
-export const run = async ({ db, mailTransport, wsPublish }) => {
+/**
+ * Run a processing.
+ * @param {import('mongodb').Db} db - Database.
+ * @param {any} mailTransport - Mail transport.
+ * @param {(channel: string, data: any) => void} wsPublish - Publish function.
+*/
+export const run = async (db, mailTransport, wsPublish) => {
   const [run, processing] = await Promise.all([
     db.collection('runs').findOne({ _id: process.argv[2] }),
     db.collection('processings').findOne({ _id: process.argv[3] })
   ])
 
   const log = prepareLog(db, wsPublish, processing, run)
+  // @ts-ignore
   log.warn = log.warning // for compatibility with old plugins
-  if (run.status === 'running') {
+  if (run?.status === 'running') {
     await log.step('Reprise après interruption.')
   }
   await running(db, wsPublish, run)
-  const pluginDir = path.resolve(config.dataDir, 'plugins', processing.plugin)
+  const pluginDir = path.resolve(config.dataDir, 'plugins', processing?.plugin)
 
   let pluginConfig = {}
   if (await fs.pathExists(pluginDir + '-config.json')) {
@@ -122,16 +148,16 @@ export const run = async ({ db, mailTransport, wsPublish }) => {
   const dir = resolvePath(processingsDir, processing._id)
   await fs.ensureDir(dir)
   const tmpDir = await tmp.dir({ unsafeCleanup: true, dir: config.tmpDir || path.resolve(config.dataDir, 'tmp') })
-  const processingConfig = processing.config || {}
+  const processingConfig = processing?.config || {}
   const context = {
     pluginConfig,
     processingConfig,
-    processingId: processing._id,
+    processingId: processing?._id,
     dir,
     tmpDir: tmpDir.path,
     log,
     axios: axiosInstance(processing),
-    ws: wsInstance(log),
+    ws: wsInstance(log, processing?.owner),
     async patchConfig (patch) {
       await log.debug('patch config', patch)
       Object.assign(processingConfig, patch)
@@ -148,9 +174,9 @@ export const run = async ({ db, mailTransport, wsPublish }) => {
     process.chdir(dir)
     await pluginModule.run(context)
     process.chdir(cwd)
-    if (_stopped) await log.error('interrompu')
-    else await log.info('terminé')
-  } catch (err) {
+    if (_stopped) await log.error('interrompu', 'Le traitement a été interrompu')
+    else await log.info('terminé', 'Le traitement est terminé')
+  } catch (/** @type {any} */ err) {
     process.chdir(cwd)
     const errStatus = err.status ?? err.statusCode
     let httpMessage = err.data && typeof err.data === 'string' ? err.data : (err.statusText ?? err.statusMessage)
