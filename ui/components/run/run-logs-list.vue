@@ -26,7 +26,7 @@
             </span>
             <span
               v-if="log.type === 'warning'"
-              class="text-warning"
+              class="text-accent"
             >
               {{ log.msg }}
             </span>

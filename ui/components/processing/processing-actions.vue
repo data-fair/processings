@@ -40,6 +40,7 @@
           v-if="hasTriggered"
           indeterminate
           color="primary"
+          class="mb-4"
         />
         <v-card-text class="py-0">
           <p v-if="canAdmin">

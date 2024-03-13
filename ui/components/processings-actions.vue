@@ -42,12 +42,12 @@
               name="title"
               label="Titre"
             />
-            <v-select
+            <v-autocomplete
               v-model="newProcessing.plugin"
               label="Plugin"
               :loading="!installedPlugins.results ? 'primary' : false"
               :items="installedPlugins.results"
-              :item-title="item => `${item.name} - ${item.version}`"
+              :item-title="item => `${item.fullName}`"
               item-value="id"
             />
           </v-form>

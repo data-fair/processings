@@ -30,14 +30,18 @@
             :key="step.date"
           >
             <v-expansion-panel-title>
-              <span>
-                <v-progress-circular
-                  v-if="i === steps.length-1 && run.status === 'running'"
-                  indeterminate
-                  color="primary"
-                  size="24"
-                />
-                &nbsp;
+              <v-progress-circular
+                v-if="i === steps.length-1 && run.status === 'running'"
+                indeterminate
+                color="primary"
+                size="24"
+              />
+              <v-icon
+                v-else-if="step.children.length"
+                :color="getColor(step)"
+                :icon="getIcon(step)"
+              />
+              <span style="padding-left: 1rem;">
                 {{ step.msg }}
               </span>
             </v-expansion-panel-title>
@@ -100,6 +104,38 @@ const steps = computed(() => {
   }
   return steps
 })
+
+function getColor(step) {
+  let color = 'success'
+
+  for (const child of step.children) {
+    if (child.type === 'error') {
+      color = 'error'
+      break
+    }
+    if (child.type === 'warning') {
+      color = 'accent'
+    }
+  }
+
+  return color
+}
+
+function getIcon(step) {
+  let icon = 'mdi-check-circle'
+
+  for (const child of step.children) {
+    if (child.type === 'error') {
+      icon = 'mdi-alert'
+      break
+    }
+    if (child.type === 'warning') {
+      icon = 'mdi-alert-circle'
+    }
+  }
+
+  return icon
+}
 
 onMounted(async () => {
   await refresh()
