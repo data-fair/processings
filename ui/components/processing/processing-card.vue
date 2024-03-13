@@ -46,7 +46,7 @@
                   size="24"
                 />
               </template>
-              <span>Exécution en cours depuis {{ $filters.fromNow(processing.lastRun.startedAt) }}</span>
+              <span style="padding-left: 1.8rem; display: inline-block;">Exécution commencée {{ $filters.fromNow(processing.lastRun.startedAt) }}</span>
             </v-list-item>
 
             <v-list-item v-if="processing.lastRun.status === 'finished'">
