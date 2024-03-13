@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@vueuse/integrations": "^10.9.0",
-    "dayjs": "^1.11.10",
+    "dayjs": "2.0.0-alpha.4",
     "debug": "^4.3.4",
     "gtfs-realtime-bindings": "1.1.1",
     "pump": "^3.0.0",

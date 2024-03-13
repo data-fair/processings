@@ -40,6 +40,7 @@
           :can-admin="canAdminProcessing"
           :can-exec="canExecProcessing"
           :edited="edited"
+          :is-small="false"
           @triggered="runs.refresh()"
         />
       </layout-navigation-right>
@@ -50,9 +51,11 @@
         <template #actions>
           <processing-actions
             :processing="processing"
+            :processing-schema="processingSchema"
             :can-admin="canAdminProcessing"
             :can-exec="canExecProcessing"
             :edited="edited"
+            :is-small="true"
             @triggered="runs.refresh()"
           />
         </template>
