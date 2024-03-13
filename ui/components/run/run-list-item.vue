@@ -44,25 +44,25 @@
     </template>
 
     <v-list-item-title v-if="run.status === 'running'">
-      démarrée {{ $filters.fromNow(run.startedAt) }}
+      Démarrée {{ $filters.fromNow(run.startedAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="run.status === 'finished'">
-      terminée - {{ $filters.date(run.finishedAt) }}
+      Terminée - {{ $filters.date(run.finishedAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="run.status === 'error'">
-      en échec - {{ $filters.date(run.finishedAt) }}
+      En échec - {{ $filters.date(run.finishedAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="run.status === 'scheduled'">
-      planifiée - {{ $filters.date(run.scheduledAt) }}
+      Planifiée - {{ $filters.date(run.scheduledAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="run.status === 'triggered'">
-      déclenchée manuellement {{ $filters.fromNow(run.createdAt) }}
+      Déclenchée manuellement {{ $filters.fromNow(run.createdAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="run.status === 'kill'">
-      interruption demandée
+      Interruption demandée
     </v-list-item-title>
     <v-list-item-title v-if="run.status === 'killed'">
-      interrompue manuellement - {{ $filters.date(run.finishedAt) }}
+      Interrompue manuellement - {{ $filters.date(run.finishedAt) }}
     </v-list-item-title>
 
     <v-list-item-subtitle v-if="run.status === 'finished' || run.status === 'error' || run.status === 'killed'">

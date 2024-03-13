@@ -1,6 +1,6 @@
 {
   "verbose": false,
-  "ext": "js, json",
+  "ext": "js, json, cjs",
   "watch": [
     "./**/*",
     "./**/**/*",

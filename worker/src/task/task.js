@@ -174,8 +174,8 @@ export const run = async (db, mailTransport, wsPublish) => {
     process.chdir(dir)
     await pluginModule.run(context)
     process.chdir(cwd)
-    if (_stopped) await log.error('interrompu', 'Le traitement a été interrompu')
-    else await log.info('terminé', 'Le traitement est terminé')
+    if (_stopped) await log.error('L\'exécution a été interrompue')
+    else await log.info('L\'exécution est terminée')
   } catch (/** @type {any} */ err) {
     process.chdir(cwd)
     const errStatus = err.status ?? err.statusCode
