@@ -30,7 +30,9 @@
         >
           <v-list-item>
             <template #prepend>
-              <v-icon>mdi-power-plug</v-icon>
+              <v-icon
+                icon="mdi-power-plug"
+              />
             </template>
             <span>{{ plugin ? plugin.fullName : processing.plugin }}</span>
           </v-list-item>
@@ -49,18 +51,20 @@
 
             <v-list-item v-if="processing.lastRun.status === 'finished'">
               <template #prepend>
-                <v-icon color="success">
-                  mdi-check-circle
-                </v-icon>
+                <v-icon
+                  color="success"
+                  icon="mdi-check-circle"
+                />
               </template>
               <span>Dernière exécution terminée {{ $filters.fromNow(processing.lastRun.finishedAt) }}</span>
             </v-list-item>
 
             <v-list-item v-if="processing.lastRun.status === 'error'">
               <template #prepend>
-                <v-icon color="error">
-                  mdi-alert
-                </v-icon>
+                <v-icon
+                  color="error"
+                  icon="mdi-alert"
+                />
               </template>
               <span>Dernière exécution en échec {{ $filters.fromNow(processing.lastRun.finishedAt) }}</span>
             </v-list-item>
@@ -68,7 +72,10 @@
 
           <v-list-item v-else>
             <template #prepend>
-              <v-icon>mdi-information</v-icon>
+              <v-icon
+                color="primary"
+                icon="mdi-information"
+              />
             </template>
             <span>Aucune exécution dans l'historique</span>
           </v-list-item>
@@ -76,14 +83,20 @@
           <template v-if="processing.nextRun">
             <v-list-item v-if="processing.nextRun.status === 'scheduled'">
               <template #prepend>
-                <v-icon>mdi-clock</v-icon>
+                <v-icon
+                  color="primary"
+                  icon="mdi-clock"
+                />
               </template>
               <span>Prochaine exécution planifiée {{ $filters.fromNow(processing.nextRun.scheduledAt, true) }}</span>
             </v-list-item>
 
             <v-list-item v-if="processing.nextRun.status === 'triggered'">
               <template #prepend>
-                <v-icon>mdi-play-circle</v-icon>
+                <v-icon
+                  color="primary"
+                  icon="mdi-play-circle"
+                />
               </template>
               <span>
                 Prochaine exécution déclenchée manuellement {{ $filters.fromNow(processing.nextRun.createdAt) }}

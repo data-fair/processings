@@ -53,15 +53,11 @@
           </div>
           <v-spacer />
           <div style="white-space: nowrap;">
-            <span class="pl-2">
-              {{ $filters.date(log.date, 'lll') }}
-            </span>
+            <span class="pl-2">{{ $filters.date(log.date, 'lll') }}</span>
             <span
               v-if="log.progressDate"
               class="pl-2"
-            >
-              - {{ $filters.date(log.progressDate, 'lll') }}
-            </span>
+            >- {{ $filters.date(log.progressDate, 'lll') }}</span>
           </div>
         </div>
       </v-card-text>

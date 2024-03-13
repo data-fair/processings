@@ -13,9 +13,10 @@
       <template #activator="{ props }">
         <v-list-item v-bind="props">
           <template #prepend>
-            <v-icon color="primary">
-              mdi-plus-circle
-            </v-icon>
+            <v-icon
+              color="primary"
+              icon="mdi-plus-circle"
+            />
           </template>
           Créer un nouveau traitement
         </v-list-item>

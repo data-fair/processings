@@ -1,66 +1,88 @@
 <template>
-  <v-list-item :to="link ? `/runs/${run._id}` : ''">
-    <template v-if="run.status === 'running'">
-      <v-progress-circular
-        indeterminate
-        color="primary"
-        size="24"
-      />
-      démarrée {{ $filters.fromNow(run.startedAt) }}
-    </template>
-
-    <template v-if="run.status === 'finished'">
-      <v-icon color="success">
-        mdi-check-circle
-      </v-icon>
-      terminée - {{ $filters.date(run.finishedAt) }}<br>
-      durée : {{ duration(run.startedAt, run.finishedAt) }}
-    </template>
-
-    <template v-if="run.status === 'error'">
-      <v-icon color="error">
-        mdi-alert
-      </v-icon>
-      en échec - {{ $filters.date(run.finishedAt) }}<br>
-      durée : {{ duration(run.startedAt, run.finishedAt) }}
-    </template>
-
-    <template v-if="run.status === 'scheduled'">
-      <v-icon>mdi-clock</v-icon>
-      planifiée - {{ $filters.date(run.scheduledAt) }}
-    </template>
-
-    <template v-if="run.status === 'triggered'">
-      <v-icon>mdi-play-circle</v-icon>
-      déclenchée manuellement {{ $filters.fromNow(run.createdAt) }}<br>
-      planifiée {{ $filters.fromNow(run.scheduledAt, true) }}
-    </template>
-
-    <template v-if="run.status === 'kill'">
-      <v-icon color="warning">
-        mdi-stop
-      </v-icon>
-      interruption demandée
-    </template>
-
-    <template v-if="run.status === 'killed'">
-      <v-icon color="warning">
-        mdi-stop
-      </v-icon>
-      interrompue manuellement - {{ $filters.date(run.finishedAt) }}<br>
-      durée : {{ duration(run.startedAt, run.finishedAt) }}
-    </template>
-
-    <template v-if="!run.finishedAt && run.status !== 'kill' && canExec">
-      <v-list-item-action>
-        <v-btn
+  <v-list-item
+    class="py-4"
+    :to="link ? `/runs/${run._id}` : ''"
+  >
+    <template #prepend>
+      <v-avatar v-if="run.status === 'running'">
+        <v-progress-circular
+          indeterminate
+          color="primary"
+          size="24"
+        />
+      </v-avatar>
+      <v-avatar v-if="run.status === 'finished'">
+        <v-icon
+          color="success"
+          icon="mdi-check-circle"
+        />
+      </v-avatar>
+      <v-avatar v-if="run.status === 'error'">
+        <v-icon
+          color="error"
+          icon="mdi-alert"
+        />
+      </v-avatar>
+      <v-avatar v-if="run.status === 'scheduled'">
+        <v-icon
+          color="primary"
+          icon="mdi-clock"
+        />
+      </v-avatar>
+      <v-avatar v-if="run.status === 'triggered'">
+        <v-icon
+          color="primary"
+          icon="mdi-play-circle"
+        />
+      </v-avatar>
+      <v-avatar v-if="run.status === 'kill' || run.status === 'killed'">
+        <v-icon
           color="warning"
           icon="mdi-stop"
-          size="x-small"
-          title="interrompre"
-          @click.prevent="kill()"
         />
-      </v-list-item-action>
+      </v-avatar>
+    </template>
+
+    <v-list-item-title v-if="run.status === 'running'">
+      démarrée {{ $filters.fromNow(run.startedAt) }}
+    </v-list-item-title>
+    <v-list-item-title v-if="run.status === 'finished'">
+      terminée - {{ $filters.date(run.finishedAt) }}
+    </v-list-item-title>
+    <v-list-item-title v-if="run.status === 'error'">
+      en échec - {{ $filters.date(run.finishedAt) }}
+    </v-list-item-title>
+    <v-list-item-title v-if="run.status === 'scheduled'">
+      planifiée - {{ $filters.date(run.scheduledAt) }}
+    </v-list-item-title>
+    <v-list-item-title v-if="run.status === 'triggered'">
+      déclenchée manuellement {{ $filters.fromNow(run.createdAt) }}
+    </v-list-item-title>
+    <v-list-item-title v-if="run.status === 'kill'">
+      interruption demandée
+    </v-list-item-title>
+    <v-list-item-title v-if="run.status === 'killed'">
+      interrompue manuellement - {{ $filters.date(run.finishedAt) }}
+    </v-list-item-title>
+
+    <v-list-item-subtitle v-if="run.status === 'finished' || run.status === 'error' || run.status === 'killed'">
+      durée : {{ duration(run.startedAt, run.finishedAt) }}
+    </v-list-item-subtitle>
+    <v-list-item-subtitle v-if="run.status === 'triggered' && run.scheduledAt && run.scheduledAt !== run.createdAt">
+      planifiée {{ $filters.fromNow(run.scheduledAt, true) }}
+    </v-list-item-subtitle>
+
+    <template
+      v-if="!run.finishedAt && run.status !== 'kill' && canExec"
+      #append
+    >
+      <v-btn
+        color="warning"
+        icon="mdi-stop"
+        size="x-small"
+        title="interrompre"
+        @click.prevent="kill()"
+      />
     </template>
   </v-list-item>
 </template>

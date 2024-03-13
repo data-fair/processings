@@ -1,7 +1,7 @@
 <template>
   <div class="v-app">
     <v-app>
-      <ClientOnly><AppBar v-if="dev" /></ClientOnly>
+      <ClientOnly><AppBar v-if="dev()" /></ClientOnly>
       <v-main>
         <NuxtPage />
         <Notifications />
@@ -19,7 +19,13 @@ globalThis.iFrameResizer = {
   heightCalculationMethod: 'taggedElement'
 }
 
-const dev = useRuntimeConfig().public.isDev
+const dev = () => {
+  try {
+    return !(window.self !== window.top)
+  } catch (e) {
+    return true
+  }
+}
 
 useHead({
   title: 'Data Fair Processings',

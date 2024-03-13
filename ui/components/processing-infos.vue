@@ -18,10 +18,9 @@
             >
               <v-icon
                 color="primary"
+                icon="mdi-information"
                 size="20"
-              >
-                mdi-information
-              </v-icon>
+              />
             </v-btn>
           </template>
           <span>Description du traitement</span>
@@ -54,11 +53,10 @@
               <td class="text-center">{{ sourceTypeDescription }}</td>
               <td class="text-center">
                 <v-icon
-                  size="x-large"
                   color="primary"
-                >
-                  mdi-arrow-right
-                </v-icon>
+                  icon="mdi-arrow-right"
+                  size="x-large"
+                />
               </td>
               <td class="text-center">
                 <v-table>

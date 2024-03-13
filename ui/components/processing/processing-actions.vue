@@ -21,9 +21,10 @@
           :disabled="processingSchema === null || !processing?.active || edited"
         >
           <template #prepend>
-            <v-icon color="primary">
-              mdi-play
-            </v-icon>
+            <v-icon
+              color="primary"
+              icon="mdi-play"
+            />
           </template>
           <span>Exécuter</span>
         </v-list-item>
@@ -81,9 +82,10 @@
       <template #activator="{ props }">
         <v-list-item v-bind="props">
           <template #prepend>
-            <v-icon color="warning">
-              mdi-delete
-            </v-icon>
+            <v-icon
+              color="warning"
+              icon="mdi-delete"
+            />
           </template>
           Supprimer
         </v-list-item>
@@ -128,9 +130,10 @@
       target="_blank"
     >
       <template #prepend>
-        <v-icon color="primary">
-          mdi-open-in-new
-        </v-icon>
+        <v-icon
+          color="primary"
+          icon="mdi-open-in-new"
+        />
       </template>
       Voir le jeu de données
     </v-list-item>
@@ -145,9 +148,10 @@
       <template #activator="{ props }">
         <v-list-item v-bind="props">
           <template #prepend>
-            <v-icon color="primary">
-              mdi-bell
-            </v-icon>
+            <v-icon
+              color="primary"
+              icon="mdi-bell"
+            />
           </template>
           Notifications
         </v-list-item>
