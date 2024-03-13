@@ -6,9 +6,8 @@ export default defineNuxtConfig({
   app: {
     baseURL: '/'
   },
-  // https://vuetifyjs.com/en/getting-started/installation/#using-nuxt-3
   build: {
-    transpile: ['@koumoul', '@data-fair', 'vuetify']
+    transpile: [/@koumoul/, /@data-fair/, 'vuetify']
   },
   css: ['@/assets/main.scss'],
   // Force enabling the dev tools on nuxi dev as the shortcut (Shift + Alt + D) is not working on non QWERTY keyboards, see https://github.com/nuxt/devtools/issues/601

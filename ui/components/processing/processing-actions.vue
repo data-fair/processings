@@ -2,7 +2,7 @@
   <v-list
     density="compact"
     class="list-actions"
-    style="background-color: transparent;"
+    :style="isSmall ? '' : 'background-color: transparent;'"
   >
     <v-menu
       v-if="canAdmin || canExec"
@@ -189,6 +189,7 @@ const properties = defineProps({
   canAdmin: Boolean,
   canExec: Boolean,
   edited: Boolean,
+  isSmall: Boolean,
   processing: {
     type: Object,
     default: null
