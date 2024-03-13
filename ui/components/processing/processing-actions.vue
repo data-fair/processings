@@ -11,11 +11,6 @@
       max-width="800"
     >
       <template #activator="{ props }">
-        <v-progress-linear
-          v-if="edited"
-          indeterminate
-          color="primary"
-        />
         <v-list-item
           v-bind="props"
           :disabled="processingSchema === null || !processing?.active || edited"
@@ -27,6 +22,11 @@
           </template>
           <span>Exécuter</span>
         </v-list-item>
+        <v-progress-linear
+          v-if="edited"
+          indeterminate
+          color="primary"
+        />
       </template>
       <v-card
         rounded="lg"

@@ -55,12 +55,7 @@
           <div style="white-space: nowrap;">
             <span class="pl-2">
               {{ $filters.date(log.date, 'lll') }}
-            </span>
-            <span
-              v-if="log.progressDate"
-              class="pl-2"
-            >
-              - {{ $filters.date(log.progressDate, 'lll') }}
+              <span v-if="log.progressDate">- {{ $filters.date(log.progressDate, 'lll') }}</span>
             </span>
           </div>
         </div>
