@@ -10,6 +10,7 @@ import moment from 'moment'
 import Ajv from 'ajv'
 import ajvFormats from 'ajv-formats'
 
+// @ts-ignore
 const ajv = ajvFormats(new Ajv({ strict: false }))
 const validate = ajv.compile(runSchema)
 
@@ -52,9 +53,8 @@ export const deleteProcessing = async (db, processing) => {
  * @param {import('mongodb').Db} db
  * @param {import('../../../shared/types/processing/index.js').Processing} processing
  * @param {boolean} triggered
- * @returns {Promise<void>} nothing
+ * @returns {Promise<import('../../../shared/types/run/index.js').Run>}
  */
-// TODO a tester avec triggered = false par defaut
 export const createNext = async (db, processing, triggered = false, delaySeconds = 0) => {
   const run = {
     _id: nanoid(),
@@ -87,7 +87,7 @@ export const createNext = async (db, processing, triggered = false, delaySeconds
     const timeZone = processing.scheduling.timeZone || config.defaultTimeZone
     const job = new CronJob(cron, () => {}, () => {}, false, timeZone)
     const nextDate = job.nextDates()
-    run.scheduledAt = nextDate.toISOString()
+    run.scheduledAt = nextDate.toString()
   }
 
   const valid = validate(run)

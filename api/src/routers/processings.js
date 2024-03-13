@@ -71,7 +71,8 @@ router.get('', asyncHandler(async (req, res) => {
     size > 0 ? processings.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
     processings.countDocuments(query)
   ])
-  res.json({ results: results.map(p => cleanProcessing(p, reqSession)), count })
+  // @ts-ignore
+  res.json({ results: results.map((p) => cleanProcessing(p, reqSession)), count })
 }))
 
 // Create a processing
@@ -94,7 +95,7 @@ router.post('', asyncHandler(async (req, res) => {
     // ok for super admins
   } else if (access && access.public) {
     // ok, this plugin is public
-  } else if (access && access.privateAccess && access.privateAccess.find(p => p.type === req.body.owner.type && p.id === req.body.owner.id)) {
+  } else if (access && access.privateAccess && access.privateAccess.find((/** @type {any} */ p) => p.type === req.body.owner.type && p.id === req.body.owner.id)) {
     // ok, private access is granted
   } else {
     return res.status(403).send()

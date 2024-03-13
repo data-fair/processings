@@ -50,6 +50,12 @@
     "owner": {
       "$ref": "https://github.com/data-fair/lib/account"
     },
+    "permissions": {
+      "type": "array",
+      "items": {
+        "$ref": "https://github.com/data-fair/processings/permission"
+      }
+    },
     "plugin": {
       "type": "string"
     },

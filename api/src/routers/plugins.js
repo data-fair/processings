@@ -89,6 +89,7 @@ router.get('/', asyncHandler(async (req, res) => {
       pluginInfo.access = access
     }
     if (req.query.privateAccess) {
+      // @ts-ignore
       const [type, id] = req.query.privateAccess.split(':')
       if (!reqSession.user.adminMode && (type !== reqSession.account.type || id !== reqSession.account.id)) {
         return res.status(403).send('privateAccess does not match current account')

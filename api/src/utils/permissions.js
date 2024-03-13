@@ -13,6 +13,12 @@ const getOwnerRole = (owner, reqSession) => {
   return reqSession.accountRole
 }
 
+/**
+ * @param {any} req
+ * @param {any} res
+ * @param {any} next
+ * @returns {Promise<void>}
+ */
 const isSuperAdmin = async (req, res, next) => {
   const reqSession = await session.reqAuthenticated(req)
   if (!reqSession.user) return res.status(401).send()
@@ -20,6 +26,12 @@ const isSuperAdmin = async (req, res, next) => {
   next()
 }
 
+/**
+ * @param {any} req
+ * @param {any} res
+ * @param {any} next
+ * @returns {Promise<void>}
+ */
 const isAccountMember = async (req, res, next) => {
   const reqSession = await session.reqAuthenticated(req)
   if (!reqSession.user) return res.status(401).send()
@@ -71,6 +83,7 @@ const getOwnerPermissionFilter = (owner, reqSession) => {
     'owner.type': owner.type,
     'owner.id': owner.id
   }
+  // @ts-ignore
   if (reqSession.user?.adminMode || ['admin', 'contrib'].includes(getOwnerRole(owner, reqSession))) return filter
   /** @type {any[]} */
   const or = [{ 'target.type': 'userEmail', 'target.email': reqSession.user?.email }]
@@ -108,12 +121,13 @@ const getUserResourceProfile = (processing, reqSession) => {
   // this line is first, a manual permission cannot demote an admin
   const ownerRole = getOwnerRole(processing.owner, reqSession)
   if (ownerRole === 'admin') {
+    // TODO
     // if (req.secondaryHost) return 'exec' // no admin functionality in portals
     // else return 'admin'
     return 'admin'
   }
   for (const profile of ['read', 'exec']) {
-    if (processing.permissions && processing.permissions.find(p => p.profile === profile && matchPermissionTarget(p.target, reqSession))) {
+    if (processing.permissions && processing.permissions.find((/** @type {import('../../../shared/types/permission/index.js').Permission} */ p) => p.profile === profile && matchPermissionTarget(p.target, reqSession))) {
       return profile
     }
   }
