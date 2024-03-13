@@ -18,7 +18,7 @@
         />
         <v-list-item
           v-bind="props"
-          :disabled="!processing?.active || edited"
+          :disabled="processingSchema === null || !processing?.active || edited"
         >
           <template #prepend>
             <v-icon color="primary">
@@ -190,6 +190,10 @@ const properties = defineProps({
   canExec: Boolean,
   edited: Boolean,
   processing: {
+    type: Object,
+    default: null
+  },
+  processingSchema: {
     type: Object,
     default: null
   }

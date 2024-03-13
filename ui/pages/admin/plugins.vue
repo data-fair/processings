@@ -45,13 +45,55 @@
             :disabled="loading"
             @click="update(result)"
           />
-          <v-btn
-            title="Désinstaller"
-            icon="mdi-delete"
-            color="warning"
-            :disabled="loading"
-            @click="uninstall(result)"
-          />
+          <v-menu
+            :key="result.id"
+            v-model="showDeleteMenu[result.id]"
+            :close-on-content-click="false"
+            max-width="500"
+          >
+            <template #activator="{ props }">
+              <v-btn
+                v-bind="props"
+                title="Désinstaller"
+                icon="mdi-delete"
+                color="warning"
+                :disabled="loading"
+              />
+            </template>
+            <v-card
+              rounded="lg"
+              variant="elevated"
+            >
+              <v-card-title primary-title>
+                Suppression du plugin
+              </v-card-title>
+              <v-progress-linear
+                v-if="inDelete"
+                indeterminate
+                color="warning"
+              />
+              <v-card-text>
+                Voulez-vous vraiment supprimer le plugin "{{ result.fullName }}" ?
+              </v-card-text>
+              <v-card-actions>
+                <v-spacer />
+                <v-btn
+                  variant="text"
+                  :disabled="inDelete"
+                  @click="showDeleteMenu = false"
+                >
+                  Non
+                </v-btn>
+                <v-btn
+                  color="warning"
+                  :disabled="inDelete"
+                  @click="uninstall(result)"
+                >
+                  Oui
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-menu>
         </v-toolbar>
 
         <v-card-text class="py-2">
@@ -132,8 +174,10 @@ import { useSession } from '@data-fair/lib/vue/session.js'
 const session = useSession()
 
 const availablePlugins = ref({})
+const inDelete = ref(false)
 const installedPlugins = ref({})
 const loading = ref(false)
+const showDeleteMenu = ref({})
 const search = ref('')
 
 const filteredAvailablePlugins = computed(() => {
@@ -147,6 +191,14 @@ const filteredInstalledPlugins = computed(() => {
   if (!search.value) return installedPlugins.value.results
   return installedPlugins.value.results.filter(r => r.name.includes(search.value) || (r.description && r.description.includes(search.value)))
 })
+
+function updateShowDeleteMenu() {
+  const menuState = {}
+  installedPlugins.value.results.forEach(plugin => {
+    menuState[plugin.id] = false
+  })
+  showDeleteMenu.value = menuState
+}
 
 onMounted(async () => {
   const access = await checkAccess()
@@ -189,6 +241,7 @@ async function fetchInstalledPlugins() {
   installedPlugins.value = {
     results: response.results.sort((a, b) => a.name.localeCompare(b.name))
   }
+  updateShowDeleteMenu()
 }
 
 async function install(plugin) {
@@ -203,11 +256,14 @@ async function install(plugin) {
 
 async function uninstall(plugin) {
   loading.value = true
+  inDelete.value = true
   await $fetch(`/api/v1/plugins/${plugin.id}`, {
     method: 'DELETE'
   })
   await fetchInstalledPlugins()
   loading.value = false
+  inDelete.value = false
+  showDeleteMenu.value = false
 }
 
 function updateAvailable(plugin) {

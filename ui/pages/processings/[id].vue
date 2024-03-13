@@ -36,6 +36,7 @@
       <layout-navigation-right v-if="$vuetify.display.lgAndUp">
         <processing-actions
           :processing="processing"
+          :processing-schema="processingSchema"
           :can-admin="canAdminProcessing"
           :can-exec="canExecProcessing"
           :edited="edited"
