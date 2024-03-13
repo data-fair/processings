@@ -9,46 +9,17 @@
   "additionalProperties": false,
   "required": [
     "_id",
-    "title",
-    "plugin",
     "owner",
+    "plugin",
     "scheduling",
-    "created",
-    "config"
+    "title"
   ],
   "properties": {
     "_id": {
       "type": "string"
     },
-    "title": {
-      "type": "string"
-    },
-    "plugin": {
-      "type": "string"
-    },
-    "owner": {
-      "$ref": "https://github.com/data-fair/lib/account#/$defs/accountKeys"
-    },
-    "updated": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "id",
-        "name",
-        "date"
-      ],
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "date": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
+    "active": {
+      "type": "boolean"
     },
     "created": {
       "type": "object",
@@ -66,15 +37,58 @@
           "type": "string"
         },
         "date": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
     "config": {
       "type": "object"
     },
+    "debug": {
+      "type": "boolean"
+    },
+    "owner": {
+      "$ref": "https://github.com/data-fair/lib/account"
+    },
+    "permissions": {
+      "type": "array",
+      "items": {
+        "$ref": "https://github.com/data-fair/processings/permission"
+      }
+    },
+    "plugin": {
+      "type": "string"
+    },
+    "scheduling": {
+      "type": "object"
+    },
+    "title": {
+      "type": "string"
+    },
+    "updated": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "date"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        }
+      }
+    },
     "userProfile": {
+      "type": "string"
+    },
+    "webhookKey": {
       "type": "string"
     }
   }

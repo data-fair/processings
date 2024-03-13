@@ -1,4 +1,4 @@
-import { owner } from './owner.js'
+import owner from './owner.js'
 import permissions from './permissions.js'
 
 const run = {

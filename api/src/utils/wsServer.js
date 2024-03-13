@@ -47,7 +47,7 @@ export const startWSServer = async (server, db, session) => {
           const [type, _id] = message.channel.split('/')
           const resource = await db.collection(type).findOne({ _id })
           const reqSession = await session.req(req)
-          if (!permissions.isContrib(reqSession, resource)) {
+          if (!permissions.isContrib(reqSession, resource.owner)) {
             return ws.send(JSON.stringify({ type: 'error', status: 403, data: 'Permission manquante.' }))
           }
 

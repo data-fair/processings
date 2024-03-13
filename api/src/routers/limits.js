@@ -4,10 +4,10 @@ import { getLimits } from '../../../shared/limits.js'
 import mongo from '@data-fair/lib/node/mongo.js'
 import permissions from '../utils/permissions.js'
 import Ajv from 'ajv'
-import ajvFormats from 'ajv-formats'
-import config from '../config.js'
+import AjvFormats from 'ajv-formats'
 
-const ajv = ajvFormats(new Ajv({ strict: false }))
+// @ts-ignore
+const ajv = AjvFormats(new Ajv({ strict: false }))
 
 const schema = {
   type: 'object',
@@ -46,7 +46,8 @@ router.post('/:type/:id', permissions.isSuperAdmin, asyncHandler(async (req, res
 
 // A user can get limits information for himself only
 router.get('/:type/:id', permissions.isAccountMember, asyncHandler(async (req, res) => {
-  const limits = await getLimits(mongo.db, { type: req.params.type, id: req.params.id }, config.defaultLimits.processingsSeconds)
+  const consumer = { type: req.params.type, id: req.params.id }
+  const limits = await getLimits(mongo.db, consumer)
   if (!limits) return res.status(404).send()
   delete limits._id
   res.send(limits)

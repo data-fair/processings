@@ -1,18 +1,19 @@
-import semver from 'semver'
-import config from '../config.js'
+import { session, asyncHandler } from '@data-fair/lib/express/index.js'
+import { exec as execCallback } from 'child_process'
+import { promisify } from 'util'
 import { Router } from 'express'
+import config from '../config.js'
+import permissions from '../utils/permissions.js'
+import Ajv from 'ajv'
 import fs from 'fs-extra'
 import path from 'path'
-import { promisify } from 'util'
-import { exec as execCallback } from 'child_process'
-import tmp from 'tmp-promise'
-import Ajv from 'ajv'
 import resolvePath from 'resolve-path'
-import permissions from '../utils/permissions.js'
-import { session, asyncHandler } from '@data-fair/lib/express/index.js'
+import semver from 'semver'
+import tmp from 'tmp-promise'
 
-const exec = promisify(execCallback)
+// @ts-ignore
 const ajv = new Ajv({ strict: false })
+const exec = promisify(execCallback)
 
 const router = Router()
 export default router
@@ -22,6 +23,22 @@ fs.ensureDirSync(pluginsDir)
 const tmpDir = config.tmpDir || path.join(config.dataDir, 'tmp')
 fs.ensureDirSync(tmpDir)
 
+/**
+ * @typedef {Object} PluginInfo
+ * @property {string} name
+ * @property {string} fullName
+ * @property {string} version
+ * @property {string} distTag
+ * @property {string} description
+ * @property {string} npm
+ * @property {Object} config
+ * @property {Object} access
+ */
+
+/**
+ * @param {PluginInfo} pluginInfo
+ * @returns {PluginInfo}
+ */
 const preparePluginInfo = (pluginInfo) => {
   const version = pluginInfo.distTag === 'latest' ? pluginInfo.version : `${pluginInfo.distTag} - ${pluginInfo.version}`
   return { ...pluginInfo, fullName: `${pluginInfo.name.replace('@data-fair/processing-', '')} (${version})` }
@@ -62,6 +79,7 @@ router.get('/', asyncHandler(async (req, res) => {
   const dirs = (await fs.readdir(pluginsDir)).filter(p => !p.endsWith('.json'))
   const results = []
   for (const dir of dirs) {
+    /** @type {PluginInfo} */
     const pluginInfo = await fs.readJson(path.join(pluginsDir, dir, 'plugin.json'))
     const access = await fs.pathExists(path.join(pluginsDir, dir + '-access.json')) ? await fs.readJson(path.join(pluginsDir, dir + '-access.json')) : { public: false, privateAccess: [] }
     if (reqSession.user.adminMode) {
@@ -71,11 +89,12 @@ router.get('/', asyncHandler(async (req, res) => {
       pluginInfo.access = access
     }
     if (req.query.privateAccess) {
+      // @ts-ignore
       const [type, id] = req.query.privateAccess.split(':')
       if (!reqSession.user.adminMode && (type !== reqSession.account.type || id !== reqSession.account.id)) {
         return res.status(403).send('privateAccess does not match current account')
       }
-      if (!access.public && !access.privateAccess.find(p => p.type === type && p.id === id)) {
+      if (!access.public && !access.privateAccess.find((/** @type {any} */p) => p.type === type && p.id === id)) {
         continue
       }
     } else if (!reqSession.user.adminMode) {
@@ -91,7 +110,7 @@ router.get('/', asyncHandler(async (req, res) => {
 
 router.get('/:id', asyncHandler(async (req, res) => {
   await session.reqAuthenticated(req)
-
+  /** @type {PluginInfo} */
   const pluginInfo = await fs.readJson(resolvePath(pluginsDir, path.join(req.params.id, 'plugin.json')))
   res.send(preparePluginInfo(pluginInfo))
 }))
