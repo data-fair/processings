@@ -173,7 +173,7 @@ async function patch() {
   edited.value = true
   await $fetch(`/api/v1/processings/${route.params.id}`, {
     method: 'PATCH',
-    body: { ...editProcessing.value }
+    body: JSON.stringify({ ...editProcessing.value })
   })
   await fetchProcessing()
   edited.value = false

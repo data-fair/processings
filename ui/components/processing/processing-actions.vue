@@ -271,7 +271,11 @@ const triggerExecution = async () => {
   try {
     await $fetch(`/api/v1/processings/${properties.processing?._id}/_trigger`, {
       method: 'POST',
-      body: { delay: triggerDelay.value }
+      body: JSON.stringify({
+        params: {
+          delay: triggerDelay.value
+        }
+      })
     })
     emit('triggered')
     showTriggerMenu.value = false

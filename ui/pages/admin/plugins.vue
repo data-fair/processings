@@ -33,9 +33,18 @@
           flat
         >
           <v-toolbar-title>
-            {{ result.fullName }}
+            {{ result.fullName.replace(/\s*\(\d+(\.\d+)*\)/, '') }}
           </v-toolbar-title>
           <v-spacer />
+          {{ result.version }}
+          <v-btn
+            v-if="updateAvailable(result)[0]"
+            :title="`Mettre à jour ${updateAvailable(result)[1]}`"
+            icon="mdi-update"
+            color="primary"
+            :disabled="loading"
+            @click="update(result)"
+          />
           <v-btn
             title="Désinstaller"
             icon="mdi-delete"
@@ -78,6 +87,7 @@
       :key="'available-' + result.name + '-' + result.version"
     >
       <v-card
+        v-if="installedPlugins.results && !installedPlugins.results.find(r => r.name === result.name && r.distTag === result.distTag)"
         class="my-2"
         variant="elevated"
         rounded="lg"
@@ -87,14 +97,15 @@
           flat
         >
           <v-toolbar-title>
-            {{ result.distTag === 'latest' ? result.name + ' (' + result.version + ')' : result.name + ' (' + result.distTag + ' - ' + result.version + ')' }}
+            {{ result.distTag === 'latest' ? result.name : result.name + ' (' + result.distTag + ')' }}
           </v-toolbar-title>
           <v-spacer />
+          {{ result.version }}
           <v-btn
             title="Installer"
             icon="mdi-download"
             color="primary"
-            :disabled="loading || !installedPlugins.results || !!installedPlugins.results.find(r => r.name === result.name && r.version === result.version)"
+            :disabled="loading"
             @click="install(result)"
           />
         </v-toolbar>
@@ -117,9 +128,9 @@ import { useSession } from '@data-fair/lib/vue/session.js'
 
 const session = useSession()
 
-const loading = ref(false)
 const availablePlugins = ref({})
 const installedPlugins = ref({})
+const loading = ref(false)
 const search = ref('')
 
 const filteredAvailablePlugins = computed(() => {
@@ -164,18 +175,24 @@ async function checkAccess() {
 }
 
 async function fetchAvailablePlugins() {
-  availablePlugins.value = await $fetch('/api/v1/plugins-registry')
+  const response = await $fetch('/api/v1/plugins-registry')
+  availablePlugins.value = {
+    results: response.results.sort((a, b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
+  }
 }
 
 async function fetchInstalledPlugins() {
-  installedPlugins.value = await $fetch('/api/v1/plugins')
+  const response = await $fetch('/api/v1/plugins')
+  installedPlugins.value = {
+    results: response.results.sort((a, b) => a.name.localeCompare(b.name))
+  }
 }
 
 async function install(plugin) {
   loading.value = true
   await $fetch('/api/v1/plugins', {
     method: 'POST',
-    body: { ...plugin }
+    body: JSON.stringify({ ...plugin })
   })
   await fetchInstalledPlugins()
   loading.value = false
@@ -190,11 +207,28 @@ async function uninstall(plugin) {
   loading.value = false
 }
 
+function updateAvailable(plugin) {
+  if (!availablePlugins.value.results) return [false, '']
+  const availablePlugin = availablePlugins.value.results.find(r => r.name === plugin.name)
+  if (availablePlugin && availablePlugin.version !== plugin.version) return [true, availablePlugin.version]
+  return [false, '']
+}
+
+async function update(plugin) {
+  loading.value = true
+  if (!availablePlugins.value.results) return false
+  const availablePlugin = availablePlugins.value.results.find(r => r.name === plugin.name)
+  if (availablePlugin && availablePlugin.version !== plugin.version) {
+    await install(availablePlugin)
+  }
+  loading.value = false
+}
+
 async function saveConfig(plugin) {
   loading.value = true
   await $fetch(`/api/v1/plugins/${plugin.id}/config`, {
     method: 'PUT',
-    body: { ...plugin.config }
+    body: JSON.stringify({ ...plugin.config })
   })
   loading.value = false
 }
@@ -203,7 +237,7 @@ async function saveAccess(plugin) {
   loading.value = true
   await $fetch(`/api/v1/plugins/${plugin.id}/access`, {
     method: 'PUT',
-    body: { ...plugin.access }
+    body: JSON.stringify({ ...plugin.access })
   })
   loading.value = false
 }
