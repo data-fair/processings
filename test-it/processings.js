@@ -16,7 +16,7 @@ await workerServer.start()
 
 const plugin = (await superadmin.post('/api/v1/plugins', {
   name: '@data-fair/processing-hello-world',
-  version: '0.11.0',
+  version: '0.12.2',
   distTag: 'latest',
   description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.',
   npm: 'https://www.npmjs.com/package/%40data-fair%2Fprocessing-hello-world'

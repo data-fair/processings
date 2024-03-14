@@ -88,7 +88,7 @@ export const createNext = async (db, processing, triggered = false, delaySeconds
     const timeZone = processing.scheduling.timeZone || config.defaultTimeZone
     const job = new CronJob(cron, () => {}, () => {}, false, timeZone)
     const nextDate = job.nextDates()
-    run.scheduledAt = nextDate.toString()
+    run.scheduledAt = nextDate.toISOString()
   }
 
   const valid = validate(run)

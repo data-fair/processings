@@ -13,7 +13,7 @@ const dmeadusOrg = await axiosAuth({ email: 'dmeadus0@answers.com', password: 'p
 await test('should install a new plugin then list and remove it', async function () {
   const plugin = {
     name: '@data-fair/processing-hello-world',
-    version: '0.11.0',
+    version: '0.12.2',
     distTag: 'latest',
     description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.',
     npm: 'https://www.npmjs.com/package/%40ata-fair%2F@dprocessing-hello-world'
