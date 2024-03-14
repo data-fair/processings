@@ -36,7 +36,7 @@
           flat
         >
           <v-toolbar-title>
-            {{ result.fullName.replace(/\s*\(\d+(\.\d+)*\)/, '') }}
+            {{ result.customName }}
           </v-toolbar-title>
           <v-spacer />
           {{ result.version }}
@@ -253,6 +253,7 @@ async function install(plugin) {
     method: 'POST',
     body: JSON.stringify({ ...plugin })
   })
+  // TODO just update the installed plugin instead of fetching all, the plugin id is returned by the POST
   await fetchInstalledPlugins()
   loading.value = false
 }

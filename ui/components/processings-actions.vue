@@ -47,7 +47,7 @@
               label="Plugin"
               :loading="!installedPlugins.results ? 'primary' : false"
               :items="installedPlugins.results"
-              item-title="fullName"
+              item-title="customName"
               item-value="id"
               clearable
             />

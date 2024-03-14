@@ -1,9 +1,6 @@
 import { start, stop } from './src/server.js'
 
-start().then(() => {}, err => {
-  console.error('Failure while starting service', err)
-  process.exit(1)
-})
+start()
 
 process.on('SIGTERM', function onSigterm () {
   console.info('Received SIGTERM signal, shutdown gracefully...')

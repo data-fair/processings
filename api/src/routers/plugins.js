@@ -24,35 +24,74 @@ const tmpDir = config.tmpDir || path.join(config.dataDir, 'tmp')
 fs.ensureDirSync(tmpDir)
 
 /**
- * @typedef {Object} PluginInfo
+ * @typedef {Object} PluginData
  * @property {string} name
- * @property {string} fullName
+ * @property {string} customName - the name defined by config
+ * @property {string} description
  * @property {string} version
  * @property {string} distTag
+ * @property {string} id
+ * @property {any} pluginConfigSchema
+ * @property {any} processingConfigSchema
+ */
+
+/**
+ * @typedef {Object} PluginDataWithConfig
+ * @property {string} name
+ * @property {string} customName - the name defined by config
  * @property {string} description
- * @property {string} npm
+ * @property {string} version
+ * @property {string} distTag
+ * @property {string} id
+ * @property {any} pluginConfigSchema
+ * @property {any} processingConfigSchema
  * @property {Object} config
  * @property {Object} access
  */
 
 /**
- * @param {PluginInfo} pluginInfo
- * @returns {PluginInfo}
+ * For compatibility with old plugins
+ * @param {PluginData} plugin
+ * @returns {PluginData}
  */
-const preparePluginInfo = (pluginInfo) => {
-  const version = pluginInfo.distTag === 'latest' ? pluginInfo.version : `${pluginInfo.distTag} - ${pluginInfo.version}`
-  return { ...pluginInfo, fullName: `${pluginInfo.name.replace('@data-fair/processing-', '')} (${version})` }
+const injectPluginNameConfig = (plugin) => {
+  // For compatibility with old plugins
+  if (!plugin.pluginConfigSchema.properties.pluginName) {
+    const version = plugin.distTag === 'latest' ? plugin.version : `${plugin.distTag} - ${plugin.version}`
+    const defaultName = plugin.name.replace('@data-fair/processing-', '') + ' (' + version + ')'
+    plugin.pluginConfigSchema.properties.pluginName = {
+      type: 'string',
+      title: 'Nom du plugin',
+      description: 'Nom du plugin affiché dans les traitements',
+      default: defaultName
+    }
+  }
+  return plugin
 }
 
-// prepare the plugin in a subdirectory
-router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
-  await session.reqAuthenticated(req)
+/**
+ * @param {PluginData | PluginDataWithConfig} pluginInfo
+ * @returns {Promise<PluginData | PluginDataWithConfig>}
+ */
+const preparePluginInfo = async (pluginInfo) => {
+  pluginInfo = injectPluginNameConfig(pluginInfo)
+  const pluginConfigPath = path.join(pluginsDir, pluginInfo.id + '-config.json')
+  const customName = await fs.pathExists(pluginConfigPath) ? (await fs.readJson(pluginConfigPath)).pluginName : pluginInfo.pluginConfigSchema.properties.pluginName.default
+  return { ...pluginInfo, customName }
+}
 
+// Install a plugin
+// superAdmin only
+// req.body: { name: string, description: string, version: string, distTag: string }
+router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
+  /** @type {PluginData} */
   const plugin = req.body
   plugin.id = plugin.name.replace('/', '-') + '-' + semver.major(plugin.version)
   if (plugin.distTag !== 'latest') plugin.id += '-' + plugin.distTag
+
   const pluginDir = path.join(pluginsDir, plugin.id)
   const dir = await tmp.dir({ unsafeCleanup: true, dir: tmpDir })
+
   try {
     // create a pseudo npm package with a dependency to the plugin referenced from the registry
     await fs.writeFile(path.join(dir.path, 'package.json'), JSON.stringify({
@@ -73,34 +112,33 @@ router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
   res.send(plugin)
 }))
 
+// List installed plugins
 router.get('/', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
 
   const dirs = (await fs.readdir(pluginsDir)).filter(p => !p.endsWith('.json'))
   const results = []
   for (const dir of dirs) {
-    /** @type {PluginInfo} */
+    /** @type {PluginDataWithConfig} */
     const pluginInfo = await fs.readJson(path.join(pluginsDir, dir, 'plugin.json'))
     const access = await fs.pathExists(path.join(pluginsDir, dir + '-access.json')) ? await fs.readJson(path.join(pluginsDir, dir + '-access.json')) : { public: false, privateAccess: [] }
+
     if (reqSession.user.adminMode) {
-      if (await fs.pathExists(path.join(pluginsDir, dir + '-config.json'))) {
-        pluginInfo.config = await fs.readJson(path.join(pluginsDir, dir + '-config.json'))
-      }
+      const pluginConfigPath = path.join(pluginsDir, dir + '-config.json')
+      if (await fs.pathExists(pluginConfigPath)) pluginInfo.config = await fs.readJson(pluginConfigPath)
       pluginInfo.access = access
-    }
-    if (req.query.privateAccess) {
-      // @ts-ignore
+    } else if (req.query.privateAccess && typeof req.query.privateAccess === 'string') {
       const [type, id] = req.query.privateAccess.split(':')
-      if (!reqSession.user.adminMode && (type !== reqSession.account.type || id !== reqSession.account.id)) {
+      if (type !== reqSession.account.type || id !== reqSession.account.id) {
         return res.status(403).send('privateAccess does not match current account')
       }
-      if (!access.public && !access.privateAccess.find((/** @type {any} */p) => p.type === type && p.id === id)) {
-        continue
+      if (!access.public && !access.privateAccess.find((/** @type {{type: string, id: string}} */p) => p.type === type && p.id === id)) {
+        continue // pass to next plugin
       }
-    } else if (!reqSession.user.adminMode) {
+    } else {
       return res.status(400).send('privateAccess filter is required')
     }
-    results.push(preparePluginInfo(pluginInfo))
+    results.push(await preparePluginInfo(pluginInfo))
   }
   res.send({
     count: results.length,
@@ -108,11 +146,12 @@ router.get('/', asyncHandler(async (req, res) => {
   })
 }))
 
+// Return PluginData (if connected)
 router.get('/:id', asyncHandler(async (req, res) => {
   await session.reqAuthenticated(req)
-  /** @type {PluginInfo} */
+  /** @type {PluginData} */
   const pluginInfo = await fs.readJson(resolvePath(pluginsDir, path.join(req.params.id, 'plugin.json')))
-  res.send(preparePluginInfo(pluginInfo))
+  res.send(await preparePluginInfo(pluginInfo))
 }))
 
 router.delete('/:id', permissions.isSuperAdmin, asyncHandler(async (req, res) => {

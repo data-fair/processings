@@ -16,9 +16,10 @@ const search = memoize(async (/** @type {any} */q) => {
   })
   const results = []
   for (const o of res.data.objects) {
+    // TODO send data on flux, maybe with websockets ?
     if (!o.package.keywords || !o.package.keywords.includes('data-fair-processings-plugin')) continue
     const distTags = (await axios.get('https://registry.npmjs.org/-/package/' + o.package.name + '/dist-tags')).data
-    const plugin = { name: o.package.name, description: o.package.description, npm: o.package.links.npm }
+    const plugin = { name: o.package.name, description: o.package.description }
     for (const distTag in distTags) {
       results.push({ ...plugin, version: distTags[distTag], distTag })
     }
