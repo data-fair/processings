@@ -1,16 +1,22 @@
+import { session, asyncHandler } from '@data-fair/lib/express/index.js'
 import { Router } from 'express'
+import mongo from '@data-fair/lib/node/mongo.js'
 import findUtils from '../utils/find.js'
 import permissions from '../utils/permissions.js'
-import { session, asyncHandler } from '@data-fair/lib/express/index.js'
-import mongo from '@data-fair/lib/node/mongo.js'
 
 const router = Router()
 export default router
 
 const sensitiveParts = ['permissions']
 
+/**
+ * Remove sensitive parts from a run object (permissions)
+ * @param {import('../../../shared/types/run/index.js').Run} run the run object to clean
+ * @param {import('@data-fair/lib/express/index.js').SessionState} reqSession
+ * @returns {import('../../../shared/types/run/index.js').Run} the cleaned run object
+ */
 const cleanRun = (run, reqSession) => {
-  run.userProfile = permissions.getUserResourceProfile(run, reqSession)
+  run.userProfile = permissions.getUserResourceProfile(run.owner, run.permissions ?? [], reqSession)
   if (run.userProfile !== 'admin') {
     for (const part of sensitiveParts) delete run[part]
   }
@@ -25,27 +31,30 @@ router.get('', asyncHandler(async (req, res) => {
   if (reqSession.user.adminMode) req.query.showAll = 'true'
   const query = findUtils.query(req.query, reqSession, { processing: 'processing._id' })
   const project = { log: 0 }
-  const runs = mongo.db.collection('runs')
-  const [results, count] = await Promise.all([
-    size > 0 ? runs.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
-    runs.countDocuments(query)
+  const runsCollection = mongo.db.collection('runs')
+  const [runs, count] = await Promise.all([
+    size > 0 ? runsCollection.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
+    runsCollection.countDocuments(query)
   ])
-  res.send({ results: results.map(r => cleanRun(r, reqSession)), count })
+  const results = runs.map((run) => cleanRun(run, reqSession))
+  res.send({ results, count })
 }))
 
 router.get('/:id', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
+  /** @type {import('../../../shared/types/run/index.js').Run} */
   const run = await mongo.db.collection('runs').findOne({ _id: req.params.id })
   if (!run) return res.status(404).send()
-  if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(run, reqSession))) return res.status(403).send()
-  res.send(cleanRun(run, req))
+  if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(run.owner, run.permissions ?? [], reqSession) ?? '')) return res.status(403).send()
+  res.send(cleanRun(run, reqSession))
 }))
 
 router.post('/:id/_kill', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
+  /** @type {import('../../../shared/types/run/index.js').Run} */
   const run = await mongo.db.collection('runs').findOne({ _id: req.params.id })
   if (!run) return res.status(404).send()
-  if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(run, reqSession))) return res.status(403).send()
+  if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(run.owner, run.permissions ?? [], reqSession) ?? '')) return res.status(403).send()
   await mongo.db.collection('runs').updateOne({ _id: run._id }, { $set: { status: 'kill' } })
   run.status = 'kill'
   res.send(cleanRun(run, reqSession))

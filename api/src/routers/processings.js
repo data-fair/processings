@@ -45,13 +45,14 @@ const validateFullProcessing = async (processing) => {
 }
 
 /**
- * @param {import('../../../shared/types/processing/index.js').Processing} processing
+ * Remove sensitive parts from a processing object (permissions, webhookKey and config)
+ * @param {import('../../../shared/types/processing/index.js').Processing} processing the processing object to clean
  * @param {import('@data-fair/lib/express/index.js').SessionState} reqSession
- * @returns {import('../../../shared/types/processing/index.js').Processing}
+ * @returns {import('../../../shared/types/processing/index.js').Processing} the cleaned processing object
  */
 const cleanProcessing = (processing, reqSession) => {
   delete processing.webhookKey
-  processing.userProfile = permissions.getUserResourceProfile(processing, reqSession)
+  processing.userProfile = permissions.getUserResourceProfile(processing.owner, processing.permissions ?? [], reqSession)
   if (processing.userProfile !== 'admin') {
     // @ts-ignore
     for (const part of sensitiveParts) delete processing[part]
@@ -110,9 +111,11 @@ router.post('', asyncHandler(async (req, res) => {
 // Patch some of the attributes of a processing
 router.patch('/:id', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
-  const processing = await mongo.db.collection('processings').findOne({ _id: req.params.id }, { projection: {} })
+  /** @type {import('../../../shared/types/processing/index.js').Processing} */
+  const processing = await mongo.db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
-  if (permissions.getUserResourceProfile(processing, reqSession) !== 'admin') return res.status(403).send()
+  if (permissions.getUserResourceProfile(processing.owner, processing.permissions ?? [], reqSession) !== 'admin') return res.status(403).send()
+
   // Restrict the parts of the processing that can be edited by API
   const acceptedParts = Object.keys(processingSchema.properties)
     .filter(k => reqSession.user.adminMode || !processingSchema.properties[k].readOnly)
@@ -145,18 +148,19 @@ router.patch('/:id', asyncHandler(async (req, res) => {
 
 router.get('/:id', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
-  const processing = await mongo.db.collection('processings')
-    .findOne({ _id: req.params.id }, { projection: {} })
+  /** @type {import('../../../shared/types/processing/index.js').Processing} */
+  const processing = await mongo.db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
-  if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(processing, reqSession))) return res.status(403).send()
+  if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(processing.owner, processing.permissions ?? [], reqSession) ?? '')) return res.status(403).send()
   res.status(200).json(cleanProcessing(processing, reqSession))
 }))
 
 router.delete('/:id', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
+  /** @type {import('../../../shared/types/processing/index.js').Processing} */
   const processing = await mongo.db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
-  if (permissions.getUserResourceProfile(processing, reqSession) !== 'admin') return res.status(403).send()
+  if (permissions.getUserResourceProfile(processing.owner, processing.permissions ?? [], reqSession) !== 'admin') return res.status(403).send()
   await mongo.db.collection('processings').deleteOne({ _id: req.params.id })
   if (processing && processing.value) await deleteProcessing(mongo.db, processing)
   res.sendStatus(204)
@@ -164,17 +168,19 @@ router.delete('/:id', asyncHandler(async (req, res) => {
 
 router.get('/:id/webhook-key', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
+  /** @type {import('../../../shared/types/processing/index.js').Processing} */
   const processing = await mongo.db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
-  if (permissions.getUserResourceProfile(processing, reqSession) !== 'admin') return res.status(403).send()
+  if (permissions.getUserResourceProfile(processing.owner, processing.permissions ?? [], reqSession) !== 'admin') return res.status(403).send()
   res.send(processing.webhookKey)
 }))
 
 router.delete('/:id/webhook-key', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
+  /** @type {import('../../../shared/types/processing/index.js').Processing} */
   const processing = await mongo.db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
-  if (permissions.getUserResourceProfile(processing, reqSession) !== 'admin') return res.status(403).send()
+  if (permissions.getUserResourceProfile(processing.owner, processing.permissions ?? [], reqSession) !== 'admin') return res.status(403).send()
   const webhookKey = cryptoRandomString({ length: 16, type: 'url-safe' })
   await mongo.db.collection('processings').updateOne(
     { _id: processing._id },
@@ -184,15 +190,14 @@ router.delete('/:id/webhook-key', asyncHandler(async (req, res) => {
 }))
 
 router.post('/:id/_trigger', asyncHandler(async (req, res) => {
-  const processing = await mongo.db.collection('processings')
-    .findOne({ _id: req.params.id }, { projection: {} })
-  if (req.query.key) {
-    if (req.query.key !== processing.webhookKey) {
-      return res.status(403).send('Mauvaise clé de déclenchement')
-    }
+  /** @type {import('../../../shared/types/processing/index.js').Processing} */
+  const processing = await mongo.db.collection('processings').findOne({ _id: req.params.id })
+  if (!processing) return res.status(404).send()
+  if (req.query.key && req.query.key !== processing.webhookKey) {
+    return res.status(403).send('Mauvaise clé de déclenchement')
   } else {
     const reqSession = await session.req(req)
-    if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(processing, reqSession))) return res.status(403).send()
+    if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(processing.owner, processing.permissions ?? [], reqSession) ?? '')) return res.status(403).send()
   }
   if (!processing.active) return res.status(409).send('Le traitement n\'est pas actif')
   res.send(await createNext(mongo.db, processing, true, req.query.delay ? Number(req.query.delay) : 0))

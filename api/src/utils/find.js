@@ -21,7 +21,6 @@ const query = (reqQuery, reqSession, fieldsMap = {}) => {
     let owner = reqSession.account
     if (reqQuery.owner) {
       const ownerParts = reqQuery.owner.split(':')
-      // @ts-ignore
       owner = { type: ownerParts[0], id: ownerParts[1], department: ownerParts[2] }
     }
     Object.assign(query, permissions.getOwnerPermissionFilter(owner, reqSession))
@@ -71,7 +70,7 @@ const pagination = (query, defaultSize = 10) => {
 }
 
 /**
- * @param {string} selectStr
+ * @param {any} selectStr
  * @returns {Object<string, number>}
  */
 const project = (selectStr) => {

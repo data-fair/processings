@@ -111,23 +111,22 @@ const matchPermissionTarget = (target, reqSession) => {
 }
 
 /**
- * @param {import('../../../shared/types/processing/index.js').Processing} processing
+ * @param {import('@data-fair/lib/express/index.js').Account} owner
+ * @param {import('../../../shared/types/permission/index.js').Permission[]} permissions
  * @param {import('@data-fair/lib/express/index.js').SessionState} reqSession
  * @returns {string|undefined}
  */
-const getUserResourceProfile = (processing, reqSession) => {
+const getUserResourceProfile = (owner, permissions, reqSession) => {
   if (!reqSession.user) return
 
   // this line is first, a manual permission cannot demote an admin
-  const ownerRole = getOwnerRole(processing.owner, reqSession)
+  const ownerRole = getOwnerRole(owner, reqSession)
   if (ownerRole === 'admin') {
-    // TODO
-    // if (req.secondaryHost) return 'exec' // no admin functionality in portals
-    // else return 'admin'
+    // TODO // if (req.secondaryHost) return 'exec' // no admin functionality in portals
     return 'admin'
   }
   for (const profile of ['read', 'exec']) {
-    if (processing.permissions && processing.permissions.find((/** @type {import('../../../shared/types/permission/index.js').Permission} */ p) => p.profile === profile && matchPermissionTarget(p.target, reqSession))) {
+    if (permissions && permissions.find((/** @type {import('../../../shared/types/permission/index.js').Permission} */ p) => p.profile === profile && matchPermissionTarget(p.target, reqSession))) {
       return profile
     }
   }

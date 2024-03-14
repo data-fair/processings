@@ -1,8 +1,14 @@
 import moment from 'moment'
 
+/**
+ * @param {import('mongodb').Db} db
+ * @param {import('@data-fair/lib/express/index.js').Account} consumer
+ * @param {number} processingsSeconds
+ */
 export const getLimits = async (db, consumer, processingsSeconds = -1) => {
   const coll = db.collection('limits')
   const now = moment()
+  /** @type {any} */
   let limits = await coll.findOne({ type: consumer.type, id: consumer.id })
   if (!limits) {
     limits = {
@@ -14,7 +20,7 @@ export const getLimits = async (db, consumer, processingsSeconds = -1) => {
     }
     try {
       await coll.insertOne(limits)
-    } catch (err) {
+    } catch (/** @type {any} */ err) {
       if (err.code !== 11000) throw err
     }
   }
