@@ -94,6 +94,20 @@
       append-inner-icon="mdi-magnify"
       @update:model-value="eventBus.emit('search', search)"
     />
+    <v-select
+      v-model="selectedStatuses"
+      :items="statuses"
+      clearable
+      chips
+      closable-chips
+      label="Statut"
+      multiple
+      rounded="xl"
+      variant="outlined"
+      class="mt-4 mr-4"
+      @click="getProcessingStatus()"
+      @update:model-value="eventBus.emit('status', selectedStatuses)"
+    />
   </v-list>
 </template>
 
@@ -103,7 +117,7 @@ import { ref } from 'vue'
 
 const eventBus = useEventBus()
 
-defineProps({
+const props = defineProps({
   installedPlugins: { type: Object, required: true },
   isSmall: Boolean,
   processings: { type: Array, required: true }
@@ -113,6 +127,60 @@ const inCreate = ref(false)
 const showCreateMenu = ref(false)
 const newProcessing = ref({})
 const search = ref([])
+const selectedStatuses = ref([])
+const statuses = ref([])
+
+const statusText = {
+  error: 'En échec',
+  finished: 'Terminé',
+  kill: 'Interruption',
+  killed: 'Interrompu',
+  none: 'Aucune exécution',
+  running: 'Démarré',
+  scheduled: 'Planifié',
+  triggered: 'Déclenché'
+}
+
+function getProcessingStatus() {
+  if (!props.processings) return statuses
+  const array = []
+  for (const processing of props.processings) {
+    if (processing.lastRun) {
+      const status = processing.lastRun.status
+      let includes = false
+      let index = 0
+      for (const element of array) {
+        if (element.includes(statusText[status])) {
+          includes = true
+          index = array.indexOf(element)
+          break
+        }
+      }
+      if (includes) {
+        array[index] = `${statusText[status]} (${Number(array[index].split('(')[1].replace(')', '')) + 1})`
+      } else {
+        array.push(`${statusText[status]} (1)`)
+      }
+    } else {
+      let includes = false
+      let index = 0
+      for (const element of array) {
+        if (element.includes(statusText['none'])) {
+          includes = true
+          index = array.indexOf(element)
+          break
+        }
+      }
+      if (includes) {
+        array[index] = `${statusText['none']} (${Number(array[index].split(':')[1].replace(')', '')) + 1})`
+      } else {
+        array.push(`${statusText['none']} (1)`)
+      }
+    }
+  }
+  statuses.value = array.sort()
+  return statuses
+}
 
 const createProcessing = async () => {
   inCreate.value = true

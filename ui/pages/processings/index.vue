@@ -6,7 +6,7 @@
     <v-row>
       <v-col>
         <v-container>
-          <v-list-subheader>{{ (processings && processings.count) || 0 }} traitements</v-list-subheader>
+          <v-list-subheader>{{ displayProcessings.length }} traitements</v-list-subheader>
           <v-row v-if="processings">
             <v-col
               v-for="processing in displayProcessings"
@@ -18,7 +18,7 @@
               <processing-card
                 :processing="processing"
                 :show-owner="showAll"
-                :plugin="displayProcessings && displayProcessings.find(p => p.id === processing.plugin)"
+                :plugin="installedPlugins.results && installedPlugins.results.find(p => p.id === processing.plugin)"
               />
             </v-col>
           </v-row>
@@ -34,7 +34,7 @@
         <v-card
           v-if="user.adminMode"
           flat
-          class="mt-2 pa-3 adminSwitch"
+          class="px-3 adminSwitch"
         >
           <v-switch
             v-model="showAll"
@@ -42,7 +42,7 @@
             label="Voir tous les traitements"
             hide-details
             density="compact"
-            class="mt-0 adminSwitch"
+            class="adminSwitch"
             @update:model-value="refresh()"
           />
         </v-card>
@@ -60,7 +60,7 @@
           <v-card
             v-if="user.adminMode"
             variant="text"
-            class="mt-0 pa-3 adminSwitch"
+            class="px-3 adminSwitch"
           >
             <v-switch
               v-model="showAll"
@@ -68,7 +68,7 @@
               label="Voir tous les traitements"
               hide-details
               density="compact"
-              class="mt-0 adminSwitch"
+              class="adminSwitch"
               @update:model-value="refresh()"
             />
           </v-card>
@@ -88,6 +88,7 @@ const eventBus = useEventBus()
 const route = useRoute()
 const session = useSession()
 
+const filteredStatuses = ref([])
 /** @type {any} */
 const installedPlugins = ref({})
 /** @type {any} */
@@ -106,6 +107,17 @@ const owner = computed(() => {
     return activeAccount.value
   }
 })
+
+const statusesText = {
+  error: 'En échec',
+  finished: 'Terminé',
+  kill: 'Interruption',
+  killed: 'Interrompu',
+  none: 'Aucune exécution',
+  running: 'Démarré',
+  scheduled: 'Planifié',
+  triggered: 'Déclenché'
+}
 
 if (!user.value || !owner.value) {
   window.location.href = '/error?statusCode=401&message=' + encodeURIComponent('Authentification nécessaire')
@@ -126,6 +138,10 @@ const canAdmin = computed(() => {
   return ownerRole.value === 'admin' || user.value.adminMode
 })
 
+const displayProcessings = computed(() => {
+  return refreshProcessings()
+})
+
 onMounted(async () => {
   await refresh()
   await fetchInstalledPlugins()
@@ -135,9 +151,42 @@ eventBus.on('search', (results) => {
   searchResults.value = results
 })
 
-const displayProcessings = computed(() => {
-  return searchResults.value.length > 0 ? searchResults.value : processings.value?.results || []
+eventBus.on('status', (statuses) => {
+  filteredStatuses.value = statuses
+  refreshProcessings()
 })
+
+function refreshProcessings() {
+  let results = []
+  if (searchResults.value.length > 0) {
+    results = searchResults.value
+  } else {
+    results = processings.value?.results || []
+  }
+  if (filteredStatuses.value.length === 0) {
+    return results
+  }
+
+  const temp = []
+  results.forEach(result => {
+    const status = result.lastRun ? result.lastRun.status : 'none'
+    temp.push({ _id: result._id, status: status })
+  })
+
+  const finalArray = []
+  temp.forEach(tempItem => {
+    const statusText = statusesText[tempItem.status]
+    const filteredStatusesMainText = filteredStatuses.value.map(status => status.split(' (')[0])
+    if (filteredStatusesMainText.includes(statusText)) {
+      const originalItem = results.find(item => item._id === tempItem._id)
+      if (originalItem) {
+        finalArray.push(originalItem)
+      }
+    }
+  })
+
+  return finalArray
+}
 
 async function fetchInstalledPlugins() {
   if (!canAdmin.value) return
