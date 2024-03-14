@@ -8,9 +8,10 @@
       hide-details
       clearable
       style="max-width:400px;"
+      class="mb-4"
       append-icon="mdi-magnify"
     />
-    <v-list-subheader>Plugins Installés</v-list-subheader>
+    <v-list-subheader>{{ (installedPlugins.results && installedPlugins.results.length) || 0 }} plugins installés</v-list-subheader>
     <v-progress-linear
       v-if="!installedPlugins.results"
       indeterminate
@@ -117,7 +118,7 @@
         </v-card-text>
       </v-card>
     </template>
-    <v-list-subheader>Plugins disponibles</v-list-subheader>
+    <v-list-subheader>{{ (availablePlugins.results && availablePlugins.results.length) || 0 }} plugins disponibles</v-list-subheader>
     <v-progress-linear
       v-if="!availablePlugins.results"
       indeterminate
