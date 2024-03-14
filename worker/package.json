@@ -9,9 +9,8 @@
     "@types/nodemailer": "^6.4.14"
   },
   "dependencies": {
-    "cacheable-lookup": "6",
+    "cacheable-lookup": "^6.0.4",
     "child-process-promise": "^2.2.1",
-    "mongodb": "6",
     "nodemailer": "^6.9.10",
     "tree-kill": "^1.2.2"
   }
