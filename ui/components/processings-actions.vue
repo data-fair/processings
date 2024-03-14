@@ -72,27 +72,20 @@
         </v-card-actions>
       </v-card>
     </v-menu>
-    <v-autocomplete
+    <v-text-field
       v-model="search"
-      :items="processings"
       :loading="processings == [] ? 'primary' : false"
       placeholder="rechercher"
       variant="outlined"
       hide-details
       hide-selected
-      hide-no-data
-      multiple
-      menu-icon=""
       clearable
-      :return-object="true"
-      chips
       rounded="xl"
-      closable-chips
       style="max-width:400px;"
       class="mt-4 mr-4"
       color="primary"
       append-inner-icon="mdi-magnify"
-      @update:model-value="eventBus.emit('search', search)"
+      @update:model-value="eventBus.emit('search', search); getProcessingStatus()"
     />
     <v-select
       v-model="selectedStatuses"
@@ -126,7 +119,7 @@ const props = defineProps({
 const inCreate = ref(false)
 const showCreateMenu = ref(false)
 const newProcessing = ref({})
-const search = ref([])
+const search = ref('')
 const selectedStatuses = ref([])
 const statuses = ref([])
 
@@ -143,6 +136,7 @@ const statusText = {
 
 function getProcessingStatus() {
   if (!props.processings) return statuses
+  console.log('props.processings', props.processings)
   const array = []
   for (const processing of props.processings) {
     if (processing.lastRun) {

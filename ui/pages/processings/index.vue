@@ -29,7 +29,7 @@
           v-if="canAdmin"
           :is-small="false"
           :installed-plugins="installedPlugins"
-          :processings="processings && processings.results ? processings.results : []"
+          :processings="displayProcessings"
         />
         <v-card
           v-if="user.adminMode"
@@ -55,7 +55,7 @@
           <processings-actions
             :is-small="true"
             :installed-plugins="installedPlugins"
-            :processings="processings"
+            :processings="displayProcessings"
           />
           <v-card
             v-if="user.adminMode"
@@ -94,7 +94,7 @@ const installedPlugins = ref({})
 /** @type {any} */
 const processings = ref(null)
 const showAll = ref(false)
-const searchResults = ref([])
+const searchResults = ref('')
 
 const activeAccount = computed(() => session.state.account)
 const user = computed(() => session.state.user)
@@ -148,7 +148,7 @@ onMounted(async () => {
 })
 
 eventBus.on('search', (results) => {
-  searchResults.value = results
+  searchResults.value = results || ''
 })
 
 eventBus.on('status', (statuses) => {
@@ -157,11 +157,9 @@ eventBus.on('status', (statuses) => {
 })
 
 function refreshProcessings() {
-  let results = []
+  let results = processings.value?.results || []
   if (searchResults.value.length > 0) {
-    results = searchResults.value
-  } else {
-    results = processings.value?.results || []
+    results = results.filter(result => result.title.includes(searchResults.value))
   }
   if (filteredStatuses.value.length === 0) {
     return results

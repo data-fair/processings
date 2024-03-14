@@ -8,14 +8,14 @@
         <h2 class="text-h6">
           Traitement {{ processing.title }}
         </h2>
-        <v-form ref="form">
+        <v-form>
           <vjsf
             v-if="processingSchema"
             :key="renderVjsfKey"
             v-model="editProcessing"
             :schema="processingSchema"
             :options="vjsfOptions"
-            @change="patch()"
+            @update:model-value="patch()"
           >
             <template #custom-time-zone="{value, disabled, on}">
               <time-zone-select
@@ -79,7 +79,6 @@ const session = useSession()
 const edited = ref(false)
 /** @type {import('vue').Ref<import('../../../shared/types/index.js').processingType>} */
 const editProcessing = ref(null)
-const form = ref(null)
 /** @type {import('vue').Ref<import('../../../shared/types/index.js').processingType>} */
 const processing = ref(null)
 const plugin = ref(null)
@@ -169,7 +168,6 @@ async function fetchPlugin() {
 }
 
 async function patch() {
-  if (form.value && !form.value.validate()) return
   if (editProcessing.value.scheduling && editProcessing.value.scheduling.type === 'weekly') {
     if (editProcessing.value.scheduling.dayOfWeek === '*') editProcessing.value.scheduling.dayOfWeek = '1'
     renderVjsfKey.value += 1
@@ -179,7 +177,6 @@ async function patch() {
     method: 'PATCH',
     body: JSON.stringify({ ...editProcessing.value })
   })
-  await fetchProcessing()
   edited.value = false
 }
 </script>
