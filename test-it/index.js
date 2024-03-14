@@ -13,8 +13,8 @@ await apiServer.cleanDB()
 await run('test-it')
 
 // After tests
+await apiServer.cleanDB()
+await apiServer.stop()
 await fs.emptyDir('./data/test/plugins')
 await fs.emptyDir('./data/test/processings')
 await fs.emptyDir('./data/test/tmp')
-await apiServer.cleanDB()
-await apiServer.stop()

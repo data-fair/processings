@@ -112,7 +112,7 @@ router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
   res.send(plugin)
 }))
 
-// List installed plugins
+// List installed plugins (optional filter: privateAccess=[type]:[id)
 router.get('/', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
 
@@ -155,7 +155,6 @@ router.get('/:id', asyncHandler(async (req, res) => {
 }))
 
 router.delete('/:id', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
-  await session.reqAuthenticated(req)
   await fs.remove(path.join(pluginsDir, req.params.id))
   await fs.remove(path.join(pluginsDir, req.params.id + '-config.json'))
   await fs.remove(path.join(pluginsDir, req.params.id + '-access.json'))
@@ -163,7 +162,6 @@ router.delete('/:id', permissions.isSuperAdmin, asyncHandler(async (req, res) =>
 }))
 
 router.put('/:id/config', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
-  await session.reqAuthenticated(req)
   const { pluginConfigSchema } = await fs.readJson(path.join(pluginsDir, req.params.id, 'plugin.json'))
   const validate = ajv.compile(pluginConfigSchema)
   const valid = validate(req.body)
@@ -173,7 +171,6 @@ router.put('/:id/config', permissions.isSuperAdmin, asyncHandler(async (req, res
 }))
 
 router.put('/:id/access', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
-  await session.reqAuthenticated(req)
   await fs.writeJson(path.join(pluginsDir, req.params.id + '-access.json'), req.body)
   res.send(req.body)
 }))
