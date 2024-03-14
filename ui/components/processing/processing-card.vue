@@ -68,6 +68,16 @@
               </template>
               <span>Dernière exécution en échec {{ $filters.fromNow(processing.lastRun.finishedAt) }}</span>
             </v-list-item>
+
+            <v-list-item v-if="processing.lastRun.status === 'kill' || processing.lastRun.status === 'killed'">
+              <template #prepend>
+                <v-icon
+                  color="accent"
+                  icon="mdi-stop"
+                />
+              </template>
+              <span>Dernière exécution interrompue {{ $filters.fromNow(processing.lastRun.finishedAt) }}</span>
+            </v-list-item>
           </template>
 
           <v-list-item v-else>

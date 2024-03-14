@@ -8,8 +8,9 @@
       hide-details
       clearable
       style="max-width:400px;"
-      class="mb-4"
-      append-icon="mdi-magnify"
+      class="my-2"
+      color="primary"
+      append-inner-icon="mdi-magnify"
     />
     <v-list-subheader>{{ (installedPlugins.results && installedPlugins.results.length) || 0 }} plugins installés</v-list-subheader>
     <v-progress-linear

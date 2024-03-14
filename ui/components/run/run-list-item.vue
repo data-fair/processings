@@ -37,7 +37,7 @@
       </v-avatar>
       <v-avatar v-if="run.status === 'kill' || run.status === 'killed'">
         <v-icon
-          color="warning"
+          color="accent"
           icon="mdi-stop"
         />
       </v-avatar>

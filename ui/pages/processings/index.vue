@@ -9,7 +9,7 @@
           <v-list-subheader>{{ (processings && processings.count) || 0 }} traitements</v-list-subheader>
           <v-row v-if="processings">
             <v-col
-              v-for="processing in processings.results"
+              v-for="processing in displayProcessings"
               :key="processing._id"
               md="4"
               sm="6"
@@ -18,7 +18,7 @@
               <processing-card
                 :processing="processing"
                 :show-owner="showAll"
-                :plugin="installedPlugins.results && installedPlugins.results.find(p => p.id === processing.plugin)"
+                :plugin="displayProcessings && displayProcessings.find(p => p.id === processing.plugin)"
               />
             </v-col>
           </v-row>
@@ -27,7 +27,9 @@
       <layout-navigation-right v-if="$vuetify.display.lgAndUp">
         <processings-actions
           v-if="canAdmin"
+          :is-small="false"
           :installed-plugins="installedPlugins"
+          :processings="processings && processings.results ? processings.results : []"
         />
         <v-card
           v-if="user.adminMode"
@@ -51,7 +53,9 @@
       >
         <template #actions>
           <processings-actions
+            :is-small="true"
             :installed-plugins="installedPlugins"
+            :processings="processings"
           />
           <v-card
             v-if="user.adminMode"
@@ -89,6 +93,7 @@ const installedPlugins = ref({})
 /** @type {any} */
 const processings = ref(null)
 const showAll = ref(false)
+const searchResults = ref([])
 
 const activeAccount = computed(() => session.state.account)
 const user = computed(() => session.state.user)
@@ -124,6 +129,14 @@ const canAdmin = computed(() => {
 onMounted(async () => {
   await refresh()
   await fetchInstalledPlugins()
+})
+
+eventBus.on('search', (results) => {
+  searchResults.value = results
+})
+
+const displayProcessings = computed(() => {
+  return searchResults.value.length > 0 ? searchResults.value : processings.value?.results || []
 })
 
 async function fetchInstalledPlugins() {

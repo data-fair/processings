@@ -2,7 +2,7 @@
   <v-list
     density="compact"
     class="list-actions"
-    style="background-color: transparent;"
+    :style="isSmall ? '' : 'background-color: transparent;'"
   >
     <v-menu
       v-model="showCreateMenu"
@@ -56,6 +56,7 @@
         <v-card-actions>
           <v-spacer />
           <v-btn
+            :disabled="inCreate"
             variant="text"
             @click="showCreateMenu = false"
           >
@@ -71,19 +72,47 @@
         </v-card-actions>
       </v-card>
     </v-menu>
+    <v-autocomplete
+      v-model="search"
+      :items="processings"
+      :loading="processings == [] ? 'primary' : false"
+      placeholder="rechercher"
+      variant="outlined"
+      hide-details
+      hide-selected
+      hide-no-data
+      multiple
+      menu-icon=""
+      clearable
+      :return-object="true"
+      chips
+      rounded
+      closable-chips
+      style="max-width:400px;"
+      class="mt-4 mr-4"
+      color="primary"
+      append-inner-icon="mdi-magnify"
+      @update:model-value="eventBus.emit('search', search)"
+    />
   </v-list>
 </template>
 
 <script setup>
+import useEventBus from '~/composables/event-bus'
 import { ref } from 'vue'
 
+const eventBus = useEventBus()
+
 defineProps({
-  installedPlugins: { type: Object, required: true }
+  installedPlugins: { type: Object, required: true },
+  isSmall: Boolean,
+  processings: { type: Array, required: true }
 })
 
 const inCreate = ref(false)
 const showCreateMenu = ref(false)
 const newProcessing = ref({})
+const search = ref([])
 
 const createProcessing = async () => {
   inCreate.value = true
