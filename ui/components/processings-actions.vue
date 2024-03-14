@@ -86,7 +86,7 @@
       clearable
       :return-object="true"
       chips
-      rounded
+      rounded="xl"
       closable-chips
       style="max-width:400px;"
       class="mt-4 mr-4"

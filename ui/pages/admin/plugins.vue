@@ -1,12 +1,17 @@
 <template>
   <v-container data-iframe-height>
-    <v-text-field
+    <v-autocomplete
       v-model="search"
+      :items="installedPlugins.results && availablePlugins.results ? installedPlugins.results.concat(availablePlugins.results) : []"
+      item-title="name"
       placeholder="rechercher"
       variant="outlined"
       density="compact"
       hide-details
+      hide-no-data
+      menu-icon=""
       clearable
+      rounded="xl"
       style="max-width:400px;"
       class="my-2"
       color="primary"
@@ -180,7 +185,7 @@ const inDelete = ref(false)
 const installedPlugins = ref({})
 const loading = ref(false)
 const showDeleteMenu = ref({})
-const search = ref('')
+const search = ref([])
 
 const filteredAvailablePlugins = computed(() => {
   if (!availablePlugins.value.results) return
