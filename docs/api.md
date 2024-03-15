@@ -15,109 +15,188 @@ Every variable will be noted with `:id`
 If you run the API locally (see [the contribution guidelines](../CONTRIBUTING.md#working-on-data-fairprocessingsapi)), you can access the API at `http://localhost:8082/api/v1` (or `http://localhost:5600/api/v1` if you're running the entire app).
 
 <details>
-<summary><b><code>/limits</code></b></summary>
+<summary><code>/limits</code></summary></br>
 
 The `limits` endpoints are used for managing and retrieving limit settings for various entities, such as services or users. These settings control usage or access limitations. They are utilized by the client service to retrieve and configure limits and the consumption of processing time.
 
+---
 #### `GET /limits/`
 
 Lists limit settings for all entities, filtered by optional query parameters. This endpoint is protected and requires super admin permissions.  
-Returns a list of limit settings, limited to 10,000 entries.
 
-**Query Parameters**
-- `type` (optional) : Filter by the entity type.
-- `id` (optional) : Filter by the unique identifier of the entity.
+**Parameters**
+- `type` (query, optional) : Filter by the entity type.
+- `id` (query, optional) : Filter by the unique identifier of the entity.
+  
+**Responses**
+- a list of limit settings, limited to 10,000 entries
 
+---
 #### `GET /limits/:type/:id`
 
 Retrieves the limit settings for a specific entity. Access is limited to account members for their own information.  
-Returns the retrieved limit settings for the entity.
 
 **Parameters**
 - `type` (path) : The entity type.
 - `id` (path) : The unique identifier of the entity.
 
+**Responses**
+- the limit settings for the entity
+
+---
 #### `POST /limits/:type/:id`
 
 Creates or updates the limit settings for a specific entity, identified by its type and ID. This endpoint is protected and requires super admin permissions. It is used by client services to configure and update the limits and the processing time consumption for specific entities.  
-Returns the created or updated limit settings.
 
 **Parameters**
-- `type` (path) : The entity type.
-- `id` (path) : The unique identifier of the entity.
+- (Request body) : 
+    - Required fields : `id`, `type`, `lastUpdate`.
+    - Optional fields : `name`, `defaults`, `processings_seconds`.
+> `processings_seconds` should include `limit` and `consumption` numbers.
 
-**Request Body**
-- Required fields : `id`, `type`, `lastUpdate`.
-- Optional fields : `name`, `defaults`, `processings_seconds`.
-- `processings_seconds` should include `limit` and `consumption` numbers.
+**Responses**
+- the created or updated limit settings
 
 </details>
 
+
+
+
+
+
 <details>
-<summary><b><code>/plugins</code></b></summary>
+<summary><code>/plugins</code></summary></br>
 
 The `plugins` endpoints are used for managing and retrieving plugins, which are used to extend the functionality of the Data Fair platform. Plugins are managed within two main directories :
 - `pluginsDir`: Located at `config.dataDir/plugins`, this is where installed plugins are stored.
 - `tmpDir`: Utilized for temporary operations, located either at `config.dataDir/tmp` or `config.tmpDir`.
 
+---
 #### `GET /plugins/`
 
-Retrieves a list of all installed plugins. This endpoint can filter plugins based on access rights if the `privateAccess` query parameter is provided, matching the current session's account type and ID. Returns an array of plugin objects including `name`, `description`, `version`, `dist-tag`, `id`, `pluginConfigSchema`, `processingConfigSchema`, `customName`, `config`, and `access`. A `400` response is returned if the request is not made by an admin without specifying `privateAccess`, and a `403` is returned if `privateAccess` does not match the current session.
+Retrieves a list of all installed plugins. This endpoint can filter plugins based on access rights if the `privateAccess` query parameter is provided, matching the current session's account type and ID.
 
-**Query Parameters**
-- `privateAccess` (optional) : Specifies the access filter in the format `[type]:[id]`, allowing for the retrieval of plugins with matching access rights.
+**Parameters**
+- `privateAccess` (query, optional) : Specifies the access filter in the format `[type]:[id]`, allowing for the retrieval of plugins with matching access rights.
 
+**Responses**
+- `400` : the request is not made by an admin without specifying `privateAccess`
+- `403` : `privateAccess` does not match the current session
+- An array of plugin objects
+```json
+{
+  "name" -> The plugin name (npm)
+  "description": -> The plugin description (npm)
+  "version": -> The plugin version
+  "dist-tag": -> The plugin distribution tag
+  "id": -> The plugin identifier (folder name)
+  "pluginConfigSchema": -> The plugin configuration schema
+  "processingConfigSchema": -> The plugin processing configuration schema
+  "customName": -> The plugin custom name defined on configuration (or the name if not defined)
+  "config": -> The plugin configuration (SuperAdmin Only)
+  "access": -> The plugin access rights (SuperAdmin Only)
+}
+```
+
+---
 #### `POST /plugins/`
 
-Allows for the installation of a new plugin or updating an existing plugin. Requires super admin permissions and includes the plugin's basic information in the request body. It installs the plugin in the `pluginsDir`, overwriting the existing one if present, and returns the plugin's details including `name`, `description`, `version`, `dist-tag`, `id`, `pluginConfigSchema`, and `processingConfigSchema`.
+Allows for the installation of a new plugin or updating an existing plugin. Requires super admin permissions and includes the plugin's basic information in the request body. It installs the plugin in the `pluginsDir`, overwriting the existing one if present.
 
 **Permissions**
 - Super Admin only.
 
-**Request Body**
-- Should include the plugin's `name`, `description`, `version`, and `distTag`.
+**Parameters**
+- (Request body) : Should include the plugin's `name`, `description`, `version`, and `distTag`.
 
+**Responses**
+- `403` : The request is not made by a super admin
+- `400` : The plugin's basic information is not provided
+- A plugin object
+```json
+{
+  "name" -> The plugin name (npm)
+  "description": -> The plugin description (npm)
+  "version": -> The plugin version
+  "dist-tag": -> The plugin distribution tag
+  "id": -> The plugin identifier (folder name)
+  "pluginConfigSchema": -> The plugin configuration schema
+  "processingConfigSchema": -> The plugin processing configuration schema
+}
+```
+
+---
 #### `GET /plugins/:id`
 
-Fetches detailed information about a specific plugin, identified by its unique `id`. This endpoint requires the user to be authenticated and is intended to provide configuration and access details for the plugin. It is used to fetch plugin information (`fetchPlugin()`) and returns an object with `name`, `description`, `version`, `dist-tag`, `id`, `pluginConfigSchema`, `processingConfigSchema`, and `customName`.
+Fetches detailed information about a specific plugin, identified by its unique `id`. This endpoint requires the user to be authenticated and is intended to provide configuration and access details for the plugin.
 
 **Parameters**
 - `id` (path) : The unique identifier of the plugin.
 
+**Responses**
+- `404` : The plugin is not found
+- A plugin object : 
+```json
+{
+  "name" -> The plugin name (npm)
+  "description": -> The plugin description (npm)
+  "version": -> The plugin version
+  "dist-tag": -> The plugin distribution tag
+  "id": -> The plugin identifier (folder name)
+  "pluginConfigSchema": -> The plugin configuration schema
+  "processingConfigSchema": -> The plugin processing configuration schema
+  "customName": -> The plugin custom name defined on configuration (or the name if not defined)
+}
+```
+
+---
 #### `DELETE /plugins/:id`
 
-Removes a specific plugin from the system, including its configuration and access control settings. This operation requires super admin permissions and is identified by the plugin's unique `id`. Returns a `204` response upon successful deletion.
-
-**Parameters**
-- `id` (path) : The unique identifier of the plugin.
+Removes a specific plugin from the system, including its configuration and access control settings. This operation requires super admin permissions and is identified by the plugin's unique `id`.
 
 **Permissions**
 - Super Admin only.
 
+**Parameters**
+- `id` (path) : The unique identifier of the plugin.
+
+**Responses**
+- `204` : The plugin is successfully removed
+
+---
 #### `PUT /plugins/:id/access`
 
-Updates the access control settings for a specific plugin, identified by its `id`. This endpoint allows super admins to modify who can access the plugin, based on the contents of the request body. Returns the request body upon successful update.
-
-**Parameters**
-- `id` (path) : The unique identifier of the plugin.
+Updates the access control settings for a specific plugin, identified by its `id`. This endpoint allows super admins to modify who can access the plugin, based on the contents of the request body.
 
 **Permissions**
 - Super Admin only.
 
+**Parameters**
+- `id` (path) : The unique identifier of the plugin.
+- (Request body) : Should include the `access` object : `{"public":boolean,"privateAccess":Array}`
+
+**Responses**
+- The request body upon successful update
+
+---
 #### `PUT /plugins/:id/config`
 
-Updates the configuration for a specific plugin identified by its `id`. This operation requires super admin permissions and expects the new configuration to match the plugin's configuration schema. Returns a `400` response if the schema is not valid, otherwise returns the request body.
+Updates the configuration for a specific plugin identified by its `id`. This operation expects the new configuration to match the plugin's configuration schema.
+
+**Permissions**
+- Super Admin only.
 
 **Parameters**
 - `id` (path) : The unique identifier of the plugin.
 
-**Permissions**
-- Super Admin only.
+**Responses**
+- `400` : The plugin's configuration does not match the schema
+- The request body upon successful update
 
 </details>
 
 <details>
-<summary><b><code>/plugins-registry</code></b></summary>
+<summary><code>/plugins-registry</code></summary></br>
 
 The `plugins-registry` endpoints are used for searching and retrieving plugins from the npm registry, which can be integrated into the Data Fair platform. This functionality is crucial for discovering new plugins that can extend the capabilities of the platform with additional data processing functionalities.
 
@@ -140,7 +219,7 @@ Performs a search query against the npm registry for plugins tagged with `data-f
 </details>
 
 <details>
-<summary><b><code>/processings</code></b></summary>
+<summary><code>/processings</code></summary></br>
 
 The `processings` endpoints are used for managing and retrieving processing configurations, which define the execution of data processing tasks on the Data Fair platform. Processing configurations include sensitive parts such as `permissions`, `webhookKey`, and `config` which are handled with care, especially in terms of visibility and modifications based on the user's permissions.
 
@@ -203,7 +282,7 @@ Triggers the execution of a specified processing configuration. Supports optiona
 </details>
 
 <details>
-<summary><b><code>/runs</code></b></summary>
+<summary><code>/runs</code></summary></br>
 
 The `runs` endpoints are used for managing and retrieving run configurations, which represent the execution of processing configurations on the Data Fair platform. Run configurations include sensitive parts such as `permissions`, which are meticulously managed to ensure that visibility and modifications are appropriately restricted based on the user's permissions.
 
