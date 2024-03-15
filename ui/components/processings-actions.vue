@@ -82,7 +82,7 @@
       clearable
       rounded="xl"
       style="max-width:400px;"
-      class="mt-4 mr-4"
+      class="mt-4 mx-4"
       color="primary"
       append-inner-icon="mdi-magnify"
       @update:model-value="eventBus.emit('search', search); getProcessingStatus()"
@@ -97,7 +97,8 @@
       multiple
       rounded="xl"
       variant="outlined"
-      class="mt-4 mr-4"
+      style="max-width:400px;"
+      class="mt-4 mx-4"
       @click="getProcessingStatus()"
       @update:model-value="eventBus.emit('status', selectedStatuses)"
     />
