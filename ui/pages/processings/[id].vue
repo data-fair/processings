@@ -8,10 +8,7 @@
         <h2 class="text-h6">
           Traitement {{ processing.title }}
         </h2>
-        <v-form
-          ref="form"
-          validate-on="submit"
-        >
+        <v-form>
           <vjsf
             v-if="processingSchema"
             :key="renderVjsfKey"
@@ -82,7 +79,6 @@ const session = useSession()
 const edited = ref(false)
 /** @type {import('vue').Ref<import('../../../shared/types/index.js').processingType>} */
 const editProcessing = ref(null)
-const form = ref(null)
 /** @type {import('vue').Ref<import('../../../shared/types/index.js').processingType>} */
 const processing = ref(null)
 const plugin = ref(null)
@@ -174,9 +170,6 @@ async function fetchPlugin() {
 }
 
 async function patch() {
-  if (!form.value) return
-  const valid = await form.value.validate()
-  if (!valid.valid) return
   if (editProcessing.value.scheduling && editProcessing.value.scheduling.type === 'weekly') {
     if (editProcessing.value.scheduling.dayOfWeek === '*') editProcessing.value.scheduling.dayOfWeek = '1'
     renderVjsfKey.value += 1
