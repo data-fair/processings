@@ -279,14 +279,10 @@ const getWebhookKey = async () => {
 const triggerExecution = async () => {
   hasTriggered.value = true
   try {
-    await $fetch(`/api/v1/processings/${properties.processing?._id}/_trigger`, {
-      method: 'POST',
-      body: JSON.stringify({
-        params: {
-          delay: triggerDelay.value
-        }
-      })
-    })
+    let link = `/api/v1/processings/${properties.processing?._id}/_trigger`
+    if (triggerDelay.value > 0) link += `?delay=${triggerDelay.value}`
+
+    await $fetch(link, { method: 'POST' })
     emit('triggered')
     showTriggerMenu.value = false
   } catch (error) {

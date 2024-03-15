@@ -83,10 +83,10 @@ router.get('', asyncHandler(async (req, res) => {
   const [size, skip] = findUtils.pagination(params.size, params.page, params.skip)
   const project = findUtils.project(params.select)
   const query = findUtils.query(params, reqSession) // Check permissions
-  const processings = mongo.db.collection('processings')
+  const processingsCollection = mongo.db.collection('processings')
   const [results, count] = await Promise.all([
-    size > 0 ? processings.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
-    processings.countDocuments(query)
+    size > 0 ? processingsCollection.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
+    processingsCollection.countDocuments(query)
   ])
   // @ts-ignore -> p is a processing
   res.json({ results: results.map((p) => cleanProcessing(p, reqSession)), count })
@@ -128,7 +128,7 @@ router.post('', asyncHandler(async (req, res) => {
 router.patch('/:id', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
   /** @type {import('../../../shared/types/processing/index.js').Processing} */
-  // @ts-ignore -> type && req.params.id is an id
+  // @ts-ignore -> findOne returns a processing && req.params.id is an id
   const processing = await mongo.db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing.owner, processing.permissions ?? [], reqSession) !== 'admin') return res.status(403).send()
@@ -169,7 +169,7 @@ router.patch('/:id', asyncHandler(async (req, res) => {
 router.get('/:id', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
   /** @type {import('../../../shared/types/processing/index.js').Processing} */
-  // @ts-ignore -> req.params.id is an id
+  // @ts-ignore -> findOne returns a processing && req.params.id is an id
   const processing = await mongo.db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(processing.owner, processing.permissions ?? [], reqSession) ?? '')) return res.status(403).send()
@@ -180,7 +180,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
 router.delete('/:id', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
   /** @type {import('../../../shared/types/processing/index.js').Processing} */
-  // @ts-ignore -> req.params.id is an id
+  // @ts-ignore -> findOne returns a processing && req.params.id is an id
   const processing = await mongo.db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing.owner, processing.permissions ?? [], reqSession) !== 'admin') return res.status(403).send()
@@ -193,7 +193,7 @@ router.delete('/:id', asyncHandler(async (req, res) => {
 router.get('/:id/webhook-key', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
   /** @type {import('../../../shared/types/processing/index.js').Processing} */
-  // @ts-ignore -> req.params.id is an id
+  // @ts-ignore -> findOne returns a processing && req.params.id is an id
   const processing = await mongo.db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing.owner, processing.permissions ?? [], reqSession) !== 'admin') return res.status(403).send()
@@ -203,7 +203,7 @@ router.get('/:id/webhook-key', asyncHandler(async (req, res) => {
 router.delete('/:id/webhook-key', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
   /** @type {import('../../../shared/types/processing/index.js').Processing} */
-  // @ts-ignore -> req.params.id is an id
+  // @ts-ignore -> findOne returns a processing && req.params.id is an id
   const processing = await mongo.db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing.owner, processing.permissions ?? [], reqSession) !== 'admin') return res.status(403).send()
@@ -218,6 +218,7 @@ router.delete('/:id/webhook-key', asyncHandler(async (req, res) => {
 
 router.post('/:id/_trigger', asyncHandler(async (req, res) => {
   /** @type {import('../../../shared/types/processing/index.js').Processing} */
+  // @ts-ignore -> findOne returns a processing && req.params.id is an id
   const processing = await mongo.db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (req.query.key && req.query.key !== processing.webhookKey) {

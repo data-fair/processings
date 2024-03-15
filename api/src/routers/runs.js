@@ -23,38 +23,57 @@ const cleanRun = (run, reqSession) => {
   return run
 }
 
+/**
+ * @typedef {Object} getParams
+ * @property {string} size
+ * @property {string} page
+ * @property {string} skip
+ * @property {string} showAll
+ * @property {string} sort
+ * @property {string} select
+ */
+
+// Get the list of runs (without logs)
 router.get('', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
-  const sort = findUtils.sort(req.query.sort)
-  const [size, skip] = findUtils.pagination(req.query.size, req.query.page, req.query.skip)
+  /** @type {getParams} */
+  // @ts-ignore -> req.query is a getParams type
+  const params = req.query
+  const sort = findUtils.sort(params.sort)
+  const [size, skip] = findUtils.pagination(params.size, params.page, params.skip)
   // implicit showAll on runs if we are looking at a processing in adminMode
-  if (reqSession.user.adminMode) req.query.showAll = 'true'
-  const query = findUtils.query(req.query, reqSession, { processing: 'processing._id' })
+  if (reqSession.user.adminMode) params.showAll = 'true'
+  const query = findUtils.query(req.query, reqSession, { processing: 'processing._id' }) // Check permissions on processing
   const project = { log: 0 }
   const runsCollection = mongo.db.collection('runs')
   const [runs, count] = await Promise.all([
     size > 0 ? runsCollection.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
     runsCollection.countDocuments(query)
   ])
-  const results = runs.map((run) => cleanRun(run, reqSession))
-  res.send({ results, count })
+  // @ts-ignore -> r is a run
+  res.send({ results: runs.map((r) => cleanRun(r, reqSession)), count })
 }))
 
+// Get a run (with logs)
 router.get('/:id', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
   /** @type {import('../../../shared/types/run/index.js').Run} */
+  // @ts-ignore -> findOne returns a run
   const run = await mongo.db.collection('runs').findOne({ _id: req.params.id })
   if (!run) return res.status(404).send()
   if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(run.owner, run.permissions ?? [], reqSession) ?? '')) return res.status(403).send()
   res.send(cleanRun(run, reqSession))
 }))
 
+// Kill a run
 router.post('/:id/_kill', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
   /** @type {import('../../../shared/types/run/index.js').Run} */
+  // @ts-ignore -> findOne returns a run && _id is an id
   const run = await mongo.db.collection('runs').findOne({ _id: req.params.id })
   if (!run) return res.status(404).send()
   if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(run.owner, run.permissions ?? [], reqSession) ?? '')) return res.status(403).send()
+  // @ts-ignore -> _id is an id
   await mongo.db.collection('runs').updateOne({ _id: run._id }, { $set: { status: 'kill' } })
   run.status = 'kill'
   res.send(cleanRun(run, reqSession))

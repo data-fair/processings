@@ -1,18 +1,12 @@
-import config from '../config.js'
-import path from 'path'
-import fs from 'fs-extra'
+import { toCRON } from '../../../shared/scheduling.js'
+import { runType } from '../../../shared/types/index.js'
 import { CronJob } from 'cron'
 import { nanoid } from 'nanoid'
-import resolvePath from 'resolve-path'
-import runSchema from '../../../contract/run.js'
-import { toCRON } from '../../../shared/scheduling.js'
+import config from '../config.js'
+import fs from 'fs-extra'
 import moment from 'moment'
-import Ajv from 'ajv'
-import ajvFormats from 'ajv-formats'
-
-// @ts-ignore
-const ajv = ajvFormats(new Ajv({ strict: false }))
-const validate = ajv.compile(runSchema)
+import path from 'path'
+import resolvePath from 'resolve-path'
 
 const processingsDir = path.resolve(config.dataDir, 'processings')
 
@@ -93,11 +87,18 @@ export const createNext = async (db, processing, triggered = false, delaySeconds
     run.scheduledAt = nextDate.toISOString()
   }
 
-  const valid = validate(run)
-  if (!valid) throw new Error(JSON.stringify(validate.errors))
+  runType.assertValid(run)
+  // @ts-ignore run is a valid document
   await db.collection('runs').insertOne(run)
-  const { log, processing: _processing, owner, ...nextRun } = run
+  const nextRun = {
+    _id: run._id,
+    createdAt: run.createdAt,
+    status: run.status,
+    permissions: run.permissions,
+    scheduledAt: run.scheduledAt
+  }
   await db.collection('processings').updateOne(
+    // @ts-ignore _id is a valid id
     { _id: run.processing._id },
     { $set: { nextRun } }
   )

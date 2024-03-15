@@ -2,7 +2,7 @@ import moment from 'moment'
 
 /**
  * @param {import('mongodb').Db} db
- * @param {import('@data-fair/lib/express/index.js').Account} consumer
+ * @param {any} consumer
  * @param {number} processingsSeconds
  */
 export const getLimits = async (db, consumer, processingsSeconds = -1) => {

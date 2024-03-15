@@ -55,7 +55,6 @@ fs.ensureDirSync(tmpDir)
  * @returns {PluginData}
  */
 const injectPluginNameConfig = (plugin) => {
-  // For compatibility with old plugins
   if (!plugin.pluginConfigSchema.properties.pluginName) {
     const version = plugin.distTag === 'latest' ? plugin.version : `${plugin.distTag} - ${plugin.version}`
     const defaultName = plugin.name.replace('@data-fair/processing-', '') + ' (' + version + ')'

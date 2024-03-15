@@ -11,10 +11,10 @@ ADD /api/package.json api/
 
 RUN npm -w api --include-workspace-root ci --no-audit --no-fund
 
-ADD /upgrade upgrade
-ADD /shared shared
-ADD /contract contract
 ADD /api api
+ADD /contract contract
+ADD /shared shared
+ADD /upgrade upgrade
 RUN npm run build-types-api
 
 ##########################

@@ -18,6 +18,7 @@ const query = (reqQuery, reqSession, fieldsMap = {}) => {
     throw createError(400, 'Only super admins can override permissions filter with showAll parameter')
   }
   if (!showAll) {
+    /** @type {any} */
     let owner = reqSession.account
     if (reqQuery.owner) {
       const ownerParts = reqQuery.owner.split(':')

@@ -46,8 +46,8 @@ ADD /worker/package.json worker/
 
 RUN npm -w worker --include-workspace-root ci --no-audit --no-fund
 
-ADD /shared shared
 ADD /contract contract
+ADD /shared shared
 ADD /worker worker
 RUN npm run build-types-worker
 

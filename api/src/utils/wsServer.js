@@ -16,7 +16,6 @@ import { nanoid } from 'nanoid'
 import { channel } from '../../../shared/ws.js'
 import { WebSocketServer } from 'ws'
 import permissions from './permissions.js'
-import c from 'config'
 
 /** @type any */
 let cursor
@@ -26,6 +25,11 @@ const subscribers = {}
 const clients = {}
 
 let stopped = false
+/**
+ * @param {any} server
+ * @param {any} db
+ * @param {any} session
+ */
 export const startWSServer = async (server, db, session) => {
   wss = new WebSocketServer({ server })
   wss.on('connection', async (ws, req) => {
