@@ -6,3 +6,7 @@
 ## Developers
 
 Take a look at the [contribution guidelines](./CONTRIBUTING.md).
+
+## Documentation
+
+- [API](./docs/api.md)

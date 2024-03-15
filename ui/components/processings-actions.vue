@@ -137,7 +137,6 @@ const statusText = {
 
 function getProcessingStatus() {
   if (!props.processings) return statuses
-  console.log('props.processings', props.processings)
   const array = []
   for (const processing of props.processings) {
     if (processing.lastRun) {

@@ -41,6 +41,8 @@ Run a development server (access it at http://localhost:8082/api/) :
 npm run dev-api
 ```
 
+You can find the API documentation here : [API](./docs/api.md)
+
 ## Working on @data-fair/processings/ui
 
 The UI is a [Nuxt 3](https://nuxt.com/) project that uses [Vuetify 3](https://vuetifyjs.com/).  
