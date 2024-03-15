@@ -1,11 +1,11 @@
-import http from 'http'
-import { createHttpTerminator } from 'http-terminator'
-import config from './config.js'
-import { session } from '@data-fair/lib/express/index.js'
-import { startObserver, stopObserver } from '@data-fair/lib/node/observer.js'
-import mongo from '@data-fair/lib/node/mongo.js'
 import { app } from './app.js'
 import { startWSServer, stopWSServer } from './utils/wsServer.js'
+import { session } from '@data-fair/lib/express/index.js'
+import { startObserver, stopObserver } from '@data-fair/lib/node/observer.js'
+import { createHttpTerminator } from 'http-terminator'
+import config from './config.js'
+import mongo from '@data-fair/lib/node/mongo.js'
+import http from 'http'
 
 const server = http.createServer(app)
 const httpTerminator = createHttpTerminator({ server })
@@ -18,7 +18,7 @@ server.headersTimeout = (60 * 1000) + 2000
 
 export const start = async () => {
   if (config.observer.active) await startObserver(config.observer.port)
-  await session.init(config.directoryUrl)
+  session.init(config.directoryUrl)
   await mongo.connect(config.mongoUrl, { readPreference: 'nearest', maxPoolSize: 1 })
   server.listen(config.port)
   await new Promise(resolve => server.once('listening', resolve))

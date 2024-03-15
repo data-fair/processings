@@ -26,7 +26,7 @@ const cleanRun = (run, reqSession) => {
 router.get('', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
   const sort = findUtils.sort(req.query.sort)
-  const [skip, size] = findUtils.pagination(req.query)
+  const [size, skip] = findUtils.pagination(req.query.size, req.query.page, req.query.skip)
   // implicit showAll on runs if we are looking at a processing in adminMode
   if (reqSession.user.adminMode) req.query.showAll = 'true'
   const query = findUtils.query(req.query, reqSession, { processing: 'processing._id' })

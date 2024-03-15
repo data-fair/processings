@@ -112,7 +112,7 @@ const processingSchema = computed(() => {
   })
   schema.properties.config = {
     ...plugin.value.processingConfigSchema,
-    title: 'Plugin ' + plugin.value.fullName,
+    title: 'Plugin ' + plugin.value.customName,
     'x-options': { deleteReadOnly: false }
   }
   if (user?.adminMode) delete schema.properties.debug?.readOnly

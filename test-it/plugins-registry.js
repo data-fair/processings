@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import { axiosBuilder } from '@data-fair/lib/node/axios.js'
 
 const axiosOpts = { baseURL: 'http://localhost:5600' }
-const anonymous = await axiosBuilder(axiosOpts)
+const anonymous = axiosBuilder(axiosOpts)
 
 await test('should search for plugins on npmjs', async function () {
   const res = await anonymous.get('/api/v1/plugins-registry', { params: { q: '@data-fair hello world' } })

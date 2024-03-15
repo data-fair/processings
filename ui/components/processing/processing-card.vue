@@ -34,7 +34,7 @@
                 icon="mdi-power-plug"
               />
             </template>
-            <span>{{ plugin ? plugin.fullName : processing.plugin }}</span>
+            <span>{{ plugin ? plugin.customName : processing.plugin }}</span>
           </v-list-item>
 
           <template v-if="processing.lastRun">
