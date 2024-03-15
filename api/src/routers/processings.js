@@ -25,6 +25,9 @@ const router = Router()
 export default router
 
 /**
+ * Check that a processing object is valid
+ * Check if the plugin exists
+ * Check if the config is valid (only if the processing is activated)
  * @param {import('../../../shared/types/processing/index.js').Processing} processing
  * @returns {Promise<void>}
  */
@@ -37,7 +40,7 @@ const validateFullProcessing = async (processing) => {
   const valid = validate(processing)
   if (!valid) throw createError(400, JSON.stringify(validate.errors))
   if (!await fs.pathExists(path.join(pluginsDir, processing.plugin))) throw createError(400, 'Plugin not found')
-  if (!processing.config) return
+  if (!processing.config) return // no config to validate
   const pluginInfo = await fs.readJson(path.join(pluginsDir, path.join(processing.plugin, 'plugin.json')))
   const configValidate = ajv.compile(pluginInfo.processingConfigSchema)
   const configValid = configValidate(processing.config)
@@ -60,52 +63,65 @@ const cleanProcessing = (processing, reqSession) => {
   return processing
 }
 
+/**
+ * @typedef {Object} getParams
+ * @property {string} size
+ * @property {string} page
+ * @property {string} skip
+ * @property {string} showAll
+ * @property {string} sort
+ * @property {string} select
+ */
+
 // Get the list of processings
 router.get('', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
-  const sort = findUtils.sort(req.query.sort)
-  const [skip, size] = findUtils.pagination(req.query)
-  const query = findUtils.query(req.query, reqSession)
-  const project = findUtils.project(req.query.select)
-  const processings = await mongo.db.collection('processings')
+  /** @type {getParams} */
+  // @ts-ignore -> req.query is a getParams type
+  const params = req.query
+  const sort = findUtils.sort(params.sort)
+  const [size, skip] = findUtils.pagination(params.size, params.page, params.skip)
+  const project = findUtils.project(params.select)
+  const query = findUtils.query(params, reqSession) // Check permissions
+  const processings = mongo.db.collection('processings')
   const [results, count] = await Promise.all([
     size > 0 ? processings.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
     processings.countDocuments(query)
   ])
-  // @ts-ignore
+  // @ts-ignore -> p is a processing
   res.json({ results: results.map((p) => cleanProcessing(p, reqSession)), count })
 }))
 
 // Create a processing
 router.post('', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
-  req.body._id = nanoid()
-  if (req.body.owner && !reqSession.user.adminMode) return res.status(403).send('owner can only be set for superadmin')
-  req.body.owner = req.body.owner || reqSession.account
-  if (!permissions.isAdmin(reqSession, req.body.owner)) return res.status(403).send()
-  req.body.scheduling = req.body.scheduling || { type: 'trigger' }
-  req.body.webhookKey = cryptoRandomString({ length: 16, type: 'url-safe' })
-  req.body.created = req.body.updated = {
+  const processing = { ...req.body }
+  processing._id = nanoid()
+  if (processing.owner && !reqSession.user.adminMode) return res.status(403).send('owner can only be set for superadmin')
+  processing.owner = processing.owner || reqSession.account
+  if (!permissions.isAdmin(reqSession, processing.owner)) return res.status(403).send()
+  processing.scheduling = processing.scheduling || { type: 'trigger' }
+  processing.webhookKey = cryptoRandomString({ length: 16, type: 'url-safe' })
+  processing.created = processing.updated = {
     id: reqSession.user.id,
     name: reqSession.user.name,
     date: new Date().toISOString()
   }
 
-  const access = await fs.pathExists(resolvePath(pluginsDir, req.body.plugin + '-access.json')) ? await fs.readJson(resolvePath(pluginsDir, req.body.plugin + '-access.json')) : { public: false, privateAccess: [] }
+  const access = await fs.pathExists(resolvePath(pluginsDir, processing.plugin + '-access.json')) ? await fs.readJson(resolvePath(pluginsDir, processing.plugin + '-access.json')) : { public: false, privateAccess: [] }
   if (reqSession.user.adminMode) {
     // ok for super admins
   } else if (access && access.public) {
     // ok, this plugin is public
-  } else if (access && access.privateAccess && access.privateAccess.find((/** @type {any} */ p) => p.type === req.body.owner.type && p.id === req.body.owner.id)) {
+  } else if (access && access.privateAccess && access.privateAccess.find((/** @type {any} */ p) => p.type === processing.owner.type && p.id === processing.owner.id)) {
     // ok, private access is granted
   } else {
     return res.status(403).send()
   }
 
-  await validateFullProcessing(req.body)
-  await mongo.db.collection('processings').insertOne(req.body)
-  await applyProcessing(mongo.db, req.body)
-  res.status(200).json(cleanProcessing(req.body, reqSession))
+  await validateFullProcessing(processing)
+  await mongo.db.collection('processings').insertOne(processing)
+  res.status(200).json(cleanProcessing(processing, reqSession))
 }))
 
 // Patch some of the attributes of a processing

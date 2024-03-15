@@ -112,7 +112,7 @@ router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
   res.send(plugin)
 }))
 
-// List installed plugins (optional filter: privateAccess=[type]:[id)
+// List installed plugins (optional: privateAccess=[type]:[id)
 router.get('/', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
 

@@ -49,24 +49,25 @@ const sort = (sortStr) => {
 }
 
 /**
- * @param {any} query
- * @param {number} defaultSize
- * @returns {[number, number]}
+ * @param {string|undefined} size
+ * @param {string|undefined} page
+ * @param {string|undefined} skip
+ * @returns {[number, number]} - [size, skip]
  */
-const pagination = (query, defaultSize = 10) => {
-  let size = defaultSize
-  if (query && query.size && !isNaN(parseInt(query.size))) {
-    size = parseInt(query.size)
+const pagination = (size, page, skip) => {
+  let sizeInt = 10
+  if (size && !isNaN(parseInt(size))) {
+    sizeInt = parseInt(size)
   }
 
-  let skip = 0
-  if (query && query.skip && !isNaN(parseInt(query.skip))) {
-    skip = parseInt(query.skip)
-  } else if (query && query.page && !isNaN(parseInt(query.page))) {
-    skip = (parseInt(query.page) - 1) * size
+  let skipInt = 0
+  if (skip && !isNaN(parseInt(skip))) {
+    skipInt = parseInt(skip)
+  } else if (page && !isNaN(parseInt(page))) {
+    skipInt = (parseInt(page) - 1) * sizeInt
   }
 
-  return [skip, size]
+  return [sizeInt, skipInt]
 }
 
 /**
@@ -77,7 +78,7 @@ const project = (selectStr) => {
   /** @type {Object<string, number>} */
   const select = {}
   if (selectStr) {
-    selectStr.split(',').forEach(s => {
+    selectStr.split(',').forEach((/** @type {string} */ s) => {
       select[s] = 1
     })
   }

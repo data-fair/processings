@@ -17,6 +17,9 @@ const validate = ajv.compile(runSchema)
 const processingsDir = path.resolve(config.dataDir, 'processings')
 
 /**
+ * Stop all pending runs for a processing if it is deactivated
+ * Cancel job that might have been scheduled previously if processing is set on manual trigger
+ * 
  * @param {import('mongodb').Db} db
  * @param {import('../../../shared/types/processing/index.js').Processing} processing
  * @returns {Promise<void>} nothing

@@ -178,10 +178,9 @@ function getProcessingStatus() {
 
 const createProcessing = async () => {
   inCreate.value = true
-  /** @type import('../../shared/types/index.js').processingType */
   const processing = await $fetch('/api/v1/processings', {
     method: 'POST',
-    body: JSON.stringify({ ...newProcessing.value })
+    body: JSON.stringify(newProcessing.value)
   })
   showCreateMenu.value = false
   inCreate.value = false
