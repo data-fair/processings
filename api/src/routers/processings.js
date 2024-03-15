@@ -128,6 +128,7 @@ router.post('', asyncHandler(async (req, res) => {
 router.patch('/:id', asyncHandler(async (req, res) => {
   const reqSession = await session.reqAuthenticated(req)
   /** @type {import('../../../shared/types/processing/index.js').Processing} */
+  // @ts-ignore -> req.body is a Processing type && req.params.id is an id
   const processing = await mongo.db.collection('processings').findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing.owner, processing.permissions ?? [], reqSession) !== 'admin') return res.status(403).send()
@@ -143,6 +144,7 @@ router.patch('/:id', asyncHandler(async (req, res) => {
     name: reqSession.user.name,
     date: new Date().toISOString()
   }
+  /** @type {any} */
   const patch = {}
   for (const key in req.body) {
     if (!req.body[key]) {
@@ -154,12 +156,13 @@ router.patch('/:id', asyncHandler(async (req, res) => {
       patch.$set[key] = req.body[key]
     }
   }
-  const patchedprocessing = { ...processing, ...req.body }
-  await validateFullProcessing(patchedprocessing)
+  const patchedProcessing = { ...processing, ...req.body }
+  await validateFullProcessing(patchedProcessing)
+  // @ts-ignore -> _id is an id
   await mongo.db.collection('processings').updateOne({ _id: req.params.id }, patch)
-  await mongo.db.collection('runs').updateMany({ 'processing._id': processing._id }, { $set: { permissions: patchedprocessing.permissions || [] } })
-  await applyProcessing(mongo.db, patchedprocessing)
-  res.status(200).json(cleanProcessing(patchedprocessing, reqSession))
+  await mongo.db.collection('runs').updateMany({ 'processing._id': processing._id }, { $set: { permissions: patchedProcessing.permissions || [] } })
+  await applyProcessing(mongo.db, patchedProcessing)
+  res.status(200).json(cleanProcessing(patchedProcessing, reqSession))
 }))
 
 router.get('/:id', asyncHandler(async (req, res) => {
