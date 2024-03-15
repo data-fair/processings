@@ -47,5 +47,7 @@ function configureWS(wsUrl, suffix = '', eventBus) {
 export default defineNuxtPlugin(nuxtApp => {
   const eventBus = useEventBus()
   const wsPublicUrl = (window.location.origin + '/api/').replace('http:', 'ws:').replace('https:', 'wss:')
+  const notifyWSUrl = (window.location.origin + '/notify/').replace('http:', 'ws:').replace('https:', 'wss:')
   configureWS(wsPublicUrl, '', eventBus)
+  configureWS(notifyWSUrl, '-notify', eventBus)
 })
