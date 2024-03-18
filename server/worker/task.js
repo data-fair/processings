@@ -123,7 +123,7 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
   ws._channels = []
   ws._connect = async () => {
     return new Promise((resolve, reject) => {
-      const wsUrl = config.dataFairUrl.replace('http://', 'ws://').replace('https://', 'wss://') + '/'
+      const wsUrl = (config.privateDataFairUrl || config.dataFairUrl).replace('http://', 'ws://').replace('https://', 'wss://') + '/'
       log.debug(`connect Web Socket to ${wsUrl}`)
       ws._ws = new WebSocket(wsUrl)
       ws._ws.on('error', err => {
