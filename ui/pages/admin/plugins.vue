@@ -36,7 +36,7 @@
           flat
         >
           <v-toolbar-title>
-            {{ result.customName }}
+            {{ result.name }}
           </v-toolbar-title>
           <v-spacer />
           {{ result.version }}
@@ -273,7 +273,9 @@ async function uninstall(plugin) {
 function updateAvailable(plugin) {
   if (!availablePlugins.value.results) return [false, '']
   const availablePlugin = availablePlugins.value.results.find(r => r.name === plugin.name)
-  if (availablePlugin && availablePlugin.version !== plugin.version) return [true, availablePlugin.version]
+  if (availablePlugin &&
+    availablePlugin.distTag === plugin.distTag &&
+    availablePlugin.version !== plugin.version) return [true, availablePlugin.version]
   return [false, '']
 }
 
