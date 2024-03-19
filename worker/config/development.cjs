@@ -7,5 +7,6 @@ module.exports = {
   notifyUrl: 'http://localhost:5600/notify',
   observer: {
     port: 9091
-  }
+  },
+  privateDataFairUrl: 'http://localhost:8081'
 }

@@ -14,22 +14,13 @@ const debugLoop = debug('loop')
 
 let stopped = false
 const promisePool = []
+
+// Loop promises, resolved when stopped
+/** @type {Promise<void>} */
 let mainLoopPromise
+/** @type {Promise<void>} */
 let killLoopPromise
 
-// clear also for testing
-export const clear = () => {
-  for (let i = 0; i < config.worker.concurrency; i++) {
-    for (let i = 0; i < config.worker.concurrency; i++) {
-      if (promisePool[i]) {
-        promisePool[i].catch(() => {})
-        delete promisePool[i]
-      }
-    }
-  }
-}
-
-/* eslint no-unmodified-loop-condition: 0 */
 export const start = async () => {
   await mongo.connect(config.mongoUrl, { readPreference: 'primary' })
   const db = mongo.db

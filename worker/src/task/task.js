@@ -34,13 +34,14 @@ const axiosInstance = (processing) => {
     httpsAgent
   })
 
+  const dataFairUrl = config.privateDataFairUrl || config.dataFairUrl
   // apply default base url and send api key when relevant
   axiosInstance.interceptors.request.use(cfg => {
     if (!/^https?:\/\//i.test(cfg.url)) {
-      if (cfg.url?.startsWith('/')) cfg.url = config.dataFairUrl + cfg.url
-      else cfg.url = config.dataFairUrl + '/' + cfg.url
+      if (cfg.url?.startsWith('/')) cfg.url = dataFairUrl + cfg.url
+      else cfg.url = dataFairUrl + '/' + cfg.url
     }
-    const isDataFairUrl = cfg.url?.startsWith(config.dataFairUrl)
+    const isDataFairUrl = cfg.url?.startsWith(dataFairUrl)
     if (isDataFairUrl) Object.assign(cfg.headers, headers)
 
     return cfg
@@ -73,7 +74,7 @@ const axiosInstance = (processing) => {
  */
 const wsInstance = (log, owner) => {
   return new DataFairWsClient({
-    url: config.dataFairUrl,
+    url: config.privateDataFairUrl || config.dataFairUrl,
     apiKey: config.dataFairAPIKey,
     log,
     adminMode: config.dataFairAdminMode,

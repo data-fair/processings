@@ -6,6 +6,7 @@ module.exports = {
   observer: {
     port: 9091
   },
+  privateDataFairUrl: 'http://localhost:8081',
   worker: {
     interval: 100,
     killInterval: 2000,

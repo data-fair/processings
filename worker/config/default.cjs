@@ -29,6 +29,7 @@ module.exports = {
     active: true,
     port: 9090
   },
+  privateDataFairUrl: null,
   worker: {
     // base interval for polling the database for new resources to work on
     interval: 2000,

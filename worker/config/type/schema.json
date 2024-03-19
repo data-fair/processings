@@ -100,6 +100,9 @@
         }
       }
     },
+    "privateDataFairUrl": {
+      "type": "string"
+    },
     "worker": {
       "type": "object",
       "properties": {

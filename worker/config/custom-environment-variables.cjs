@@ -24,6 +24,7 @@ module.exports = {
     active: 'OBSERVER_ACTIVE',
     port: 'OBSERVER_PORT'
   },
+  privateDataFairUrl: 'PRIVATE_DATA_FAIR_URL',
   worker: {
     interval: 'WORKER_INTERVAL',
     inactiveInterval: 'WORKER_INACTIVE_INTERVAL',

@@ -66,10 +66,10 @@
     </v-list-item-title>
 
     <v-list-item-subtitle v-if="run.status === 'finished' || run.status === 'error' || run.status === 'killed'">
-      durée : {{ duration(run.startedAt, run.finishedAt) }}
+      Durée : {{ duration(run.startedAt, run.finishedAt) }}
     </v-list-item-subtitle>
     <v-list-item-subtitle v-if="run.status === 'triggered' && run.scheduledAt && run.scheduledAt !== run.createdAt">
-      planifiée {{ $filters.fromNow(run.scheduledAt, true) }}
+      Planifiée {{ $filters.fromNow(run.scheduledAt, true) }}
     </v-list-item-subtitle>
 
     <template

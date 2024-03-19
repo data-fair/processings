@@ -51,6 +51,9 @@
     "port": {
       "type": "number"
     },
+    "privateDirectoryUrl": {
+      "type": "string"
+    },
     "observer": {
       "type": "object",
       "properties": {

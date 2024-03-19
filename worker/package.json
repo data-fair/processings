@@ -6,6 +6,7 @@
     "dev": "NODE_ENV=development DEBUG=scheduler,upgrade nodemon worker"
   },
   "devDependencies": {
+    "@types/child-process-promise": "^2.2.6",
     "@types/nodemailer": "^6.4.14"
   },
   "dependencies": {
