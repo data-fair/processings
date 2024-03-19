@@ -34,16 +34,26 @@ const axiosInstance = (processing) => {
     httpsAgent
   })
 
-  const dataFairUrl = config.privateDataFairUrl || config.dataFairUrl
   // apply default base url and send api key when relevant
   axiosInstance.interceptors.request.use(cfg => {
     if (!/^https?:\/\//i.test(cfg.url)) {
-      if (cfg.url?.startsWith('/')) cfg.url = dataFairUrl + cfg.url
-      else cfg.url = dataFairUrl + '/' + cfg.url
+      if (cfg.url.startsWith('/')) cfg.url = config.dataFairUrl + cfg.url
+      else cfg.url = config.dataFairUrl + '/' + cfg.url
     }
-    const isDataFairUrl = cfg.url?.startsWith(dataFairUrl)
+    const isDataFairUrl = cfg.url.startsWith(config.dataFairUrl)
     if (isDataFairUrl) Object.assign(cfg.headers, headers)
 
+    // use private data fair url if specified to prevent leaving internal infrastructure
+    // except from GET requests so that they still appear in metrics
+    // except if config.getFromPrivateDataFairUrl is set to true, then all requests are sent to the private url
+    const usePrivate =
+      config.privateDataFairUrl &&
+      isDataFairUrl &&
+      (config.getFromPrivateDataFairUrl || ['post', 'put', 'delete', 'patch'].includes(cfg.method))
+    if (usePrivate) {
+      cfg.url = cfg.url.replace(config.dataFairUrl, config.privateDataFairUrl)
+      cfg.headers.host = new URL(config.dataFairUrl).host
+    }
     return cfg
   }, error => Promise.reject(error))
   // customize axios errors for shorter stack traces when a request fails
@@ -74,7 +84,7 @@ const axiosInstance = (processing) => {
  */
 const wsInstance = (log, owner) => {
   return new DataFairWsClient({
-    url: config.privateDataFairUrl || config.dataFairUrl,
+    url: config.privateDataFairUrl,
     apiKey: config.dataFairAPIKey,
     log,
     adminMode: config.dataFairAdminMode,
@@ -184,7 +194,7 @@ export const run = async (db, mailTransport, wsPublish) => {
     if (errStatus && httpMessage) {
       if (err.config && err.config.url) {
         let url = err.config.url
-        url = url.replace(config.dataFairUrl, '')
+        url = url.replace(config.privateDataFairUrl, '')
         httpMessage += ` (${url})`
       }
       console.error(httpMessage)

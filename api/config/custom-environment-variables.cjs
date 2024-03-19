@@ -5,7 +5,6 @@ module.exports = {
   defaultLimits: {
     processingsSeconds: 'DEFAULT_LIMITS_PROCESSINGS_SECONDS'
   },
-  directoryUrl: 'DIRECTORY_URL',
   mongoUrl: 'MONGO_URL',
   origin: 'ORIGIN',
   port: 'PORT',

@@ -13,7 +13,7 @@
   "required": [
     "dataDir",
     "defaultTimeZone",
-    "directoryUrl",
+    "privateDirectoryUrl",
     "mongoUrl",
     "origin",
     "port",
@@ -37,10 +37,6 @@
     "defaultTimeZone": {
       "type": "string"
     },
-    "directoryUrl": {
-      "type": "string",
-      "pattern": "^https?://"
-    },
     "mongoUrl": {
       "type": "string"
     },
@@ -52,7 +48,8 @@
       "type": "number"
     },
     "privateDirectoryUrl": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^https?://"
     },
     "observer": {
       "type": "object",

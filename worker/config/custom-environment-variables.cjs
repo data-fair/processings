@@ -7,6 +7,7 @@ module.exports = {
     processingsSeconds: 'DEFAULT_LIMITS_PROCESSINGS_SECONDS'
   },
   defaultTimeZone: 'DEFAULT_TIME_ZONE',
+  getFromPrivateDataFairUrl: 'GET_FROM_PRIVATE_DATA_FAIR_URL',
   mails: {
     transport: {
       port: 'MAILS_TRANSPORT_PORT',

@@ -9,6 +9,7 @@ module.exports = {
     processingsSeconds: -1
   },
   defaultTimeZone: 'Europe/Paris',
+  getFromPrivateDataFairUrl: false,
   mails: {
     // transport is a full configuration object for createTransport of nodemailer
     // cf https://nodemailer.com/smtp/

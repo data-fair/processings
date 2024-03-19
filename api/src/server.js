@@ -18,8 +18,7 @@ server.headersTimeout = (60 * 1000) + 2000
 
 export const start = async () => {
   if (config.observer.active) await startObserver(config.observer.port)
-  console.log(config.privateDirectoryUrl || config.directoryUrl)
-  session.init(config.privateDirectoryUrl || config.directoryUrl)
+  session.init(config.privateDirectoryUrl)
   await mongo.connect(config.mongoUrl, { readPreference: 'nearest', maxPoolSize: 1 })
   server.listen(config.port)
   await new Promise(resolve => server.once('listening', resolve))

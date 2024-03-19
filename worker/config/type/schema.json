@@ -50,6 +50,9 @@
     "defaultTimeZone": {
       "type": "string"
     },
+    "getFromPrivateDataFairUrl": {
+      "type": "boolean"
+    },
     "mails": {
       "type": "object",
       "properties": {
