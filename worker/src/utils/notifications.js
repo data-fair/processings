@@ -3,15 +3,16 @@ import axios from '@data-fair/lib/node/axios.js'
 import debug from 'debug'
 import { internalError } from '@data-fair/lib/node/observer.js'
 
+const debugNotif = debug('notifications')
 /**
- * @param {string} notification the notification to send
+ * @param {any} notification the notification to send
  * @returns {Promise<void>} nothing
  */
 export const send = async (notification) => {
   // @test:spy("notificationSend", notification)
-  debug(`send notification ${notification}`)
+  debugNotif(`send notification ${notification}`)
   if (!config.notifyUrl) {
-    debug('no notifyUrl in config')
+    debugNotif('no notifyUrl in config')
     return
   }
   if (process.env.NODE_ENV !== 'test') {

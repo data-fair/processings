@@ -1,18 +1,6 @@
-import notifications from './notifications.js'
 import { incrementConsumption } from './limits.js'
 import { runsMetrics } from './metrics.js'
-import { nanoid } from 'nanoid'
-import config from '../config.js'
-import moment from 'moment'
-import { CronJob } from 'cron'
-import { toCRON } from '../../../shared/scheduling.js'
-import runSchema from '../../../contract/run.js'
-
-import Ajv from 'ajv'
-import ajvFormats from 'ajv-formats'
-
-const ajv = ajvFormats(new Ajv({ strict: false }))
-const validate = ajv.compile(runSchema)
+import notifications from './notifications.js'
 
 export const running = async (db, wsPublish, run) => {
   const patch = { status: 'running', startedAt: new Date().toISOString() }
@@ -26,7 +14,17 @@ export const running = async (db, wsPublish, run) => {
     .updateOne({ _id: run.processing._id }, { $set: { lastRun }, $unset: { nextRun: '' } })
 }
 
-export const finish = async (db, wsPublish, run, errorMessage, errorLogType = 'debug') => {
+/**
+ * Update the database when a run is finished (edit status, log, duration, etc.)
+ * @param {import('mongodb').Db} db
+ * @param {(channel: string, data: any) => void} wsPublish
+ * @param {import('../../../shared/types/run/index.js').Run} run
+ * @param {string | undefined} errorMessage
+ * @param {string} errorLogType
+ * @return {Promise<void>}
+ */
+export const finish = async (db, wsPublish, run, errorMessage = undefined, errorLogType = 'debug') => {
+  /** @type {any} */
   const query = {
     $set: {
       status: 'finished',
@@ -39,18 +37,20 @@ export const finish = async (db, wsPublish, run, errorMessage, errorLogType = 'd
     query.$push = { log: { type: errorLogType, msg: errorMessage, date: new Date().toISOString() } }
   }
   let lastRun = (await db.collection('runs').findOneAndUpdate(
+    // @ts-ignore
     { _id: run._id },
     query,
     { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
   ))
   if (!lastRun.startedAt) {
     lastRun = (await db.collection('runs').findOneAndUpdate(
+      // @ts-ignore
       { _id: run._id },
       { $set: { startedAt: lastRun.finishedAt } },
       { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
     ))
   }
-  await wsPublish(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch: query.$set })
+  wsPublish(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch: query.$set })
   const duration = (new Date(lastRun.finishedAt).getTime() - new Date(lastRun.startedAt).getTime()) / 1000
   runsMetrics.labels(({ status: query.$set.status, owner: run.owner.name })).observe(duration)
   await incrementConsumption(db, run.owner, 'processings_seconds', Math.round(duration))
@@ -71,7 +71,7 @@ export const finish = async (db, wsPublish, run, errorMessage, errorLogType = 'd
       topic: { key: `processings:processing-finish-ok:${run.processing._id}` },
       title: `Le traitement ${run.processing.title} a terminé avec succès`
     })
-    const errorLogs = lastRun.log.filter(l => l.type === 'error')
+    const errorLogs = lastRun.log.filter((/** @type {any} */ l) => l.type === 'error')
     if (errorLogs.length) {
       let htmlBody = '<ul>'
       for (const errorLog of errorLogs) {
@@ -82,7 +82,7 @@ export const finish = async (db, wsPublish, run, errorMessage, errorLogType = 'd
         ...notif,
         topic: { key: `processings:processing-log-error:${run.processing._id}` },
         title: `Le traitement ${run.processing.title} a terminé correctement mais son journal contient des erreurs`,
-        body: errorLogs.map(l => l.msg).join(' - '),
+        body: errorLogs.map((/** @type {any} */ l) => l.msg).join(' - '),
         htmlBody
       })
     }
@@ -98,58 +98,14 @@ export const finish = async (db, wsPublish, run, errorMessage, errorLogType = 'd
 
   // store the newly closed run as processing.lastRun for convenient access
   delete lastRun.log
-  await db.collection('processings')
-    .updateOne({ _id: run.processing._id }, { $set: { lastRun } })
-}
-
-export const createNext = async (db, processing, triggered, delaySeconds = 0) => {
-  const run = {
-    _id: nanoid(),
-    owner: processing.owner,
-    processing: {
-      _id: processing._id,
-      title: processing.title
-    },
-    createdAt: new Date().toISOString(),
-    status: triggered ? 'triggered' : 'scheduled',
-    log: [],
-    permissions: processing.permissions || []
-  }
-
-  // cancel one that might have been scheduled previously
-  if (triggered) {
-    await db.collection('runs')
-      .deleteMany({ 'processing._id': processing._id, status: { $in: ['triggered', 'scheduled'] } })
-    if (delaySeconds) {
-      const scheduledAt = moment()
-      scheduledAt.add(delaySeconds, 'seconds')
-      run.scheduledAt = scheduledAt.toISOString()
-    } else {
-      run.scheduledAt = run.createdAt
-    }
-  } else {
-    await db.collection('runs')
-      .deleteMany({ 'processing._id': processing._id, status: 'scheduled' })
-    const cron = toCRON(processing.scheduling)
-    const timeZone = processing.scheduling.timeZone || config.defaultTimeZone
-    const job = new CronJob(cron, () => {}, () => {}, false, timeZone)
-    const nextDate = job.nextDates()
-    run.scheduledAt = nextDate.toISOString()
-  }
-
-  const valid = validate(run)
-  if (!valid) throw new Error(JSON.stringify(validate.errors))
-  await db.collection('runs').insertOne(run)
-  const { log, processing: _processing, owner, ...nextRun } = run
   await db.collection('processings').updateOne(
+    // @ts-ignore
     { _id: run.processing._id },
-    { $set: { nextRun } }
+    { $set: { lastRun } }
   )
-  return run
 }
 
 export default {
   running,
-  finish,
-  createNext
+  finish
 }

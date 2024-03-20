@@ -8,7 +8,6 @@ module.exports = {
     // -1 for unlimited storage
     processingsSeconds: -1
   },
-  defaultTimeZone: 'Europe/Paris',
   getFromPrivateDataFairUrl: false,
   mails: {
     // transport is a full configuration object for createTransport of nodemailer

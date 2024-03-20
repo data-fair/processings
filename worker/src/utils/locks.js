@@ -25,6 +25,13 @@ export const stop = () => {
   clearInterval(interval)
 }
 
+/**
+ * Acquire a lock for a given processing id
+ *
+ * @param {import('mongodb').Db} db
+ * @param {string} _id the processing id
+ * @returns {Promise<boolean>} true if the lock was acquired, false if it was already acquired
+ */
 export const acquire = async (db, _id) => {
   const locks = db.collection('locks')
   try {

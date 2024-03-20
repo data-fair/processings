@@ -17,7 +17,6 @@ export const initPublisher = async (db) => {
   const mongoChannel = await channel(db)
   await mongoChannel.insertOne({ type: 'init' })
   return (channel, data) => {
-    // console.log(channel, data)
     mongoChannel.insertOne({ type: 'message', channel, data })
   }
 }

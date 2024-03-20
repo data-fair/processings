@@ -47,9 +47,6 @@
         }
       }
     },
-    "defaultTimeZone": {
-      "type": "string"
-    },
     "getFromPrivateDataFairUrl": {
       "type": "boolean"
     },
@@ -108,6 +105,14 @@
     },
     "worker": {
       "type": "object",
+      "required": [
+        "interval",
+        "inactiveInterval",
+        "inactivityDelay",
+        "killInterval",
+        "concurrency",
+        "gracePeriod"
+      ],
       "properties": {
         "interval": {
           "type": "number"
