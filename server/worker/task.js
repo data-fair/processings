@@ -223,9 +223,13 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
     else await log.info('terminé')
   } catch (err) {
     process.chdir(cwd)
-    const errStatus = err.status ?? err.statusCode
-    let httpMessage = err.data && typeof err.data === 'string' ? err.data : (err.statusText ?? err.statusMessage)
-    if (errStatus && httpMessage) {
+    let httpMessage = err.statusText ?? err.statusMessage ?? err.status ?? err.statusCode
+    if (httpMessage) {
+      if (err.data) {
+        if (typeof err.data === 'string') httpMessage += ' - ' + err.data
+        else httpMessage += ' - ' + JSON.stringify(err.data)
+      }
+
       if (err.config && err.config.url) {
         let url = err.config.url
         url = url.replace(config.dataFairUrl, '')
