@@ -137,6 +137,11 @@
         variant="elevated"
         rounded="lg"
       >
+        <v-progress-linear
+          v-if="inInstall[result.name]"
+          indeterminate
+          color="primary"
+        />
         <v-toolbar
           dense
           flat
@@ -178,6 +183,7 @@ const session = useSession()
 
 const availablePlugins = ref({})
 const inDelete = ref(false)
+const inInstall = ref({})
 const installedPlugins = ref({})
 const loading = ref(false)
 const showDeleteMenu = ref({})
@@ -237,6 +243,11 @@ async function fetchAvailablePlugins() {
   availablePlugins.value = {
     results: response.results.sort((a, b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
   }
+  availablePlugins.value.results.forEach(plugin => {
+    if (!(plugin.name in inInstall.value)) {
+      inInstall.value[plugin.name] = false
+    }
+  })
 }
 
 async function fetchInstalledPlugins() {
@@ -249,12 +260,14 @@ async function fetchInstalledPlugins() {
 
 async function install(plugin) {
   loading.value = true
+  inInstall.value[plugin.name] = true
   await $fetch('/api/v1/plugins', {
     method: 'POST',
     body: JSON.stringify({ ...plugin })
   })
   // TODO just update the installed plugin instead of fetching all, the plugin id is returned by the POST
   await fetchInstalledPlugins()
+  inInstall.value[plugin.name] = false
   loading.value = false
 }
 

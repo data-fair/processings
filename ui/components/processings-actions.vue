@@ -166,9 +166,25 @@ function getProcessingStatus() {
         }
       }
       if (includes) {
-        array[index] = `${statusText['none']} (${Number(array[index].split(':')[1].replace(')', '')) + 1})`
+        array[index] = `${statusText['none']} (${Number(array[index].split('(')[1].replace(')', '')) + 1})`
       } else {
         array.push(`${statusText['none']} (1)`)
+      }
+    }
+    if (processing.nextRun) {
+      let includes = false
+      let index = 0
+      for (const element of array) {
+        if (element.includes(statusText['scheduled'])) {
+          includes = true
+          index = array.indexOf(element)
+          break
+        }
+      }
+      if (includes) {
+        array[index] = `${statusText['scheduled']} (${Number(array[index].split('(')[1].replace(')', '')) + 1})`
+      } else {
+        array.push(`${statusText['scheduled']} (1)`)
       }
     }
   }

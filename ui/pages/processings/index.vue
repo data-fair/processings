@@ -168,7 +168,11 @@ function refreshProcessings() {
   const temp = []
   results.forEach(result => {
     const status = result.lastRun ? result.lastRun.status : 'none'
-    temp.push({ _id: result._id, status: status })
+    if (result.nextRun) {
+      temp.push({ _id: result._id, status, nextRun: result.nextRun })
+    } else {
+      temp.push({ _id: result._id, status })
+    }
   })
 
   const finalArray = []
@@ -176,6 +180,13 @@ function refreshProcessings() {
     const statusText = statusesText[tempItem.status]
     const filteredStatusesMainText = filteredStatuses.value.map(status => status.split(' (')[0])
     if (filteredStatusesMainText.includes(statusText)) {
+      const originalItem = results.find(item => item._id === tempItem._id)
+      if (originalItem) {
+        finalArray.push(originalItem)
+      }
+    }
+    const filteredStatusesNextText = filteredStatuses.value.map(status => status.split(' (')[0])
+    if (tempItem.nextRun && filteredStatusesNextText.includes('Planifié')) {
       const originalItem = results.find(item => item._id === tempItem._id)
       if (originalItem) {
         finalArray.push(originalItem)
