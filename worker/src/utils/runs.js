@@ -2,6 +2,11 @@ import { incrementConsumption } from './limits.js'
 import { runsMetrics } from './metrics.js'
 import notifications from './notifications.js'
 
+/**
+ * @param {import('mongodb').Db} db
+ * @param {(channel: string, data: any) => Promise<void>} wsPublish
+ * @param {import('../../../shared/types/run/index.js').Run} run
+ */
 export const running = async (db, wsPublish, run) => {
   const patch = { status: 'running', startedAt: new Date().toISOString() }
   const lastRun = (await db.collection('runs').findOneAndUpdate(
@@ -17,7 +22,7 @@ export const running = async (db, wsPublish, run) => {
 /**
  * Update the database when a run is finished (edit status, log, duration, etc.)
  * @param {import('mongodb').Db} db
- * @param {(channel: string, data: any) => void} wsPublish
+ * @param {(channel: string, data: any) => Promise<void>} wsPublish
  * @param {import('../../../shared/types/run/index.js').Run} run
  * @param {string | undefined} errorMessage
  * @param {string} errorLogType
@@ -50,7 +55,7 @@ export const finish = async (db, wsPublish, run, errorMessage = undefined, error
       { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
     ))
   }
-  wsPublish(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch: query.$set })
+  await wsPublish(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch: query.$set })
   const duration = (new Date(lastRun.finishedAt).getTime() - new Date(lastRun.startedAt).getTime()) / 1000
   runsMetrics.labels(({ status: query.$set.status, owner: run.owner.name })).observe(duration)
   await incrementConsumption(db, run.owner, 'processings_seconds', Math.round(duration))

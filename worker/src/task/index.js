@@ -8,8 +8,7 @@ await mongo.connect(config.mongoUrl, { readPreference: 'primary' })
 const mailTransport = nodemailer.createTransport(config.mails.transport)
 const wsPublish = await initPublisher(mongo.db)
 
-await run(mongo.db, mailTransport, wsPublish).catch(() => { process.exit(-1) })
-console.log('Task started')
+await run(mongo.db, mailTransport, wsPublish)
 await mongo.client.close()
 mailTransport.close()
 

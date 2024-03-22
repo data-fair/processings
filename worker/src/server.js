@@ -20,6 +20,9 @@ const promisePool = []
 /** @type {Object<string, number>} */
 const pids = {}
 
+/** @type {(channel: string, data: any) => Promise<void>} */
+let wsPublish
+
 // Loop promises, resolved when stopped
 /** @type {Promise<void>} */
 let mainLoopPromise
@@ -31,7 +34,7 @@ export const start = async () => {
   await mongo.connect(config.mongoUrl, { readPreference: 'primary' })
   const db = mongo.db
   await locks.init(db)
-  const wsPublish = await initPublisher(db)
+  wsPublish = await initPublisher(db)
   if (config.observer.active) {
     await initMetrics(mongo.db)
     await startObserver(config.observer.port)
@@ -44,10 +47,10 @@ export const start = async () => {
   }
 
   // non-blocking secondary kill loop
-  killLoop(db, wsPublish)
+  killLoop(db)
 
   const lastActivity = new Date().getTime()
-  mainLoop(db, wsPublish, lastActivity)
+  mainLoop(db, lastActivity)
 }
 
 // Stop and wait for all workers to finish their current task
@@ -66,10 +69,9 @@ export const stop = async () => {
  * If the worker is inactive, wait for a longer delay
  *
  * @param {import('mongodb').Db} db
- * @param {(channel: string, data: any) => void} wsPublish a function to publish messages to the websocket
  * @param {number} lastActivity the timestamp of the last activity of the worker
  */
-async function mainLoop (db, wsPublish, lastActivity) {
+async function mainLoop (db, lastActivity) {
   mainLoopPromise = new Promise(async (resolve) => {
     // eslint-disable-next-line no-unmodified-loop-condition
     while (!stopped) {
@@ -91,7 +93,7 @@ async function mainLoop (db, wsPublish, lastActivity) {
       const freeSlot = promisePool.findIndex(p => !p)
       debugLoop('index of a free slot', freeSlot)
 
-      const run = await acquireNext(db, wsPublish)
+      const run = await acquireNext(db)
 
       if (!run) {
         continue
@@ -102,7 +104,7 @@ async function mainLoop (db, wsPublish, lastActivity) {
 
       if (stopped) continue
 
-      promisePool[freeSlot] = iter(db, wsPublish, run)
+      promisePool[freeSlot] = iter(db, run)
       // @ts-ignore
       promisePool[freeSlot].catch(err => {
         internalError('worker-iter, error in worker iter', { error: err })
@@ -124,10 +126,9 @@ async function mainLoop (db, wsPublish, lastActivity) {
  * A secondary loop to handle killing tasks
  *
  * @param {import('mongodb').Db} db
- * @param {(channel: string, data: any) => void} wsPublish
  * @returns {Promise<void>}
  */
-async function killLoop (db, wsPublish) {
+async function killLoop (db) {
   killLoopPromise = new Promise(async (resolve) => {
     // eslint-disable-next-line no-unmodified-loop-condition
     while (!stopped) {
@@ -137,7 +138,7 @@ async function killLoop (db, wsPublish) {
         // @ts-ignore -> find return an array of runs
         const runs = await db.collection('runs').find({ status: 'kill' }).toArray()
         for (const run of runs) {
-          killRun(db, wsPublish, run).catch(err => {
+          killRun(db, run).catch(err => {
             internalError('worker-task-kill', 'error while killing task', { error: err })
             console.error('(task-kill) error while killing task', err)
           })
@@ -154,11 +155,10 @@ async function killLoop (db, wsPublish) {
 /**
  * Kill a run
  * @param {import('mongodb').Db} db
- * @param {(channel: string, data: any) => void} wsPublish
  * @param {import('../../shared/types/run/index.js').Run} run the run to kill
  * @returns {Promise<void>}
  */
-async function killRun (db, wsPublish, run) {
+async function killRun (db, run) {
   if (!pids[run._id]) {
     const ack = await locks.acquire(db, run.processing._id)
     if (ack) {
@@ -185,11 +185,10 @@ async function killRun (db, wsPublish, run) {
 /**
  * Manage a run
  * @param {import('mongodb').Db} db
- * @param {(channel: string, data: any) => void} wsPublish
  * @param {import('../../shared/types/run/index.js').Run} run the run to start
  * @return {Promise<void>}
  */
-async function iter (db, wsPublish, run) {
+async function iter (db, run) {
   let stderr = ''
   /** @type {import('../../shared/types/processing/index.js').Processing} */
   // @ts-ignore -> findOne return a processing & _id is a valid id
@@ -278,10 +277,9 @@ async function iter (db, wsPublish, run) {
  * meaning the task was brutally interrupted
  *
  * @param {import('mongodb').Db} db
- * @param {(channel: string, data: any) => void} wsPublish a function to publish messages to the websocket
  * @returns {Promise<import('../../shared/types/run/index.js').Run | undefined>} the next run to process
  */
-async function acquireNext (db, wsPublish) {
+async function acquireNext (db) {
   // Random sort prevents from insisting on the same failed dataset again and again
   const cursor = db.collection('runs')
     .aggregate([{
@@ -300,7 +298,7 @@ async function acquireNext (db, wsPublish) {
     // @ts-ignore -> the cursor return a run
     let run = await cursor.next()
     const ack = await locks.acquire(db, run.processing._id)
-    debug('acquire lock for run ?', run, ack)
+    debug('acquire lock for run ?', run._id, ack)
 
     if (ack) {
       // re-fetch run to prevent some race condition

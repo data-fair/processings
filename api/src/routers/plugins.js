@@ -148,9 +148,14 @@ router.get('/', asyncHandler(async (req, res) => {
 // Return PluginData (if connected)
 router.get('/:id', asyncHandler(async (req, res) => {
   await session.reqAuthenticated(req)
-  /** @type {PluginData} */
-  const pluginInfo = await fs.readJson(resolvePath(pluginsDir, path.join(req.params.id, 'plugin.json')))
-  res.send(await preparePluginInfo(pluginInfo))
+  try {
+    /** @type {PluginData} */
+    const pluginInfo = await fs.readJson(resolvePath(pluginsDir, path.join(req.params.id, 'plugin.json')))
+    res.send(await preparePluginInfo(pluginInfo))
+  } catch (/** @type {any} */ e) {
+    if (e.code === 'ENOENT') res.status(404).send('Plugin not found')
+    else throw e
+  }
 }))
 
 router.delete('/:id', permissions.isSuperAdmin, asyncHandler(async (req, res) => {

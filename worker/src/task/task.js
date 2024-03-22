@@ -36,6 +36,7 @@ const axiosInstance = (processing) => {
 
   // apply default base url and send api key when relevant
   axiosInstance.interceptors.request.use(cfg => {
+    if (!cfg.url) throw new Error('missing url in axios request')
     if (!/^https?:\/\//i.test(cfg.url)) {
       if (cfg.url.startsWith('/')) cfg.url = config.dataFairUrl + cfg.url
       else cfg.url = config.dataFairUrl + '/' + cfg.url
@@ -49,8 +50,10 @@ const axiosInstance = (processing) => {
     const usePrivate =
       config.privateDataFairUrl &&
       isDataFairUrl &&
+      // @ts-ignore
       (config.getFromPrivateDataFairUrl || ['post', 'put', 'delete', 'patch'].includes(cfg.method))
     if (usePrivate) {
+      // @ts-ignore
       cfg.url = cfg.url.replace(config.dataFairUrl, config.privateDataFairUrl)
       cfg.headers.host = new URL(config.dataFairUrl).host
     }
@@ -84,7 +87,7 @@ const axiosInstance = (processing) => {
  */
 const wsInstance = (log, owner) => {
   return new DataFairWsClient({
-    url: config.privateDataFairUrl,
+    url: config.privateDataFairUrl || config.dataFairUrl,
     apiKey: config.dataFairAPIKey,
     log,
     adminMode: config.dataFairAdminMode,
@@ -95,7 +98,7 @@ const wsInstance = (log, owner) => {
 /**
  * Prepare log functions.
  * @param {import('mongodb').Db} db - Database.
- * @param {(channel: string, data: any) => void} wsPublish - Publish function.
+ * @param {(channel: string, data: any) => Promise<void>} wsPublish - Publish function.
  * @param {import('../../../shared/types/processing/index.js').Processing} processing - Processing.
  * @param {import('../../../shared/types/run/index.js').Run} run - Run.
  * @returns {import('@data-fair/lib/processings/types.js').LogFunctions} Log functions.
@@ -106,16 +109,17 @@ const prepareLog = (db, wsPublish, processing, run) => {
    */
   const pushLog = async (log) => {
     log.date = new Date().toISOString()
+    // @ts-ignore _id is a valid id
     await db.collection('runs').updateOne({ _id: run._id }, { $push: { log } })
     await wsPublish(`processings/${processing._id}/run-log`, { _id: run._id, log })
   }
 
   return {
     step: async (msg) => await pushLog({ type: 'step', msg }),
-    error: async (msg, extra) => await pushLog({ type: 'error', msg, extra }),
-    warning: async (msg, extra) => await pushLog({ type: 'warning', msg, extra }),
-    info: async (msg, extra) => await pushLog({ type: 'info', msg, extra }),
-    debug: async (msg, extra) => { if (!processing.debug) await pushLog({ type: 'debug', msg, extra }) },
+    error: async (msg, extra = '') => await pushLog({ type: 'error', msg, extra }),
+    warning: async (msg, extra = '') => await pushLog({ type: 'warning', msg, extra }),
+    info: async (msg, extra = '') => await pushLog({ type: 'info', msg, extra }),
+    debug: async (msg, extra = '') => { if (!processing.debug) await pushLog({ type: 'debug', msg, extra }) },
     task: async (msg) => await pushLog({ type: 'task', msg }),
     progress: async (msg, progress, total) => {
       const progressDate = new Date().toISOString()
@@ -131,9 +135,15 @@ const prepareLog = (db, wsPublish, processing, run) => {
  * Run a processing.
  * @param {import('mongodb').Db} db - Database.
  * @param {any} mailTransport - Mail transport.
- * @param {(channel: string, data: any) => void} wsPublish - Publish function.
+ * @param {(channel: string, data: any) => Promise<void>} wsPublish - Publish function.
 */
 export const run = async (db, mailTransport, wsPublish) => {
+  /**
+   * @type {[
+   *   import('../../../shared/types/run/index.js').Run,
+   *   import('../../../shared/types/processing/index.js').Processing
+   * ]}
+   */
   const [run, processing] = await Promise.all([
     db.collection('runs').findOne({ _id: process.argv[2] }),
     db.collection('processings').findOne({ _id: process.argv[3] })
@@ -147,7 +157,6 @@ export const run = async (db, mailTransport, wsPublish) => {
   }
   await running(db, wsPublish, run)
   const pluginDir = path.resolve(config.dataDir, 'plugins', processing?.plugin)
-
   let pluginConfig = {}
   if (await fs.pathExists(pluginDir + '-config.json')) {
     pluginConfig = await fs.readJson(pluginDir + '-config.json')
@@ -160,6 +169,8 @@ export const run = async (db, mailTransport, wsPublish) => {
   await fs.ensureDir(dir)
   const tmpDir = await tmp.dir({ unsafeCleanup: true, dir: config.tmpDir || path.resolve(config.dataDir, 'tmp') })
   const processingConfig = processing?.config || {}
+
+  /** @type {import('@data-fair/lib/processings/types.js').ProcessingContext} */
   const context = {
     pluginConfig,
     processingConfig,
@@ -189,9 +200,12 @@ export const run = async (db, mailTransport, wsPublish) => {
     else await log.info('L\'exécution est terminée', '')
   } catch (/** @type {any} */ err) {
     process.chdir(cwd)
-    const errStatus = err.status ?? err.statusCode
-    let httpMessage = err.data && typeof err.data === 'string' ? err.data : (err.statusText ?? err.statusMessage)
-    if (errStatus && httpMessage) {
+    let httpMessage = err.statusText ?? err.statusMessage ?? err.status ?? err.statusCode
+    if (httpMessage) {
+      if (err.data) {
+        if (typeof err.data === 'string') httpMessage += ' - ' + err.data
+        else httpMessage += ' - ' + JSON.stringify(err.data)
+      }
       if (err.config && err.config.url) {
         let url = err.config.url
         url = url.replace(config.privateDataFairUrl, '')

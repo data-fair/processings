@@ -10,13 +10,13 @@ export const channel = async (db) => {
 
 /**
  * @param {import('mongodb').Db} db
- * @returns {Promise<(channel: string, data: any) => void>}
+ * @returns {Promise<(channel: string, data: any) => Promise<void>>}
  */
 export const initPublisher = async (db) => {
   // Write to pubsub channel
   const mongoChannel = await channel(db)
   await mongoChannel.insertOne({ type: 'init' })
-  return (channel, data) => {
-    mongoChannel.insertOne({ type: 'message', channel, data })
+  return async (channel, data) => {
+    await mongoChannel.insertOne({ type: 'message', channel, data })
   }
 }
