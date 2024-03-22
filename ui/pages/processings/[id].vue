@@ -79,6 +79,7 @@ const session = useSession()
 const edited = ref(false)
 /** @type {import('vue').Ref<import('../../../shared/types/index.js').processingType>} */
 const editProcessing = ref(null)
+const patching = ref(false)
 /** @type {import('vue').Ref<import('../../../shared/types/index.js').processingType>} */
 const processing = ref(null)
 const plugin = ref(null)
@@ -170,6 +171,8 @@ async function fetchPlugin() {
 }
 
 async function patch() {
+  if (patching.value) return
+  patching.value = true
   if (editProcessing.value.scheduling && editProcessing.value.scheduling.type === 'weekly') {
     if (editProcessing.value.scheduling.dayOfWeek === '*') editProcessing.value.scheduling.dayOfWeek = '1'
     renderVjsfKey.value += 1
@@ -180,5 +183,6 @@ async function patch() {
     body: JSON.stringify({ ...editProcessing.value })
   })
   edited.value = false
+  patching.value = false
 }
 </script>
