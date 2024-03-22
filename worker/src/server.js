@@ -14,6 +14,7 @@ import Debug from 'debug'
 const debug = Debug('worker')
 const debugLoop = Debug('worker-loop')
 
+/** @type {boolean} */
 let stopped = false
 /** @type {(Promise<void> | null)[]} */
 const promisePool = []

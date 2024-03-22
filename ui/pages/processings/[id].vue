@@ -178,11 +178,16 @@ async function patch() {
     renderVjsfKey.value += 1
   }
   edited.value = true
-  await $fetch(`/api/v1/processings/${route.params.id}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ ...editProcessing.value })
-  })
+  try {
+    await $fetch(`/api/v1/processings/${route.params.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ ...editProcessing.value })
+    })
+  } catch (e) {
+    console.error(e)
+  } finally {
+    patching.value = false
+  }
   edited.value = false
-  patching.value = false
 }
 </script>
