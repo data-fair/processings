@@ -39,7 +39,6 @@ const props = defineProps({
 const eventBus = useEventBus()
 
 const loading = ref(false)
-// TODO type
 const runs = ref(null)
 
 const wsChannel = computed(() => `processings/${props.processing._id}/run-patch`)

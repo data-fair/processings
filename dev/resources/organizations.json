@@ -1,116 +1,180 @@
-[{
+[
+  {
     "id": "KWqAGZ4mG",
     "name": "Fivechat",
-    "members": [{
-      "id": "dmeadus0",
-      "role": "admin"
-    }, {
-      "id": "ngernier4",
-      "role": "contrib"
-    }, {
-      "id": "bhazeldean7",
-      "role": "user"
-    }]
+    "departments": [
+      {
+        "id": "dep1",
+        "name": "department 1"
+      },
+      {
+        "id": "dep2",
+        "name": "department 2"
+      }
+    ],
+    "members": [
+      {
+        "id": "dmeadus0",
+        "role": "admin"
+      },
+      {
+        "id": "ngernier4",
+        "role": "contrib"
+      },
+      {
+        "id": "bhazeldean7",
+        "role": "user"
+      },
+      {
+        "id": "icarlens9",
+        "role": "contrib",
+        "department": "dep2"
+      },
+      {
+        "id": "ddecruce5",
+        "role": "contrib",
+        "department": "dep1"
+      },
+      {
+        "id": "hlalonde3",
+        "role": "admin",
+        "department": "dep1"
+      },
+      {
+        "id": "hlalonde3",
+        "role": "admin",
+        "department": "dep2"
+      }
+    ]
   },
   {
     "id": "ihMQiGTaY",
     "name": "Blogpad",
-    "members": [{
-      "id": "ngernier4",
-      "role": "admin"
-    }, {
-      "id": "icarlens9",
-      "role": "user"
-    }, {
-      "id": "ddecruce5",
-      "role": "user"
-    }]
+    "members": [
+      {
+        "id": "ngernier4",
+        "role": "admin"
+      },
+      {
+        "id": "icarlens9",
+        "role": "user"
+      },
+      {
+        "id": "ddecruce5",
+        "role": "user"
+      }
+    ]
   },
   {
     "id": "3sSi7xDIK",
     "name": "Ntag",
-    "members": [{
-      "id": "cdurning2",
-      "role": "admin"
-    }, {
-      "id": "ccherryholme1",
-      "role": "admin"
-    }, {
-      "id": "icarlens9",
-      "role": "user"
-    }, {
-      "id": "hlalonde3",
-      "role": "user"
-    }, {
-      "id": "dmeadus0",
-      "role": "user"
-    }]
+    "members": [
+      {
+        "id": "cdurning2",
+        "role": "admin"
+      },
+      {
+        "id": "ccherryholme1",
+        "role": "admin"
+      },
+      {
+        "id": "icarlens9",
+        "role": "user"
+      },
+      {
+        "id": "hlalonde3",
+        "role": "user"
+      },
+      {
+        "id": "dmeadus0",
+        "role": "user"
+      }
+    ]
   },
   {
     "id": "uakapD5tu",
     "name": "Skilith",
-    "members": [{
-      "id": "cdurning2",
-      "role": "admin"
-    }, {
-      "id": "vdulany6",
-      "role": "user"
-    }]
+    "members": [
+      {
+        "id": "cdurning2",
+        "role": "admin"
+      },
+      {
+        "id": "vdulany6",
+        "role": "user"
+      }
+    ]
   },
   {
     "id": "Yty0BxuZG",
     "name": "Topicblab",
-    "members": [{
-      "id": "icarlens9",
-      "role": "admin"
-    }]
+    "members": [
+      {
+        "id": "icarlens9",
+        "role": "admin"
+      }
+    ]
   },
   {
     "id": "EnTgB2UbH",
     "name": "Livefish",
-    "members": [{
-      "id": "vdulany6",
-      "role": "admin"
-    }, {
-      "id": "ngernier4",
-      "role": "admin"
-    }, {
-      "id": "cdurning2",
-      "role": "user"
-    }, {
-      "id": "bhazeldean7",
-      "role": "user"
-    }, {
-      "id": "dhannan8",
-      "role": "user"
-    }]
+    "members": [
+      {
+        "id": "vdulany6",
+        "role": "admin"
+      },
+      {
+        "id": "ngernier4",
+        "role": "admin"
+      },
+      {
+        "id": "cdurning2",
+        "role": "user"
+      },
+      {
+        "id": "bhazeldean7",
+        "role": "user"
+      },
+      {
+        "id": "dhannan8",
+        "role": "user"
+      },
+      {
+        "id": "superadmin",
+        "role": "admin"
+      }
+    ]
   },
   {
     "id": "koumoul",
     "name": "Koumoul",
-    "members": [{
-      "id": "albanm",
-      "role": "admin"
-    }, {
-      "id": "superadmin",
-      "role": "admin"
-    }, {
-      "id": "dhannan8",
-      "role": "user"
-    }, {
-      "id": "admin1",
-      "role": "admin"
-    }, {
-      "id": "contrib1",
-      "role": "contrib"
-    }, {
-      "id": "user1",
-      "role": "user"
-    }],
-    "partners": [{
-      "id": "KWqAGZ4mG",
-      "name": "Fivechat",
-      "contactEmail": "dmeadus0@answers.com"
-    }]
+    "members": [
+      {
+        "id": "albanm",
+        "role": "admin"
+      },
+      {
+        "id": "superadmin",
+        "role": "admin"
+      },
+      {
+        "id": "dhannan8",
+        "role": "user"
+      },
+      {
+        "id": "user1",
+        "role": "user"
+      },
+      {
+        "id": "contrib1",
+        "role": "contrib"
+      }
+    ],
+    "partners": [
+      {
+        "id": "KWqAGZ4mG",
+        "name": "Fivechat"
+      }
+    ]
   }
 ]

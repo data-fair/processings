@@ -79,9 +79,14 @@ const preparePluginInfo = async (pluginInfo) => {
   return { ...pluginInfo, customName }
 }
 
-// Install a plugin
-// superAdmin only
-// req.body: { name: string, description: string, version: string, distTag: string }
+/**
+ * Install a plugin
+ * SuperAdmin only
+ *
+ * @param {import('express').Request} req
+ * req.body: { name: string, description: string, version: string, distTag: string }
+ * @param {import('express').Response} res
+ */
 router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
   /** @type {PluginData} */
   const plugin = req.body
@@ -113,7 +118,7 @@ router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
 
 // List installed plugins (optional: privateAccess=[type]:[id)
 router.get('/', asyncHandler(async (req, res) => {
-  const reqSession = await session.reqAuthenticated(req)
+  const sessionState = await session.reqAuthenticated(req)
 
   const dirs = (await fs.readdir(pluginsDir)).filter(p => !p.endsWith('.json'))
   const results = []
@@ -122,13 +127,13 @@ router.get('/', asyncHandler(async (req, res) => {
     const pluginInfo = await fs.readJson(path.join(pluginsDir, dir, 'plugin.json'))
     const access = await fs.pathExists(path.join(pluginsDir, dir + '-access.json')) ? await fs.readJson(path.join(pluginsDir, dir + '-access.json')) : { public: false, privateAccess: [] }
 
-    if (reqSession.user.adminMode) {
+    if (sessionState.user.adminMode) {
       const pluginConfigPath = path.join(pluginsDir, dir + '-config.json')
       if (await fs.pathExists(pluginConfigPath)) pluginInfo.config = await fs.readJson(pluginConfigPath)
       pluginInfo.access = access
     } else if (req.query.privateAccess && typeof req.query.privateAccess === 'string') {
       const [type, id] = req.query.privateAccess.split(':')
-      if (type !== reqSession.account.type || id !== reqSession.account.id) {
+      if (type !== sessionState.account.type || id !== sessionState.account.id) {
         return res.status(403).send('privateAccess does not match current account')
       }
       if (!access.public && !access.privateAccess.find((/** @type {{type: string, id: string}} */p) => p.type === type && p.id === id)) {

@@ -9,7 +9,6 @@ services:
     network_mode: host
     volumes:
       - ./dev/resources/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./dev/data/:/data
 
   #####
   # related services from the data-fair stack
@@ -32,6 +31,7 @@ services:
       - AUTHRATELIMIT_ATTEMPTS=200
       - OBSERVER_ACTIVE=false
       - MANAGE_PARTNERS=true
+      - MANAGE_DEPARTMENTS=true
     volumes:
       - ./dev/resources/users.json:/webapp/data/users.json
       - ./dev/resources/organizations.json:/webapp/data/organizations.json
