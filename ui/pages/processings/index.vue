@@ -34,7 +34,7 @@
         <v-card
           v-if="user.adminMode"
           flat
-          class="px-3 adminSwitch"
+          class="mt-4 px-3 adminSwitch"
         >
           <v-switch
             v-model="showAll"
@@ -60,7 +60,7 @@
           <v-card
             v-if="user.adminMode"
             variant="text"
-            class="px-3 adminSwitch"
+            class="mt-4 px-3 adminSwitch"
           >
             <v-switch
               v-model="showAll"
@@ -88,6 +88,7 @@ const eventBus = useEventBus()
 const route = useRoute()
 const session = useSession()
 
+const filteredPlugins = ref([])
 const filteredStatuses = ref([])
 /** @type {any} */
 const installedPlugins = ref({})
@@ -95,6 +96,7 @@ const installedPlugins = ref({})
 const processings = ref(null)
 const showAll = ref(false)
 const searchResults = ref('')
+const selectedPlugins = ref([])
 
 const activeAccount = computed(() => session.state.account)
 const user = computed(() => session.state.user)
@@ -145,6 +147,7 @@ const displayProcessings = computed(() => {
 onMounted(async () => {
   await refresh()
   await fetchInstalledPlugins()
+  refreshPlugins()
 })
 
 eventBus.on('search', (results) => {
@@ -156,11 +159,19 @@ eventBus.on('status', (statuses) => {
   refreshProcessings()
 })
 
+eventBus.on('plugin', (plugins) => {
+  filteredPlugins.value = plugins
+  refreshPlugins()
+})
+
 function refreshProcessings() {
   let results = processings.value?.results || []
   if (searchResults.value.length > 0) {
     results = results.filter(result => result.title.includes(searchResults.value))
   }
+  results = results.filter(processing => {
+    return selectedPlugins.value.find(plugin => plugin.id === processing.plugin)
+  })
   if (filteredStatuses.value.length === 0) {
     return results
   }
@@ -195,6 +206,19 @@ function refreshProcessings() {
   })
 
   return finalArray
+}
+
+function refreshPlugins() {
+  if (!installedPlugins.value) return
+  const results = installedPlugins.value.results || []
+  if (selectedPlugins.value.length === 0 || filteredPlugins.value.length === 0) {
+    selectedPlugins.value = results
+  } else {
+    selectedPlugins.value = results.filter(plugin => {
+      const customName = plugin.customName.split(' (')[0]
+      return filteredPlugins.value.includes(customName)
+    })
+  }
 }
 
 async function fetchInstalledPlugins() {

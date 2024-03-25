@@ -102,6 +102,21 @@
       @click="getProcessingStatus()"
       @update:model-value="eventBus.emit('status', selectedStatuses)"
     />
+    <v-select
+      v-model="selectedPlugins"
+      :items="plugins"
+      clearable
+      chips
+      closable-chips
+      label="Plugin"
+      multiple
+      rounded="xl"
+      variant="outlined"
+      style="max-width:400px;"
+      class="mt-4 mx-4"
+      @click="getUsedPlugins()"
+      @update:model-value="eventBus.emit('plugin', selectedPlugins)"
+    />
   </v-list>
 </template>
 
@@ -111,7 +126,7 @@ import { ref } from 'vue'
 
 const eventBus = useEventBus()
 
-const props = defineProps({
+const processingProps = defineProps({
   installedPlugins: { type: Object, required: true },
   isSmall: Boolean,
   processings: { type: Array, required: true }
@@ -120,7 +135,9 @@ const props = defineProps({
 const inCreate = ref(false)
 const showCreateMenu = ref(false)
 const newProcessing = ref({})
+const plugins = ref([])
 const search = ref('')
+const selectedPlugins = ref([])
 const selectedStatuses = ref([])
 const statuses = ref([])
 
@@ -136,9 +153,9 @@ const statusText = {
 }
 
 function getProcessingStatus() {
-  if (!props.processings) return statuses
+  if (!processingProps.processings) return statuses
   const array = []
-  for (const processing of props.processings) {
+  for (const processing of processingProps.processings) {
     if (processing.lastRun) {
       const status = processing.lastRun.status
       let includes = false
@@ -192,6 +209,16 @@ function getProcessingStatus() {
   return statuses
 }
 
+function getUsedPlugins() {
+  if (!processingProps.processings) return plugins
+  const array = []
+  for (const plugin of processingProps.installedPlugins.results) {
+    array.push(plugin.customName.split(' (')[0])
+  }
+  plugins.value = Array.from(new Set(array)).sort()
+  return plugins
+}
+
 const createProcessing = async () => {
   inCreate.value = true
   const processing = await $fetch('/api/v1/processings', {
@@ -204,5 +231,8 @@ const createProcessing = async () => {
 }
 </script>
 
-<style>
+<style scoped>
+:deep(.v-input .v-input__details) {
+  display: none;
+}
 </style>
