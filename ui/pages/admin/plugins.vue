@@ -103,7 +103,7 @@
           <p class="mb-0">
             {{ result.description }}
           </p>
-          <private-access
+          <PrivateAccess
             :patch="result.access"
             @change="saveAccess(result)"
           />

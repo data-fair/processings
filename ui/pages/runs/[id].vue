@@ -10,12 +10,12 @@
     </v-row>
     <v-row>
       <v-col>
-        <run-list-item
+        <RunListItem
           class="mb-4"
           :run="run"
           :can-exec="canExec"
         />
-        <run-logs-list
+        <RunLogsList
           v-if="steps.length === 1 && !steps[0].msg"
           :logs="steps[0].children"
         />
@@ -46,7 +46,7 @@
               </span>
             </v-expansion-panel-title>
             <v-expansion-panel-text v-if="step.children.length">
-              <run-logs-list :logs="step.children" />
+              <RunLogsList :logs="step.children" />
             </v-expansion-panel-text>
           </v-expansion-panel>
         </v-expansion-panels>
@@ -56,8 +56,6 @@
 </template>
 
 <script setup>
-import RunListItem from '~/components/run/run-list-item.vue'
-import RunLogsList from '~/components/run/run-logs-list.vue'
 import useEventBus from '~/composables/event-bus'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'

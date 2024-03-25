@@ -15,7 +15,7 @@
               sm="6"
               cols="12"
             >
-              <processing-card
+              <ProcessingCard
                 :processing="processing"
                 :show-owner="showAll"
                 :plugin="installedPlugins.results && installedPlugins.results.find(p => p.id === processing.plugin)"
@@ -24,8 +24,8 @@
           </v-row>
         </v-container>
       </v-col>
-      <layout-navigation-right v-if="$vuetify.display.lgAndUp">
-        <processings-actions
+      <LayoutNavigationRight v-if="$vuetify.display.lgAndUp">
+        <ProcessingsActions
           v-if="canAdmin"
           :is-small="false"
           :installed-plugins="installedPlugins"
@@ -34,7 +34,7 @@
         <v-card
           v-if="user.adminMode"
           flat
-          class="mt-4 px-3 adminSwitch"
+          class="mt-4 px-6 adminSwitch"
         >
           <v-switch
             v-model="showAll"
@@ -46,13 +46,13 @@
             @update:model-value="refresh()"
           />
         </v-card>
-      </layout-navigation-right>
-      <layout-actions-button
+      </LayoutNavigationRight>
+      <LayoutActionsButton
         v-else-if="canAdmin"
         class="pt-2"
       >
         <template #actions>
-          <processings-actions
+          <ProcessingsActions
             :is-small="true"
             :installed-plugins="installedPlugins"
             :processings="displayProcessings"
@@ -60,7 +60,7 @@
           <v-card
             v-if="user.adminMode"
             variant="text"
-            class="mt-4 px-3 adminSwitch"
+            class="px-6 adminSwitch"
           >
             <v-switch
               v-model="showAll"
@@ -73,7 +73,7 @@
             />
           </v-card>
         </template>
-      </layout-actions-button>
+      </LayoutActionsButton>
     </v-row>
   </v-container>
 </template>

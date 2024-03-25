@@ -13,7 +13,7 @@
           :key="run._id"
         >
           <v-divider />
-          <run-list-item
+          <RunListItem
             :run="run"
             :link="true"
             :can-exec="canExec"
@@ -25,7 +25,6 @@
 </template>
 
 <script setup>
-import RunListItem from '~/components/run/run-list-item.vue'
 import useEventBus from '~/composables/event-bus'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 

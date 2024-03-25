@@ -1,7 +1,7 @@
 <template>
   <div class="v-app">
     <v-app>
-      <ClientOnly><AppBar v-if="dev()" /></ClientOnly>
+      <LayoutAppBar v-if="dev()" />
       <v-main>
         <NuxtPage />
         <Notifications />
@@ -12,8 +12,6 @@
 
 <script setup>
 import 'iframe-resizer/js/iframeResizer.contentWindow'
-import AppBar from '~/components/layout/app-bar.vue'
-import Notifications from '~/components/notifications.vue'
 
 globalThis.iFrameResizer = {
   heightCalculationMethod: 'taggedElement'
@@ -38,8 +36,6 @@ useHead({
   ]
 })
 </script>
-
-<components :Notifications="Notifications" />
 
 <style>
 </style>

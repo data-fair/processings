@@ -121,7 +121,7 @@
       v-if="showOwner"
       class="pl-3"
     >
-      <owner-short
+      <OwnerShort
         :owner="processing.owner"
       />
       <v-spacer />
@@ -130,7 +130,6 @@
 </template>
 
 <script setup>
-import OwnerShort from '~/components/owner/owner-short.vue'
 import { ref } from 'vue'
 
 defineProps({

@@ -18,7 +18,7 @@
             @update:model-value="patch()"
           >
             <template #custom-time-zone="{value, disabled, on}">
-              <time-zone-select
+              <TimeZoneSelect
                 :value="value"
                 :disabled="disabled"
                 v-on="on"
@@ -33,8 +33,8 @@
           :can-exec="canExecProcessing"
         />
       </v-col>
-      <layout-navigation-right v-if="$vuetify.display.lgAndUp">
-        <processing-actions
+      <LayoutNavigationRight v-if="$vuetify.display.lgAndUp">
+        <ProcessingActions
           :processing="processing"
           :processing-schema="processingSchema"
           :can-admin="canAdminProcessing"
@@ -43,13 +43,13 @@
           :is-small="false"
           @triggered="runs.refresh()"
         />
-      </layout-navigation-right>
-      <layout-actions-button
+      </LayoutNavigationRight>
+      <LayoutActionsButton
         v-else
         class="pt-2"
       >
         <template #actions>
-          <processing-actions
+          <ProcessingActions
             :processing="processing"
             :processing-schema="processingSchema"
             :can-admin="canAdminProcessing"
@@ -59,7 +59,7 @@
             @triggered="runs.refresh()"
           />
         </template>
-      </layout-actions-button>
+      </LayoutActionsButton>
     </v-row>
   </v-container>
 </template>
