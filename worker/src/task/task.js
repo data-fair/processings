@@ -73,6 +73,8 @@ const axiosInstance = (processing) => {
       if (response.config.data && response.config.data._writableState) delete response.config.data
     }
     if (response.data && response.data._readableState) delete response.data
+    if (error.message) response.message = error.message
+    if (error.stack) response.stack = error.stack
     return Promise.reject(response)
   })
 
@@ -200,12 +202,17 @@ export const run = async (db, mailTransport, wsPublish) => {
     else await log.info('L\'exécution est terminée', '')
   } catch (/** @type {any} */ err) {
     process.chdir(cwd)
-    let httpMessage = err.statusText ?? err.statusMessage ?? err.status ?? err.statusCode
+    let httpMessage = err.status ?? err.statusCode
     if (httpMessage) {
+      const statusText = err.statusText ?? err.statusMessage
+      if (statusText) httpMessage += ' - ' + statusText
       if (err.data) {
         if (typeof err.data === 'string') httpMessage += ' - ' + err.data
         else httpMessage += ' - ' + JSON.stringify(err.data)
+      } else if (err.message) {
+        httpMessage += ' - ' + err.message
       }
+
       if (err.config && err.config.url) {
         let url = err.config.url
         url = url.replace(config.privateDataFairUrl, '')

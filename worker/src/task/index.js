@@ -4,7 +4,7 @@ import { initPublisher } from '../../../shared/ws.js'
 import config from '../config.js'
 import { run, stop } from './task.js'
 
-process.on('SIGTERM', function onSigterm() {
+process.on('SIGTERM', function onSigterm () {
   console.info('Received SIGTERM signal, shutdown gracefully...')
   stop().then(() => {
     console.log('shutting down now')
