@@ -68,7 +68,7 @@
 import '@koumoul/vjsf-markdown'
 import contractProcessing from '../../../contract/processing'
 import Vjsf from '@koumoul/vjsf'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSession } from '@data-fair/lib/vue/session.js'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
@@ -76,9 +76,11 @@ import { v2compat } from '@koumoul/vjsf/compat/v2'
 const route = useRoute()
 const session = useSession()
 
+const currentPatch = ref(null)
 const edited = ref(false)
 /** @type {import('vue').Ref<import('../../../shared/types/index.js').processingType>} */
 const editProcessing = ref(null)
+const nextPatch = ref(null)
 const patching = ref(false)
 /** @type {import('vue').Ref<import('../../../shared/types/index.js').processingType>} */
 const processing = ref(null)
@@ -171,8 +173,12 @@ async function fetchPlugin() {
 }
 
 async function patch() {
-  if (patching.value) return
+  if (patching.value) {
+    if (nextPatch.value !== editProcessing.value && currentPatch.value !== editProcessing.value) nextPatch.value = editProcessing.value
+    return
+  }
   patching.value = true
+  currentPatch.value = editProcessing.value
   if (editProcessing.value.scheduling && editProcessing.value.scheduling.type === 'weekly') {
     if (editProcessing.value.scheduling.dayOfWeek === '*') editProcessing.value.scheduling.dayOfWeek = '1'
     renderVjsfKey.value += 1
@@ -187,7 +193,23 @@ async function patch() {
     console.error(e)
   } finally {
     patching.value = false
+    edited.value = false
   }
-  edited.value = false
 }
+
+watch(() => nextPatch.value, async value => {
+  if (value) {
+    await /** @type {Promise<void>} */(new Promise(resolve => {
+      const interval = setInterval(() => {
+        if (!patching.value) {
+          clearInterval(interval)
+          resolve()
+        }
+      }, 100)
+    }))
+    editProcessing.value = value
+    nextPatch.value = null
+    await patch()
+  }
+})
 </script>
