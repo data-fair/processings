@@ -14,23 +14,21 @@ const processingsDir = path.resolve(config.dataDir, 'processings')
  * @returns {Promise<void>} nothing
  */
 export const applyProcessing = async (db, processing) => {
+  /** @type {import('mongodb').Collection<import('../../../shared/types/processing/index.js').Processing>} */
+  const processingsCollection = db.collection('processings')
+  const runsCollection = db.collection('runs')
+
   // if processing is deactivated, cancel pending runs
   if (!processing.active) {
-    await db.collection('processings')
-      // @ts-ignore
-      .updateOne({ _id: processing._id }, { $unset: { nextRun: '' } })
-    await db.collection('runs')
-      .deleteMany({ 'processing._id': processing._id, status: { $in: ['scheduled', 'triggered'] } })
+    await processingsCollection.updateOne({ _id: processing._id }, { $unset: { nextRun: '' } })
+    await runsCollection.deleteMany({ 'processing._id': processing._id, status: { $in: ['scheduled', 'triggered'] } })
     return
   }
 
   // if processing is set on manual trigger, cancel job that might have been scheduled previously
   if (processing.scheduling.type === 'trigger') {
-    await db.collection('processings')
-      // @ts-ignore
-      .updateOne({ _id: processing._id }, { $unset: { nextRun: '' } })
-    await db.collection('runs')
-      .deleteMany({ 'processing._id': processing._id, status: 'scheduled' })
+    await processingsCollection.updateOne({ _id: processing._id }, { $unset: { nextRun: '' } })
+    await runsCollection.deleteMany({ 'processing._id': processing._id, status: 'scheduled' })
     return
   }
 

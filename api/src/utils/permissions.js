@@ -1,4 +1,5 @@
 import { session } from '@data-fair/lib/express/index.js'
+import config from '../config.js'
 
 /**
  * @param {import('@data-fair/lib/express/index.js').SessionStateAuthenticated} sessionState
@@ -52,7 +53,7 @@ const isMember = (sessionState, owner) => {
 }
 
 /**
- * @param {import('@data-fair/lib/express/index.js').SessionState} sessionState
+ * @param {import('@data-fair/lib/express/index.js').SessionStateAuthenticated} sessionState
  * @param {import('@data-fair/lib/express/index.js').Account} owner
  * @returns {any}
  */
@@ -62,8 +63,7 @@ const getOwnerPermissionFilter = (sessionState, owner) => {
     'owner.type': owner.type,
     'owner.id': owner.id
   }
-  // @ts-ignore
-  if (sessionState.user?.adminMode || ['admin', 'contrib'].includes(getOwnerRole(sessionState, owner))) return filter
+  if (sessionState.user?.adminMode || ['admin', 'contrib'].includes(getOwnerRole(sessionState, owner) || '')) return filter
   /** @type {any[]} */
   const or = [{ 'target.type': 'userEmail', 'target.email': sessionState.user?.email }]
   if (sessionState.account?.type === 'organization') {
@@ -93,14 +93,14 @@ const matchPermissionTarget = (target, sessionState) => {
  * @param {import('@data-fair/lib/express/index.js').Account} owner
  * @param {import('../../../shared/types/permission/index.js').Permission[] | undefined} permissions
  * @param {import('@data-fair/lib/express/index.js').SessionStateAuthenticated} sessionState
- * @param {string|undefined} secondaryHost
+ * @param {string|undefined} host req.headers.host
  * @returns {string | undefined}
  */
-const getUserResourceProfile = (owner, permissions, sessionState, secondaryHost) => {
+const getUserResourceProfile = (owner, permissions, sessionState, host) => {
   // this line is first, a manual permission cannot demote an admin
   const ownerRole = getOwnerRole(sessionState, owner)
   if (ownerRole === 'admin') {
-    if (secondaryHost) return 'exec' // no admin functionality in portals
+    if (new URL(config.origin).host !== host) return 'exec' // no admin functionality in portals
     return 'admin'
   }
   for (const profile of ['read', 'exec']) {

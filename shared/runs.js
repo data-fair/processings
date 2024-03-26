@@ -25,10 +25,14 @@ export const createNext = async (db, processing, triggered = false, delaySeconds
     permissions: processing.permissions || []
   }
 
+  /** @type {import('mongodb').Collection<import('./types/run/index.js').Run>} */
+  const runsCollection = db.collection('runs')
   // cancel one that might have been scheduled previously
   if (triggered) {
-    await db.collection('runs')
-      .deleteMany({ 'processing._id': processing._id, status: { $in: ['triggered', 'scheduled'] } })
+    await runsCollection.deleteMany({
+      'processing._id': processing._id,
+      status: { $in: ['triggered', 'scheduled'] }
+    })
     if (delaySeconds) {
       const scheduledAt = moment()
       scheduledAt.add(delaySeconds, 'seconds')
@@ -37,8 +41,7 @@ export const createNext = async (db, processing, triggered = false, delaySeconds
       run.scheduledAt = run.createdAt
     }
   } else {
-    await db.collection('runs')
-      .deleteMany({ 'processing._id': processing._id, status: 'scheduled' })
+    await runsCollection.deleteMany({ 'processing._id': processing._id, status: 'scheduled' })
     const cron = toCRON(processing.scheduling)
     const timeZone = processing.scheduling.timeZone || 'Europe/Paris'
     const job = new CronJob(cron, () => { }, () => { }, false, timeZone)
@@ -47,8 +50,7 @@ export const createNext = async (db, processing, triggered = false, delaySeconds
   }
 
   runType.assertValid(run)
-  // @ts-ignore run is a valid document
-  await db.collection('runs').insertOne(run)
+  await runsCollection.insertOne(run)
   const nextRun = {
     _id: run._id,
     createdAt: run.createdAt,
@@ -56,8 +58,10 @@ export const createNext = async (db, processing, triggered = false, delaySeconds
     permissions: run.permissions,
     scheduledAt: run.scheduledAt
   }
-  await db.collection('processings').updateOne(
-    // @ts-ignore _id is a valid id
+
+  /** @type {import('mongodb').Collection<import('./types/processing/index.js').Processing>} */
+  const processingsCollection = db.collection('processings')
+  await processingsCollection.updateOne(
     { _id: run.processing._id },
     { $set: { nextRun } }
   )
