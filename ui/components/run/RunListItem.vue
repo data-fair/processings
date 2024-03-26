@@ -91,7 +91,6 @@
 const nuxtApp = useNuxtApp()
 const dayjs = nuxtApp.$dayjs
 
-const emit = defineEmits(['update:run'])
 const props = defineProps({
   canExec: Boolean,
   link: Boolean,
@@ -113,7 +112,7 @@ const kill = async () => {
   await $fetch(`/api/v1/runs/${props.run._id}/_kill`, {
     method: 'POST'
   })
-  emit('update:run', { ...props.run, status: 'kill' })
+  props.run.status = 'kill'
 }
 </script>
 

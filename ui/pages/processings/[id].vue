@@ -17,11 +17,10 @@
             :options="vjsfOptions"
             @update:model-value="patch()"
           >
-            <template #custom-time-zone="{value, disabled, on}">
+            <template #custom-time-zone>
               <TimeZoneSelect
-                :value="value"
-                :disabled="disabled"
-                v-on="on"
+                :value="editProcessing?.config?.timeZone"
+                @tzchange="handleTimeZoneChange"
               />
             </template>
           </vjsf>
@@ -76,16 +75,19 @@ import { v2compat } from '@koumoul/vjsf/compat/v2'
 const route = useRoute()
 const session = useSession()
 
-/** @type {Ref<import('../../../shared/types/index.js').processingType|null>} */
+/** @typedef {import('../../../shared/types/processing/index.js').Processing} Processing */
+
+/** @type {Ref<Processing|null>} */
 const currentPatch = ref(null)
 const edited = ref(false)
-/** @type {Ref<import('../../../shared/types/index.js').processingType|null>} */
+/** @type {Ref<Processing|null>} */
 const editProcessing = ref(null)
-/** @type {Ref<import('../../../shared/types/index.js').processingType|null>} */
+/** @type {Ref<Processing|null>} */
 const nextPatch = ref(null)
 const patching = ref(false)
-/** @type {Ref<import('../../../shared/types/index.js').processingType|null>} */
+/** @type {Ref<Processing|null>} */
 const processing = ref(null)
+/** @type {Record<String, any>} */
 const plugin = ref(null)
 const runs = ref(null)
 const renderVjsfKey = ref(0)
@@ -104,6 +106,24 @@ const canExecProcessing = computed(() => {
   return ['admin', 'exec'].includes(processing.value.userProfile)
 })
 
+/**
+ * @param {Record<String, any>} object
+ */
+function updateCustomTimeZone(object) {
+  Object.keys(object).forEach(key => {
+    const value = object[key]
+
+    if (value && typeof value === 'object') {
+      updateCustomTimeZone(value)
+    }
+
+    if (key === 'x-display' && value === 'custom-time-zone') {
+      object.layout = { slots: { component: 'custom-time-zone' } }
+      delete object[key]
+    }
+  })
+}
+
 const processingSchema = computed(() => {
   if (!plugin.value || !processing.value) return
   const schema = JSON.parse(JSON.stringify(contractProcessing))
@@ -114,14 +134,12 @@ const processingSchema = computed(() => {
       delete schema.properties[key]
     }
   })
+  updateCustomTimeZone(schema)
   schema.properties.config = {
-    // @ts-ignore
     ...plugin.value.processingConfigSchema,
-    // @ts-ignore
     title: 'Plugin ' + plugin.value.customName,
     'x-options': { deleteReadOnly: false }
   }
-  // @ts-ignore
   if (user.value?.adminMode) delete schema.properties.debug?.readOnly
   if (!canAdminProcessing.value) {
     delete schema.properties.permissions
@@ -158,7 +176,7 @@ const vjsfOptions = computed(() => {
     density: 'compact',
     readOnly: !canAdminProcessing.value,
     readOnlyPropertiesMode: 'remove',
-    validateOn: 'submit'
+    validateOn: 'blur'
   }
 })
 
@@ -174,15 +192,21 @@ async function fetchProcessing() {
 }
 
 async function fetchPlugin() {
-  // @ts-ignore
   if (processing.value && processing.value.plugin) {
-    // @ts-ignore
     plugin.value = await $fetch(`/api/v1/plugins/${processing.value.plugin}`)
     Object.keys(processingSchema.value.properties).forEach(key => {
       // @ts-ignore
       if (processingSchema.value.properties[key].readOnly) delete editProcessing.value[key]
     })
   }
+}
+
+/**
+ * @param {string} value
+ */
+async function handleTimeZoneChange(value) {
+  if (editProcessing.value?.config) editProcessing.value.config.timeZone = value
+  await patch()
 }
 
 async function patch() {
@@ -192,9 +216,7 @@ async function patch() {
   }
   patching.value = true
   currentPatch.value = editProcessing.value
-  // @ts-ignore
-  if (editProcessing.value.scheduling && editProcessing.value.scheduling.type === 'weekly') {
-    // @ts-ignore
+  if (editProcessing.value?.scheduling && editProcessing.value.scheduling.type === 'weekly') {
     if (editProcessing.value.scheduling.dayOfWeek === '*') editProcessing.value.scheduling.dayOfWeek = '1'
     renderVjsfKey.value += 1
   }
@@ -208,6 +230,7 @@ async function patch() {
     console.error(e)
   } finally {
     patching.value = false
+    currentPatch.value = null
     edited.value = false
   }
 }

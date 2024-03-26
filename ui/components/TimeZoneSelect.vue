@@ -5,10 +5,8 @@
     :label="t('tz')"
     :clearable="true"
     persistent-hint
-    :disabled="disabled"
-    :menu-props="{ origin: 'auto' }"
     :hint="t('defaultTZ', { defaultTimeZone })"
-    @update:model-value="$emit('update:modelValue', $event)"
+    @update:model-value="propagateEvent($event)"
   />
 </template>
 
@@ -26,12 +24,11 @@ import timeZones from 'timezones.json'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-defineEmits(['update:modelValue'])
-defineProps({
-  disabled: Boolean,
+const emit = defineEmits(['tzchange'])
+const props = defineProps({
   value: {
     type: String,
-    default: 'fr'
+    default: 'Europe/Paris'
   }
 })
 
@@ -46,7 +43,14 @@ const utcs = computed(() => {
   return utcs.sort()
 })
 
-const defaultTimeZone = 'fr'
+const defaultTimeZone = 'Europe/Paris'
+
+/**
+ * @param {string} newValue
+ */
+function propagateEvent(newValue) {
+  emit('tzchange', newValue)
+}
 </script>
 
 <style>

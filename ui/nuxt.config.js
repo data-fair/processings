@@ -1,5 +1,5 @@
 import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
-import { commonjsDeps, commonjsDepsPaths } from '@koumoul/vjsf/utils/build.js'
+import { commonjsDeps } from '@koumoul/vjsf/utils/build.js'
 import { defineNuxtConfig } from 'nuxt/config'
 
 export default defineNuxtConfig({
@@ -58,11 +58,6 @@ export default defineNuxtConfig({
   ssr: false,
   telemetry: false,
   vite: {
-    build: {
-      commonjsOptions: {
-        include: commonjsDepsPaths
-      }
-    },
     optimizeDeps: {
       include: commonjsDeps
     },

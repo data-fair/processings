@@ -13,13 +13,6 @@
       color="primary"
       append-inner-icon="mdi-magnify"
     />
-    <v-checkbox
-      v-model="showAll"
-      label="Afficher tous les plugins"
-      color="primary"
-      class="my-2"
-      @update:model-value="fetchAvailablePlugins"
-    />
     <v-list-subheader>{{ (installedPlugins.results && installedPlugins.results.length) || 0 }} plugins installés</v-list-subheader>
     <v-progress-linear
       v-if="!installedPlugins.results"
@@ -127,7 +120,18 @@
         </v-card-text>
       </v-card>
     </template>
-    <v-list-subheader>{{ (availablePlugins.results && availablePlugins.results.length) || 0 }} plugins disponibles</v-list-subheader>
+    <v-col>
+      <v-row>
+        <v-list-subheader>{{ (availablePlugins.results && availablePlugins.results.length) || 0 }} plugins disponibles</v-list-subheader>
+        <v-checkbox
+          v-model="showAll"
+          label="Afficher tous les plugins"
+          color="primary"
+          class="my-2"
+          @update:model-value="fetchAvailablePlugins"
+        />
+      </v-row>
+    </v-col>
     <v-progress-linear
       v-if="!availablePlugins.results || reloading"
       indeterminate
@@ -231,8 +235,10 @@ onMounted(async () => {
 window.onpopstate = async () => {
   const access = await checkAccess()
   if (access === true) {
-    await fetchInstalledPlugins()
-    await fetchAvailablePlugins()
+    await Promise.all([
+      fetchInstalledPlugins(),
+      fetchAvailablePlugins()
+    ])
   }
 }
 
