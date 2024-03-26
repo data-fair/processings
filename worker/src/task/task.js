@@ -14,6 +14,8 @@ let pluginModule
 let _stopped
 const processingsDir = path.join(config.dataDir, 'processings')
 
+/** @typedef {import('../../../shared/types/run/index.js').Run} Run */
+
 /**
  * Create an Axios instance.
  * @param {import('../../../shared/types/processing/index.js').Processing} processing
@@ -50,10 +52,9 @@ const axiosInstance = (processing) => {
     const usePrivate =
       config.privateDataFairUrl &&
       isDataFairUrl &&
-      // @ts-ignore
-      (config.getFromPrivateDataFairUrl || ['post', 'put', 'delete', 'patch'].includes(cfg.method))
+      (config.getFromPrivateDataFairUrl || ['post', 'put', 'delete', 'patch'].includes(cfg.method || ''))
     if (usePrivate) {
-      // @ts-ignore
+      // @ts-ignore -> privateDataFairUrl can't be undefined here
       cfg.url = cfg.url.replace(config.dataFairUrl, config.privateDataFairUrl)
       cfg.headers.host = new URL(config.dataFairUrl).host
     }
@@ -99,20 +100,17 @@ const wsInstance = (log, owner) => {
 
 /**
  * Prepare log functions.
- * @param {import('mongodb').Db} db - Database.
- * @param {(channel: string, data: any) => Promise<void>} wsPublish - Publish function.
- * @param {import('../../../shared/types/processing/index.js').Processing} processing - Processing.
- * @param {import('../../../shared/types/run/index.js').Run} run - Run.
- * @returns {import('@data-fair/lib/processings/types.js').LogFunctions} Log functions.
+ * @param {import('mongodb').Collection<Run>} runsCollection - Runs collection
+ * @param {(channel: string, data: any) => Promise<void>} wsPublish - Publish function
+ * @param {import('../../../shared/types/processing/index.js').Processing} processing - Processing
+ * @param {Run} run - run
+ * @returns {import('@data-fair/lib/processings/types.js').LogFunctions} Log functions
  */
-const prepareLog = (db, wsPublish, processing, run) => {
-  /**
-   * @param {any} log - Log.
-   */
+const prepareLog = (runsCollection, wsPublish, processing, run) => {
+  /** @param {any} log - Log */
   const pushLog = async (log) => {
     log.date = new Date().toISOString()
-    // @ts-ignore _id is a valid id
-    await db.collection('runs').updateOne({ _id: run._id }, { $push: { log } })
+    await runsCollection.updateOne({ _id: run._id }, { $push: { log } })
     await wsPublish(`processings/${processing._id}/run-log`, { _id: run._id, log })
   }
 
@@ -125,9 +123,8 @@ const prepareLog = (db, wsPublish, processing, run) => {
     task: async (msg) => await pushLog({ type: 'task', msg }),
     progress: async (msg, progress, total) => {
       const progressDate = new Date().toISOString()
-      await db.collection('runs')
-        .updateOne({ _id: run._id, log: { $elemMatch: { type: 'task', msg } } },
-          { $set: { 'log.$.progress': progress, 'log.$.total': total, 'log.$.progressDate': progressDate } })
+      await runsCollection.updateOne({ _id: run._id, log: { $elemMatch: { type: 'task', msg } } },
+        { $set: { 'log.$.progress': progress, 'log.$.total': total, 'log.$.progressDate': progressDate } })
       await wsPublish(`processings/${processing._id}/run-log`, { _id: run._id, log: { type: 'task', msg, progressDate, progress, total } })
     }
   }
@@ -140,19 +137,19 @@ const prepareLog = (db, wsPublish, processing, run) => {
  * @param {(channel: string, data: any) => Promise<void>} wsPublish - Publish function.
 */
 export const run = async (db, mailTransport, wsPublish) => {
-  /**
-   * @type {[
-   *   import('../../../shared/types/run/index.js').Run,
-   *   import('../../../shared/types/processing/index.js').Processing
-   * ]}
-   */
+  /** @type {import('mongodb').Collection<Run>} */
+  const runsCollection = db.collection('runs')
+  /** @type {import('mongodb').Collection<import('../../../shared/types/processing/index.js').Processing>} */
+  const processingsCollection = db.collection('processings')
+  /** @type {[Run, import('../../../shared/types/processing/index.js').Processing]} */
+  // @ts-ignore
   const [run, processing] = await Promise.all([
-    db.collection('runs').findOne({ _id: process.argv[2] }),
-    db.collection('processings').findOne({ _id: process.argv[3] })
+    runsCollection.findOne({ _id: process.argv[2] }),
+    processingsCollection.findOne({ _id: process.argv[3] })
   ])
 
-  const log = prepareLog(db, wsPublish, processing, run)
-  // @ts-ignore
+  const log = prepareLog(runsCollection, wsPublish, processing, run)
+  // @ts-expect-error -> warn is deprecated
   log.warn = log.warning // for compatibility with old plugins
   if (run?.status === 'running') {
     await log.step('Reprise après interruption.')
@@ -185,7 +182,7 @@ export const run = async (db, mailTransport, wsPublish) => {
     async patchConfig (patch) {
       await log.debug('patch config', patch)
       Object.assign(processingConfig, patch)
-      db.collection('processings').updateOne({ _id: processing._id }, { $set: { config: processingConfig } })
+      processingsCollection.updateOne({ _id: processing._id }, { $set: { config: processingConfig } })
     },
     async sendMail (data) {
       return mailTransport.sendMail(data)
@@ -218,13 +215,13 @@ export const run = async (db, mailTransport, wsPublish) => {
         url = url.replace(config.privateDataFairUrl, '')
         httpMessage += ` (${url})`
       }
-      console.error(httpMessage)
-      console.log(err)
+      // console.error(httpMessage)
+      // console.log(err)
       await log.error(httpMessage)
       await log.debug('axios error', err)
     } else {
-      console.error(err.message)
-      console.log(err)
+      // console.error(err.message)
+      // console.log(err)
       await log.error(err.message)
       await log.debug(err.stack)
     }

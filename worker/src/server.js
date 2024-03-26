@@ -14,10 +14,12 @@ import Debug from 'debug'
 const debug = Debug('worker')
 const debugLoop = Debug('worker-loop')
 
+/** @typedef {import('../../shared/types/run/index.js').Run} Run */
+
 /** @type {boolean} */
 let stopped = false
-/** @type {(Promise<void> | null)[]} */
-const promisePool = []
+/** @type {[Promise<void> | null]} */
+const promisePool = [null]
 /** @type {Object<string, number>} */
 const pids = {}
 
@@ -106,13 +108,13 @@ async function mainLoop (db, lastActivity) {
       if (stopped) continue
 
       promisePool[freeSlot] = iter(db, run)
-      // @ts-ignore
+      // @ts-ignore -> we are sure that the slot is a Promise<void>
       promisePool[freeSlot].catch(err => {
         internalError('worker-iter, error in worker iter', { error: err })
         console.error('(worker-iter) error in worker iter', err)
       })
       // always empty the slot after the promise is finished
-      // @ts-ignore
+      // @ts-ignore -> we are sure that the slot is a Promise<void>
       promisePool[freeSlot].finally(() => {
         promisePool[freeSlot] = null
       })
@@ -135,9 +137,9 @@ async function killLoop (db) {
     while (!stopped) {
       await new Promise(resolve => setTimeout(resolve, config.worker.killInterval))
       try {
-        /** @type {Array<import('../../shared/types/run/index.js').Run>} */
-        // @ts-ignore -> find return an array of runs
-        const runs = await db.collection('runs').find({ status: 'kill' }).toArray()
+        /** @type {import('mongodb').Collection<Run>} */
+        const runsCollection = mongo.db.collection('runs')
+        const runs = await runsCollection.find({ status: 'kill' }).toArray()
         for (const run of runs) {
           killRun(db, run).catch(err => {
             internalError('worker-task-kill', 'error while killing task', { error: err })
@@ -156,7 +158,7 @@ async function killLoop (db) {
 /**
  * Kill a run
  * @param {import('mongodb').Db} db
- * @param {import('../../shared/types/run/index.js').Run} run the run to kill
+ * @param {Run} run the run to kill
  * @returns {Promise<void>}
  */
 async function killRun (db, run) {
@@ -186,20 +188,21 @@ async function killRun (db, run) {
 /**
  * Manage a run
  * @param {import('mongodb').Db} db
- * @param {import('../../shared/types/run/index.js').Run} run the run to start
+ * @param {Run} run the run to start
  * @return {Promise<void>}
  */
 async function iter (db, run) {
   let stderr = ''
-  /** @type {import('../../shared/types/processing/index.js').Processing} */
-  // @ts-ignore -> findOne return a processing & _id is a valid id
-  const processing = await db.collection('processings').findOne({ _id: run.processing._id })
+  /** @type {import('mongodb').Collection<import('../../shared/types/processing/index.js').Processing>} */
+  const processingsCollection = db.collection('processings')
+  const processing = await processingsCollection.findOne({ _id: run.processing._id })
 
   if (!processing) {
     internalError('worker-missing-processing', 'found a run without associated processing, weird')
     console.error('(missing-processing) found a run without associated processing, weird')
-    // @ts-ignore -> _id is a valid id
-    await db.collection('runs').deleteOne({ _id: run._id })
+    /** @type {import('mongodb').Collection<Run>} */
+    const runsCollection = db.collection('runs')
+    await runsCollection.deleteOne({ _id: run._id })
     return
   }
   if (!processing.active) {
@@ -278,10 +281,11 @@ async function iter (db, run) {
  * meaning the task was brutally interrupted
  *
  * @param {import('mongodb').Db} db
- * @returns {Promise<import('../../shared/types/run/index.js').Run | undefined>} the next run to process
+ * @returns {Promise<Run | undefined>} the next run to process
  */
 async function acquireNext (db) {
   // Random sort prevents from insisting on the same failed dataset again and again
+  /** @type {import('mongodb').AggregationCursor<Run>} */
   const cursor = db.collection('runs')
     .aggregate([{
       $match: {
@@ -295,25 +299,24 @@ async function acquireNext (db) {
     }, { $sample: { size: 100 } }])
 
   while (await cursor.hasNext()) {
-    /** @type {import('../../shared/types/run/index.js').Run} */
-    // @ts-ignore -> the cursor return a run
-    let run = await cursor.next()
+    let run = /** @type {Run} */(await cursor.next())
     const ack = await locks.acquire(db, run.processing._id)
     debug('acquire lock for run ?', run._id, ack)
 
     if (ack) {
       // re-fetch run to prevent some race condition
-      // @ts-ignore -> findOne return a run & _id is a valid property
-      run = await db.collection('runs').findOne({ _id: run._id })
+      /** @type {import('mongodb').Collection<Run>} */
+      const runsCollection = db.collection('runs')
+      run = /** @type {Run} */(await runsCollection.findOne({ _id: run._id }))
 
       // if we could asquire the lock it means the task was brutally interrupted
       if (run.status === 'running') {
         try {
           console.warn('we had to close a run that was stuck in running status', run)
           await finish(db, wsPublish, run, 'le traitement a été interrompu suite à une opération de maintenance', 'error')
-          /** @type {import('../../shared/types/processing/index.js').Processing} */
-          // @ts-ignore -> findOne return a processing & _id is a valid id
-          const processing = await db.collection('processings').findOne({ _id: run.processing._id })
+          /** @type {import('mongodb').Collection<import('../../shared/types/processing/index.js').Processing>} */
+          const processingsCollection = db.collection('processings')
+          const processing = await processingsCollection.findOne({ _id: run.processing._id })
           await locks.release(db, run.processing._id)
           if (processing && processing.scheduling.type !== 'trigger') {
             await createNext(db, processing) // we create the next scheduled run
