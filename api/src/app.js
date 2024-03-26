@@ -1,4 +1,5 @@
 import { session, errorHandler } from '@data-fair/lib/express/index.js'
+import config from './config.js'
 import express from 'express'
 
 import pluginsRegistryRouter from './routers/plugins-registry.js'
@@ -16,6 +17,12 @@ app.use(session.middleware())
 app.set('json spaces', 2)
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+
+const publicHost = new URL(config.origin).host
+app.use((req, res, next) => {
+  req.secondaryHost = publicHost !== req.headers.host
+  next()
+})
 
 app.use('/api/v1/plugins-registry', pluginsRegistryRouter)
 app.use('/api/v1/plugins', pluginsRouter)

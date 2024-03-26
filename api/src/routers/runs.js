@@ -12,11 +12,12 @@ const sensitiveParts = ['permissions']
 /**
  * Remove sensitive parts from a run object (permissions)
  * @param {import('../../../shared/types/run/index.js').Run} run the run object to clean
- * @param {import('@data-fair/lib/express/index.js').SessionState} sessionState
+ * @param {import('@data-fair/lib/express/index.js').SessionStateAuthenticated} sessionState
+ * @param {string|undefined} secondaryHost
  * @returns {import('../../../shared/types/run/index.js').Run} the cleaned run object
  */
-const cleanRun = (run, sessionState) => {
-  run.userProfile = permissions.getUserResourceProfile(run.owner, run.permissions ?? [], sessionState)
+const cleanRun = (run, sessionState, secondaryHost) => {
+  run.userProfile = permissions.getUserResourceProfile(run.owner, run.permissions, sessionState, secondaryHost)
   if (run.userProfile !== 'admin') {
     for (const part of sensitiveParts) delete run[part]
   }
@@ -61,8 +62,8 @@ router.get('/:id', asyncHandler(async (req, res) => {
   // @ts-ignore -> findOne returns a run
   const run = await mongo.db.collection('runs').findOne({ _id: req.params.id })
   if (!run) return res.status(404).send()
-  if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(run.owner, run.permissions ?? [], sessionState) ?? '')) return res.status(403).send()
-  res.send(cleanRun(run, sessionState))
+  if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(run.owner, run.permissions, sessionState, req.secondaryHost) ?? '')) return res.status(403).send()
+  res.send(cleanRun(run, sessionState, req.secondaryHost))
 }))
 
 // Kill a run
@@ -72,9 +73,9 @@ router.post('/:id/_kill', asyncHandler(async (req, res) => {
   // @ts-ignore -> findOne returns a run && _id is an id
   const run = await mongo.db.collection('runs').findOne({ _id: req.params.id })
   if (!run) return res.status(404).send()
-  if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(run.owner, run.permissions ?? [], sessionState) ?? '')) return res.status(403).send()
+  if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(run.owner, run.permissions, sessionState, req.secondaryHost) ?? '')) return res.status(403).send()
   // @ts-ignore -> _id is an id
   await mongo.db.collection('runs').updateOne({ _id: run._id }, { $set: { status: 'kill' } })
   run.status = 'kill'
-  res.send(cleanRun(run, sessionState))
+  res.send(cleanRun(run, sessionState, req.secondaryHost))
 }))

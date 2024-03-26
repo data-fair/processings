@@ -1,8 +1,7 @@
-import { Router } from 'express'
-import { asyncHandler } from '@data-fair/lib/express/index.js'
+import { asyncHandler, session } from '@data-fair/lib/express/index.js'
 import { getLimits } from '../../../shared/limits.js'
+import { Router } from 'express'
 import mongo from '@data-fair/lib/node/mongo.js'
-import permissions from '../utils/permissions.js'
 import Ajv from 'ajv'
 import AjvFormats from 'ajv-formats'
 
@@ -33,8 +32,33 @@ const validate = ajv.compile(schema)
 const router = Router()
 export default router
 
+/**
+ * Middleware to check the req.params (representing a user account or organization)
+ * indeed belongs to the currently logged-in user,
+ * or to an organization of which the currently logged-in user is a member.
+ *
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+const isAccountMember = async (req, res, next) => {
+  const sessionState = await session.req(req)
+  if (!sessionState.user) return res.status(401).send()
+  if (sessionState.user.adminMode) return next()
+  if (!['organization', 'user'].includes(req.params.type)) return res.status(400).send('Wrong consumer type')
+  if (req.params.type === 'user') {
+    if (sessionState.user.id !== req.params.id) return res.status(403).send()
+  }
+  if (req.params.type === 'organization') {
+    const org = sessionState.user.organizations.find(o => o.id === req.params.id)
+    if (!org) return res.status(403).send()
+  }
+  next()
+}
+
 // Endpoint for customers service to create/update limits
-router.post('/:type/:id', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
+router.post('/:type/:id', asyncHandler(async (req, res) => {
+  await session.reqAdminMode(req)
   req.body.type = req.params.type
   req.body.id = req.params.id
   const valid = validate(req.body)
@@ -45,7 +69,7 @@ router.post('/:type/:id', permissions.isSuperAdmin, asyncHandler(async (req, res
 }))
 
 // A user can get limits information for himself only
-router.get('/:type/:id', permissions.isAccountMember, asyncHandler(async (req, res) => {
+router.get('/:type/:id', isAccountMember, asyncHandler(async (req, res) => {
   const consumer = { type: req.params.type, id: req.params.id }
   const limits = await getLimits(mongo.db, consumer)
   if (!limits) return res.status(404).send()
@@ -53,7 +77,8 @@ router.get('/:type/:id', permissions.isAccountMember, asyncHandler(async (req, r
   res.send(limits)
 }))
 
-router.get('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
+router.get('/', asyncHandler(async (req, res) => {
+  await session.reqAdminMode(req)
   const filter = {}
   if (req.query.type) filter.type = req.query.type
   if (req.query.id) filter.id = req.query.id
