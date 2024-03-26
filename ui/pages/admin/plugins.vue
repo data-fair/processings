@@ -13,6 +13,13 @@
       color="primary"
       append-inner-icon="mdi-magnify"
     />
+    <v-checkbox
+      v-model="showAll"
+      label="Afficher tous les plugins"
+      color="primary"
+      class="my-2"
+      @update:model-value="fetchAvailablePlugins"
+    />
     <v-list-subheader>{{ (installedPlugins.results && installedPlugins.results.length) || 0 }} plugins installés</v-list-subheader>
     <v-progress-linear
       v-if="!installedPlugins.results"
@@ -122,7 +129,7 @@
     </template>
     <v-list-subheader>{{ (availablePlugins.results && availablePlugins.results.length) || 0 }} plugins disponibles</v-list-subheader>
     <v-progress-linear
-      v-if="!availablePlugins.results"
+      v-if="!availablePlugins.results || reloading"
       indeterminate
       color="primary"
     />
@@ -186,8 +193,10 @@ const inDelete = ref(false)
 const /** @type {Ref<Record<String, any>>} */ inInstall = ref({})
 const /** @type {Ref<Record<String, any>>} */ installedPlugins = ref({})
 const loading = ref(false)
+const reloading = ref(false)
 const /** @type {Ref<Record<String, any>>} */ showDeleteMenu = ref({})
 const search = ref('')
+const showAll = ref(false)
 
 const filteredAvailablePlugins = computed(() => {
   if (!availablePlugins.value.results) return
@@ -241,7 +250,12 @@ async function checkAccess() {
 }
 
 async function fetchAvailablePlugins() {
-  const /** @type {Record<String, any>} */ response = await $fetch('/api/v1/plugins-registry')
+  reloading.value = true
+  let url = '/api/v1/plugins-registry'
+  if (showAll.value) {
+    url += '?showAll=true'
+  }
+  const /** @type {Record<String, any>} */ response = await $fetch(url)
   availablePlugins.value = {
     results: response.results.sort((/** @type {Record<String, any>} */ a, /** @type {Record<String, any>} */ b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
   }
@@ -250,6 +264,7 @@ async function fetchAvailablePlugins() {
       inInstall.value[plugin.name] = false
     }
   })
+  reloading.value = false
 }
 
 async function fetchInstalledPlugins() {

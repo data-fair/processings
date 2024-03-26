@@ -22,7 +22,7 @@ const search = memoize(async (q, showAll) => {
   const results = []
   for (const o of res.data.objects) {
     if (!o.package.keywords || !o.package.keywords.includes('data-fair-processings-plugin')) continue
-    const plugin = { name: o.package.name, description: o.package.description }
+    const plugin = { name: o.package.name, description: o.package.description, version: o.package.version }
 
     if (showAll) {
       const distTags = (await axios.get('https://registry.npmjs.org/-/package/' + o.package.name + '/dist-tags')).data

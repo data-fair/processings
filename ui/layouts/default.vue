@@ -37,5 +37,8 @@ useHead({
 })
 </script>
 
-<style>
+<style scoped>
+:deep(.v-input .v-input__details) {
+  display: none;
+}
 </style>

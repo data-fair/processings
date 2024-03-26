@@ -240,8 +240,5 @@ const createProcessing = async () => {
 }
 </script>
 
-<style scoped>
-:deep(.v-input .v-input__details) {
-  display: none;
-}
+<style>
 </style>
