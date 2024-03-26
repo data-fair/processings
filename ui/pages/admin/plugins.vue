@@ -212,8 +212,10 @@ function updateShowDeleteMenu() {
 onMounted(async () => {
   const access = await checkAccess()
   if (access === true) {
-    await fetchInstalledPlugins()
-    await fetchAvailablePlugins()
+    await Promise.all([
+      fetchInstalledPlugins(),
+      fetchAvailablePlugins()
+    ])
   }
 })
 

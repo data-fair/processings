@@ -1,35 +1,54 @@
 import { asyncHandler } from '@data-fair/lib/express/index.js'
 import { Router } from 'express'
 import axios from '@data-fair/lib/node/axios.js'
-import memoize from 'memoizee'
+import memoize from 'memoize'
 
 const router = Router()
 export default router
 
-const search = memoize(async (/** @type {any} */q, res) => {
+/**
+ * Search for plugins in the npm registry
+ * @param {string} q - search query
+ * @param {boolean} showAll - if true, return all versions of each plugin
+ */
+const search = memoize(async (q, showAll) => {
   // see https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md#get-v1search
-  const response = await axios.get('https://registry.npmjs.org/-/v1/search', {
+  const res = await axios.get('https://registry.npmjs.org/-/v1/search', {
     params: {
       size: 250,
       text: `keywords:data-fair-processings-plugin ${q || ''}`
     }
   })
-
-  for (const o of response.data.objects) {
+  const results = []
+  for (const o of res.data.objects) {
     if (!o.package.keywords || !o.package.keywords.includes('data-fair-processings-plugin')) continue
-    const distTags = (await axios.get('https://registry.npmjs.org/-/package/' + o.package.name + '/dist-tags')).data
     const plugin = { name: o.package.name, description: o.package.description }
-    for (const distTag in distTags) {
-      const result = { ...plugin, version: distTags[distTag], distTag }
-      res.write(JSON.stringify(result) + '\n') // send data after each plugin loaded
+
+    if (showAll) {
+      const distTags = (await axios.get('https://registry.npmjs.org/-/package/' + o.package.name + '/dist-tags')).data
+      for (const distTag in distTags) {
+        results.push({ ...plugin, version: distTags[distTag], distTag })
+      }
+    } else {
+      results.push({ ...plugin, distTag: 'latest' })
     }
   }
-  res.end()
+  return {
+    count: results.length,
+    results
+  }
 }, {
+  cacheKey: arguments_ => arguments_.join(','),
   maxAge: 5 * 60 * 1000 // cached for 5 minutes to be polite with npmjs
 })
 
+/**
+ * Search for plugins in the npm registry
+ * @route GET /plugins-registry
+ * @param {string} q.query - search query
+ * @param {boolean} showAll.query - if true, return all versions of each plugin
+ * @returns {object} 200 - An object with the count of results and an array of plugins
+ */
 router.get('/', asyncHandler(async (req, res) => {
-  res.setHeader('Content-Type', 'application/json')
-  await search(req.query.q, res)
+  res.send(await search(req.query.q, req.params.showAll === 'true' || false))
 }))

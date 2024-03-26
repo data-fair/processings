@@ -264,6 +264,7 @@ Performs a search query against the npm registry for plugins tagged with `data-f
 **Parameters**
 
 - `q` (query, optional) : A search query to filter plugins based on their name, description, or other characteristics. The search is further refined to only include packages with the `data-fair-processings-plugin` keyword.
+- `showAll` (query, optional) : A boolean to show plugins and all their versions (differents distTag).
 
 **Caching**
 
