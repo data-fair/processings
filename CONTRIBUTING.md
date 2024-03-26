@@ -82,9 +82,9 @@ docker build -f worker/Dockerfile -t data-fair/processings/worker:dev .
 Run the images :
 
 ```sh
-docker run --network host docker.io/data-fair/processings/api:dev
+docker run --network host -e NODE_ENV=development docker.io/data-fair/processings/api:dev
 docker run --network host docker.io/data-fair/processings/ui:dev
-docker run --network host docker.io/data-fair/processings/worker:dev
+docker run --network host -e NODE_ENV=development docker.io/data-fair/processings/worker:dev
 ```
 
 ## Running the tests

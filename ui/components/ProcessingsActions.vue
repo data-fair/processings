@@ -74,7 +74,6 @@
     </v-menu>
     <v-text-field
       v-model="search"
-      :loading="processings.length === 0 ? 'primary' : false"
       placeholder="rechercher"
       variant="outlined"
       hide-details
