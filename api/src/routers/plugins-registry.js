@@ -50,5 +50,5 @@ const search = memoize(async (q, showAll) => {
  * @returns {object} 200 - An object with the count of results and an array of plugins
  */
 router.get('/', asyncHandler(async (req, res) => {
-  res.send(await search(req.query.q, req.params.showAll === 'true' || false))
+  res.send(await search(req.query.q, req.query.showAll === 'true' || false))
 }))
