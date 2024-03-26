@@ -17,8 +17,8 @@
       :custom-filter="() => true"
       :multiple="true"
       :clearable="true"
-      :item-title="(item) => item && `${item.name || item.id} (${item.type})`"
-      :item-value="(item) => item && `${item.type}:${item.id}`"
+      :item-title="(/** @type {Record<String, any>} */ item) => item && `${item.name || item.id} (${item.type})`"
+      :item-value="(/** @type {Record<String, any>} */ item) => item && `${item.type}:${item.id}`"
       :label="t('privateAccess')"
       :placeholder="t('searchName')"
       return-object
@@ -77,14 +77,14 @@ async function listSuggestions() {
   }
 
   loading.value = true
-  const orgsResponse = await $fetch('/simple-directory/api/organizations', {
+  const /** @type {Record<String, any>} */ orgsResponse = await $fetch('/simple-directory/api/organizations', {
     params: { q: search.value }
   })
-  const orgs = orgsResponse.results.map(r => ({ ...r, type: 'organization' }))
-  const usersResponse = await $fetch('/simple-directory/api/users', {
+  const orgs = orgsResponse.results.map(/** @param {any} r */ r => ({ ...r, type: 'organization' }))
+  const /** @type {Record<String, any>} */ usersResponse = await $fetch('/simple-directory/api/users', {
     params: { q: search.value }
   })
-  const users = usersResponse.results.map(r => ({ ...r, type: 'user' }))
+  const users = usersResponse.results.map(/** @param {any} r */ r => ({ ...r, type: 'user' }))
   suggestions.value = props.patch.privateAccess.concat(orgs, users)
   emit('change', props.patch)
   loading.value = false

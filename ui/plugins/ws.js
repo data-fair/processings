@@ -2,16 +2,22 @@ import ReconnectingWebSocket from 'reconnecting-websocket'
 import useEventBus from '~/composables/event-bus'
 import { defineNuxtPlugin } from '#app'
 
+/**
+ * @param {String} wsUrl
+ * @param {String} suffix
+ * @param {any} eventBus
+ */
 function configureWS(wsUrl, suffix = '', eventBus) {
   console.log('Configure WS', wsUrl)
   if (window.WebSocket) {
     const ws = new ReconnectingWebSocket(wsUrl)
-    const subscriptions = {}
+    const /** @type {Record<String, any>} */ subscriptions = {}
     let ready = false
 
     ws.addEventListener('open', () => {
       ready = true
       Object.keys(subscriptions).forEach(channel => {
+        // @ts-ignore
         if (subscriptions[channel]) ws.send(JSON.stringify({ type: 'subscribe', channel }))
         else ws.send(JSON.stringify({ type: 'unsubscribe', channel }))
       })
@@ -21,13 +27,13 @@ function configureWS(wsUrl, suffix = '', eventBus) {
       ready = false
     })
 
-    eventBus.on('subscribe' + suffix, channel => {
+    eventBus.on('subscribe' + suffix, /** @param {any} channel */ channel => {
       if (subscriptions[channel]) return
       subscriptions[channel] = true
       if (ready) ws.send(JSON.stringify({ type: 'subscribe', channel }))
     })
 
-    eventBus.on('unsubscribe' + suffix, channel => {
+    eventBus.on('unsubscribe' + suffix, /** @param {any} channel */ channel => {
       subscriptions[channel] = false
       if (ready) ws.send(JSON.stringify({ type: 'unsubscribe', channel }))
     })

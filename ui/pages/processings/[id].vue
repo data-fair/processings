@@ -76,13 +76,15 @@ import { v2compat } from '@koumoul/vjsf/compat/v2'
 const route = useRoute()
 const session = useSession()
 
+/** @type {Ref<import('../../../shared/types/index.js').processingType|null>} */
 const currentPatch = ref(null)
 const edited = ref(false)
-/** @type {import('vue').Ref<import('../../../shared/types/index.js').processingType>} */
+/** @type {Ref<import('../../../shared/types/index.js').processingType|null>} */
 const editProcessing = ref(null)
+/** @type {Ref<import('../../../shared/types/index.js').processingType|null>} */
 const nextPatch = ref(null)
 const patching = ref(false)
-/** @type {import('vue').Ref<import('../../../shared/types/index.js').processingType>} */
+/** @type {Ref<import('../../../shared/types/index.js').processingType|null>} */
 const processing = ref(null)
 const plugin = ref(null)
 const runs = ref(null)
@@ -92,11 +94,13 @@ const user = computed(() => session.state.user)
 
 const canAdminProcessing = computed(() => {
   if (!processing.value) return false
+  // @ts-ignore
   return processing.value.userProfile === 'admin'
 })
 
 const canExecProcessing = computed(() => {
   if (!processing.value) return false
+  // @ts-ignore
   return ['admin', 'exec'].includes(processing.value.userProfile)
 })
 
@@ -105,16 +109,20 @@ const processingSchema = computed(() => {
   const schema = JSON.parse(JSON.stringify(contractProcessing))
   Object.keys(schema.properties).forEach(key => {
     if (schema.properties[key].readOnly) {
+      // @ts-ignore
       schema.required = schema.required.filter(k => k !== key)
       delete schema.properties[key]
     }
   })
   schema.properties.config = {
+    // @ts-ignore
     ...plugin.value.processingConfigSchema,
+    // @ts-ignore
     title: 'Plugin ' + plugin.value.customName,
     'x-options': { deleteReadOnly: false }
   }
-  if (user?.adminMode) delete schema.properties.debug?.readOnly
+  // @ts-ignore
+  if (user.value?.adminMode) delete schema.properties.debug?.readOnly
   if (!canAdminProcessing.value) {
     delete schema.properties.permissions
     delete schema.properties.config
@@ -141,6 +149,7 @@ const vjsfOptions = computed(() => {
     },
     */
     context: {
+      // @ts-ignore
       owner: processing.value.owner,
       dataFairUrl: window.location.origin + '/data-fair',
       directoryUrl: window.location.origin + '/simple-directory'
@@ -160,13 +169,17 @@ onMounted(async () => {
 
 async function fetchProcessing() {
   processing.value = await $fetch(`/api/v1/processings/${route.params.id}`)
+  // @ts-ignore
   editProcessing.value = { ...processing.value }
 }
 
 async function fetchPlugin() {
+  // @ts-ignore
   if (processing.value && processing.value.plugin) {
+    // @ts-ignore
     plugin.value = await $fetch(`/api/v1/plugins/${processing.value.plugin}`)
     Object.keys(processingSchema.value.properties).forEach(key => {
+      // @ts-ignore
       if (processingSchema.value.properties[key].readOnly) delete editProcessing.value[key]
     })
   }
@@ -179,7 +192,9 @@ async function patch() {
   }
   patching.value = true
   currentPatch.value = editProcessing.value
+  // @ts-ignore
   if (editProcessing.value.scheduling && editProcessing.value.scheduling.type === 'weekly') {
+    // @ts-ignore
     if (editProcessing.value.scheduling.dayOfWeek === '*') editProcessing.value.scheduling.dayOfWeek = '1'
     renderVjsfKey.value += 1
   }

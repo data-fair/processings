@@ -7,6 +7,9 @@ import { parse } from 'path'
 
 const pumpPromise = promisify(pump)
 
+/**
+ * @param {Record<string, any>} config
+ */
 export async function run(config) {
   const response = await ofetch.raw(config.url, { responseType: 'arrayBuffer' })
   const tmpFile = await file()

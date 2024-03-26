@@ -83,7 +83,7 @@
                 <v-btn
                   variant="text"
                   :disabled="inDelete"
-                  @click="showDeleteMenu = false"
+                  @click="showDeleteMenu[result.id] = false"
                 >
                   Non
                 </v-btn>
@@ -132,7 +132,7 @@
       :key="'available-' + result.name + '-' + result.version"
     >
       <v-card
-        v-if="installedPlugins.results && !installedPlugins.results.find(r => r.name === result.name && r.distTag === result.distTag)"
+        v-if="installedPlugins.results && !installedPlugins.results.find(/** @param {Record<String, any>} r */ r => r.name === result.name && r.distTag === result.distTag)"
         class="my-4"
         variant="elevated"
         rounded="lg"
@@ -181,29 +181,29 @@ import { useSession } from '@data-fair/lib/vue/session.js'
 
 const session = useSession()
 
-const availablePlugins = ref({})
+const /** @type {Ref<Record<String, any>>} */ availablePlugins = ref({})
 const inDelete = ref(false)
-const inInstall = ref({})
-const installedPlugins = ref({})
+const /** @type {Ref<Record<String, any>>} */ inInstall = ref({})
+const /** @type {Ref<Record<String, any>>} */ installedPlugins = ref({})
 const loading = ref(false)
-const showDeleteMenu = ref({})
+const /** @type {Ref<Record<String, any>>} */ showDeleteMenu = ref({})
 const search = ref('')
 
 const filteredAvailablePlugins = computed(() => {
   if (!availablePlugins.value.results) return
   if (!search.value) return availablePlugins.value.results
-  return availablePlugins.value.results.filter(r => r.name.includes(search.value) || (r.description && r.description.includes(search.value)))
+  return availablePlugins.value.results.filter(/** @param {Record<String, any>} r */ r => r.name.includes(search.value) || (r.description && r.description.includes(search.value)))
 })
 
 const filteredInstalledPlugins = computed(() => {
   if (!installedPlugins.value.results) return
   if (!search.value) return installedPlugins.value.results
-  return installedPlugins.value.results.filter(r => r.name.includes(search.value) || (r.description && r.description.includes(search.value)))
+  return installedPlugins.value.results.filter(/** @param {Record<String, any>} r */ r => r.name.includes(search.value) || (r.description && r.description.includes(search.value)))
 })
 
 function updateShowDeleteMenu() {
-  const menuState = {}
-  installedPlugins.value.results.forEach(plugin => {
+  const /** @type {Record<String, any>} */ menuState = {}
+  installedPlugins.value.results.forEach(/** @param {Record<String, any>} plugin */ plugin => {
     menuState[plugin.id] = false
   })
   showDeleteMenu.value = menuState
@@ -239,11 +239,11 @@ async function checkAccess() {
 }
 
 async function fetchAvailablePlugins() {
-  const response = await $fetch('/api/v1/plugins-registry')
+  const /** @type {Record<String, any>} */ response = await $fetch('/api/v1/plugins-registry')
   availablePlugins.value = {
-    results: response.results.sort((a, b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
+    results: response.results.sort((/** @type {Record<String, any>} */ a, /** @type {Record<String, any>} */ b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
   }
-  availablePlugins.value.results.forEach(plugin => {
+  availablePlugins.value.results.forEach(/** @param {Record<String, any>} plugin */ plugin => {
     if (!(plugin.name in inInstall.value)) {
       inInstall.value[plugin.name] = false
     }
@@ -251,13 +251,16 @@ async function fetchAvailablePlugins() {
 }
 
 async function fetchInstalledPlugins() {
-  const response = await $fetch('/api/v1/plugins')
+  const /** @type {Record<String, any>} */ response = await $fetch('/api/v1/plugins')
   installedPlugins.value = {
-    results: response.results.sort((a, b) => a.name.localeCompare(b.name))
+    results: response.results.sort((/** @type {Record<String, any>} */ a, /** @type {Record<String, any>} */ b) => a.name.localeCompare(b.name))
   }
   updateShowDeleteMenu()
 }
 
+/**
+ * @param {Record<String, any>} plugin
+ */
 async function install(plugin) {
   loading.value = true
   inInstall.value[plugin.name] = true
@@ -271,6 +274,9 @@ async function install(plugin) {
   loading.value = false
 }
 
+/**
+ * @param {Record<String, any>} plugin
+ */
 async function uninstall(plugin) {
   loading.value = true
   inDelete.value = true
@@ -280,28 +286,37 @@ async function uninstall(plugin) {
   await fetchInstalledPlugins()
   loading.value = false
   inDelete.value = false
-  showDeleteMenu.value = false
+  showDeleteMenu.value[plugin.id] = false
 }
 
+/**
+ * @param {Record<String, any>} plugin
+ */
 function updateAvailable(plugin) {
   if (!availablePlugins.value.results) return [false, '']
-  const availablePlugin = availablePlugins.value.results.find(r => r.name === plugin.name)
+  const availablePlugin = availablePlugins.value.results.find(/** @param {Record<String, any>} r */ r => r.name === plugin.name)
   if (availablePlugin &&
     availablePlugin.distTag === plugin.distTag &&
     availablePlugin.version !== plugin.version) return [true, availablePlugin.version]
   return [false, '']
 }
 
+/**
+ * @param {Record<String, any>} plugin
+ */
 async function update(plugin) {
   loading.value = true
   if (!availablePlugins.value.results) return false
-  const availablePlugin = availablePlugins.value.results.find(r => r.name === plugin.name)
+  const availablePlugin = availablePlugins.value.results.find(/** @param {Record<String, any>} r */ r => r.name === plugin.name)
   if (availablePlugin && availablePlugin.version !== plugin.version) {
     await install(availablePlugin)
   }
   loading.value = false
 }
 
+/**
+ * @param {Record<String, any>} plugin
+ */
 async function saveConfig(plugin) {
   loading.value = true
   await $fetch(`/api/v1/plugins/${plugin.id}/config`, {
@@ -311,6 +326,9 @@ async function saveConfig(plugin) {
   loading.value = false
 }
 
+/**
+ * @param {Record<String, any>} plugin
+ */
 async function saveAccess(plugin) {
   loading.value = true
   await $fetch(`/api/v1/plugins/${plugin.id}/access`, {

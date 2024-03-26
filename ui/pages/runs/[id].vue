@@ -66,9 +66,9 @@ const route = useRoute()
 const session = useSession()
 
 const loading = ref(false)
-const run = ref(null)
+const /** @type {Ref<Record<String, any>|null>} */ run = ref(null)
 
-const user = computed(() => session.state.user)
+const /** @type {Record<String, any>} */ user = computed(() => session.state.user)
 
 const canExec = computed(() => {
   if (!run.value) return false
@@ -83,8 +83,8 @@ const wsPatchChannel = computed(() => {
   return run.value && `processings/${run.value.processing._id}/run-patch`
 })
 
-const steps = computed(() => {
-  if (!run.value) return
+const /** @type {Record<String, any>} */ steps = computed(() => {
+  if (!run.value) return []
   const steps = []
   let lastStep
   for (const log of run.value.log) {
@@ -103,6 +103,9 @@ const steps = computed(() => {
   return steps
 })
 
+/**
+ * @param {Record<String, any>} step
+ */
 function getColor(step) {
   let color = 'success'
 
@@ -119,6 +122,9 @@ function getColor(step) {
   return color
 }
 
+/**
+ * @param {Record<String, any>} step
+ */
 function getIcon(step) {
   let icon = 'mdi-check-circle'
 
@@ -158,6 +164,9 @@ async function refresh() {
   loading.value = false
 }
 
+/**
+ * @param {Record<String, any>} runPatch
+ */
 function onRunPatch(runPatch) {
   if (!run.value || run.value._id !== runPatch._id) return
   for (const key of Object.keys(runPatch.patch)) {
@@ -165,10 +174,13 @@ function onRunPatch(runPatch) {
   }
 }
 
+/**
+ * @param {Record<String, any>} runLog
+ */
 function onRunLog(runLog) {
   if (!run.value || run.value._id !== runLog._id) return
   if (runLog.log.type === 'task') {
-    const matchingTaskIndex = run.value.log.findIndex(l => l.type === 'task' && l.msg === runLog.log.msg)
+    const matchingTaskIndex = run.value.log.findIndex(/** @param {Record<String, any>} l */ l => l.type === 'task' && l.msg === runLog.log.msg)
     if (matchingTaskIndex !== -1) {
       for (const key of Object.keys(runLog.log)) {
         run.value.log[matchingTaskIndex][key] = runLog.log[key]

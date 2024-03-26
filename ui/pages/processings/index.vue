@@ -18,7 +18,7 @@
               <ProcessingCard
                 :processing="processing"
                 :show-owner="showAll"
-                :plugin="installedPlugins.results && installedPlugins.results.find(p => p.id === processing.plugin)"
+                :plugin="installedPlugins.results && installedPlugins.results.find(/** @param {Record<String, any>} p */ p => p.id === processing.plugin)"
               />
             </v-col>
           </v-row>
@@ -88,21 +88,22 @@ const eventBus = useEventBus()
 const route = useRoute()
 const session = useSession()
 
-const filteredPlugins = ref([])
-const filteredStatuses = ref([])
+const /** @type {Ref<Array<String>>} */ filteredPlugins = ref([])
+const /** @type {Ref<Array<String>>} */ filteredStatuses = ref([])
 /** @type {any} */
 const installedPlugins = ref({})
 /** @type {any} */
 const processings = ref(null)
 const showAll = ref(false)
 const searchResults = ref('')
-const selectedPlugins = ref([])
+const /** @type {Ref<Array<Record<String, any>>>} */ selectedPlugins = ref([])
 
 const activeAccount = computed(() => session.state.account)
-const user = computed(() => session.state.user)
+const /** @type {Record<String, any>} */ user = computed(() => session.state.user)
 
-const owner = computed(() => {
+const /** @type {Record<String, any>} */ owner = computed(() => {
   if (route.query.owner) {
+    // @ts-ignore
     const parts = route.query.owner.split(':')
     return { type: parts[0], id: parts[1] }
   } else {
@@ -110,6 +111,9 @@ const owner = computed(() => {
   }
 })
 
+/**
+ * @type {Record<String, String>}
+ */
 const statusesText = {
   error: 'En échec',
   finished: 'Terminé',
@@ -130,7 +134,7 @@ const ownerRole = computed(() => {
     if (owner.value.id === user.value.id) return 'admin'
     else return 'anonymous'
   }
-  const userOrg = user.value.organizations.find(o => o.id === owner.value.id)
+  const userOrg = user.value.organizations.find(/** @param {Record<String, any>} o */ o => o.id === owner.value.id)
   return userOrg ? userOrg.role : 'anonymous'
 })
 
@@ -150,16 +154,16 @@ onMounted(async () => {
   refreshPlugins()
 })
 
-eventBus.on('search', (results) => {
+eventBus.on('search', (/** @type {String} */ results) => {
   searchResults.value = results || ''
 })
 
-eventBus.on('status', (statuses) => {
+eventBus.on('status', (/** @type {Array<string>} */ statuses) => {
   filteredStatuses.value = statuses
   refreshProcessings()
 })
 
-eventBus.on('plugin', (plugins) => {
+eventBus.on('plugin', (/** @type {Array<string>} */ plugins) => {
   filteredPlugins.value = plugins
   refreshPlugins()
 })
@@ -167,17 +171,17 @@ eventBus.on('plugin', (plugins) => {
 function refreshProcessings() {
   let results = processings.value?.results || []
   if (searchResults.value.length > 0) {
-    results = results.filter(result => result.title.includes(searchResults.value))
+    results = results.filter(/** @param {Record<String, any>} result */ result => result.title.includes(searchResults.value))
   }
-  results = results.filter(processing => {
+  results = results.filter(/** @param {Record<String, any>} processing */ processing => {
     return selectedPlugins.value.find(plugin => plugin.id === processing.plugin)
   })
   if (filteredStatuses.value.length === 0) {
     return results
   }
 
-  const temp = []
-  results.forEach(result => {
+  const /** @type {Array<Record<String, any>>} */ temp = []
+  results.forEach(/** @param {Record<String, any>} result */ result => {
     const status = result.lastRun ? result.lastRun.status : 'none'
     if (result.nextRun) {
       temp.push({ _id: result._id, status, nextRun: result.nextRun })
@@ -186,19 +190,19 @@ function refreshProcessings() {
     }
   })
 
-  const finalArray = []
+  const /** @type {Array<Record<String, any>>} */ finalArray = []
   temp.forEach(tempItem => {
     const statusText = statusesText[tempItem.status]
     const filteredStatusesMainText = filteredStatuses.value.map(status => status.split(' (')[0])
     if (filteredStatusesMainText.includes(statusText)) {
-      const originalItem = results.find(item => item._id === tempItem._id)
+      const originalItem = results.find(/** @param {Record<String, any>} item */ item => item._id === tempItem._id)
       if (originalItem) {
         finalArray.push(originalItem)
       }
     }
     const filteredStatusesNextText = filteredStatuses.value.map(status => status.split(' (')[0])
     if (tempItem.nextRun && filteredStatusesNextText.includes('Planifié')) {
-      const originalItem = results.find(item => item._id === tempItem._id)
+      const originalItem = results.find(/** @param {Record<String, any>} item */ item => item._id === tempItem._id)
       if (originalItem) {
         finalArray.push(originalItem)
       }
@@ -212,7 +216,7 @@ function refreshPlugins() {
   if (!installedPlugins.value) return
   const results = installedPlugins.value.results || []
   if (selectedPlugins.value.length === 0 || filteredPlugins.value.length === 0) {
-    const plugins = processings.value.results.map(processing => processing.plugin)
+    const plugins = processings.value.results.map(/** @param {Record<String, any>} processing */ processing => processing.plugin)
     for (let i = 0; i < plugins.length; i++) {
       let found = false
       for (let j = 0; j < results.length; j++) {
@@ -230,8 +234,8 @@ function refreshPlugins() {
     }
     selectedPlugins.value = results
   } else {
-    selectedPlugins.value = results.filter(plugin => {
-      const customName = plugin.customName
+    selectedPlugins.value = results.filter(/** @param {Record<String, any>} plugin */ plugin => {
+      const /** @type {String} */ customName = plugin.customName
       return filteredPlugins.value.includes(customName)
     })
   }

@@ -65,11 +65,31 @@
 </template>
 
 <script setup>
+/**
+ * Defines a log entry in the logs array.
+ * @typedef {Object} LogEntry
+ * @property {string} date - The date of the log.
+ * @property {string} type - The type of the log.
+ * @property {Record<String, any>} msg - The message of the log.
+ * @property {number} progress - The progress of the log.
+ * @property {number} total - The total of the log.
+ * @property {string} progressDate - The progress date of the log.
+ */
+
+/**
+ * Defines props for the component.
+ * @typedef {Object} LogProps
+ * @property {LogEntry[]} logs - An array of log entries.
+ */
+
+/**
+ * @type {LogProps}
+ */
 defineProps({
   logs: { type: Array, required: true }
 })
 
-const taskColor = (log) => {
+const taskColor = (/** @type {Record<String, any>} */ log) => {
   if (log.progress && log.progress === log.total) return 'success'
   return 'primary'
 }

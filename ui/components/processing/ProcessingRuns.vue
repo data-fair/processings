@@ -39,14 +39,17 @@ const props = defineProps({
 const eventBus = useEventBus()
 
 const loading = ref(false)
-const runs = ref(null)
+const /** @type {Ref<Record<String, any>|null>} */ runs = ref(null)
 
 const wsChannel = computed(() => `processings/${props.processing._id}/run-patch`)
 
+/**
+ * @param {Record<String, any>} runPatch
+ */
 function onRunPatch(runPatch) {
   console.log('message from', wsChannel.value, runPatch)
   if (!runs.value) return
-  const matchingRun = runs.value.results.find(run => run._id === runPatch._id)
+  const matchingRun = runs.value.results.find(/** @param {Record<String, any>} run */ run => run._id === runPatch._id)
   if (!matchingRun) {
     console.log('received info from WS about an unknown run, refresh list')
     return refresh()

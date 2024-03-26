@@ -101,6 +101,10 @@ const props = defineProps({
   }
 })
 
+/**
+ * @param {String} start
+ * @param {String} end
+ */
 function duration(start, end) {
   return dayjs.duration(dayjs(end).diff(dayjs(start))).humanize()
 }

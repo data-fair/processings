@@ -208,7 +208,7 @@ const properties = defineProps({
 // The iframe have by default a style="background: transparent;" that causes issues in dark mode
 // Basically none of the text is visible and the background is pure white
 // Each time the iframe loads, we remove the style attribute
-const observer = new MutationObserver((mutationsList, observer) => {
+const observer = new MutationObserver((mutationsList) => {
   for (const mutation of mutationsList) {
     if (mutation.type === 'childList') {
       const vIframeDiv = document.querySelector('.v-iframe')
@@ -239,7 +239,7 @@ const triggerDelay = ref(0)
 const webhookKey = ref(null)
 
 const session = useSession()
-const activeAccount = computed(() => session.state.account)
+const /** @type {Record<String, any>} */ activeAccount = computed(() => session.state.account)
 
 const notifUrl = computed(() => {
   const topics = [

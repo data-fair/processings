@@ -21,7 +21,7 @@ onMounted(() => {
   if (!params.has('statusCode') && !params.has('message')) {
     navigateTo({ path: '/' })
   }
-  const state = {
+  const /** @type {Record<String, number|string|null>} */ state = {
     statusCode: 401,
     message: 'Authentification nécessaire'
   }
@@ -31,6 +31,7 @@ onMounted(() => {
   if (params.has('message')) {
     state.message = params.get('message')
   }
+  // @ts-ignore
   error.value = { ...state }
   history.replaceState({}, document.title, location.pathname)
 })

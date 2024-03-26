@@ -74,7 +74,7 @@
     </v-menu>
     <v-text-field
       v-model="search"
-      :loading="processings == [] ? 'primary' : false"
+      :loading="processings.length === 0 ? 'primary' : false"
       placeholder="rechercher"
       variant="outlined"
       hide-details
@@ -120,28 +120,28 @@
   </v-list>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import useEventBus from '~/composables/event-bus'
-import { ref } from 'vue'
+import { type PropType, ref } from 'vue'
 
 const eventBus = useEventBus()
 
 const processingProps = defineProps({
-  installedPlugins: { type: Object, required: true },
+  installedPlugins: { type: Object as PropType<Record<string, any>>, required: true },
   isSmall: Boolean,
-  processings: { type: Array, required: true }
+  processings: { type: Array as PropType<Array<Record<string, any>>>, required: true }
 })
 
 const inCreate = ref(false)
 const showCreateMenu = ref(false)
-const newProcessing = ref({})
-const plugins = ref([])
+const newProcessing: Ref<Record<string, any>> = ref({})
+const plugins: Ref<Array<string> | Array<never>> = ref([])
 const search = ref('')
 const selectedPlugins = ref([])
 const selectedStatuses = ref([])
-const statuses = ref([])
+const statuses: Ref<Array<string> | Array<never>> = ref([])
 
-const statusText = {
+const statusText: Record<string, string> = {
   error: 'En échec',
   finished: 'Terminé',
   kill: 'Interruption',
@@ -154,7 +154,7 @@ const statusText = {
 
 function getProcessingStatus() {
   if (!processingProps.processings) return statuses
-  const array = []
+  const array: Array<string> = []
   for (const processing of processingProps.processings) {
     if (processing.lastRun) {
       const status = processing.lastRun.status
@@ -176,32 +176,32 @@ function getProcessingStatus() {
       let includes = false
       let index = 0
       for (const element of array) {
-        if (element.includes(statusText['none'])) {
+        if (element.includes(statusText.none)) {
           includes = true
           index = array.indexOf(element)
           break
         }
       }
       if (includes) {
-        array[index] = `${statusText['none']} (${Number(array[index].split('(')[1].replace(')', '')) + 1})`
+        array[index] = `${statusText.none} (${Number(array[index].split('(')[1].replace(')', '')) + 1})`
       } else {
-        array.push(`${statusText['none']} (1)`)
+        array.push(`${statusText.none} (1)`)
       }
     }
     if (processing.nextRun) {
       let includes = false
       let index = 0
       for (const element of array) {
-        if (element.includes(statusText['scheduled'])) {
+        if (element.includes(statusText.scheduled)) {
           includes = true
           index = array.indexOf(element)
           break
         }
       }
       if (includes) {
-        array[index] = `${statusText['scheduled']} (${Number(array[index].split('(')[1].replace(')', '')) + 1})`
+        array[index] = `${statusText.scheduled} (${Number(array[index].split('(')[1].replace(')', '')) + 1})`
       } else {
-        array.push(`${statusText['scheduled']} (1)`)
+        array.push(`${statusText.scheduled} (1)`)
       }
     }
   }
@@ -211,9 +211,9 @@ function getProcessingStatus() {
 
 function getUsedPlugins() {
   if (!processingProps.processings) return plugins
-  const /** @type {Array<String>} */ array = []
+  const array: Array<string> = []
   for (const processing of processingProps.processings) {
-    const plugin = processingProps.installedPlugins.results.find(plugin => plugin.id === processing.plugin)
+    const plugin = processingProps.installedPlugins.results.find((plugin: Record<string, any>) => plugin.id === processing.plugin)
     if (plugin) {
       if (!array.includes(plugin.customName)) {
         array.push(plugin.customName)
@@ -230,7 +230,7 @@ function getUsedPlugins() {
 
 const createProcessing = async () => {
   inCreate.value = true
-  const processing = await $fetch('/api/v1/processings', {
+  const processing: Record<string, any> = await $fetch('/api/v1/processings', {
     method: 'POST',
     body: JSON.stringify(newProcessing.value)
   })

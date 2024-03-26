@@ -10,7 +10,7 @@ export default function useEventBus() {
   function emit(event, ...args) {
     const handlers = events.get(event)
     if (handlers) {
-      handlers.forEach(handler => handler(...args))
+      handlers.forEach(/** @param {any} handler */ handler => handler(...args))
     }
   }
 

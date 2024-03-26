@@ -4,6 +4,9 @@
 // de vélos en libre-service (VLS) Vélocéo de Vannes
 import { ofetch } from 'ofetch'
 
+/**
+ * @param {Record<string, any>} config
+ */
 export async function run(config) {
   const infos = await ofetch(config.infosUrl)
   const status = await ofetch(config.statusUrl)

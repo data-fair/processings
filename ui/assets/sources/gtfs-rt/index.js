@@ -1,6 +1,9 @@
 import GtfsRealtimeBindings from 'gtfs-realtime-bindings'
 import { ofetch } from 'ofetch'
 
+/**
+ * @param {Record<string, any>} config
+ */
 export async function run(config) {
   const result = await ofetch(config.url, { responseType: 'arrayBuffer' })
   const feed = GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(result)

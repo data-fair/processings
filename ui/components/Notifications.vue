@@ -28,12 +28,12 @@
 import useEventBus from '~/composables/event-bus'
 import { onMounted, ref } from 'vue'
 
-const notification = ref(null)
+const /** @type {Record<String, any>} */ notification = ref(null)
 const showSnackbar = ref(false)
 const eventBus = useEventBus()
 
 onMounted(() => {
-  eventBus.on('notification', async (notif) => {
+  eventBus.on('notification', async (/** @type {Record<String, any>} */ notif) => {
     if (showSnackbar.value) {
       showSnackbar.value = false
       await new Promise(resolve => setTimeout(resolve, 300))
