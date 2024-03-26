@@ -158,6 +158,10 @@
         "role": "admin"
       },
       {
+        "id": "admin1",
+        "role": "admin"
+      },
+      {
         "id": "dhannan8",
         "role": "user"
       },

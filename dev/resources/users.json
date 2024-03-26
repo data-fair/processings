@@ -111,6 +111,15 @@
     }
   },
   {
+    "id": "admin1",
+    "firstName": "Admin1",
+    "lastName": "",
+    "email": "admin1@test.com",
+    "password": {
+      "clear": "passwd"
+    }
+  },
+  {
     "id": "albanm",
     "firstName": "Alban",
     "lastName": "Mouton",
