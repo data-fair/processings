@@ -212,10 +212,26 @@ function refreshPlugins() {
   if (!installedPlugins.value) return
   const results = installedPlugins.value.results || []
   if (selectedPlugins.value.length === 0 || filteredPlugins.value.length === 0) {
+    const plugins = processings.value.results.map(processing => processing.plugin)
+    for (let i = 0; i < plugins.length; i++) {
+      let found = false
+      for (let j = 0; j < results.length; j++) {
+        if (results[j].id === plugins[i]) {
+          found = true
+          break
+        }
+      }
+      if (!found) {
+        results.push({
+          id: plugins[i],
+          customName: plugins[i]
+        })
+      }
+    }
     selectedPlugins.value = results
   } else {
     selectedPlugins.value = results.filter(plugin => {
-      const customName = plugin.customName.split(' (')[0]
+      const customName = plugin.customName
       return filteredPlugins.value.includes(customName)
     })
   }

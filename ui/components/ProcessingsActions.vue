@@ -211,11 +211,20 @@ function getProcessingStatus() {
 
 function getUsedPlugins() {
   if (!processingProps.processings) return plugins
-  const array = []
-  for (const plugin of processingProps.installedPlugins.results) {
-    array.push(plugin.customName.split(' (')[0])
+  const /** @type {Array<String>} */ array = []
+  for (const processing of processingProps.processings) {
+    const plugin = processingProps.installedPlugins.results.find(plugin => plugin.id === processing.plugin)
+    if (plugin) {
+      if (!array.includes(plugin.customName)) {
+        array.push(plugin.customName)
+      }
+    } else {
+      if (!array.includes(processing.plugin)) {
+        array.push(processing.plugin)
+      }
+    }
   }
-  plugins.value = Array.from(new Set(array)).sort()
+  plugins.value = array.sort()
   return plugins
 }
 
