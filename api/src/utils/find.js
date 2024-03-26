@@ -4,7 +4,7 @@ import permissions from './permissions.js'
 // Util functions shared accross the main find (GET on collection) endpoints
 /**
  * @param {any} reqQuery - The query parameters from the request
- * @param {import('@data-fair/lib/express/index.js').SessionState} sessionState
+ * @param {import('@data-fair/lib/express/index.js').SessionStateAuthenticated} sessionState
  * @param {Object<string, string>} fieldsMap
  */
 const query = (reqQuery, sessionState, fieldsMap = {}) => {
@@ -14,7 +14,7 @@ const query = (reqQuery, sessionState, fieldsMap = {}) => {
   if (reqQuery.q) query.$text = { $search: reqQuery.q }
 
   const showAll = reqQuery.showAll === 'true'
-  if (showAll && !sessionState.user?.adminMode) {
+  if (showAll && !sessionState.user.adminMode) {
     throw createError(400, 'Only super admins can override permissions filter with showAll parameter')
   }
   if (!showAll) {

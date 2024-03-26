@@ -9,7 +9,7 @@ import config from '../config.js'
 const getOwnerRole = (sessionState, owner) => {
   if (!sessionState) return
   if (sessionState.account.department) return 'admin'
-  if (sessionState.account.type !== owner.type || sessionState.account?.id !== owner.id) return
+  if (sessionState.account.type !== owner.type || sessionState.account.id !== owner.id) return
   if (sessionState.account.type === 'user') return 'admin'
   return sessionState.accountRole
 }
@@ -63,10 +63,10 @@ const getOwnerPermissionFilter = (sessionState, owner) => {
     'owner.type': owner.type,
     'owner.id': owner.id
   }
-  if (sessionState.user?.adminMode || ['admin', 'contrib'].includes(getOwnerRole(sessionState, owner) || '')) return filter
+  if (sessionState.user.adminMode || ['admin', 'contrib'].includes(getOwnerRole(sessionState, owner) || '')) return filter
   /** @type {any[]} */
-  const or = [{ 'target.type': 'userEmail', 'target.email': sessionState.user?.email }]
-  if (sessionState.account?.type === 'organization') {
+  const or = [{ 'target.type': 'userEmail', 'target.email': sessionState.user.email }]
+  if (sessionState.account.type === 'organization') {
     or.push({ 'target.type': 'partner', 'target.organization.id': sessionState.account.id, 'target.roles': sessionState.accountRole })
   }
   filter.permissions = {
@@ -80,12 +80,12 @@ const getOwnerPermissionFilter = (sessionState, owner) => {
 
 /**
  * @param {any} target
- * @param {import('@data-fair/lib/express/index.js').SessionState} sessionState
+ * @param {import('@data-fair/lib/express/index.js').SessionStateAuthenticated} sessionState
  * @returns {boolean}
  */
 const matchPermissionTarget = (target, sessionState) => {
-  if (target.type === 'userEmail' && target.email === sessionState.user?.email) return true
-  if (target.type === 'partner' && sessionState.account?.type === 'organization' && sessionState.account?.id === target.organization.id && target.roles.includes(sessionState.accountRole)) return true
+  if (target.type === 'userEmail' && target.email === sessionState.user.email) return true
+  if (target.type === 'partner' && sessionState.account.type === 'organization' && sessionState.account.id === target.organization.id && target.roles.includes(sessionState.accountRole)) return true
   return false
 }
 

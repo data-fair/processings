@@ -10,8 +10,6 @@ export default router
 const sensitiveParts = ['permissions']
 
 /** @typedef {import('../../../shared/types/run/index.js').Run} Run */
-/** @type {import('mongodb').Collection<Run>} */
-const runsCollection = mongo.db.collection('runs')
 
 /**
  * Remove sensitive parts from a run object (permissions)
@@ -48,6 +46,8 @@ router.get('', asyncHandler(async (req, res) => {
   if (sessionState.user.adminMode) params.showAll = 'true'
   const query = findUtils.query(req.query, sessionState, { processing: 'processing._id' }) // Check permissions on processing
   const project = { log: 0 }
+  /** @type {import('mongodb').Collection<Run>} */
+  const runsCollection = mongo.db.collection('runs')
   const [runs, count] = await Promise.all([
     size > 0 ? runsCollection.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
     runsCollection.countDocuments(query)
@@ -59,6 +59,8 @@ router.get('', asyncHandler(async (req, res) => {
 // Get a run (with logs)
 router.get('/:id', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
+  /** @type {import('mongodb').Collection<Run>} */
+  const runsCollection = mongo.db.collection('runs')
   const run = await runsCollection.findOne({ _id: req.params.id })
   if (!run) return res.status(404).send()
   if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(run.owner, run.permissions, sessionState, req.headers.host) ?? '')) return res.status(403).send()
@@ -68,6 +70,8 @@ router.get('/:id', asyncHandler(async (req, res) => {
 // Kill a run
 router.post('/:id/_kill', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
+  /** @type {import('mongodb').Collection<Run>} */
+  const runsCollection = mongo.db.collection('runs')
   const run = await runsCollection.findOne({ _id: req.params.id })
   if (!run) return res.status(404).send()
   if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(run.owner, run.permissions, sessionState, req.headers.host) ?? '')) return res.status(403).send()

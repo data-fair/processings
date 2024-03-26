@@ -26,8 +26,6 @@ const pluginsDir = path.join(config.dataDir, 'plugins')
 const sensitiveParts = ['permissions', 'webhookKey', 'config']
 
 /** @typedef {import('../../../shared/types/processing/index.js').Processing} Processing */
-/** @type {import('mongodb').Collection<Processing>} */
-const processingsCollection = mongo.db.collection('processings')
 
 /**
  * Check that a processing object is valid
@@ -82,6 +80,8 @@ const cleanProcessing = (processing, sessionState, host) => {
 // Get the list of processings
 router.get('', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
+  /** @type {import('mongodb').Collection<Processing>} */
+  const processingsCollection = mongo.db.collection('processings')
   const params = /** @type {getParams} */(req.query)
   const sort = findUtils.sort(params.sort)
   const [size, skip] = findUtils.pagination(params.size, params.page, params.skip)
@@ -127,6 +127,8 @@ router.post('', asyncHandler(async (req, res) => {
   }
 
   await validateFullProcessing(processing)
+  /** @type {import('mongodb').Collection<Processing>} */
+  const processingsCollection = mongo.db.collection('processings')
   await processingsCollection.insertOne(processing)
   res.status(200).json(cleanProcessing(processing, sessionState, req.headers.host))
 }))
@@ -134,6 +136,8 @@ router.post('', asyncHandler(async (req, res) => {
 // Patch some of the attributes of a processing
 router.patch('/:id', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
+  /** @type {import('mongodb').Collection<Processing>} */
+  const processingsCollection = mongo.db.collection('processings')
   const processing = await processingsCollection.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState, req.headers.host) !== 'admin') return res.status(403).send()
@@ -173,6 +177,8 @@ router.patch('/:id', asyncHandler(async (req, res) => {
 // Get a processing
 router.get('/:id', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
+  /** @type {import('mongodb').Collection<Processing>} */
+  const processingsCollection = mongo.db.collection('processings')
   const processing = await processingsCollection.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState, req.headers.host) ?? '')) return res.status(403).send()
@@ -182,6 +188,8 @@ router.get('/:id', asyncHandler(async (req, res) => {
 // Delete a processing
 router.delete('/:id', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
+  /** @type {import('mongodb').Collection<Processing>} */
+  const processingsCollection = mongo.db.collection('processings')
   const processing = await processingsCollection.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState, req.headers.host) !== 'admin') return res.status(403).send()
@@ -192,6 +200,8 @@ router.delete('/:id', asyncHandler(async (req, res) => {
 
 router.get('/:id/webhook-key', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
+  /** @type {import('mongodb').Collection<Processing>} */
+  const processingsCollection = mongo.db.collection('processings')
   const processing = await processingsCollection.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState, req.headers.host) !== 'admin') return res.status(403).send()
@@ -200,6 +210,8 @@ router.get('/:id/webhook-key', asyncHandler(async (req, res) => {
 
 router.delete('/:id/webhook-key', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
+  /** @type {import('mongodb').Collection<Processing>} */
+  const processingsCollection = mongo.db.collection('processings')
   const processing = await processingsCollection.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState, req.headers.host) !== 'admin') return res.status(403).send()
@@ -212,6 +224,8 @@ router.delete('/:id/webhook-key', asyncHandler(async (req, res) => {
 }))
 
 router.post('/:id/_trigger', asyncHandler(async (req, res) => {
+  /** @type {import('mongodb').Collection<Processing>} */
+  const processingsCollection = mongo.db.collection('processings')
   const processing = await processingsCollection.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (req.query.key && req.query.key !== processing.webhookKey) {
