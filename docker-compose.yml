@@ -114,6 +114,8 @@ services:
   api:
     build:
       dockerfile: ./api/Dockerfile
+      args:
+        NODE_ENV: development
     depends_on:
       - data-fair
     profiles:
@@ -134,12 +136,12 @@ services:
       - testImages
     image: datafair/processings/ui:dev
     network_mode: host
-    volumes:
-      - processings-data:/app/data
 
   worker:
     build:
       dockerfile: ./worker/Dockerfile
+      args:
+        NODE_ENV: development
     depends_on:
       - data-fair
     profiles:

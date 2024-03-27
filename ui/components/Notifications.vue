@@ -51,12 +51,16 @@ onMounted(() => {
 })
 </script>
 
-<style>
-.notification .v-snack__content {
+<style scoped>
+:deep(.v-overlay__content) {
+  background: rgb(var(--v-theme-background));
+}
+
+:deep(.v-snackbar__content) {
   height: auto;
 }
 
-.notification .v-snack__content p {
+:deep(.v-snackbar__content p) {
   margin-bottom: 4px;
   margin-top: 4px;
 }

@@ -8,7 +8,7 @@
         <v-container>
           <v-list-subheader>{{ displayProcessings.length }} traitements</v-list-subheader>
           <v-skeleton-loader
-            v-if="!installedPlugins.results"
+            v-if="!processings || (processings && !processings.results)"
             :height="100"
             type="card@4"
             class="my-4"
@@ -269,6 +269,7 @@ async function refresh() {
     processings.value = await $fetch('/api/v1/processings', { params })
   } catch (error) {
     eventBus.emit('notification', { error, msg: 'Erreur pendant la récupération de la liste des traitements' })
+    processings.value = { results: [] }
   }
 }
 

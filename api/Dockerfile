@@ -22,7 +22,8 @@ RUN npm run build-types-api
 FROM node:20.11.1-alpine3.19
 LABEL org.opencontainers.image.authors="contact@koumoul.com"
 
-ENV NODE_ENV production
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /app/
 
@@ -39,5 +40,7 @@ ADD LICENSE .
 WORKDIR /app/api
 
 EXPOSE 8080
+
+# USER node
 
 CMD ["node", "--max-http-header-size", "64000", "index.js"]
