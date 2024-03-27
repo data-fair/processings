@@ -123,8 +123,7 @@ const processingSchema = computed(() => {
   const schema = JSON.parse(JSON.stringify(contractProcessing))
   Object.keys(schema.properties).forEach(key => {
     if (schema.properties[key].readOnly) {
-      // @ts-ignore
-      schema.required = schema.required.filter(k => k !== key)
+      schema.required = schema.required.filter((/** @type {string} */k) => k !== key)
       delete schema.properties[key]
     }
   })
@@ -204,3 +203,6 @@ async function patch() {
 }
 
 </script>
+
+<style>
+</style>

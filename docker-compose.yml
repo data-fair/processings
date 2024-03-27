@@ -52,6 +52,7 @@ services:
       - MONGO_URL=mongodb://localhost:27017/data-fair
       - OPENAPI_VIEWER_URL=http://localhost:5600/openapi-viewer/
       - DIRECTORY_URL=http://localhost:5600/simple-directory
+      - NOTIFY_URL=http://localhost:5600/notify
       - PUBLIC_URL=http://localhost:5600/data-fair
       - WS_PUBLIC_URL=ws://localhost:5600/data-fair
       - EXTRA_NAV_ITEMS=[{"id":"processings","can":"contrib","iframe":"http://localhost:5600/processings","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
@@ -120,9 +121,9 @@ services:
     image: datafair/processings/api:dev
     network_mode: host
     environment:
-      - NODE_ENV=dev
+      - NODE_ENV=development
     volumes:
-      - processings-data:/data/processings
+      - processings-data:/app/data
 
   ui:
     build:
@@ -134,7 +135,7 @@ services:
     image: datafair/processings/ui:dev
     network_mode: host
     volumes:
-      - processings-data:/data/processings
+      - processings-data:/app/data
 
   worker:
     build:
@@ -146,9 +147,9 @@ services:
     image: datafair/processings/worker:dev
     network_mode: host
     environment:
-      - NODE_ENV=dev
+      - NODE_ENV=development
     volumes:
-      - processings-data:/data/processings
+      - processings-data:/app/data
 
 volumes:
   data-fair-data:
