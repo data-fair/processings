@@ -31,7 +31,6 @@ export default defineNuxtConfig({
         cookieKey: 'i18n_lang'
       }
     }],
-    '@pinia/nuxt',
     (_options, nuxt) => {
       nuxt.hooks.hook('vite:extendConfig', (config) => {
         // @ts-expect-error
