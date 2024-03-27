@@ -66,12 +66,14 @@
 <script setup>
 import '@koumoul/vjsf-markdown'
 import contractProcessing from '../../../contract/processing'
+import useEventBus from '~/composables/event-bus'
 import Vjsf from '@koumoul/vjsf'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSession } from '@data-fair/lib/vue/session.js'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 
+const eventBus = useEventBus()
 const route = useRoute()
 const session = useSession()
 
@@ -193,8 +195,9 @@ async function patch() {
       method: 'PATCH',
       body: JSON.stringify({ ...editProcessing.value })
     })
-  } catch (e) {
-    console.error(e)
+  } catch (error) {
+    console.error(error)
+    eventBus.emit('notification', { error, msg: 'Erreur pendant la modification du traitement' })
   } finally {
     edited.value = false
   }

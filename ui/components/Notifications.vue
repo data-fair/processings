@@ -4,7 +4,7 @@
     ref="notificationSnackbar"
     v-model="showSnackbar"
     :color="notification.type"
-    :timeout="notification.type === 'error' ? 0 : 300000"
+    :timeout="notification.type === 'error' ? -1 : 300000"
     class="notification"
     location="right bottom"
     :variant="$vuetify.theme.current.dark ? 'outlined' : 'elevated'"

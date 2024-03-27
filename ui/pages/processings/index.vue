@@ -7,6 +7,12 @@
       <v-col>
         <v-container>
           <v-list-subheader>{{ displayProcessings.length }} traitements</v-list-subheader>
+          <v-skeleton-loader
+            v-if="!installedPlugins.results"
+            :height="100"
+            type="card@4"
+            class="my-4"
+          />
           <v-row v-if="processings">
             <v-col
               v-for="processing in displayProcessings"

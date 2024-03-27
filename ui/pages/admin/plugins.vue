@@ -19,6 +19,12 @@
       indeterminate
       color="primary"
     />
+    <v-skeleton-loader
+      v-if="!installedPlugins.results"
+      :height="100"
+      type="card@4"
+      class="my-4"
+    />
     <template
       v-for="result in filteredInstalledPlugins"
       v-else
@@ -42,7 +48,7 @@
           {{ result.version }}
           <v-btn
             v-if="updateAvailable(result)[0]"
-            :title="`Mettre à jour ${updateAvailable(result)[1]}`"
+            :title="`Mettre à jour (${updateAvailable(result)[1]})`"
             icon="mdi-update"
             color="primary"
             :disabled="loading"
@@ -136,6 +142,12 @@
       v-if="!availablePlugins.results || reloading"
       indeterminate
       color="primary"
+    />
+    <v-skeleton-loader
+      v-if="!availablePlugins.results || reloading"
+      :height="100"
+      type="card@4"
+      class="my-4"
     />
     <template
       v-for="result in filteredAvailablePlugins"
