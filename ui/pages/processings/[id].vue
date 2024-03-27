@@ -27,9 +27,9 @@
         </v-form>
         <processing-runs
           ref="runs"
+          :can-exec="canExecProcessing"
           :processing="processing"
           class="mt-4"
-          :can-exec="canExecProcessing"
         />
       </v-col>
       <LayoutNavigationRight v-if="$vuetify.display.lgAndUp">
@@ -40,7 +40,7 @@
           :can-exec="canExecProcessing"
           :edited="edited"
           :is-small="false"
-          @triggered="runs.refresh()"
+          @triggered="runs && runs.refresh()"
         />
       </LayoutNavigationRight>
       <LayoutActionsButton
@@ -55,7 +55,7 @@
             :can-exec="canExecProcessing"
             :edited="edited"
             :is-small="true"
-            @triggered="runs.refresh()"
+            @triggered="runs && runs.refresh()"
           />
         </template>
       </LayoutActionsButton>
@@ -67,7 +67,7 @@
 import '@koumoul/vjsf-markdown'
 import contractProcessing from '../../../contract/processing'
 import Vjsf from '@koumoul/vjsf'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSession } from '@data-fair/lib/vue/session.js'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
@@ -77,37 +77,29 @@ const session = useSession()
 
 /** @typedef {import('../../../shared/types/processing/index.js').Processing} Processing */
 
-/** @type {Ref<Processing|null>} */
-const currentPatch = ref(null)
 const edited = ref(false)
 /** @type {Ref<Processing|null>} */
 const editProcessing = ref(null)
 /** @type {Ref<Processing|null>} */
-const nextPatch = ref(null)
-const patching = ref(false)
-/** @type {Ref<Processing|null>} */
 const processing = ref(null)
-/** @type {Record<String, any>} */
+/** @type {Ref<Object<string, any>|null>} */
 const plugin = ref(null)
+/** @type {Ref<Record<string, any>|null>} */
 const runs = ref(null)
 const renderVjsfKey = ref(0)
 
-const user = computed(() => session.state.user)
-
 const canAdminProcessing = computed(() => {
   if (!processing.value) return false
-  // @ts-ignore
   return processing.value.userProfile === 'admin'
 })
 
 const canExecProcessing = computed(() => {
   if (!processing.value) return false
-  // @ts-ignore
-  return ['admin', 'exec'].includes(processing.value.userProfile)
+  return ['admin', 'exec'].includes(processing.value.userProfile || '')
 })
 
 /**
- * @param {Record<String, any>} object
+ * @param {Record<string, any>} object
  */
 function updateCustomTimeZone(object) {
   Object.keys(object).forEach(key => {
@@ -140,7 +132,7 @@ const processingSchema = computed(() => {
     title: 'Plugin ' + plugin.value.customName,
     'x-options': { deleteReadOnly: false }
   }
-  if (user.value?.adminMode) delete schema.properties.debug?.readOnly
+  if (session.state.user?.adminMode) delete schema.properties.debug?.readOnly
   if (!canAdminProcessing.value) {
     delete schema.properties.permissions
     delete schema.properties.config
@@ -150,32 +142,18 @@ const processingSchema = computed(() => {
 })
 
 const vjsfOptions = computed(() => {
-  if (!processing.value) return {}
   return {
-    /*
-    arrayItemCardProps: { outlined: true, tile: true },
-    dialogCardProps: { outlined: true },
-    dialogProps: {
-      maxWidth: 500,
-      overlayOpacity: 0 // better when inside an iframe
-    },
-    disableSorting: true,
-    editMode: 'inline',
-    expansionPanelsProps: {
-      value: 0,
-      hover: true
-    },
-    */
     context: {
-      // @ts-ignore
-      owner: processing.value.owner,
+      owner: processing.value?.owner,
       dataFairUrl: window.location.origin + '/data-fair',
       directoryUrl: window.location.origin + '/simple-directory'
     },
     debounceInputMs: 1000,
-    density: 'compact',
+    density: 'comfortable',
+    initialValidation: 'withData',
     readOnly: !canAdminProcessing.value,
     readOnlyPropertiesMode: 'remove',
+    updateOn: 'blur',
     validateOn: 'blur'
   }
 })
@@ -187,17 +165,12 @@ onMounted(async () => {
 
 async function fetchProcessing() {
   processing.value = await $fetch(`/api/v1/processings/${route.params.id}`)
-  // @ts-ignore
-  editProcessing.value = { ...processing.value }
+  if (processing.value) editProcessing.value = { ...processing.value }
 }
 
 async function fetchPlugin() {
-  if (processing.value && processing.value.plugin) {
+  if (processing.value?.plugin) {
     plugin.value = await $fetch(`/api/v1/plugins/${processing.value.plugin}`)
-    Object.keys(processingSchema.value.properties).forEach(key => {
-      // @ts-ignore
-      if (processingSchema.value.properties[key].readOnly) delete editProcessing.value[key]
-    })
   }
 }
 
@@ -210,12 +183,6 @@ async function handleTimeZoneChange(value) {
 }
 
 async function patch() {
-  if (patching.value) {
-    if (nextPatch.value !== editProcessing.value && currentPatch.value !== editProcessing.value) nextPatch.value = editProcessing.value
-    return
-  }
-  patching.value = true
-  currentPatch.value = editProcessing.value
   if (editProcessing.value?.scheduling && editProcessing.value.scheduling.type === 'weekly') {
     if (editProcessing.value.scheduling.dayOfWeek === '*') editProcessing.value.scheduling.dayOfWeek = '1'
     renderVjsfKey.value += 1
@@ -229,25 +196,8 @@ async function patch() {
   } catch (e) {
     console.error(e)
   } finally {
-    patching.value = false
-    currentPatch.value = null
     edited.value = false
   }
 }
 
-watch(() => nextPatch.value, async value => {
-  if (value) {
-    await /** @type {Promise<void>} */(new Promise(resolve => {
-      const interval = setInterval(() => {
-        if (!patching.value) {
-          clearInterval(interval)
-          resolve()
-        }
-      }, 100)
-    }))
-    editProcessing.value = value
-    nextPatch.value = null
-    await patch()
-  }
-})
 </script>

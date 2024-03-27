@@ -236,7 +236,7 @@ const showDeleteMenu = ref(false)
 const showNotifMenu = ref(false)
 const showTriggerMenu = ref(false)
 const triggerDelay = ref(0)
-const webhookKey = ref(null)
+const webhookKey = ref('')
 
 const session = useSession()
 const /** @type {Record<String, any>} */ activeAccount = computed(() => session.state.account)
