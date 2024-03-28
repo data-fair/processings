@@ -54,8 +54,8 @@
           <v-spacer />
           <div style="white-space: nowrap;">
             <span class="pl-2">
-              {{ $filters.date(log.date, 'lll') }}
-              <span v-if="log.progressDate">- {{ $filters.date(log.progressDate, 'lll') }}</span>
+              {{ format.date(log.date, 'lll') }}
+              <span v-if="log.progressDate">- {{ format.date(log.progressDate, 'lll') }}</span>
             </span>
           </div>
         </div>
@@ -65,6 +65,9 @@
 </template>
 
 <script setup>
+import useDateFormat from '~/composables/date-format'
+const format = useDateFormat()
+
 /**
  * Defines a log entry in the logs array.
  * @typedef {Object} LogEntry
@@ -77,13 +80,7 @@
  */
 
 /**
- * Defines props for the component.
- * @typedef {Object} LogProps
- * @property {LogEntry[]} logs - An array of log entries.
- */
-
-/**
- * @type {LogProps}
+ * @type {{logs: LogEntry[]}}
  */
 defineProps({
   logs: { type: Array, required: true }

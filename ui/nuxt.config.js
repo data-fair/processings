@@ -42,7 +42,6 @@ export default defineNuxtConfig({
     }
   ],
   plugins: [
-    { src: 'plugins/filters' },
     { src: 'plugins/session', mode: 'client' },
     { src: 'plugins/reactive-search-params' },
     { src: 'plugins/v-iframe', mode: 'client' },

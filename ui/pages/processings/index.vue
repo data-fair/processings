@@ -28,7 +28,7 @@
               <ProcessingCard
                 :processing="processing"
                 :show-owner="showAll"
-                :plugin="installedPlugins.results && installedPlugins.results.find(/** @param {Record<String, any>} p */ p => p.id === processing.plugin)"
+                :plugin-custom-name="installedPlugins.results.find(/** @param {Record<String, any>} p */ p => p.id === processing.plugin).customName"
                 class="w-100"
               />
             </v-col>

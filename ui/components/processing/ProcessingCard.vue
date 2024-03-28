@@ -31,9 +31,10 @@
             <template #prepend>
               <v-icon
                 icon="mdi-power-plug"
+                :color="pluginCustomName ? 'default' : 'error'"
               />
             </template>
-            <span>{{ plugin ? plugin.customName : processing.plugin }}</span>
+            <span>{{ pluginCustomName || processing.plugin }}</span>
           </v-list-item>
 
           <template v-if="processing.lastRun">
@@ -45,7 +46,7 @@
                   size="24"
                 />
               </template>
-              <span style="padding-left: 1.8rem; display: inline-block;">Exécution commencée {{ $filters.fromNow(processing.lastRun.startedAt) }}</span>
+              <span style="padding-left: 1.8rem; display: inline-block;">Exécution commencée {{ format.fromNow(processing.lastRun.startedAt) }}</span>
             </v-list-item>
 
             <v-list-item v-if="processing.lastRun.status === 'finished'">
@@ -55,7 +56,7 @@
                   icon="mdi-check-circle"
                 />
               </template>
-              <span>Dernière exécution terminée {{ $filters.fromNow(processing.lastRun.finishedAt) }}</span>
+              <span>Dernière exécution terminée {{ format.fromNow(processing.lastRun.finishedAt) }}</span>
             </v-list-item>
 
             <v-list-item v-if="processing.lastRun.status === 'error'">
@@ -65,7 +66,7 @@
                   icon="mdi-alert"
                 />
               </template>
-              <span>Dernière exécution en échec {{ $filters.fromNow(processing.lastRun.finishedAt) }}</span>
+              <span>Dernière exécution en échec {{ format.fromNow(processing.lastRun.finishedAt) }}</span>
             </v-list-item>
 
             <v-list-item v-if="processing.lastRun.status === 'kill' || processing.lastRun.status === 'killed'">
@@ -75,7 +76,7 @@
                   icon="mdi-stop"
                 />
               </template>
-              <span>Dernière exécution interrompue {{ $filters.fromNow(processing.lastRun.finishedAt) }}</span>
+              <span>Dernière exécution interrompue {{ format.fromNow(processing.lastRun.finishedAt) }}</span>
             </v-list-item>
           </template>
 
@@ -97,7 +98,7 @@
                   icon="mdi-clock"
                 />
               </template>
-              <span>Prochaine exécution planifiée {{ $filters.fromNow(processing.nextRun.scheduledAt, true) }}</span>
+              <span>Prochaine exécution planifiée {{ format.fromNow(processing.nextRun.scheduledAt, true) }}</span>
             </v-list-item>
 
             <v-list-item v-if="processing.nextRun.status === 'triggered'">
@@ -108,8 +109,8 @@
                 />
               </template>
               <span>
-                Prochaine exécution déclenchée manuellement {{ $filters.fromNow(processing.nextRun.createdAt) }}
-                <template v-if="processing.nextRun.scheduledAt && processing.nextRun.scheduledAt !== processing.nextRun.createdAt"> - planifiée {{ $filters.fromNow(processing.nextRun.scheduledAt, true) }}</template>
+                Prochaine exécution déclenchée manuellement {{ format.fromNow(processing.nextRun.createdAt) }}
+                <template v-if="processing.nextRun.scheduledAt && processing.nextRun.scheduledAt !== processing.nextRun.createdAt"> - planifiée {{ format.fromNow(processing.nextRun.scheduledAt, true) }}</template>
               </span>
             </v-list-item>
           </template>
@@ -130,10 +131,12 @@
 </template>
 
 <script setup>
+import useDateFormat from '~/composables/date-format'
+const format = useDateFormat()
 
 defineProps({
-  plugin: {
-    type: Object,
+  pluginCustomName: {
+    type: String,
     default: null
   },
   processing: {

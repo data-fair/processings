@@ -87,7 +87,7 @@
       @update:model-value="eventBus.emit('search', search); getProcessingStatus()"
     />
     <v-select
-      v-model="selectedStatuses"
+      v-model="statusesSelected"
       :items="statuses"
       label="Statut"
       chips
@@ -101,10 +101,10 @@
       variant="outlined"
       style="max-width:400px;"
       @click="getProcessingStatus()"
-      @update:model-value="eventBus.emit('status', selectedStatuses)"
+      @update:model-value="eventBus.emit('status', statusesSelected)"
     />
     <v-select
-      v-model="selectedPlugins"
+      v-model="pluginsSelected"
       :items="plugins"
       label="Plugin"
       chips
@@ -118,7 +118,7 @@
       variant="outlined"
       style="max-width:400px;"
       @click="getUsedPlugins()"
-      @update:model-value="eventBus.emit('plugin', selectedPlugins)"
+      @update:model-value="eventBus.emit('plugin', pluginsSelected)"
     />
   </v-list>
 </template>
@@ -139,10 +139,10 @@ const inCreate = ref(false)
 const showCreateMenu = ref(false)
 const newProcessing: Ref<Record<string, any>> = ref({})
 const plugins: Ref<Array<string> | Array<never>> = ref([])
+const pluginsSelected = ref([])
 const search = ref('')
-const selectedPlugins = ref([])
-const selectedStatuses = ref([])
 const statuses: Ref<Array<string> | Array<never>> = ref([])
+const statusesSelected = ref([])
 
 const statusText: Record<string, string> = {
   error: 'En échec',

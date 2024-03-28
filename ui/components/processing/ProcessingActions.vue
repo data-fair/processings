@@ -12,8 +12,9 @@
     >
       <template #activator="{ props }">
         <v-list-item
+          v-if="processingSchema !== null"
           v-bind="props"
-          :disabled="processingSchema === null || !processing?.active || edited"
+          :disabled="!processing?.active || edited"
         >
           <template #prepend>
             <v-icon
@@ -146,7 +147,10 @@
       max-width="500"
     >
       <template #activator="{ props }">
-        <v-list-item v-bind="props">
+        <v-list-item
+          v-if="processingSchema !== null"
+          v-bind="props"
+        >
           <template #prepend>
             <v-icon
               color="primary"

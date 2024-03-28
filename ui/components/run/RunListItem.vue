@@ -44,32 +44,32 @@
     </template>
 
     <v-list-item-title v-if="run.status === 'running'">
-      Démarrée {{ $filters.fromNow(run.startedAt) }}
+      Démarrée {{ format.fromNow(run.startedAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="run.status === 'finished'">
-      Terminée - {{ $filters.date(run.finishedAt) }}
+      Terminée - {{ format.date(run.finishedAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="run.status === 'error'">
-      En échec - {{ $filters.date(run.finishedAt) }}
+      En échec - {{ format.date(run.finishedAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="run.status === 'scheduled'">
-      Planifiée - {{ $filters.date(run.scheduledAt) }}
+      Planifiée - {{ format.date(run.scheduledAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="run.status === 'triggered'">
-      Déclenchée manuellement {{ $filters.fromNow(run.createdAt) }}
+      Déclenchée manuellement {{ format.fromNow(run.createdAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="run.status === 'kill'">
       Interruption demandée
     </v-list-item-title>
     <v-list-item-title v-if="run.status === 'killed'">
-      Interrompue manuellement - {{ $filters.date(run.finishedAt) }}
+      Interrompue manuellement - {{ format.date(run.finishedAt) }}
     </v-list-item-title>
 
     <v-list-item-subtitle v-if="run.status === 'finished' || run.status === 'error' || run.status === 'killed'">
-      Durée : {{ duration(run.startedAt, run.finishedAt) }}
+      Durée : {{ format.from(run.startedAt, run.finishedAt) }}
     </v-list-item-subtitle>
     <v-list-item-subtitle v-if="run.status === 'triggered' && run.scheduledAt && run.scheduledAt !== run.createdAt">
-      Planifiée {{ $filters.fromNow(run.scheduledAt, true) }}
+      Planifiée {{ format.fromNow(run.scheduledAt, true) }}
     </v-list-item-subtitle>
 
     <template
@@ -88,8 +88,8 @@
 </template>
 
 <script setup>
-const nuxtApp = useNuxtApp()
-const dayjs = nuxtApp.$dayjs
+import useDateFormat from '~/composables/date-format'
+const format = useDateFormat()
 
 const props = defineProps({
   canExec: Boolean,
@@ -99,14 +99,6 @@ const props = defineProps({
     default: null
   }
 })
-
-/**
- * @param {String} start
- * @param {String} end
- */
-function duration(start, end) {
-  return dayjs.duration(dayjs(end).diff(dayjs(start))).humanize()
-}
 
 const kill = async () => {
   await $fetch(`/api/v1/runs/${props.run._id}/_kill`, {
