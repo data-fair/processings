@@ -55,7 +55,6 @@
           />
           <v-menu
             :key="result.id"
-            :v-model="deleteMenuShowed === result.id"
             :close-on-content-click="false"
             max-width="500"
           >
@@ -66,9 +65,11 @@
                 icon="mdi-delete"
                 color="warning"
                 :disabled="pluginsLocked[`${result.name}-${result.distTag}`]"
+                @click="deleteMenuShowed = result.id"
               />
             </template>
             <v-card
+              v-if="deleteMenuShowed"
               rounded="lg"
               variant="elevated"
             >
@@ -87,6 +88,7 @@
                 <v-spacer />
                 <v-btn
                   variant="text"
+                  :disabled="pluginsLocked[`${result.name}-${result.distTag}`]"
                   @click="deleteMenuShowed = null"
                 >
                   Non
@@ -194,11 +196,13 @@
 
 <script setup>
 import '@koumoul/vjsf-markdown'
+import useEventBus from '~/composables/event-bus'
 import Vjsf from '@koumoul/vjsf'
 import { computed, onMounted, ref } from 'vue'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 import { useSession } from '@data-fair/lib/vue/session.js'
 
+const eventBus = useEventBus()
 const session = useSession()
 
 /**
@@ -301,8 +305,8 @@ async function install(plugin) {
     console.log(newPlugin)
     if (index === -1) installedPlugins.value.push(newPlugin)
     else installedPlugins.value[index] = newPlugin
-  } catch (e) {
-    // TODO handle notification error
+  } catch (error) {
+    eventBus.emit('notification', { error, msg: 'Erreur pendant l\'installation du plugin' })
   } finally {
     pluginsLocked.value[`${plugin.name}-${plugin.distTag}`] = false
   }

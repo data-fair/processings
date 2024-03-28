@@ -248,7 +248,7 @@ function refreshPlugins() {
 }
 
 async function fetchInstalledPlugins() {
-  if (!canAdmin.value) return // TODO Why ?
+  if (!canAdmin.value) return
   installedPlugins.value = await $fetch(`/api/v1/plugins?privateAccess=${ownerFilter.value}`)
 }
 

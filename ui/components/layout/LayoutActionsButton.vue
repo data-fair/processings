@@ -1,7 +1,6 @@
 <template>
   <div
-    class="actions-buttons"
-    style="position: absolute; right: 20px;"
+    class="actions-buttons mt-4"
   >
     <v-menu
       location="bottom left"
@@ -23,5 +22,10 @@
 <script setup>
 </script>
 
-<style>
+<style scoped>
+.actions-buttons {
+  z-index: 1000;
+  position: fixed;
+  right: 20px;
+}
 </style>

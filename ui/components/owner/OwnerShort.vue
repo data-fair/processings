@@ -25,7 +25,7 @@ const ownerProps = defineProps({
 })
 
 const avatarUrl = computed(() => {
-  return `simple-directory/api/avatars/${ownerProps.owner?.type}/${ownerProps.owner?.id}/avatar.png`
+  return `/simple-directory/api/avatars/${ownerProps.owner?.type}/${ownerProps.owner?.id}/avatar.png`
 })
 
 const label = computed(() => {
