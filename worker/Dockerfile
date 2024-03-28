@@ -74,5 +74,6 @@ ADD LICENSE .
 WORKDIR /app/worker
 
 # USER node
+# This would be great to use, but not possible as the volumes are mounted as root
 
 CMD ["node", "index.js"]

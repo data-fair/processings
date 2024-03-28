@@ -42,5 +42,6 @@ WORKDIR /app/api
 EXPOSE 8080
 
 # USER node
+# This would be great to use, but not possible as the volumes are mounted as root
 
 CMD ["node", "--max-http-header-size", "64000", "index.js"]

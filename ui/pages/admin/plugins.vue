@@ -131,7 +131,7 @@
         <v-list-subheader>{{ (availablePlugins && availablePlugins.length) || 0 }} plugins disponibles</v-list-subheader>
         <v-checkbox
           v-model="showAll"
-          label="Afficher tous les plugins"
+          label="Afficher les versions de test des plugins"
           color="primary"
           class="my-2"
           @update:model-value="fetchAvailablePlugins"

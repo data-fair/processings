@@ -36,6 +36,4 @@ WORKDIR /app/ui
 
 EXPOSE 3039
 
-# USER node
-
 CMD ["node", "--max-http-header-size", "64000", ".output/server/index.mjs"]
