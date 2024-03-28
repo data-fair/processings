@@ -13,18 +13,23 @@
             type="card@4"
             class="my-4"
           />
-          <v-row v-if="processings">
+          <v-row
+            v-if="processings"
+            class="d-flex align-stretch"
+          >
             <v-col
               v-for="processing in displayProcessings"
               :key="processing._id"
               md="4"
               sm="6"
               cols="12"
+              class="d-flex"
             >
               <ProcessingCard
                 :processing="processing"
                 :show-owner="showAll"
                 :plugin="installedPlugins.results && installedPlugins.results.find(/** @param {Record<String, any>} p */ p => p.id === processing.plugin)"
+                class="w-100"
               />
             </v-col>
           </v-row>
@@ -276,7 +281,8 @@ async function refresh() {
 </script>
 
 <style scoped>
-/* This aims at making the button looking better.
+/*
+ * This aims at making the button looking better.
  * Instead of having a white string on a red background, we have a red string on the actual page's background
  * Plus the button is also red, and the text is bold so it's easier to read
  */

@@ -115,7 +115,10 @@ router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
 
   const installedPlugin = /** @type {PluginDataWithConfig} */(await preparePluginInfo(plugin))
   installedPlugin.access = { public: false, privateAccess: [] }
-  await fs.writeJson(path.join(pluginsDir, plugin.id + '-access.json'), installedPlugin.access)
+  const accessFilePath = path.join(pluginsDir, installedPlugin.id + '-access.json')
+  if (!await fs.pathExists(accessFilePath)) await fs.writeJson(accessFilePath, installedPlugin.access)
+  const pluginConfigPath = path.join(pluginsDir, installedPlugin.id + '-config.json')
+  if (await fs.pathExists(pluginConfigPath)) installedPlugin.config = await fs.readJson(pluginConfigPath)
 
   res.send(installedPlugin)
 }))

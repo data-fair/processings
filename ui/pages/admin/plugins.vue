@@ -27,8 +27,7 @@
         v-if="result.pluginConfigSchema"
         :key="'installed-' + result.id"
         class="my-4"
-        variant="outlined"
-        border="md"
+        variant="elevated"
         rounded="lg"
       >
         <v-progress-linear
@@ -226,10 +225,10 @@ const session = useSession()
 */
 
 const /** @type {Ref<AvailablePlugin[]>} - A list of plugins not installed */ availablePlugins = ref([])
-const /** @type {Ref<Record<String, boolean>>} - An object with in key `${result.name}-${result.distTag}`. True if installing, updating or deleting, false otherwise */ pluginsLocked = ref({})
+const /** @type {Ref<String | null>} - Contains the id of the plugin where the deleteMenu needs to be shown */ deleteMenuShowed = ref(null)
 const /** @type {Ref<InstalledPlugin[]>} - A list of installed plugins */ installedPlugins = ref([])
 const /** @type {Ref<boolean>} - True if the list of availablePlugins is loading */ loadingAvailablePlugins = ref(false)
-const /** @type {Ref<String | null>} - Contains the id of the plugin where the deleteMenu needs to be shown */ deleteMenuShowed = ref(null)
+const /** @type {Ref<Record<String, boolean>>} - An object with in key `${result.name}-${result.distTag}`. True if installing, updating or deleting, false otherwise */ pluginsLocked = ref({})
 const /** @type {Ref<String>} */ search = ref('')
 const /** @type {Ref<boolean>} */ showAll = ref(false)
 
@@ -242,8 +241,9 @@ const filteredAvailablePlugins = computed(() => {
 const filteredInstalledPlugins = computed(() => {
   if (installedPlugins.value.length === 0) return
   if (!search.value) return installedPlugins.value
-  installedPlugins.value.forEach(plugin => { plugin.pluginConfigSchema = v2compat(plugin.pluginConfigSchema) })
-  return installedPlugins.value.filter(/** @param {Record<String, any>} r */ r => r.name.includes(search.value) || (r.description && r.description.includes(search.value)))
+  const filtered = installedPlugins.value.filter(/** @param {Record<String, any>} r */ r => r.name.includes(search.value) || (r.description && r.description.includes(search.value)))
+  filtered.forEach(plugin => { plugin.pluginConfigSchema = v2compat(plugin.pluginConfigSchema) })
+  return filtered
 })
 
 onMounted(async () => {
@@ -301,8 +301,6 @@ async function install(plugin) {
       body: JSON.stringify(plugin)
     })
     const index = installedPlugins.value.findIndex(p => p.id === newPlugin.id)
-    console.log(installedPlugins)
-    console.log(newPlugin)
     if (index === -1) installedPlugins.value.push(newPlugin)
     else installedPlugins.value[index] = newPlugin
   } catch (error) {
@@ -317,12 +315,17 @@ async function install(plugin) {
  */
 async function uninstall(plugin) {
   pluginsLocked.value[`${plugin.name}-${plugin.distTag}`] = true
-  await $fetch(`/api/v1/plugins/${plugin.id}`, {
-    method: 'DELETE'
-  })
-  await fetchInstalledPlugins()
-  pluginsLocked.value[`${plugin.name}-${plugin.distTag}`] = false
-  deleteMenuShowed.value = null
+  try {
+    await $fetch(`/api/v1/plugins/${plugin.id}`, {
+      method: 'DELETE'
+    })
+    installedPlugins.value = installedPlugins.value.filter(p => p.id !== plugin.id) // remove the plugin from the list
+  } catch (error) {
+    eventBus.emit('notification', { error, msg: 'Erreur pendant l\'installation du plugin' })
+  } finally {
+    pluginsLocked.value[`${plugin.name}-${plugin.distTag}`] = false
+    deleteMenuShowed.value = null
+  }
 }
 
 /**

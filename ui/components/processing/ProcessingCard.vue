@@ -1,11 +1,10 @@
 <template>
   <v-card
-    variant="outlined"
+    :variant="$vuetify.theme.current.dark ? 'elevated' : 'outlined'"
+    style="border-color: rgba(var(--v-theme-on-surface), var(--v-focus-opacity)) !important; border-color: rgba(var(--v-theme-on-surface), var(--v-focus-opacity)) !important"
     rounded="lg"
-    border="md"
-    :elevation="hover ? 4 : 0"
-    @mouseenter="hover = true"
-    @mouseleave="hover = false"
+    class="d-flex flex-column"
+    hover
   >
     <NuxtLink
       :to="`/processings/${processing._id}`"
@@ -25,8 +24,8 @@
         class="pa-0"
       >
         <v-list
-          bg-color="transparent"
           density="compact"
+          style="background-color: inherit;"
         >
           <v-list-item>
             <template #prepend>
@@ -117,6 +116,7 @@
         </v-list>
       </v-card-text>
     </NuxtLink>
+    <v-spacer />
     <v-card-actions
       v-if="showOwner"
       class="pl-3"
@@ -130,7 +130,6 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
 
 defineProps({
   plugin: {
@@ -144,7 +143,6 @@ defineProps({
   showOwner: Boolean
 })
 
-const hover = ref(false)
 </script>
 
 <style>
