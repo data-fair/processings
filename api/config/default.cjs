@@ -13,5 +13,8 @@ module.exports = {
   observer: {
     active: true,
     port: 9090
+  },
+  npm: {
+    httpsProxy: null
   }
 }

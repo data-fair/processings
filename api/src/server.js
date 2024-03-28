@@ -3,10 +3,13 @@ import { startWSServer, stopWSServer } from './utils/wsServer.js'
 import { session } from '@data-fair/lib/express/index.js'
 import { startObserver, stopObserver } from '@data-fair/lib/node/observer.js'
 import { createHttpTerminator } from 'http-terminator'
+import { exec as execCallback } from 'child_process'
+import { promisify } from 'util'
 import config from './config.js'
 import mongo from '@data-fair/lib/node/mongo.js'
 import http from 'http'
 
+const exec = promisify(execCallback)
 const server = http.createServer(app)
 const httpTerminator = createHttpTerminator({ server })
 
@@ -22,6 +25,8 @@ export const start = async () => {
   await mongo.connect(config.mongoUrl, { readPreference: 'nearest', maxPoolSize: 1 })
   server.listen(config.port)
   await new Promise(resolve => server.once('listening', resolve))
+  const npmHttpsProxy = config.npm?.httpsProxy || process.env.HTTPS_PROXY || process.env.https_proxy
+  if (npmHttpsProxy) await exec('npm config set https-proxy ' + npmHttpsProxy)
   await startWSServer(server, mongo.db, session)
 
   console.log(`Processings API available on ${config.origin}/api/ (listening on port ${config.port})`)

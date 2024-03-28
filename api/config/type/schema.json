@@ -58,6 +58,14 @@
         }
       }
     },
+    "npm": {
+      "type": "object",
+      "properties": {
+        "httpsProxy": {
+          "type": "string"
+        }
+      }
+    },
     "util": {},
     "get": {},
     "has": {}

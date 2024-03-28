@@ -11,5 +11,8 @@ module.exports = {
   observer: {
     active: 'OBSERVER_ACTIVE',
     port: 'OBSERVER_PORT'
+  },
+  npm: {
+    httpsProxy: 'NPM_HTTPS_PROXY'
   }
 }
