@@ -32,7 +32,9 @@
           class="mt-4"
         />
       </v-col>
-      <LayoutNavigationRight v-if="$vuetify.display.lgAndUp">
+      <LayoutNavigationRight
+        v-if="$vuetify.display.lgAndUp"
+      >
         <ProcessingActions
           :processing="processing"
           :processing-schema="processingSchema"
@@ -45,7 +47,6 @@
       </LayoutNavigationRight>
       <LayoutActionsButton
         v-else
-        class="pt-2"
       >
         <template #actions>
           <ProcessingActions

@@ -80,8 +80,7 @@ const preparePluginInfo = async (pluginInfo) => {
 }
 
 /**
- * Install a plugin
- * SuperAdmin only
+ * Install a plugin - SuperAdmin only
  *
  * @param {import('express').Request} req
  * req.body: { name: string, description: string, version: string, distTag: string }
@@ -113,7 +112,12 @@ router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
   } finally {
     await dir.cleanup()
   }
-  res.send(plugin)
+
+  const installedPlugin = /** @type {PluginDataWithConfig} */(await preparePluginInfo(plugin))
+  installedPlugin.access = { public: false, privateAccess: [] }
+  await fs.writeJson(path.join(pluginsDir, plugin.id + '-access.json'), installedPlugin.access)
+
+  res.send(installedPlugin)
 }))
 
 // List installed plugins (optional: privateAccess=[type]:[id)
@@ -125,7 +129,7 @@ router.get('/', asyncHandler(async (req, res) => {
   for (const dir of dirs) {
     /** @type {PluginDataWithConfig} */
     const pluginInfo = await fs.readJson(path.join(pluginsDir, dir, 'plugin.json'))
-    const access = await fs.pathExists(path.join(pluginsDir, dir + '-access.json')) ? await fs.readJson(path.join(pluginsDir, dir + '-access.json')) : { public: false, privateAccess: [] }
+    const access = await fs.readJson(path.join(pluginsDir, dir + '-access.json'))
 
     if (sessionState.user.adminMode) {
       const pluginConfigPath = path.join(pluginsDir, dir + '-config.json')

@@ -74,45 +74,49 @@
     </v-menu>
     <v-text-field
       v-model="search"
-      placeholder="rechercher"
-      variant="outlined"
+      append-inner-icon="mdi-magnify"
+      class="mt-4 mx-4"
+      clearable
+      color="primary"
+      density="compact"
       hide-details
       hide-selected
-      clearable
-      rounded="xl"
+      placeholder="rechercher"
       style="max-width:400px;"
-      class="mt-4 mx-4"
-      color="primary"
-      append-inner-icon="mdi-magnify"
+      variant="outlined"
       @update:model-value="eventBus.emit('search', search); getProcessingStatus()"
     />
     <v-select
       v-model="selectedStatuses"
       :items="statuses"
-      clearable
-      chips
-      closable-chips
       label="Statut"
+      chips
+      class="mt-4 mx-4"
+      clearable
+      closable-chips
+      density="compact"
+      hide-details
       multiple
       rounded="xl"
       variant="outlined"
       style="max-width:400px;"
-      class="mt-4 mx-4"
       @click="getProcessingStatus()"
       @update:model-value="eventBus.emit('status', selectedStatuses)"
     />
     <v-select
       v-model="selectedPlugins"
       :items="plugins"
-      clearable
-      chips
-      closable-chips
       label="Plugin"
+      chips
+      class="mt-4 mx-4"
+      clearable
+      closable-chips
+      density="compact"
+      hide-details
       multiple
       rounded="xl"
       variant="outlined"
       style="max-width:400px;"
-      class="mt-4 mx-4"
       @click="getUsedPlugins()"
       @update:model-value="eventBus.emit('plugin', selectedPlugins)"
     />

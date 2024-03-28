@@ -1,4 +1,7 @@
 // Optional global scss settings
+
+// v-icon has an opacity when it is prepended in a list of items.
+// ref: https://github.com/vuetifyjs/vuetify/issues/18760
 .v-theme--light {
   --v-medium-emphasis-opacity: 1 !important;
 }

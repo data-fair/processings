@@ -7,7 +7,7 @@ export default defineNuxtConfig({
     baseURL: '/'
   },
   build: {
-    transpile: [/@koumoul/, /@data-fair/, 'vuetify']
+    transpile: [/@koumoul/, /@data-fair/, /vuetify/]
   },
   css: ['@/assets/main.scss'],
   // Force enabling the dev tools on nuxi dev as the shortcut (Shift + Alt + D) is not working on non QWERTY keyboards, see https://github.com/nuxt/devtools/issues/601
@@ -44,7 +44,6 @@ export default defineNuxtConfig({
   plugins: [
     { src: 'plugins/filters' },
     { src: 'plugins/session', mode: 'client' },
-    { src: 'plugins/v-iframe', mode: 'client' },
     { src: 'plugins/reactive-search-params' },
     { src: 'plugins/vuetify' },
     { src: 'plugins/ws', mode: 'client' }

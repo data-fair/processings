@@ -142,9 +142,8 @@
     <v-menu
       v-if="notifUrl && processing?.owner.type === activeAccount.type && processing?.owner.id === activeAccount.id && !activeAccount.department"
       v-model="showNotifMenu"
-      max-width="500"
-      min-width="500"
       :close-on-content-click="false"
+      max-width="500"
     >
       <template #activator="{ props }">
         <v-list-item v-bind="props">
@@ -165,7 +164,10 @@
           Notifications
         </v-card-title>
         <v-card-text class="py-0 px-3">
-          <v-iframe :src="notifUrl" />
+          <v-iframe
+            :src="notifUrl"
+            style="color-scheme: normal;"
+          />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -185,7 +187,7 @@
 import 'iframe-resizer/js/iframeResizer'
 import useEventBus from '~/composables/event-bus'
 import VIframe from '@koumoul/v-iframe'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useSession } from '@data-fair/lib/vue/session.js'
 
 const emit = defineEmits(['triggered'])
@@ -202,29 +204,6 @@ const properties = defineProps({
   processingSchema: {
     type: Object,
     default: null
-  }
-})
-
-// The iframe have by default a style="background: transparent;" that causes issues in dark mode
-// Basically none of the text is visible and the background is pure white
-// Each time the iframe loads, we remove the style attribute
-const observer = new MutationObserver((mutationsList) => {
-  for (const mutation of mutationsList) {
-    if (mutation.type === 'childList') {
-      const vIframeDiv = document.querySelector('.v-iframe')
-      if (vIframeDiv) {
-        const realIframe = vIframeDiv.querySelector('iframe')
-        if (realIframe) {
-          const iframeDocument = realIframe.contentDocument || realIframe.contentWindow?.document
-          if (iframeDocument) {
-            const appDiv = iframeDocument.querySelector('#app')
-            if (appDiv) {
-              appDiv.removeAttribute('style')
-            }
-          }
-        }
-      }
-    }
   }
 })
 
@@ -291,16 +270,6 @@ const triggerExecution = async () => {
     hasTriggered.value = false
   }
 }
-
-onMounted(() => {
-  // Load the observer on childList changes
-  observer.observe(document.body, { attributes: true, childList: true, subtree: true })
-})
-
-onUnmounted(() => {
-  // Remove the observer when the component is unmounted to avoid running it on unnecessary pages
-  observer.disconnect()
-})
 
 watch(showTriggerMenu, async (newValue) => {
   if (newValue && properties.canAdmin) {
