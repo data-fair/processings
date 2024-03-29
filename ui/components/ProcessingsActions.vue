@@ -84,7 +84,7 @@
       placeholder="rechercher"
       style="max-width:400px;"
       variant="outlined"
-      @update:model-value="eventBus.emit('search', search);"
+      @update:model-value="eventBus.emit('search', search)"
     />
     <v-select
       v-model="statusesSelected"

@@ -190,11 +190,16 @@ async function patch() {
     if (editProcessing.value.scheduling.dayOfWeek === '*') editProcessing.value.scheduling.dayOfWeek = '1'
     renderVjsfKey.value += 1
   }
-  await $fetch(`/api/v1/processings/${route.params.id}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ ...editProcessing.value })
-  })
-  edited.value = false
+  try {
+    await $fetch(`/api/v1/processings/${route.params.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ ...editProcessing.value })
+    })
+  } catch (error) {
+    console.error(error)
+  } finally {
+    edited.value = false
+  }
 }
 
 </script>

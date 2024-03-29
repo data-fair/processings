@@ -6,18 +6,14 @@
     <v-row>
       <v-col>
         <v-container>
-          <v-progress-linear
-            v-if="loading"
-            indeterminate
-            color="primary"
-          />
-          <v-list-subheader v-if="displayProcessings.length>1">
+          <v-list-subheader v-if="displayProcessings.length > 1">
             {{ displayProcessings.length }}/{{ totalProcessings }} traitements affichés
           </v-list-subheader>
           <v-list-subheader v-else>
             {{ displayProcessings.length }}/{{ totalProcessings }} traitement affiché
           </v-list-subheader>
           <v-row
+            v-if="loading <= 0"
             class="d-flex align-stretch"
           >
             <v-col
@@ -33,6 +29,25 @@
                 :show-owner="showAll"
                 :plugin-custom-name="installedPlugins.find(/** @param {Record<String, any>} p */ p => p.id === processing.plugin)?.customName"
                 class="w-100"
+              />
+            </v-col>
+          </v-row>
+          <v-row
+            v-else
+            class="d-flex align-stretch"
+          >
+            <v-col
+              v-for="i in 9"
+              :key="i"
+              md="4"
+              sm="6"
+              cols="12"
+              class="d-flex"
+            >
+              <v-skeleton-loader
+                class="w-100"
+                height="200"
+                type="article"
               />
             </v-col>
           </v-row>
@@ -185,8 +200,7 @@ async function fetchProcessings() {
     }
     if (pluginsSelected.value.length) params.plugins = pluginsSelected.value.join(',')
     if (statusesSelected.value.length) params.statuses = statusesSelected.value.join(',')
-    if (showAll.value) params.showAll = true
-    else params.owner = ownerFilter.value
+    if (!showAll.value) params.owner = ownerFilter.value
 
     /** @type {{count:number, results:import('../../../shared/types/processing/index.js').Processing[], facets:{statuses:any, plugins:any}}} */
     const processingsResponse = await $fetch('/api/v1/processings', { params })
