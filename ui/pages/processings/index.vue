@@ -54,6 +54,10 @@
         <ProcessingsActions
           v-if="canAdmin"
           :admin-mode="user.adminMode"
+          :c-plugins-selected="pluginsSelected"
+          :c-search="search"
+          :c-show-all="showAll"
+          :c-statuses-selected="statusesSelected"
           :facets="facets"
           :is-small="false"
           :installed-plugins="installedPlugins"
@@ -79,6 +83,7 @@
 </template>
 
 <script setup>
+import getReactiveSearchParams from '@data-fair/lib/vue/reactive-search-params-global.js'
 import useEventBus from '~/composables/event-bus'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -86,6 +91,7 @@ import { useSession } from '@data-fair/lib/vue/session.js'
 
 const eventBus = useEventBus()
 const route = useRoute()
+const urlSearchParams = getReactiveSearchParams
 const session = useSession()
 
 /**
@@ -103,11 +109,11 @@ const session = useSession()
 const /** @type {Ref<import('../../../shared/types/processing/index.js').Processing[]>} */ processings = ref([])
 const /** @type {Ref<{statuses:any, plugins:any}>} */ facets = ref({ statuses: {}, plugins: {} })
 const /** @type {Ref<InstalledPlugin[]>} */ installedPlugins = ref([])
-const /** @type {Ref<String[]>} */ pluginsSelected = ref([])
-const /** @type {Ref<String[]>} */ statusesSelected = ref([])
-const showAll = ref(false)
+const /** @type {Ref<String[]>} */ pluginsSelected = ref(urlSearchParams.plugin ? urlSearchParams.plugin.split(',') : [])
+const /** @type {Ref<String[]>} */ statusesSelected = ref(urlSearchParams.status ? urlSearchParams.status.split(',') : [])
+const showAll = ref(urlSearchParams.showAll === 'true')
 const loading = ref(0)
-const search = ref('')
+const search = ref(urlSearchParams.search || '')
 const totalProcessings = ref(0)
 
 const displayProcessings = computed(() => {
@@ -161,20 +167,24 @@ onMounted(async () => {
 
 eventBus.on('search', (/** @type {String} */ searchString) => {
   search.value = searchString || ''
+  urlSearchParams.search = searchString
 })
 
 eventBus.on('status', async (/** @type {String[]} */ statuses) => {
   statusesSelected.value = statuses
+  urlSearchParams.status = statuses.join(',')
   await fetchProcessings()
 })
 
 eventBus.on('plugin', async (/** @type {String[]} */ plugins) => {
   pluginsSelected.value = plugins
+  urlSearchParams.plugin = plugins.join(',')
   await fetchProcessings()
 })
 
 eventBus.on('showAll', async (/** @type {Boolean} */ show) => {
   showAll.value = show
+  urlSearchParams.showAll = show ? 'true' : 'false'
   await fetchProcessings()
 })
 

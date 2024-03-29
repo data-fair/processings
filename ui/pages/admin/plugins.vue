@@ -195,14 +195,16 @@
 
 <script setup>
 import '@koumoul/vjsf-markdown'
+import getReactiveSearchParams from '@data-fair/lib/vue/reactive-search-params-global.js'
 import useEventBus from '~/composables/event-bus'
 import Vjsf from '@koumoul/vjsf'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 import { useSession } from '@data-fair/lib/vue/session.js'
 
 const eventBus = useEventBus()
 const session = useSession()
+const urlSearchParams = getReactiveSearchParams
 
 /**
  * @typedef AvailablePlugin
@@ -229,8 +231,8 @@ const /** @type {Ref<String | null>} - Contains the id of the plugin where the d
 const /** @type {Ref<InstalledPlugin[]>} - A list of installed plugins */ installedPlugins = ref([])
 const /** @type {Ref<boolean>} - True if the list of availablePlugins is loading */ loadingAvailablePlugins = ref(false)
 const /** @type {Ref<Record<String, boolean>>} - An object with in key `${result.name}-${result.distTag}`. True if installing, updating or deleting, false otherwise */ pluginsLocked = ref({})
-const /** @type {Ref<String>} */ search = ref('')
-const /** @type {Ref<boolean>} */ showAll = ref(false)
+const /** @type {Ref<String>} */ search = ref(urlSearchParams.search || '')
+const /** @type {Ref<boolean>} */ showAll = ref(urlSearchParams.showAll === 'true')
 
 const filteredAvailablePlugins = computed(() => {
   if (availablePlugins.value.length === 0) return
@@ -254,6 +256,14 @@ onMounted(async () => {
       fetchAvailablePlugins()
     ])
   }
+})
+
+watch(search, () => {
+  urlSearchParams.search = search.value
+})
+
+watch(showAll, () => {
+  urlSearchParams.showAll = showAll.value.toString()
 })
 
 async function checkAccess() {

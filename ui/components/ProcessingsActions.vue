@@ -136,12 +136,16 @@
 
 <script setup lang="ts">
 import useEventBus from '~/composables/event-bus'
-import { type PropType, ref } from 'vue'
+import { onMounted, type PropType, ref } from 'vue'
 
 const eventBus = useEventBus()
 
 const processingsProps = defineProps({
   adminMode: Boolean,
+  cPluginsSelected: { type: Array as PropType<Array<String>>, default: () => [] },
+  cSearch: { type: String, default: '' },
+  cShowAll: { type: Boolean, default: false },
+  cStatusesSelected: { type: Array as PropType<Array<String>>, default: () => [] },
   facets: { type: Object as PropType<Record<string, any>>, required: true },
   installedPlugins: { type: Array as PropType<Array<Record<string, any>>>, required: true },
   isSmall: Boolean,
@@ -155,6 +159,13 @@ const pluginsSelected: Ref<String[]> = ref([])
 const statusesSelected: Ref<String[]> = ref([])
 const search = ref('')
 const showAll = ref(false)
+
+onMounted(() => {
+  pluginsSelected.value = processingsProps.cPluginsSelected
+  search.value = processingsProps.cSearch
+  showAll.value = processingsProps.cShowAll
+  statusesSelected.value = processingsProps.cStatusesSelected
+})
 
 const statusesText: Record<string, string> = {
   error: 'En échec',
