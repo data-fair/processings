@@ -45,14 +45,34 @@ If you run the API locally (see [the contribution guidelines](../CONTRIBUTING.md
 <details>
 <summary><a href="#processings">/processings</a></summary>
 
-- [GET /processings/](#get-processings)
-- [POST /processings/](#post-processings)
-- [PATCH /processings/:id](#patch-processingsid)
-- [GET /processings/:id](#get-processingsid)
-- [DELETE /processings/:id](#delete-processingsid)
-- [GET /processings/:id/webhook-key](#get-processingsidwebhook-key)
-- [DELETE /processings/:id/webhook-key](#delete-processingsidwebhook-key)
-- [POST /processings/:id/_trigger](#post-processingsid_trigger)
+- [API Documentation](#api-documentation)
+  - [Files/Directories](#filesdirectories)
+  - [Endpoints](#endpoints)
+  - [/limits](#limits)
+    - [`GET /limits/`](#get-limits)
+    - [`GET /limits/:type/:id`](#get-limitstypeid)
+    - [`POST /limits/:type/:id`](#post-limitstypeid)
+  - [/plugins](#plugins)
+    - [`GET /plugins/`](#get-plugins)
+    - [`POST /plugins/`](#post-plugins)
+    - [`GET /plugins/:id`](#get-pluginsid)
+    - [`DELETE /plugins/:id`](#delete-pluginsid)
+    - [`PUT /plugins/:id/access`](#put-pluginsidaccess)
+    - [`PUT /plugins/:id/config`](#put-pluginsidconfig)
+  - [/plugins-registry](#plugins-registry)
+    - [`GET /plugins-registry/`](#get-plugins-registry)
+  - [/processings](#processings)
+    - [`GET /processings/`](#get-processings)
+    - [`POST /processings/`](#post-processings)
+    - [`PATCH /processings/:id`](#patch-processingsid)
+    - [`GET /processings/:id`](#get-processingsid)
+    - [`DELETE /processings/:id`](#delete-processingsid)
+    - [`GET /processings/:id/webhook-key` \& `DELETE /processings/:id/webhook-key`](#get-processingsidwebhook-key--delete-processingsidwebhook-key)
+    - [`POST /processings/:id/_trigger`](#post-processingsid_trigger)
+  - [/runs](#runs)
+    - [`GET /runs/`](#get-runs)
+    - [`GET /runs/:id`](#get-runsid)
+    - [`POST /runs/:id/_kill`](#post-runsid_kill)
 
 </details>
 
@@ -75,8 +95,8 @@ Lists limit settings for all entities, filtered by optional query parameters. Th
 
 **Parameters**
 
-- `type` (query, optional) : Filter by the entity type.
-- `id` (query, optional) : Filter by the unique identifier of the entity.
+- `type` (query, optional, string) : Filter by the entity type.
+- `id` (query, optional, string) : Filter by the unique identifier of the entity.
   
 **Responses**
 
@@ -88,8 +108,8 @@ Retrieves the limit settings for a specific entity. Access is limited to account
 
 **Parameters**
 
-- `type` (path) : The entity type.
-- `id` (path) : The unique identifier of the entity.
+- `type` (path, string) : The entity type.
+- `id` (path, string) : The unique identifier of the entity.
 
 **Responses**
 
@@ -124,7 +144,7 @@ Retrieves a list of all installed plugins. This endpoint can filter plugins base
 
 **Parameters**
 
-- `privateAccess` (query, optional) : Specifies the access filter in the format `[type]:[id]`, allowing for the retrieval of plugins with matching access rights.
+- `privateAccess` (query, optional, string) : Specifies the access filter in the format `[type]:[id]`, allowing for the retrieval of plugins with matching access rights.
 
 **Responses**
 
@@ -134,16 +154,16 @@ Retrieves a list of all installed plugins. This endpoint can filter plugins base
 
 ```json
 {
-  "name" -> The plugin name (npm)
-  "description": -> The plugin description (npm)
-  "version": -> The plugin version
-  "dist-tag": -> The plugin distribution tag
-  "id": -> The plugin identifier (folder name)
-  "pluginConfigSchema": -> The plugin configuration schema
-  "processingConfigSchema": -> The plugin processing configuration schema
-  "customName": -> The plugin custom name defined on configuration (or the name if not defined)
-  "config": -> The plugin configuration (SuperAdmin Only)
-  "access": -> The plugin access rights (SuperAdmin Only)
+  "name": "The plugin name (npm)",
+  "description": "The plugin description (npm)",
+  "version": "The plugin version",
+  "dist-tag": "The plugin distribution tag",
+  "id": "The plugin identifier (folder name)",
+  "pluginConfigSchema": "The plugin configuration schema",
+  "processingConfigSchema": "The plugin processing configuration schema",
+  "customName": "The plugin custom name defined on configuration (or the name if not defined)",
+  "config": "The plugin configuration (SuperAdmin Only)",
+  "access": "The plugin access rights (SuperAdmin Only)"
 }
 ```
 
@@ -167,13 +187,13 @@ Allows for the installation of a new plugin or updating an existing plugin. Requ
 
 ```json
 {
-  "name" -> The plugin name (npm)
-  "description": -> The plugin description (npm)
-  "version": -> The plugin version
-  "dist-tag": -> The plugin distribution tag
-  "id": -> The plugin identifier (folder name)
-  "pluginConfigSchema": -> The plugin configuration schema
-  "processingConfigSchema": -> The plugin processing configuration schema
+  "name": "The plugin name (npm)",
+  "description": "The plugin description (npm)",
+  "version": "The plugin version",
+  "dist-tag": "The plugin distribution tag",
+  "id": "The plugin identifier (folder name)",
+  "pluginConfigSchema": "The plugin configuration schema",
+  "processingConfigSchema": "The plugin processing configuration schema"
 }
 ```
 
@@ -183,7 +203,7 @@ Fetches detailed information about a specific plugin, identified by its unique `
 
 **Parameters**
 
-- `id` (path) : The unique identifier of the plugin.
+- `id` (path, string) : The unique identifier of the plugin.
 
 **Responses**
 
@@ -192,14 +212,14 @@ Fetches detailed information about a specific plugin, identified by its unique `
 
 ```json
 {
-  "name" -> The plugin name (npm)
-  "description": -> The plugin description (npm)
-  "version": -> The plugin version
-  "dist-tag": -> The plugin distribution tag
-  "id": -> The plugin identifier (folder name)
-  "pluginConfigSchema": -> The plugin configuration schema
-  "processingConfigSchema": -> The plugin processing configuration schema
-  "customName": -> The plugin custom name defined on configuration (or the name if not defined)
+  "name": "The plugin name (npm)",
+  "description": "The plugin description (npm)",
+  "version": "The plugin version",
+  "dist-tag": "The plugin distribution tag",
+  "id": "The plugin identifier (folder name)",
+  "pluginConfigSchema": "The plugin configuration schema",
+  "processingConfigSchema": "The plugin processing configuration schema",
+  "customName": "The plugin custom name defined on configuration (or the name if not defined)"
 }
 ```
 
@@ -213,7 +233,7 @@ Removes a specific plugin from the system, including its configuration and acces
 
 **Parameters**
 
-- `id` (path) : The unique identifier of the plugin.
+- `id` (path, string) : The unique identifier of the plugin.
 
 **Responses**
 
@@ -229,8 +249,8 @@ Updates the access control settings for a specific plugin, identified by its `id
 
 **Parameters**
 
-- `id` (path) : The unique identifier of the plugin.
-- (Request body) : Should include the `access` object : `{"public":boolean,"privateAccess":Array}`
+- `id` (path, string) : The unique identifier of the plugin.
+- (Request body) : Should include the `access` object : `{ "public": boolean, "privateAccess": Array }`
 
 **Responses**
 
@@ -246,7 +266,7 @@ Updates the configuration for a specific plugin identified by its `id`. This ope
 
 **Parameters**
 
-- `id` (path) : The unique identifier of the plugin.
+- `id` (path, string) : The unique identifier of the plugin.
 
 **Responses**
 
@@ -263,8 +283,8 @@ Performs a search query against the npm registry for plugins tagged with `data-f
 
 **Parameters**
 
-- `q` (query, optional) : A search query to filter plugins based on their name, description, or other characteristics. The search is further refined to only include packages with the `data-fair-processings-plugin` keyword.
-- `showAll` (query, optional) : A boolean to show plugins and all their versions (differents distTag).
+- `q` (query, optional, string) : A search query to filter plugins based on their name, description, or other characteristics. The search is further refined to only include packages with the `data-fair-processings-plugin` keyword.
+- `showAll` (query, optional, boolean) : Allows to show plugins and all their versions (differents distTag), useful for displaying test versions and not only latest ones. Note that using this parameter drastically increases the response time.
 
 **Caching**
 
@@ -282,7 +302,7 @@ Performs a search query against the npm registry for plugins tagged with `data-f
 
 The `processings` endpoints are used for managing and retrieving processing configurations, which define the execution of data processing tasks on the Data Fair platform.
 
-> `a full processing object = { _id, title, plugin, owner, scheduling, updated, created, active, nextRun, lastRun, [(if superAdmin) permissions, config], webhookKey}`
+> a full processing object : `{ _id, title, plugin, owner, scheduling, updated, created, active, nextRun, lastRun, [(if superAdmin) permissions, config], webhookKey}`
 
 > `webhookKey` is never returned in the response
 
@@ -299,7 +319,9 @@ Retrieves a list of all processing configurations stored in the database. Suppor
 - `skip` (query, optional, number) : Control pagination.
 - `showAll` (query, optional, boolean) : Show all processing configurations. (Always true for super admins)
 - `sort` (query, optional, string) : Sort the results, with sorting by `updated.date` in descending order as a common use case.
-- `select` (query, optional, string) : a list of string separated by `,` to select fields to return.
+- `select` (query, optional, string) : A list of string separated by `,` to select fields to return.
+- `plugins` (query, optional, string) : A list of plugin ids to filter by, separated by `,`.
+- `statuses` (query, optional, string) : A list of statuses to filter by, separated by `,`. Available statuses are : `error`, `finished`, `kill`, `killed`, `none`, `running`, `scheduled`, `triggered`.
 
 **Responses**
 
@@ -331,7 +353,7 @@ Updates specific attributes of a processing configuration. Changes the update ti
 
 **Parameters**
 
-- `id` (path) : The unique identifier of the processing configuration.
+- `id` (path, string) : The unique identifier of the processing configuration.
 - (Request body) : Should include `active`, `title`, `scheduling`, `config`.
 
 **Responses**
@@ -351,7 +373,7 @@ Retrieves data about a specific processing configuration.
 
 **Parameters**
 
-- `id` (path) : The unique identifier of the processing configuration.
+- `id` (path, string) : The unique identifier of the processing configuration.
 
 **Responses**
 
@@ -369,7 +391,7 @@ Deletes a processing configuration along with all associated runs and its proces
 
 **Parameters**
 
-- `id` (path) : The unique identifier of the processing configuration to be deleted.
+- `id` (path, string) : The unique identifier of the processing configuration to be deleted.
 
 **Responses**
 
@@ -383,7 +405,7 @@ Retrieves or regenerates the webhook key for a specific processing configuration
 
 **Parameters**
 
-- `id` (path) : The unique identifier of the processing configuration.
+- `id` (path, string) : The unique identifier of the processing configuration.
 
 **Responses**
 
@@ -397,9 +419,9 @@ Triggers the execution of a specified processing configuration. Supports optiona
 
 **Parameters**
 
-- `id` (path) : The unique identifier of the processing configuration.
-- `key` (query, optional) : The webhook key for triggering the processing.
-- `delay` (query, optional) : Delay in seconds before the processing starts.
+- `id` (path, string) : The unique identifier of the processing configuration.
+- `key` (query, optional, string) : The webhook key for triggering the processing.
+- `delay` (query, optional, number) : Delay in seconds before the processing starts.
 
 **Responses**
 
@@ -408,19 +430,19 @@ Triggers the execution of a specified processing configuration. Supports optiona
 - `409` : The processing is not active
 - The run object
 
-```
+```json
 {
-  _id: string,
-  owner: string,
-  processing: {
-    _id: string,
-    title: string
+  "_id": "string",
+  "owner": "string",
+  "processing": {
+    "_id": "string",
+    "title": "string"
   },
-  createdAt: Date,
-  scheduledAt: Date,
-  status: "triggered",
-  log: [],
-  permissions: []
+  "createdAt": "Date",
+  "scheduledAt": "Date",
+  "status": "triggered",
+  "log": [],
+  "permissions": []
 }
 ```
 
@@ -444,7 +466,7 @@ Fetches detailed information about a specific run configuration, including logs.
 
 **Parameters**
 
-- `id` (path) : The unique identifier of the run configuration.
+- `id` (path, string) : The unique identifier of the run configuration.
 
 ### `POST /runs/:id/_kill`
 
@@ -452,4 +474,4 @@ Requests the termination of a specified run configuration, changing its status t
 
 **Parameters**
 
-- `id` (path) : The unique identifier of the run configuration to be terminated.
+- `id` (path, string) : The unique identifier of the run configuration to be terminated.
