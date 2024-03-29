@@ -234,7 +234,7 @@ const /** @type {Ref<InstalledPlugin[]>} - A list of installed plugins */ instal
 const /** @type {Ref<boolean>} - True if the list of availablePlugins is loading */ loadingAvailablePlugins = ref(false)
 const /** @type {Ref<Record<String, boolean>>} - An object with in key `${result.name}-${result.distTag}`. True if installing, updating or deleting, false otherwise */ pluginsLocked = ref({})
 const /** @type {Ref<String>} */ search = ref(urlSearchParams.search || '')
-const /** @type {Ref<boolean>} */ showAll = ref(urlSearchParams.showAll === 'true')
+const /** @type {Ref<boolean>} */ showAll = ref(urlSearchParams.showAllPlugins === 'true')
 
 const filteredAvailablePlugins = computed(() => {
   if (availablePlugins.value.length === 0) return
@@ -265,7 +265,7 @@ watch(search, () => {
 })
 
 watch(showAll, () => {
-  urlSearchParams.showAll = showAll.value.toString()
+  urlSearchParams.showAllPlugins = showAll.value.toString()
 })
 
 async function checkAccess() {
