@@ -6,7 +6,10 @@
         class="text-body-2"
       >
         <v-avatar :size="28">
-          <img :src="avatarUrl">
+          <img
+            :src="avatarUrl"
+            style="object-fit: cover; width: 100%; height: 100%;"
+          >
         </v-avatar>
       </span>
     </template>
@@ -25,12 +28,14 @@ const ownerProps = defineProps({
 })
 
 const avatarUrl = computed(() => {
-  return `/simple-directory/api/avatars/${ownerProps.owner?.type}/${ownerProps.owner?.id}/avatar.png`
+  if (ownerProps.owner.department) return `/simple-directory/api/avatars/${ownerProps.owner.type}/${ownerProps.owner.id}/${ownerProps.owner.department}/avatar.png`
+  else return `/simple-directory/api/avatars/${ownerProps.owner.type}/${ownerProps.owner.id}/avatar.png`
 })
 
 const label = computed(() => {
-  let label = ownerProps.owner?.name
-  if (ownerProps.owner?.role) label += ` (${ownerProps.owner?.role})`
+  let label = ownerProps.owner.name
+  if (ownerProps.owner.department) label += ' - ' + (ownerProps.owner.departmentName || ownerProps.owner.department)
+  if (ownerProps.owner.role) label += ` (${ownerProps.owner.role})`
   return label
 })
 </script>

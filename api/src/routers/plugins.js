@@ -6,6 +6,7 @@ import config from '../config.js'
 import permissions from '../utils/permissions.js'
 import Ajv from 'ajv'
 import fs from 'fs-extra'
+import mongo from '@data-fair/lib/node/mongo.js'
 import path from 'path'
 import resolvePath from 'resolve-path'
 import semver from 'semver'
@@ -151,9 +152,15 @@ router.get('/', asyncHandler(async (req, res) => {
     }
     results.push(await preparePluginInfo(pluginInfo))
   }
+
+  const aggregationResult = (await mongo.db.collection('processings').aggregate([
+    { $group: { _id: '$plugin', count: { $sum: 1 } } }
+  ]).toArray()).reduce((acc, { _id, count }) => { acc[_id] = count; return acc }, {})
+
   res.send({
     count: results.length,
-    results
+    results,
+    facets: { usages: aggregationResult || {} }
   })
 }))
 

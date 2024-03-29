@@ -127,13 +127,13 @@
       </v-card>
     </template>
     <v-col>
-      <v-row>
+      <v-row class="mt-2">
         <v-list-subheader>{{ (availablePlugins && availablePlugins.length) || 0 }} plugins disponibles</v-list-subheader>
         <v-checkbox
           v-model="showAll"
           label="Afficher les versions de test des plugins"
           color="primary"
-          class="my-2"
+          density="compact"
           @update:model-value="fetchAvailablePlugins"
         />
       </v-row>

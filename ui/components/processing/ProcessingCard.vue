@@ -122,7 +122,7 @@
     <v-spacer />
     <v-card-actions
       v-if="showOwner"
-      class="pl-3"
+      class="pl-3 pt-0"
     >
       <OwnerShort
         :owner="processing.owner"
