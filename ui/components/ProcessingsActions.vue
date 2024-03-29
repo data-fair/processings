@@ -170,27 +170,29 @@ const statusesText: Record<string, string> = {
 const statusesItems: Ref<{ display: String, statusKey: String }[]> = computed(() => {
   if (!processingsProps.facets.statuses) return []
 
-  return Object.entries(processingsProps.facets.statuses).map(
-    ([statusKey, count]) => ({
+  return Object.entries(processingsProps.facets.statuses)
+    .map(([statusKey, count]) => ({
       display: `${statusesText[statusKey] || statusKey} (${count})`,
       statusKey
-    })
-  )
+    }))
+    .sort((a, b) => a.display.localeCompare(b.display))
 })
 
 const pluginsItems: Ref<Record<string, any>[]> = computed(() => {
   if (!processingsProps.installedPlugins) return []
   if (!processingsProps.facets.plugins) return []
 
-  return Object.entries(processingsProps.facets.plugins).map(
-    ([pluginKey, count]) => {
-      const customName = processingsProps.installedPlugins.find((plugin: Record<string, any>) => plugin.id === pluginKey)?.customName
-      return {
-        display: `${customName || 'Supprimé - ' + pluginKey} (${count})`,
-        pluginKey
+  return Object.entries(processingsProps.facets.plugins)
+    .map(
+      ([pluginKey, count]) => {
+        const customName = processingsProps.installedPlugins.find((plugin: Record<string, any>) => plugin.id === pluginKey)?.customName
+        return {
+          display: `${customName || 'Supprimé - ' + pluginKey} (${count})`,
+          pluginKey
+        }
       }
-    }
-  )
+    )
+    .sort((a, b) => a.display.localeCompare(b.display))
 })
 
 async function createProcessing () {
