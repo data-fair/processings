@@ -134,16 +134,25 @@ Retrieves a list of all installed plugins. This endpoint can filter plugins base
 
 ```json
 {
-  "name": "The plugin name (npm)",
-  "description": "The plugin description (npm)",
-  "version": "The plugin version",
-  "dist-tag": "The plugin distribution tag",
-  "id": "The plugin identifier (folder name)",
-  "pluginConfigSchema": "The plugin configuration schema",
-  "processingConfigSchema": "The plugin processing configuration schema",
-  "customName": "The plugin custom name defined on configuration (or the name if not defined)",
-  "config": "The plugin configuration (SuperAdmin Only)",
-  "access": "The plugin access rights (SuperAdmin Only)"
+  "count": "The number of plugins",
+  "results": [
+    {
+      "name": "The plugin name (npm)",
+      "description": "The plugin description (npm)",
+      "version": "The plugin version",
+      "dist-tag": "The plugin distribution tag",
+      "id": "The plugin identifier (folder name)",
+      "pluginConfigSchema": "The plugin configuration schema",
+      "processingConfigSchema": "The plugin processing configuration schema",
+      "customName": "The plugin custom name defined on configuration (or the name if not defined)"
+    },
+    {"..."}
+  ],
+  "facets": {
+    "usages": {
+      "id": "The plugin's number of usages in processings"
+    }
+  }
 }
 ```
 
