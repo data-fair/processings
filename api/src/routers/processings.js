@@ -113,26 +113,61 @@ router.get('', asyncHandler(async (req, res) => {
     processingsCollection.countDocuments(query)
   ])
 
-  // Aggregation for facets
-  const statusesAgg = await processingsCollection.aggregate([
-    { $match: { ...query, 'lastRun.status': { $exists: true } } },
-    { $group: { _id: '$lastRun.status', count: { $sum: 1 } } }
-  ]).toArray()
-
-  const pluginsAgg = await processingsCollection.aggregate([
+  const aggregationResult = await processingsCollection.aggregate([
     { $match: query },
-    { $group: { _id: '$plugin', count: { $sum: 1 } } }
+    {
+      $facet: {
+        scheduled: [
+          {
+            $match: { nextRun: { $exists: true } }
+          },
+          {
+            $group: {
+              _id: 'scheduled',
+              count: { $sum: 1 }
+            }
+          }
+        ],
+        otherStatuses: [
+          {
+            $group: {
+              _id: {
+                $cond: [
+                  { $eq: [{ $ifNull: ['$lastRun', 'none'] }, 'none'] },
+                  'none',
+                  '$lastRun.status'
+                ]
+              },
+              count: { $sum: 1 }
+            }
+          }
+        ],
+        plugins: [
+          {
+            $group: {
+              _id: '$plugin',
+              count: { $sum: 1 }
+            }
+          }
+        ]
+      }
+    },
+    {
+      $replaceRoot: {
+        newRoot: {
+          statuses: {
+            $mergeObjects: [
+              { scheduled: { $arrayElemAt: ['$scheduled.count', 0] || 0 } },
+              { $arrayToObject: { $map: { input: '$otherStatuses', as: 'el', in: { k: '$$el._id', v: '$$el.count' } } } }
+            ]
+          },
+          plugins: { $arrayToObject: { $map: { input: '$plugins', as: 'el', in: { k: '$$el._id', v: '$$el.count' } } } }
+        }
+      }
+    }
   ]).toArray()
 
-  const facets = {
-    statuses: Object.fromEntries(statusesAgg.map(({ _id, count }) => [_id, count])),
-    plugins: Object.fromEntries(pluginsAgg.map(({ _id, count }) => [_id, count]))
-  }
-
-  const noneCount = await processingsCollection.countDocuments({ ...query, lastRun: { $exists: false } })
-  if (noneCount > 0) facets.statuses.none = noneCount
-  const scheduledCount = await processingsCollection.countDocuments({ ...query, nextRun: { $exists: true } })
-  if (scheduledCount > 0) facets.statuses.scheduled = scheduledCount
+  const facets = aggregationResult[0] || { statuses: {}, plugins: {} }
 
   // @ts-ignore -> p is a processing
   res.json({ results: results.map((p) => cleanProcessing(p, sessionState, req.headers.host)), facets, count })
