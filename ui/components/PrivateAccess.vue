@@ -22,8 +22,9 @@
       :label="t('privateAccess')"
       :placeholder="t('searchName')"
       return-object
-      style="max-width:400px;"
+      style="max-width:450px;"
       hide-details
+      hide-no-data
       @update:model-value="onChange()"
     />
   </v-row>
@@ -33,11 +34,11 @@
 fr:
   public: Public
   privateAccess: Vue restreinte à des comptes
-  searchName: Saisissez un nom d'organisation
+  searchName: Saisissez un nom d'organisation / un utilisateur
 en:
   public: Public
   privateAccess: Restricted access to some accounts
-  searchName: Search an organization name
+  searchName: Search an organization name / a user name
 </i18n>
 
 <script setup>
