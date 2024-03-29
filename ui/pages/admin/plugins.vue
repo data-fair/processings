@@ -17,7 +17,7 @@
       v-if="!installedPlugins"
       :height="100"
       type="list-item-two-line"
-      class="my-4"
+      :class="$vuetify.theme.current.dark ? 'my-4' : 'my-4 skeleton'"
     />
     <template
       v-for="result in filteredInstalledPlugins"
@@ -144,7 +144,7 @@
         :key="n"
         :height="100"
         type="list-item-two-line"
-        class="my-4"
+        :class="$vuetify.theme.current.dark ? 'my-4' : 'my-4 skeleton'"
       />
     </v-col>
     <template
@@ -390,5 +390,5 @@ async function saveAccess(plugin) {
 
 </script>
 
-<style>
+<style scoped>
 </style>

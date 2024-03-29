@@ -42,7 +42,7 @@
               class="d-flex"
             >
               <v-skeleton-loader
-                class="w-100"
+                :class="$vuetify.theme.current.dark ? 'w-100' : 'w-100 skeleton'"
                 height="200"
                 type="article"
               />
