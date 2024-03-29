@@ -43,6 +43,7 @@
             {{ result.distTag === 'latest' ? result.name : result.name + ' (' + result.distTag + ')' }}
           </v-toolbar-title>
           <v-spacer />
+          Utilisé {{ result.usages ?? 0 }} fois -
           {{ result.version }}
           <v-btn
             v-if="updateAvailable(result)[0]"
@@ -63,7 +64,7 @@
                 title="Désinstaller"
                 icon="mdi-delete"
                 color="warning"
-                :disabled="pluginsLocked[`${result.name}-${result.distTag}`]"
+                :disabled="pluginsLocked[`${result.name}-${result.distTag}`] || result.usages > 0"
                 @click="deleteMenuShowed = result.id"
               />
             </template>
@@ -127,7 +128,7 @@
       </v-card>
     </template>
     <v-col>
-      <v-row class="mt-2">
+      <v-row>
         <v-list-subheader>{{ (availablePlugins && availablePlugins.length) || 0 }} plugins disponibles</v-list-subheader>
         <v-checkbox
           v-model="showAll"
@@ -216,6 +217,7 @@ const urlSearchParams = getReactiveSearchParams
 
 /**
 * @typedef InstalledPlugin
+* @property {number} usages
 * @property {String} name
 * @property {String} description
 * @property {String} distTag
@@ -294,8 +296,13 @@ async function fetchAvailablePlugins() {
 }
 
 async function fetchInstalledPlugins() {
-  const /** @type {{count: number, results: InstalledPlugin[]}} */ response = await $fetch('/api/v1/plugins')
+  const /** @type {{count: number, results: InstalledPlugin[], facets: {usages: Record<String, number>}}} */ response = await $fetch('/api/v1/plugins')
   installedPlugins.value = response.results.sort((/** @type {InstalledPlugin} */ a, /** @type {InstalledPlugin} */ b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
+  installedPlugins.value.forEach((/** @type {InstalledPlugin} */ plugin) => {
+    if (response.facets.usages[plugin.id]) {
+      plugin.usages = response.facets.usages[plugin.id]
+    }
+  })
 }
 
 /**
