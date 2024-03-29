@@ -75,6 +75,8 @@ const cleanProcessing = (processing, sessionState, host) => {
  * @property {string} showAll
  * @property {string} sort
  * @property {string} select
+ * @property {string} q
+ * @property {string} statuses
  */
 
 // Get the list of processings
@@ -87,12 +89,41 @@ router.get('', asyncHandler(async (req, res) => {
   const [size, skip] = findUtils.pagination(params.size, params.page, params.skip)
   const project = findUtils.project(params.select)
   const query = findUtils.query(params, sessionState) // Check permissions
+
+  const queryWithFilters = { ...query }
+  // Filter by statuses
+  const statuses = params.statuses ? params.statuses.split(',') : []
+  if (statuses.length > 0) {
+    queryWithFilters.$or = [
+      statuses.includes('none') ? { lastRun: { $exists: false } } : null,
+      statuses.includes('scheduled') ? { nextRun: { $exists: true } } : null,
+      { 'lastRun.status': { $in: statuses } }
+    ].filter(Boolean)
+  }
+
+  // Get the processings
   const [results, count] = await Promise.all([
-    size > 0 ? processingsCollection.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
+    size > 0 ? processingsCollection.find(queryWithFilters).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
     processingsCollection.countDocuments(query)
   ])
+
+  // Aggregation for facets
+  const statusesAgg = await processingsCollection.aggregate([
+    { $match: { ...query, 'lastRun.status': { $exists: true } } },
+    { $group: { _id: '$lastRun.status', count: { $sum: 1 } } }
+  ]).toArray()
+
+  const facets = {
+    statuses: Object.fromEntries(statusesAgg.map(({ _id, count }) => [_id, count]))
+  }
+
+  const noneCount = await processingsCollection.countDocuments({ ...query, lastRun: { $exists: false } })
+  if (noneCount > 0) facets.statuses.none = noneCount
+  const scheduledCount = await processingsCollection.countDocuments({ ...query, nextRun: { $exists: true } })
+  if (scheduledCount > 0) facets.statuses.scheduled = scheduledCount
+
   // @ts-ignore -> p is a processing
-  res.json({ results: results.map((p) => cleanProcessing(p, sessionState, req.headers.host)), count })
+  res.json({ results: results.map((p) => cleanProcessing(p, sessionState, req.headers.host)), facets, count })
 }))
 
 /**

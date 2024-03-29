@@ -185,22 +185,16 @@ async function handleTimeZoneChange(value) {
 }
 
 async function patch() {
+  edited.value = true
   if (editProcessing.value?.scheduling && editProcessing.value.scheduling.type === 'weekly') {
     if (editProcessing.value.scheduling.dayOfWeek === '*') editProcessing.value.scheduling.dayOfWeek = '1'
     renderVjsfKey.value += 1
   }
-  edited.value = true
-  try {
-    await $fetch(`/api/v1/processings/${route.params.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ ...editProcessing.value })
-    })
-  } catch (error) {
-    console.error(error)
-    eventBus.emit('notification', { error, msg: 'Erreur pendant la modification du traitement' })
-  } finally {
-    edited.value = false
-  }
+  await $fetch(`/api/v1/processings/${route.params.id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ ...editProcessing.value })
+  })
+  edited.value = false
 }
 
 </script>

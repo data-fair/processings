@@ -67,7 +67,7 @@
             color="primary"
             @click="createProcessing()"
           >
-            Enregistrer
+            Créer
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -84,11 +84,13 @@
       placeholder="rechercher"
       style="max-width:400px;"
       variant="outlined"
-      @update:model-value="eventBus.emit('search', search); getProcessingStatus()"
+      @update:model-value="eventBus.emit('search', search);"
     />
     <v-select
       v-model="statusesSelected"
-      :items="statuses"
+      :items="statusesItems"
+      item-title="display"
+      item-value="statusKey"
       label="Statut"
       chips
       class="mt-4 mx-4"
@@ -100,7 +102,6 @@
       rounded="xl"
       variant="outlined"
       style="max-width:400px;"
-      @click="getProcessingStatus()"
       @update:model-value="eventBus.emit('status', statusesSelected)"
     />
     <v-select
@@ -117,8 +118,16 @@
       rounded="xl"
       variant="outlined"
       style="max-width:400px;"
-      @click="getUsedPlugins()"
       @update:model-value="eventBus.emit('plugin', pluginsSelected)"
+    />
+    <v-switch
+      v-if="adminMode"
+      v-model="showAll"
+      color="admin"
+      label="Voir tous les traitements"
+      hide-details
+      class="mt-4 mx-4 adminSwitch"
+      @update:model-value="eventBus.emit('showAll', showAll)"
     />
   </v-list>
 </template>
@@ -129,7 +138,9 @@ import { type PropType, ref } from 'vue'
 
 const eventBus = useEventBus()
 
-const processingProps = defineProps({
+const processingsProps = defineProps({
+  adminMode: Boolean,
+  facets: { type: Object as PropType<Record<string, any>>, required: true },
   installedPlugins: { type: Object as PropType<Record<string, any>>, required: true },
   isSmall: Boolean,
   processings: { type: Array as PropType<Array<Record<string, any>>>, required: true }
@@ -138,13 +149,13 @@ const processingProps = defineProps({
 const inCreate = ref(false)
 const showCreateMenu = ref(false)
 const newProcessing: Ref<Record<string, any>> = ref({})
-const plugins: Ref<Array<string> | Array<never>> = ref([])
-const pluginsSelected = ref([])
+const plugins: Ref<String[]> = ref([])
+const pluginsSelected: Ref<String[]> = ref([])
+const statusesSelected: Ref<String[]> = ref([])
 const search = ref('')
-const statuses: Ref<Array<string> | Array<never>> = ref([])
-const statusesSelected = ref([])
+const showAll = ref(false)
 
-const statusText: Record<string, string> = {
+const statusesText: Record<string, string> = {
   error: 'En échec',
   finished: 'Terminé',
   kill: 'Interruption',
@@ -155,93 +166,63 @@ const statusText: Record<string, string> = {
   triggered: 'Déclenché'
 }
 
-function getProcessingStatus() {
-  if (!processingProps.processings) return statuses
-  const array: Array<string> = []
-  for (const processing of processingProps.processings) {
-    if (processing.lastRun) {
-      const status = processing.lastRun.status
-      let includes = false
-      let index = 0
-      for (const element of array) {
-        if (element.includes(statusText[status])) {
-          includes = true
-          index = array.indexOf(element)
-          break
-        }
-      }
-      if (includes) {
-        array[index] = `${statusText[status]} (${Number(array[index].split('(')[1].replace(')', '')) + 1})`
-      } else {
-        array.push(`${statusText[status]} (1)`)
-      }
-    } else {
-      let includes = false
-      let index = 0
-      for (const element of array) {
-        if (element.includes(statusText.none)) {
-          includes = true
-          index = array.indexOf(element)
-          break
-        }
-      }
-      if (includes) {
-        array[index] = `${statusText.none} (${Number(array[index].split('(')[1].replace(')', '')) + 1})`
-      } else {
-        array.push(`${statusText.none} (1)`)
-      }
-    }
-    if (processing.nextRun) {
-      let includes = false
-      let index = 0
-      for (const element of array) {
-        if (element.includes(statusText.scheduled)) {
-          includes = true
-          index = array.indexOf(element)
-          break
-        }
-      }
-      if (includes) {
-        array[index] = `${statusText.scheduled} (${Number(array[index].split('(')[1].replace(')', '')) + 1})`
-      } else {
-        array.push(`${statusText.scheduled} (1)`)
-      }
-    }
-  }
-  statuses.value = array.sort()
-  return statuses
-}
+const statusesItems: Ref<{ display: String, statusKey: String }[]> = computed(() => {
+  if (!processingsProps.facets.statuses) return []
 
-function getUsedPlugins() {
-  if (!processingProps.processings) return plugins
-  const array: Array<string> = []
-  for (const processing of processingProps.processings) {
-    const plugin = processingProps.installedPlugins.results.find((plugin: Record<string, any>) => plugin.id === processing.plugin)
-    if (plugin) {
-      if (!array.includes(plugin.customName)) {
-        array.push(plugin.customName)
-      }
-    } else {
-      if (!array.includes(processing.plugin)) {
-        array.push(processing.plugin)
-      }
-    }
-  }
-  plugins.value = array.sort()
-  return plugins
-}
+  return Object.entries(processingsProps.facets.statuses).map(
+    ([statusKey, count]) => ({
+      display: `${statusesText[statusKey] || statusKey} (${count})`,
+      statusKey
+    })
+  )
+})
 
-const createProcessing = async () => {
+async function createProcessing () {
+  let processing: Record<string, any> = {}
   inCreate.value = true
-  const processing: Record<string, any> = await $fetch('/api/v1/processings', {
-    method: 'POST',
-    body: JSON.stringify(newProcessing.value)
-  })
-  showCreateMenu.value = false
-  inCreate.value = false
+  try {
+    processing = await $fetch('/api/v1/processings', {
+      method: 'POST',
+      body: JSON.stringify(newProcessing.value)
+    })
+  } catch (error) {
+    eventBus.emit('notification', { error, msg: 'Erreur pendant la création du traitement' })
+  } finally {
+    showCreateMenu.value = false
+    inCreate.value = false
+  }
   return navigateTo({ path: `/processings/${processing._id}` })
 }
+
 </script>
 
-<style>
+<style scoped>
+/*
+ * This aims at making the button looking better.
+ * Instead of having a white string on a red background, we have a red string on the actual page's background
+ * Plus the button is also red, and the text is bold so it's easier to read
+ */
+:deep(.adminSwitch) {
+  background-color: transparent !important;
+  color: rgb(var(--v-theme-admin)) !important;
+}
+
+:deep(.adminSwitch .v-switch__thumb) {
+  background-color: rgb(var(--v-theme-admin)) !important;
+}
+
+:deep(.adminSwitch .v-switch__track) {
+  background-color: rgb(var(--v-theme-admin)) !important;
+  filter: saturate(100%);
+}
+
+:deep(.adminSwitch .v-switch__track:not(.bg-admin)) {
+  filter: saturate(50%);
+}
+
+:deep(.adminSwitch label) {
+  color: rgb(var(--v-theme-admin)) !important;
+  font-weight: bold !important;
+  padding-inline-start: 30px !important;
+}
 </style>

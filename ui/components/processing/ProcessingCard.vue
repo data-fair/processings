@@ -34,7 +34,9 @@
                 :color="pluginCustomName ? 'default' : 'error'"
               />
             </template>
-            <span>{{ pluginCustomName || processing.plugin }}</span>
+            <span :class="!pluginCustomName ? 'text-error' : ''">
+              {{ pluginCustomName || 'Supprimé - ' + processing.plugin }}
+            </span>
           </v-list-item>
 
           <template v-if="processing.lastRun">
