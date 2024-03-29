@@ -77,6 +77,7 @@ const cleanProcessing = (processing, sessionState, host) => {
  * @property {string} select
  * @property {string} q
  * @property {string} statuses
+ * @property {string} plugins
  */
 
 // Get the list of processings
@@ -100,6 +101,11 @@ router.get('', asyncHandler(async (req, res) => {
       { 'lastRun.status': { $in: statuses } }
     ].filter(Boolean)
   }
+  // Filter by plugins
+  const plugins = params.plugins ? params.plugins.split(',') : []
+  if (plugins.length > 0) {
+    queryWithFilters.plugin = { $in: plugins }
+  }
 
   // Get the processings
   const [results, count] = await Promise.all([
@@ -113,8 +119,14 @@ router.get('', asyncHandler(async (req, res) => {
     { $group: { _id: '$lastRun.status', count: { $sum: 1 } } }
   ]).toArray()
 
+  const pluginsAgg = await processingsCollection.aggregate([
+    { $match: query },
+    { $group: { _id: '$plugin', count: { $sum: 1 } } }
+  ]).toArray()
+
   const facets = {
-    statuses: Object.fromEntries(statusesAgg.map(({ _id, count }) => [_id, count]))
+    statuses: Object.fromEntries(statusesAgg.map(({ _id, count }) => [_id, count])),
+    plugins: Object.fromEntries(pluginsAgg.map(({ _id, count }) => [_id, count]))
   }
 
   const noneCount = await processingsCollection.countDocuments({ ...query, lastRun: { $exists: false } })

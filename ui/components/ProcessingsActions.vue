@@ -45,8 +45,8 @@
             <v-autocomplete
               v-model="newProcessing.plugin"
               label="Plugin"
-              :loading="!installedPlugins.results ? 'primary' : false"
-              :items="installedPlugins.results"
+              :loading="!installedPlugins ? 'primary' : false"
+              :items="installedPlugins"
               item-title="customName"
               item-value="id"
               clearable
@@ -106,7 +106,9 @@
     />
     <v-select
       v-model="pluginsSelected"
-      :items="plugins"
+      :items="pluginsItems"
+      item-title="display"
+      item-value="pluginKey"
       label="Plugin"
       chips
       class="mt-4 mx-4"
@@ -141,7 +143,7 @@ const eventBus = useEventBus()
 const processingsProps = defineProps({
   adminMode: Boolean,
   facets: { type: Object as PropType<Record<string, any>>, required: true },
-  installedPlugins: { type: Object as PropType<Record<string, any>>, required: true },
+  installedPlugins: { type: Array as PropType<Array<Record<string, any>>>, required: true },
   isSmall: Boolean,
   processings: { type: Array as PropType<Array<Record<string, any>>>, required: true }
 })
@@ -149,7 +151,6 @@ const processingsProps = defineProps({
 const inCreate = ref(false)
 const showCreateMenu = ref(false)
 const newProcessing: Ref<Record<string, any>> = ref({})
-const plugins: Ref<String[]> = ref([])
 const pluginsSelected: Ref<String[]> = ref([])
 const statusesSelected: Ref<String[]> = ref([])
 const search = ref('')
@@ -174,6 +175,21 @@ const statusesItems: Ref<{ display: String, statusKey: String }[]> = computed(()
       display: `${statusesText[statusKey] || statusKey} (${count})`,
       statusKey
     })
+  )
+})
+
+const pluginsItems: Ref<Record<string, any>[]> = computed(() => {
+  if (!processingsProps.installedPlugins) return []
+  if (!processingsProps.facets.plugins) return []
+
+  return Object.entries(processingsProps.facets.plugins).map(
+    ([pluginKey, count]) => {
+      const customName = processingsProps.installedPlugins.find((plugin: Record<string, any>) => plugin.id === pluginKey)?.customName
+      return {
+        display: `${customName || 'Supprimé - ' + pluginKey} (${count})`,
+        pluginKey
+      }
+    }
   )
 })
 
