@@ -4,12 +4,12 @@ import config from '../config.js'
 /**
  * @param {import('@data-fair/lib/express/index.js').SessionStateAuthenticated} sessionState
  * @param {import('@data-fair/lib/express/index.js').Account} owner
- * @returns {string|undefined}
+ * @returns {string|null}
  */
 const getOwnerRole = (sessionState, owner) => {
-  if (!sessionState) return
-  if (sessionState.account.department) return 'admin'
-  if (sessionState.account.type !== owner.type || sessionState.account.id !== owner.id) return
+  if (!sessionState) return null
+  if (sessionState.account.department) return null
+  if (sessionState.account.type !== owner.type || sessionState.account.id !== owner.id) return null
   if (sessionState.account.type === 'user') return 'admin'
   return sessionState.accountRole
 }
