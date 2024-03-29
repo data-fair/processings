@@ -3,6 +3,7 @@
     density="compact"
     class="list-actions"
     :style="isSmall ? '' : 'background-color: transparent;'"
+    data-iframe-height
   >
     <v-menu
       v-if="canAdmin || canExec"
@@ -188,7 +189,6 @@
 </template>
 
 <script setup>
-import 'iframe-resizer/js/iframeResizer'
 import useEventBus from '~/composables/event-bus'
 import VIframe from '@koumoul/v-iframe'
 import { computed, ref, watch } from 'vue'

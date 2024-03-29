@@ -71,6 +71,10 @@
         <template #actions>
           <ProcessingsActions
             :admin-mode="user.adminMode"
+            :c-plugins-selected="pluginsSelected"
+            :c-search="search"
+            :c-show-all="showAll"
+            :c-statuses-selected="statusesSelected"
             :facets="facets"
             :is-small="true"
             :installed-plugins="installedPlugins"

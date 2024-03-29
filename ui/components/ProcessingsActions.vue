@@ -3,6 +3,7 @@
     density="compact"
     class="list-actions"
     :style="isSmall ? '' : 'background-color: transparent;'"
+    data-iframe-height
   >
     <v-menu
       v-model="showCreateMenu"
