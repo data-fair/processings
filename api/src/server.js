@@ -48,11 +48,3 @@ export const stop = async () => {
   await mongo.client.close()
   await stopWSServer()
 }
-
-export const cleanDB = async () => {
-  if (process.env.NODE_ENV === 'test') {
-    await mongo.db.collection('processings').deleteMany({})
-    await mongo.db.collection('runs').deleteMany({})
-    await mongo.db.collection('limits').deleteMany({})
-  }
-}

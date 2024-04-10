@@ -34,12 +34,12 @@ let killLoopPromise
 
 // Start the worker (start the mail loop and all dependencies)
 export const start = async () => {
-  await mongo.connect(config.mongoUrl, { readPreference: 'primary' })
+  await mongo.connect(config.mongoUrl, { readPreference: 'primary', maxPoolSize: 1 })
   const db = mongo.db
   await locks.init(db)
   wsPublish = await initPublisher(db)
   if (config.observer.active) {
-    await initMetrics(mongo.db)
+    await initMetrics(db)
     await startObserver(config.observer.port)
   }
   await limits.initLimits()
@@ -139,11 +139,9 @@ async function killLoop (db) {
       try {
         /** @type {import('mongodb').Collection<Run>} */
         const runsCollection = mongo.db.collection('runs')
-        const runs = await runsCollection.find({ status: 'kill' }).toArray()
-        for (const run of runs) {
+        for await (const run of runsCollection.find({ status: 'kill' })) {
           killRun(db, run).catch(err => {
             internalError('worker-task-kill', 'error while killing task', { error: err })
-            console.error('(task-kill) error while killing task', err)
           })
         }
       } catch (err) {
@@ -210,7 +208,6 @@ async function iter (db, run) {
     return
   }
 
-  // @test:spy("isTriggered")
   debug(`run "${processing.title}" > ${run._id}`)
 
   try {
@@ -225,10 +222,16 @@ async function iter (db, run) {
     const path = process.env.NODE_ENV === 'test' ? './worker/src/task/' : './src/task/'
     const spawnPromise = spawn('node', [path, run._id, processing._id], {
       env: process.env,
-      stdio: ['ignore', 'inherit', 'pipe']
+      stdio: ['ignore', 'pipe', 'pipe']
+    })
+    spawnPromise.childProcess.stdout?.on('data', data => {
+      debug('[spawned task stdout] ' + data)
+      if (data.includes('<running>')) {
+        // @test:spy("isRunning")
+      }
     })
     spawnPromise.childProcess.stderr?.on('data', data => {
-      debug('[spawned task stderr] ' + data)
+      process.stderr.write('[spawned task stderr] ' + data)
       stderr += data
     })
     pids[run._id] = spawnPromise.childProcess.pid || -1

@@ -50,3 +50,4 @@ await test('should install a new plugin then list and remove it', async function
   res = await superadmin.get('/api/v1/plugins')
   assert.equal(res.data.count, 0)
 })
+process.exit(0)

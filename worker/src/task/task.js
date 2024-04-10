@@ -141,20 +141,22 @@ export const run = async (db, mailTransport, wsPublish) => {
   const runsCollection = db.collection('runs')
   /** @type {import('mongodb').Collection<import('../../../shared/types/processing/index.js').Processing>} */
   const processingsCollection = db.collection('processings')
-  /** @type {[Run, import('../../../shared/types/processing/index.js').Processing]} */
-  // @ts-ignore
+  /** @type {[Run | null, import('../../../shared/types/processing/index.js').Processing | null]} */
   const [run, processing] = await Promise.all([
     runsCollection.findOne({ _id: process.argv[2] }),
     processingsCollection.findOne({ _id: process.argv[3] })
   ])
+  if (!run) throw new Error('Run not found')
+  if (!processing) throw new Error('Processing not found')
 
   const log = prepareLog(runsCollection, wsPublish, processing, run)
   // @ts-expect-error -> warn is deprecated
   log.warn = log.warning // for compatibility with old plugins
-  if (run?.status === 'running') {
+  if (run.status === 'running') {
     await log.step('Reprise après interruption.')
   }
   await running(db, wsPublish, run)
+  console.log('<running>')
   const pluginDir = path.resolve(config.dataDir, 'plugins', processing?.plugin)
   let pluginConfig = {}
   if (await fs.pathExists(pluginDir + '-config.json')) {

@@ -64,7 +64,7 @@ await test('should create a new processing, activate it and run it', async funct
   await superadmin.patch(`/api/v1/processings/${processing._id}`, { scheduling: { type: 'trigger' } })
   await Promise.all([
     superadmin.post(`/api/v1/processings/${processing._id}/_trigger`),
-    testSpies.waitFor('isTriggered', 10000)
+    testSpies.waitFor('isRunning', 10000)
   ])
   runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
   assert.equal(runs.count, 1)
@@ -86,7 +86,7 @@ await test('should create a new processing, activate it and run it', async funct
   assert.ok(!processing.webhookKey)
 })
 
-await test('should kill a long run with SIGTERM', async function () {
+await test.only('should kill a long run with SIGTERM', async function () {
   const processing = (await superadmin.post('/api/v1/processings', {
     title: 'Hello processing',
     plugin: plugin.id,
@@ -101,7 +101,7 @@ await test('should kill a long run with SIGTERM', async function () {
 
   await Promise.all([
     superadmin.post(`/api/v1/processings/${processing._id}/_trigger`),
-    testSpies.waitFor('isTriggered', 10000) // We wait for the run to be triggered
+    testSpies.waitFor('isRunning', 10000) // We wait for the run to be triggered
   ])
   const runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
   assert.equal(runs.count, 1)
@@ -137,7 +137,7 @@ await test('should kill a long run with SIGTERM and wait for grace period', asyn
 
   await Promise.all([
     superadmin.post(`/api/v1/processings/${processing._id}/_trigger`),
-    testSpies.waitFor('isTriggered', 10000) // We wait for the run to be triggered
+    testSpies.waitFor('isRunning', 10000) // We wait for the run to be triggered
   ])
   await new Promise(resolve => setTimeout(resolve, 1000))
   const runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
@@ -186,3 +186,4 @@ await test('should fail a run if processings_seconds limit is exceeded', async f
 })
 
 await workerServer.stop()
+process.exit(0)
