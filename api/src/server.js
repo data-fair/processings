@@ -22,7 +22,17 @@ server.headersTimeout = (60 * 1000) + 2000
 export const start = async () => {
   if (config.observer.active) await startObserver(config.observer.port)
   session.init(config.privateDirectoryUrl)
-  await mongo.connect(config.mongoUrl, { readPreference: 'nearest', maxPoolSize: 1 })
+  await mongo.connect(config.mongoUrl)
+  await mongo.configure({
+    processings: {
+      fulltext: { title: 'text' },
+      main: { 'owner.type': 1, 'owner.id': 1 }
+    },
+    runs: {
+      main: { 'owner.type': 1, 'owner.id': 1, 'processing._id': 1, createdAt: -1 }
+    }
+  })
+
   server.listen(config.port)
   await new Promise(resolve => server.once('listening', resolve))
   const npmHttpsProxy = config.npm?.httpsProxy || process.env.HTTPS_PROXY || process.env.https_proxy
