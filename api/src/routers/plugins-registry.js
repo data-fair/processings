@@ -7,12 +7,17 @@ import memoize from 'memoize'
 const router = Router()
 export default router
 
+/** @type {import('axios').AxiosRequestConfig} */
 const axiosOpts = {}
+
 if (config.npm?.httpsProxy) {
   const proxyUrl = new URL(config.npm?.httpsProxy)
   // cf https://axios-http.com/docs/req_config
-  axiosOpts.proxy = { protocol: proxyUrl.protocol, host: proxyUrl.hostname }
-  if (proxyUrl.port) axiosOpts.proxy.port = proxyUrl.port
+  axiosOpts.proxy = {
+    protocol: proxyUrl.protocol,
+    host: proxyUrl.hostname,
+    port: proxyUrl.port ? Number(proxyUrl.port) : (proxyUrl.protocol === 'https:' ? 443 : 80)
+  }
   if (proxyUrl.username) axiosOpts.proxy.auth = { username: proxyUrl.username, password: proxyUrl.password }
 }
 
@@ -23,7 +28,6 @@ if (config.npm?.httpsProxy) {
  */
 const search = memoize(async (q, showAll) => {
   // see https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md#get-v1search
-  // @ts-ignore
   const res = await axios.get('https://registry.npmjs.org/-/v1/search', {
     ...axiosOpts,
     params: {
