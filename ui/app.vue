@@ -1,13 +1,11 @@
 <template>
-  <div class="v-app">
-    <v-app>
-      <LayoutAppBar v-if="dev()" />
-      <v-main>
-        <NuxtPage />
-        <Notifications />
-      </v-main>
-    </v-app>
-  </div>
+  <v-app>
+    <LayoutAppBar v-if="!embed" />
+    <v-main>
+      <NuxtPage />
+      <Notifications />
+    </v-main>
+  </v-app>
 </template>
 
 <script setup>
@@ -17,13 +15,13 @@ globalThis.iFrameResizer = {
   heightCalculationMethod: 'taggedElement'
 }
 
-const dev = () => {
+const embed = (() => {
   try {
-    return !(window.self !== window.top)
+    return window.self !== window.top
   } catch (e) {
     return true
   }
-}
+})()
 
 useHead({
   title: 'Data Fair Processings',
@@ -36,9 +34,3 @@ useHead({
   ]
 })
 </script>
-
-<style scoped>
-:deep(.v-input .v-input__details) {
-  display: none;
-}
-</style>

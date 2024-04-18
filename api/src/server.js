@@ -1,3 +1,5 @@
+import { existsSync } from 'fs'
+import resolvePath from 'resolve-path'
 import { app } from './app.js'
 import { startWSServer, stopWSServer } from './utils/wsServer.js'
 import { session } from '@data-fair/lib/express/index.js'
@@ -20,6 +22,9 @@ server.keepAliveTimeout = (60 * 1000) + 1000
 server.headersTimeout = (60 * 1000) + 2000
 
 export const start = async () => {
+  if (!existsSync(config.dataDir) && process.env.NODE_ENV === 'production') {
+    throw new Error(`Data directory ${resolvePath(config.dataDir)} was not mounted`)
+  }
   if (config.observer.active) await startObserver(config.observer.port)
   session.init(config.privateDirectoryUrl)
   await mongo.connect(config.mongoUrl)

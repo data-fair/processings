@@ -135,7 +135,7 @@ const prepareLog = (runsCollection, wsPublish, processing, run) => {
  * @param {import('mongodb').Db} db - Database.
  * @param {any} mailTransport - Mail transport.
  * @param {(channel: string, data: any) => Promise<void>} wsPublish - Publish function.
-*/
+ */
 export const run = async (db, mailTransport, wsPublish) => {
   /** @type {import('mongodb').Collection<Run>} */
   const runsCollection = db.collection('runs')

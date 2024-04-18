@@ -8,6 +8,7 @@ import moment from 'moment'
  * @param {import('mongodb').Db} db
  * @param {import('./types/processing/index.js').Processing} processing
  * @param {boolean} triggered
+ * @param {number} delaySeconds
  * @returns {Promise<import('./types/run/index.js').Run>}
  */
 export const createNext = async (db, processing, triggered = false, delaySeconds = 0) => {

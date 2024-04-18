@@ -32,8 +32,6 @@ ADD README.md .
 ADD package.json .
 ADD LICENSE .
 
-WORKDIR /app/ui
-
 EXPOSE 8080
 
-CMD ["node", "--max-http-header-size", "64000", ".output/server/index.mjs"]
+CMD ["node", "--max-http-header-size", "64000", "ui/.output/server/index.mjs"]

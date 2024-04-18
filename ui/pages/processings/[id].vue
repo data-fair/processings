@@ -83,7 +83,7 @@ const edited = ref(false)
 const editProcessing = ref(null)
 /** @type {Ref<Processing|null>} */
 const processing = ref(null)
-/** @type {Ref<Object<string, any>|null>} */
+/** @type {Ref<Record<string, any>|null>} */
 const plugin = ref(null)
 /** @type {Ref<Record<string, any>|null>} */
 const runs = ref(null)

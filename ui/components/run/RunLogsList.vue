@@ -70,10 +70,10 @@ const format = useDateFormat()
 
 /**
  * Defines a log entry in the logs array.
- * @typedef {Object} LogEntry
+ * @typedef {object} LogEntry
  * @property {string} date - The date of the log.
  * @property {string} type - The type of the log.
- * @property {Record<String, any>} msg - The message of the log.
+ * @property {Record<string, any>} msg - The message of the log.
  * @property {number} progress - The progress of the log.
  * @property {number} total - The total of the log.
  * @property {string} progressDate - The progress date of the log.
@@ -86,7 +86,7 @@ defineProps({
   logs: { type: Array, required: true }
 })
 
-const taskColor = (/** @type {Record<String, any>} */ log) => {
+const taskColor = (/** @type {Record<string, any>} */ log) => {
   if (log.progress && log.progress === log.total) return 'success'
   return 'primary'
 }

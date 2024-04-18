@@ -17,7 +17,7 @@ import { channel } from '../../../shared/ws.js'
 import { WebSocketServer } from 'ws'
 import permissions from './permissions.js'
 
-/** @type any */
+/** @type {any} */
 let cursor
 /** @type {WebSocketServer} */
 let wss

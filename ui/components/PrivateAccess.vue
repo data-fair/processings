@@ -78,11 +78,11 @@ async function listSuggestions() {
   }
 
   loading.value = true
-  const /** @type {Record<String, any>} */ orgsResponse = await $fetch('/simple-directory/api/organizations', {
+  const /** @type {Record<string, any>} */ orgsResponse = await $fetch('/simple-directory/api/organizations', {
     params: { q: search.value }
   })
   const orgs = orgsResponse.results.map(/** @param {any} r */ r => ({ ...r, type: 'organization' }))
-  const /** @type {Record<String, any>} */ usersResponse = await $fetch('/simple-directory/api/users', {
+  const /** @type {Record<string, any>} */ usersResponse = await $fetch('/simple-directory/api/users', {
     params: { q: search.value }
   })
   const users = usersResponse.results.map(/** @param {any} r */ r => ({ ...r, type: 'user' }))

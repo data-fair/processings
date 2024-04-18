@@ -99,7 +99,7 @@ const urlSearchParams = getReactiveSearchParams
 const session = useSession()
 
 /**
-* @typedef InstalledPlugin
+ * @typedef InstalledPlugin
  * @property {string} name
  * @property {string} customName
  * @property {string} description
@@ -108,13 +108,13 @@ const session = useSession()
  * @property {string} id
  * @property {any} pluginConfigSchema
  * @property {any} processingConfigSchema
-*/
+ */
 
 const /** @type {Ref<import('../../../shared/types/processing/index.js').Processing[]>} */ processings = ref([])
 const /** @type {Ref<{statuses:any, plugins:any}>} */ facets = ref({ statuses: {}, plugins: {} })
 const /** @type {Ref<InstalledPlugin[]>} */ installedPlugins = ref([])
-const /** @type {Ref<String[]>} */ pluginsSelected = ref(urlSearchParams.plugin ? urlSearchParams.plugin.split(',') : [])
-const /** @type {Ref<String[]>} */ statusesSelected = ref(urlSearchParams.status ? urlSearchParams.status.split(',') : [])
+const /** @type {Ref<string[]>} */ pluginsSelected = ref(urlSearchParams.plugin ? urlSearchParams.plugin.split(',') : [])
+const /** @type {Ref<string[]>} */ statusesSelected = ref(urlSearchParams.status ? urlSearchParams.status.split(',') : [])
 const showAll = ref(urlSearchParams.showAll === 'true')
 const loading = ref(0)
 const search = ref(urlSearchParams.search || '')
@@ -123,7 +123,7 @@ const totalProcessings = ref(0)
 const displayProcessings = computed(() => {
   if (!search.value) return processings.value
   return processings.value.filter(
-    /** @param {Record<String, any>} processing */ processing =>
+    /** @param {Record<string, any>} processing */ processing =>
       processing.title.toLowerCase().includes(search.value.toLowerCase()))
 })
 
@@ -153,7 +153,7 @@ const ownerRole = computed(() => {
     if (owner.value.id === user.value.id) return 'admin'
     else return 'anonymous'
   }
-  const userOrg = user.value.organizations.find(/** @param {Record<String, any>} o */ o => o.id === owner.value.id)
+  const userOrg = user.value.organizations.find(/** @param {Record<string, any>} o */ o => o.id === owner.value.id)
   return userOrg ? userOrg.role : 'anonymous'
 })
 
@@ -169,24 +169,24 @@ onMounted(async () => {
   await fetchProcessings()
 })
 
-eventBus.on('search', (/** @type {String} */ searchString) => {
+eventBus.on('search', (/** @type {string} */ searchString) => {
   search.value = searchString || ''
   urlSearchParams.search = searchString
 })
 
-eventBus.on('status', async (/** @type {String[]} */ statuses) => {
+eventBus.on('status', async (/** @type {string[]} */ statuses) => {
   statusesSelected.value = statuses
   urlSearchParams.status = statuses.join(',')
   await fetchProcessings()
 })
 
-eventBus.on('plugin', async (/** @type {String[]} */ plugins) => {
+eventBus.on('plugin', async (/** @type {string[]} */ plugins) => {
   pluginsSelected.value = plugins
   urlSearchParams.plugin = plugins.join(',')
   await fetchProcessings()
 })
 
-eventBus.on('showAll', async (/** @type {Boolean} */ show) => {
+eventBus.on('showAll', async (/** @type {boolean} */ show) => {
   showAll.value = show
   urlSearchParams.showAll = show ? 'true' : 'false'
   await fetchProcessings()

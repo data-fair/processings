@@ -1,6 +1,5 @@
 /**
  * Converts scheduling object to a CRON expression.
- *
  * @param {any} scheduling The scheduling object.
  * @returns {string} The CRON expression.
  */

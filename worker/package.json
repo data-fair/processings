@@ -3,7 +3,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "NODE_ENV=development DEBUG=worker nodemon worker"
+    "dev": "NODE_ENV=development DEBUG=worker node --watch index.js"
   },
   "devDependencies": {
     "@types/child-process-promise": "^2.2.6",

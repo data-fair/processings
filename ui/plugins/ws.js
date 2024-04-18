@@ -3,15 +3,15 @@ import useEventBus from '~/composables/event-bus'
 import { defineNuxtPlugin } from '#app'
 
 /**
- * @param {String} wsUrl
- * @param {String} suffix
+ * @param {string} wsUrl
+ * @param {string} suffix
  * @param {any} eventBus
  */
 function configureWS(wsUrl, suffix = '', eventBus) {
   console.log('Configure WS', wsUrl)
   if (window.WebSocket) {
     const ws = new ReconnectingWebSocket(wsUrl)
-    const /** @type {Record<String, any>} */ subscriptions = {}
+    const /** @type {Record<string, any>} */ subscriptions = {}
     let ready = false
 
     ws.addEventListener('open', () => {
@@ -52,7 +52,7 @@ function configureWS(wsUrl, suffix = '', eventBus) {
 
 export default defineNuxtPlugin(nuxtApp => {
   const eventBus = useEventBus()
-  const wsPublicUrl = (window.location.origin + '/api/').replace('http:', 'ws:').replace('https:', 'wss:')
+  const wsPublicUrl = (window.location.origin + '/processings/api/').replace('http:', 'ws:').replace('https:', 'wss:')
   const notifyWSUrl = (window.location.origin + '/notify/').replace('http:', 'ws:').replace('https:', 'wss:')
   configureWS(wsPublicUrl, '', eventBus)
   configureWS(notifyWSUrl, '-notify', eventBus)

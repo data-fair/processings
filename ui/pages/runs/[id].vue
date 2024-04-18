@@ -66,9 +66,9 @@ const route = useRoute()
 const session = useSession()
 
 const loading = ref(false)
-const /** @type {Ref<Record<String, any>|null>} */ run = ref(null)
+const /** @type {Ref<Record<string, any> | null>} */ run = ref(null)
 
-const /** @type {Record<String, any>} */ user = computed(() => session.state.user)
+const /** @type {Record<string, any>} */ user = computed(() => session.state.user)
 
 const canExec = computed(() => {
   if (!run.value) return false
@@ -83,7 +83,7 @@ const wsPatchChannel = computed(() => {
   return run.value && `processings/${run.value.processing._id}/run-patch`
 })
 
-const /** @type {Record<String, any>} */ steps = computed(() => {
+const /** @type {Record<string, any>} */ steps = computed(() => {
   if (!run.value) return []
   const steps = []
   let lastStep
@@ -104,7 +104,7 @@ const /** @type {Record<String, any>} */ steps = computed(() => {
 })
 
 /**
- * @param {Record<String, any>} step
+ * @param {Record<string, any>} step
  */
 function getColor(step) {
   let color = 'success'
@@ -123,7 +123,7 @@ function getColor(step) {
 }
 
 /**
- * @param {Record<String, any>} step
+ * @param {Record<string, any>} step
  */
 function getIcon(step) {
   let icon = 'mdi-check-circle'
@@ -165,7 +165,7 @@ async function refresh() {
 }
 
 /**
- * @param {Record<String, any>} runPatch
+ * @param {Record<string, any>} runPatch
  */
 function onRunPatch(runPatch) {
   if (!run.value || run.value._id !== runPatch._id) return
@@ -175,12 +175,12 @@ function onRunPatch(runPatch) {
 }
 
 /**
- * @param {Record<String, any>} runLog
+ * @param {Record<string, any>} runLog
  */
 function onRunLog(runLog) {
   if (!run.value || run.value._id !== runLog._id) return
   if (runLog.log.type === 'task') {
-    const matchingTaskIndex = run.value.log.findIndex(/** @param {Record<String, any>} l */ l => l.type === 'task' && l.msg === runLog.log.msg)
+    const matchingTaskIndex = run.value.log.findIndex(/** @param {Record<string, any>} l */ l => l.type === 'task' && l.msg === runLog.log.msg)
     if (matchingTaskIndex !== -1) {
       for (const key of Object.keys(runLog.log)) {
         run.value.log[matchingTaskIndex][key] = runLog.log[key]

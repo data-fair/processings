@@ -222,7 +222,7 @@ const triggerDelay = ref(0)
 const webhookKey = ref('')
 
 const session = useSession()
-const /** @type {Record<String, any>} */ activeAccount = computed(() => session.state.account)
+const /** @type {Record<string, any>} */ activeAccount = computed(() => session.state.account)
 
 const notifUrl = computed(() => {
   const topics = [

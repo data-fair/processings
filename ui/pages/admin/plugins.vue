@@ -1,7 +1,7 @@
 <template>
   <v-container data-iframe-height>
     <v-text-field
-      v-model="search"
+      v-model="urlSearchParams.search"
       append-inner-icon="mdi-magnify"
       class="my-2"
       clearable
@@ -12,12 +12,34 @@
       style="max-width:400px;"
       variant="outlined"
     />
-    <v-list-subheader>{{ (installedPlugins && installedPlugins.length) || 0 }} plugins installés</v-list-subheader>
+    <v-list-subheader>
+      <v-progress-circular
+        v-if="installedPluginsFetch.pending.value"
+        indeterminate
+        size="16"
+        width="2"
+        color="primary"
+      />
+      <v-icon
+        v-else-if="installedPluginsFetch.error.value"
+        color="error"
+      >
+        mdi-alert
+      </v-icon>
+      <template v-else-if="installedPluginsFetch.data.value">
+        {{ installedPluginsFetch.data.value.count }}
+      </template>
+      plugins installés
+    </v-list-subheader>
     <v-skeleton-loader
-      v-if="!installedPlugins"
+      v-if="installedPluginsFetch.pending.value"
       :height="100"
       type="list-item-two-line"
       :class="$vuetify.theme.current.dark ? 'my-4' : 'my-4 skeleton'"
+    />
+    <fetch-error
+      v-else-if="installedPluginsFetch.error.value"
+      :error="installedPluginsFetch.error.value"
     />
     <template
       v-for="result in filteredInstalledPlugins"
@@ -26,31 +48,30 @@
       <v-card
         v-if="result.pluginConfigSchema"
         :key="'installed-' + result.id"
-        class="my-4"
-        variant="elevated"
-        rounded="lg"
+        class="mb-4"
       >
         <v-progress-linear
-          v-if="pluginsLocked[`${result.name}-${result.distTag}`]"
+          v-if="pluginLocked === `${result.name}-${result.distTag}`"
           indeterminate
           color="primary"
         />
         <v-toolbar
-          dense
+          density="compact"
           flat
+          variant="outlined"
         >
           <v-toolbar-title>
             {{ result.distTag === 'latest' ? result.name : result.name + ' (' + result.distTag + ')' }}
           </v-toolbar-title>
           <v-spacer />
-          Utilisé {{ result.usages ?? 0 }} fois -
+          Utilisé {{ result.usages }} fois -
           {{ result.version }}
           <v-btn
             v-if="updateAvailable(result)[0]"
             :title="`Mettre à jour (${updateAvailable(result)[1]})`"
             icon="mdi-update"
             color="primary"
-            :disabled="pluginsLocked[`${result.name}-${result.distTag}`]"
+            :disabled="!!pluginLocked"
             @click="update(result)"
           />
           <v-menu
@@ -64,20 +85,16 @@
                 title="Désinstaller"
                 icon="mdi-delete"
                 color="warning"
-                :disabled="pluginsLocked[`${result.name}-${result.distTag}`] || result.usages > 0"
+                :disabled="!!pluginLocked"
                 @click="deleteMenuShowed = result.id"
               />
             </template>
-            <v-card
-              v-if="deleteMenuShowed"
-              rounded="lg"
-              variant="elevated"
-            >
+            <v-card v-if="deleteMenuShowed">
               <v-card-title primary-title>
                 Désinstallation du plugin
               </v-card-title>
               <v-progress-linear
-                v-if="pluginsLocked[`${result.name}-${result.distTag}`]"
+                v-if="pluginLocked === `${result.name}-${result.distTag}`"
                 indeterminate
                 color="warning"
               />
@@ -88,14 +105,14 @@
                 <v-spacer />
                 <v-btn
                   variant="text"
-                  :disabled="pluginsLocked[`${result.name}-${result.distTag}`]"
+                  :disabled="!!pluginLocked"
                   @click="deleteMenuShowed = null"
                 >
                   Non
                 </v-btn>
                 <v-btn
                   color="warning"
-                  :disabled="pluginsLocked[`${result.name}-${result.distTag}`]"
+                  :disabled="!!pluginLocked"
                   @click="uninstall(result)"
                 >
                   Oui
@@ -131,15 +148,15 @@
       <v-row>
         <v-list-subheader>{{ (availablePlugins && availablePlugins.length) || 0 }} plugins disponibles</v-list-subheader>
         <v-checkbox
-          v-model="showAll"
+          :model-value="urlSearchParams.showAll === 'true'"
           label="Afficher les versions de test des plugins"
           color="primary"
           density="compact"
-          @update:model-value="fetchAvailablePlugins"
+          @update:model-value="value => urlSearchParams.showAll = '' + value"
         />
       </v-row>
     </v-col>
-    <v-col v-if="loadingAvailablePlugins">
+    <v-col v-if="availablePluginsFetch.pending.value">
       <v-skeleton-loader
         v-for="n in 4"
         :key="n"
@@ -155,12 +172,10 @@
     >
       <v-card
         v-if="!installedPlugins.find(/** @param {Record<String, any>} r */ r => r.name === result.name && r.distTag === result.distTag)"
-        class="my-4"
-        variant="elevated"
-        rounded="lg"
+        class="mb-4"
       >
         <v-progress-linear
-          v-if="pluginsLocked[`${result.name}-${result.distTag}`]"
+          v-if="pluginLocked === `${result.name}-${result.distTag}`"
           indeterminate
           color="primary"
         />
@@ -177,7 +192,7 @@
             title="Installer"
             icon="mdi-download"
             color="primary"
-            :disabled="pluginsLocked[`${result.name}-${result.distTag}`]"
+            :disabled="!!pluginLocked"
             @click="install(result)"
           />
         </v-toolbar>
@@ -196,134 +211,95 @@
 
 <script setup>
 import '@koumoul/vjsf-markdown'
-import getReactiveSearchParams from '@data-fair/lib/vue/reactive-search-params-global.js'
+import urlSearchParams from '@data-fair/lib/vue/reactive-search-params-global.js'
 import useEventBus from '~/composables/event-bus'
 import Vjsf from '@koumoul/vjsf'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 import { useSession } from '@data-fair/lib/vue/session.js'
 
 const eventBus = useEventBus()
 const session = useSession()
-const urlSearchParams = getReactiveSearchParams
+
+if (!session.state.user) {
+  throw createError({ status: 401, message: 'Authentification nécessaire', fatal: true })
+}
+if (!session.state.user?.adminMode) {
+  throw createError({ status: 403, message: 'Vous n\'avez pas la permission d\'accéder à cette page, il faut avoir activé le mode super-administration.', fatal: true })
+}
 
 /**
  * @typedef AvailablePlugin
- * @property {String} name
- * @property {String} description
- * @property {String} distTag
- * @property {String} version
+ * @property {string} name
+ * @property {string} description
+ * @property {string} distTag
+ * @property {string} version
  */
 
 /**
-* @typedef InstalledPlugin
-* @property {number} usages
-* @property {String} name
-* @property {String} description
-* @property {String} distTag
-* @property {String} version
-* @property {String} id
-* @property {Object<String, any>} config
-* @property {Object<String, any>} access
-* @property {Object<String, any>} pluginConfigSchema
-*/
+ * @typedef InstalledPlugin
+ * @property {number} usages
+ * @property {string} name
+ * @property {string} description
+ * @property {string} distTag
+ * @property {string} version
+ * @property {string} id
+ * @property {Record<string, any>} config
+ * @property {Record<string, any>} access
+ * @property {Record<string, any>} pluginConfigSchema
+ */
 
-const /** @type {Ref<AvailablePlugin[]>} - A list of plugins not installed */ availablePlugins = ref([])
-const /** @type {Ref<String | null>} - Contains the id of the plugin where the deleteMenu needs to be shown */ deleteMenuShowed = ref(null)
-const /** @type {Ref<InstalledPlugin[]>} - A list of installed plugins */ installedPlugins = ref([])
-const /** @type {Ref<boolean>} - True if the list of availablePlugins is loading */ loadingAvailablePlugins = ref(false)
-const /** @type {Ref<Record<String, boolean>>} - An object with in key `${result.name}-${result.distTag}`. True if installing, updating or deleting, false otherwise */ pluginsLocked = ref({})
-const /** @type {Ref<String>} */ search = ref(urlSearchParams.search || '')
-const /** @type {Ref<boolean>} */ showAll = ref(urlSearchParams.showAllPlugins === 'true')
+/** @type {Awaited<ReturnType<typeof useFetch<{count: number, results: InstalledPlugin[], facets: {usages: Record<string, number>}}>>>}  */
+const installedPluginsFetch = await useFetch('/api/v1/plugins', { lazy: true })
+const installedPlugins = computed(() => {
+  const results = installedPluginsFetch.data.value?.results ?? []
+  return results?.map(r => ({
+    ...r,
+    pluginConfigSchema: v2compat(r.pluginConfigSchema),
+    usages: installedPluginsFetch.data.value?.facets.usages[r.id] ?? 0
+  }))
+})
 
-const filteredAvailablePlugins = computed(() => {
-  if (availablePlugins.value.length === 0) return
-  if (!search.value) return availablePlugins.value
-  return availablePlugins.value.filter(/** @param {Record<String, any>} r */ r => r.name.includes(search.value) || (r.description && r.description.includes(search.value)))
+/** @type {Awaited<ReturnType<typeof useFetch<{count: number, results: AvailablePlugin[]}>>>}  */
+const availablePluginsFetch = await useFetch('/api/v1/plugins-registry', { lazy: true, query: { showAll: urlSearchParams.showAll } })
+const availablePlugins = computed(() => {
+  const results = availablePluginsFetch.data.value?.results ?? []
+  results.sort((a, b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
+  return results
 })
 
 const filteredInstalledPlugins = computed(() => {
-  if (installedPlugins.value.length === 0) return
-  if (!search.value) return installedPlugins.value
-  const filtered = installedPlugins.value.filter(/** @param {Record<String, any>} r */ r => r.name.includes(search.value) || (r.description && r.description.includes(search.value)))
-  filtered.forEach(plugin => { plugin.pluginConfigSchema = v2compat(plugin.pluginConfigSchema) })
-  return filtered
+  if (!urlSearchParams.search) return installedPlugins.value
+  return installedPlugins.value
+    .filter(r => r.name.includes(urlSearchParams.search) || (r.description && r.description.includes(urlSearchParams.search)))
 })
 
-onMounted(async () => {
-  const access = await checkAccess()
-  if (access === true) {
-    await Promise.all([
-      fetchInstalledPlugins(),
-      fetchAvailablePlugins()
-    ])
-  }
+const filteredAvailablePlugins = computed(() => {
+  if (!urlSearchParams.search) return availablePlugins.value
+  return availablePlugins.value.filter(/** @param {Record<string, any>} r */ r => r.name.includes(urlSearchParams.search) || (r.description && r.description.includes(urlSearchParams.search)))
 })
 
-watch(search, () => {
-  urlSearchParams.search = search.value
-})
-
-watch(showAll, () => {
-  urlSearchParams.showAllPlugins = showAll.value.toString()
-})
-
-async function checkAccess() {
-  if (!session.state.user) {
-    window.location.href = '/error?statusCode=401&message=' + encodeURIComponent('Authentification nécessaire')
-    return false
-  }
-  if (!session.state.user?.adminMode) {
-    window.location.href = '/error?statusCode=403&message=' + encodeURIComponent('Vous n\'avez pas la permission d\'accéder à cette page, il faut avoir activé le mode super-administration.')
-    return false
-  }
-
-  return true
-}
-
-async function fetchAvailablePlugins() {
-  loadingAvailablePlugins.value = true
-  const url = '/api/v1/plugins-registry' + (showAll.value ? '?showAll=true' : '')
-  const /** @type {{count: number, results: AvailablePlugin[]}} */ response = await $fetch(url)
-  availablePlugins.value = response.results.sort((/** @type {AvailablePlugin} */ a, /** @type {AvailablePlugin} */ b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
-
-  availablePlugins.value.forEach((/** @type {AvailablePlugin} */ plugin) => {
-    if (!(`${plugin.name}-${plugin.distTag}` in pluginsLocked.value)) {
-      pluginsLocked.value[`${plugin.name}-${plugin.distTag}`] = false
-    }
-  })
-  loadingAvailablePlugins.value = false
-}
-
-async function fetchInstalledPlugins() {
-  const /** @type {{count: number, results: InstalledPlugin[], facets: {usages: Record<String, number>}}} */ response = await $fetch('/api/v1/plugins')
-  installedPlugins.value = response.results.sort((/** @type {InstalledPlugin} */ a, /** @type {InstalledPlugin} */ b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
-  installedPlugins.value.forEach((/** @type {InstalledPlugin} */ plugin) => {
-    if (response.facets.usages[plugin.id]) {
-      plugin.usages = response.facets.usages[plugin.id]
-    }
-  })
-}
+/** @type {Ref<string | null>} */
+const deleteMenuShowed = ref(null)
+/** @type {Ref<string | null>} */
+const pluginLocked = ref(null)
 
 /**
- * Call the API to install a plugin
  * @param {AvailablePlugin} plugin
  */
 async function install(plugin) {
-  pluginsLocked.value[`${plugin.name}-${plugin.distTag}`] = true
+  pluginLocked.value = `${plugin.name}-${plugin.distTag}`
   try {
     /** @type {InstalledPlugin} */
-    const newPlugin = await $fetch('/api/v1/plugins', {
+    await $fetch('/api/v1/plugins', {
       method: 'POST',
       body: JSON.stringify(plugin)
     })
-    const index = installedPlugins.value.findIndex(p => p.id === newPlugin.id)
-    if (index === -1) installedPlugins.value.push(newPlugin)
-    else installedPlugins.value[index] = newPlugin
+    installedPluginsFetch.refresh()
   } catch (error) {
     eventBus.emit('notification', { error, msg: 'Erreur pendant l\'installation du plugin' })
   } finally {
-    pluginsLocked.value[`${plugin.name}-${plugin.distTag}`] = false
+    pluginLocked.value = null
   }
 }
 
@@ -331,23 +307,23 @@ async function install(plugin) {
  * @param {InstalledPlugin} plugin
  */
 async function uninstall(plugin) {
-  pluginsLocked.value[`${plugin.name}-${plugin.distTag}`] = true
+  pluginLocked.value = `${plugin.name}-${plugin.distTag}`
   try {
     await $fetch(`/api/v1/plugins/${plugin.id}`, {
       method: 'DELETE'
     })
-    installedPlugins.value = installedPlugins.value.filter(p => p.id !== plugin.id) // remove the plugin from the list
+    installedPluginsFetch.refresh()
   } catch (error) {
     eventBus.emit('notification', { error, msg: 'Erreur pendant l\'installation du plugin' })
   } finally {
-    pluginsLocked.value[`${plugin.name}-${plugin.distTag}`] = false
+    pluginLocked.value = null
     deleteMenuShowed.value = null
   }
 }
 
 /**
  * Check if an update is available for a plugin (same distTag, same name, different version)
- * @param {Record<String, any>} plugin
+ * @param {Record<string, any>} plugin
  * @returns {[boolean, string]} - A tuple with a boolean indicating if an update is available and the new version
  */
 function updateAvailable(plugin) {
@@ -359,40 +335,40 @@ function updateAvailable(plugin) {
 }
 
 /**
- * @param {Record<String, any>} plugin
+ * @param {Record<string, any>} plugin
  */
 async function update(plugin) {
-  pluginsLocked.value[`${plugin.name}-${plugin.distTag}`] = true
+  pluginLocked.value = `${plugin.name}-${plugin.distTag}`
   if (availablePlugins.value.length === 0) return false
-  const availablePlugin = availablePlugins.value.find(/** @param {Record<String, any>} r */ r => r.name === plugin.name)
+  const availablePlugin = availablePlugins.value.find(/** @param {Record<string, any>} r */ r => r.name === plugin.name)
   if (availablePlugin && availablePlugin.version !== plugin.version) {
     await install(availablePlugin)
   }
-  pluginsLocked.value[`${plugin.name}-${plugin.distTag}`] = false
+  pluginLocked.value = null
 }
 
 /**
- * @param {Record<String, any>} plugin
+ * @param {Record<string, any>} plugin
  */
 async function saveConfig(plugin) {
-  pluginsLocked.value[`${plugin.name}-${plugin.distTag}`] = true
+  pluginLocked.value = `${plugin.name}-${plugin.distTag}`
   await $fetch(`/api/v1/plugins/${plugin.id}/config`, {
     method: 'PUT',
     body: JSON.stringify({ ...plugin.config })
   })
-  pluginsLocked.value[`${plugin.name}-${plugin.distTag}`] = false
+  pluginLocked.value = null
 }
 
 /**
- * @param {Record<String, any>} plugin
+ * @param {Record<string, any>} plugin
  */
 async function saveAccess(plugin) {
-  pluginsLocked.value[`${plugin.name}-${plugin.distTag}`] = true
+  pluginLocked.value = `${plugin.name}-${plugin.distTag}`
   await $fetch(`/api/v1/plugins/${plugin.id}/access`, {
     method: 'PUT',
     body: JSON.stringify({ ...plugin.access })
   })
-  pluginsLocked.value[`${plugin.name}-${plugin.distTag}`] = false
+  pluginLocked.value = null
 }
 
 </script>

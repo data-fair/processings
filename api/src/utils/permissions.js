@@ -16,7 +16,6 @@ const getOwnerRole = (sessionState, owner) => {
 
 /**
  * Middleware to check if the user is a super admin
- *
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  * @param {import('express').NextFunction} next

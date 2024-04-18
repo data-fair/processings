@@ -26,7 +26,7 @@ export const running = async (db, wsPublish, run) => {
  * @param {import('../../../shared/types/run/index.js').Run} run
  * @param {string | undefined} errorMessage
  * @param {string} errorLogType
- * @return {Promise<void>}
+ * @returns {Promise<void>}
  */
 export const finish = async (db, wsPublish, run, errorMessage = undefined, errorLogType = 'debug') => {
   /** @type {any} */

@@ -3,4 +3,3 @@ node_modules/
 config/local-*
 .config/
 .type/
-logs/

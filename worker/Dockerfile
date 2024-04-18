@@ -71,7 +71,7 @@ ADD README.md .
 ADD package.json .
 ADD LICENSE .
 
-WORKDIR /app/worker
+WORKDIR /app/
 
 # USER node
 # This would be great to use, but not possible as the volumes are mounted as root

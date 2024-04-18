@@ -1,4 +1,6 @@
 /* eslint-disable no-async-promise-executor */
+import { existsSync } from 'fs'
+import resolvePath from 'resolve-path'
 import mongo from '@data-fair/lib/node/mongo.js'
 import limits from './utils/limits.js'
 import locks from './utils/locks.js'
@@ -20,7 +22,7 @@ const debugLoop = Debug('worker-loop')
 let stopped = false
 /** @type {[Promise<void> | null]} */
 const promisePool = [null]
-/** @type {Object<string, number>} */
+/** @type {Record<string, number>} */
 const pids = {}
 
 /** @type {(channel: string, data: any) => Promise<void>} */
@@ -34,6 +36,9 @@ let killLoopPromise
 
 // Start the worker (start the mail loop and all dependencies)
 export const start = async () => {
+  if (!existsSync(config.dataDir) && process.env.NODE_ENV === 'production') {
+    throw new Error(`Data directory ${resolvePath(config.dataDir)} was not mounted`)
+  }
   await mongo.connect(config.mongoUrl, { readPreference: 'primary', maxPoolSize: 1 })
   const db = mongo.db
   await locks.init(db)
@@ -70,7 +75,6 @@ export const stop = async () => {
  * Main loop
  * Check for available runs to process and start a task for each run
  * If the worker is inactive, wait for a longer delay
- *
  * @param {import('mongodb').Db} db
  * @param {number} lastActivity the timestamp of the last activity of the worker
  */
@@ -127,7 +131,6 @@ async function mainLoop (db, lastActivity) {
 
 /**
  * A secondary loop to handle killing tasks
- *
  * @param {import('mongodb').Db} db
  * @returns {Promise<void>}
  */
@@ -187,7 +190,7 @@ async function killRun (db, run) {
  * Manage a run
  * @param {import('mongodb').Db} db
  * @param {Run} run the run to start
- * @return {Promise<void>}
+ * @returns {Promise<void>}
  */
 async function iter (db, run) {
   let stderr = ''
@@ -282,7 +285,6 @@ async function iter (db, run) {
 /**
  * Acquire the next run to process, if a run is already running, check if the lock was released,
  * meaning the task was brutally interrupted
- *
  * @param {import('mongodb').Db} db
  * @returns {Promise<Run | undefined>} the next run to process
  */

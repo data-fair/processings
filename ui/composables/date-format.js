@@ -11,9 +11,9 @@ dayjs.locale('fr')
 
 export default function useDateFormat() {
   /**
-   * @param {String} value the date to format
-   * @param {String} format the format to use
-   * @returns {String | undefined} the formatted date
+   * @param {string} value the date to format
+   * @param {string} format the format to use
+   * @returns {string | undefined} the formatted date
    */
   function date (value, format = 'LLL') {
     if (!value) return
@@ -21,9 +21,9 @@ export default function useDateFormat() {
   }
 
   /**
-   * @param {String} value the date to format
-   * @param {Boolean} acceptFuture if the date is in the future, should we accept it
-   * @returns {String | undefined} the formatted date
+   * @param {string} value the date to format
+   * @param {boolean} acceptFuture if the date is in the future, should we accept it
+   * @returns {string | undefined} the formatted date
    */
   function fromNow (value, acceptFuture = false) {
     if (!value) return
@@ -36,9 +36,9 @@ export default function useDateFormat() {
   }
 
   /**
-   * @param {String} start the format to use
-   * @param {String} end the format to use
-   * @returns {String} the time between the two dates
+   * @param {string} start the format to use
+   * @param {string} end the format to use
+   * @returns {string} the time between the two dates
    */
   function from (start, end) {
     return dayjs(start).locale('fr').from(dayjs(end), true)
