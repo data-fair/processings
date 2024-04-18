@@ -1,6 +1,6 @@
 #################################
 # install root dev deps and build types
-FROM node:20.11.1-alpine3.19 AS builder
+FROM node:20.12.2-alpine3.19 AS builder
 
 RUN npm i -g clean-modules@3.0.4
 
@@ -19,7 +19,7 @@ RUN npm run build-types-api
 
 ##########################
 # copy deps and build and assemble actual dist
-FROM node:20.11.1-alpine3.19
+FROM node:20.12.2-alpine3.19
 LABEL org.opencontainers.image.authors="contact@koumoul.com"
 
 ARG NODE_ENV=production

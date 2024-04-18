@@ -1,6 +1,6 @@
 ############################################################
 # Stage: install libraries for geographic data manipulations
-FROM node:20.11.1-alpine3.19 AS geodeps
+FROM node:20.12.2-alpine3.19 AS geodeps
 
 RUN apk add --no-cache curl cmake make g++ linux-headers
 RUN apk add --no-cache boost-dev gmp gmp-dev mpfr-dev
@@ -20,7 +20,7 @@ RUN make install
 ############################################################################################################
 # Stage: prepare a base image with all native utils pre-installed, used both by builder and definitive image
 
-FROM node:20.11.1-alpine3.19 AS nativedeps
+FROM node:20.12.2-alpine3.19 AS nativedeps
 
 COPY --from=geodeps /usr/local/lib/libCGAL.so.13 /usr/local/lib/libCGAL.so.13
 
@@ -53,7 +53,7 @@ RUN npm run build-types-worker
 
 ##############################################
 # copy deps and build and assemble actual dist
-FROM node:20.11.1-alpine3.19
+FROM node:20.12.2-alpine3.19
 LABEL org.opencontainers.image.authors="contact@koumoul.com"
 
 ARG NODE_ENV=production

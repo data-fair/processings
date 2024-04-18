@@ -4,7 +4,7 @@ import { defineNuxtConfig } from 'nuxt/config'
 
 export default defineNuxtConfig({
   app: {
-    baseURL: '/'
+    baseURL: '/processings/'
   },
   build: {
     transpile: [/@koumoul/, /@data-fair/, /vuetify/]

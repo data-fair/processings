@@ -1,6 +1,6 @@
 ##########################
 # install root dev deps and build
-FROM node:20.11.1-alpine3.19 AS builder
+FROM node:20.12.2-alpine3.19 AS builder
 
 RUN npm i -g clean-modules@3.0.4
 
@@ -17,7 +17,7 @@ RUN npm -w ui run build
 
 ##########################
 # copy built app and assemble actual dist
-FROM node:20.11.1-alpine3.19
+FROM node:20.12.2-alpine3.19
 
 LABEL org.opencontainers.image.authors="contact@koumoul.com"
 
@@ -34,6 +34,6 @@ ADD LICENSE .
 
 WORKDIR /app/ui
 
-EXPOSE 3039
+EXPOSE 8080
 
 CMD ["node", "--max-http-header-size", "64000", ".output/server/index.mjs"]
