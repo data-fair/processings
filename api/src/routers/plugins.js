@@ -25,7 +25,7 @@ const tmpDir = config.tmpDir || path.join(config.dataDir, 'tmp')
 fs.ensureDirSync(tmpDir)
 
 /**
- * @typedef {Object} PluginData
+ * @typedef {object} PluginData
  * @property {string} name
  * @property {string} customName - the name defined by config
  * @property {string} description
@@ -37,7 +37,7 @@ fs.ensureDirSync(tmpDir)
  */
 
 /**
- * @typedef {Object} PluginDataWithConfig
+ * @typedef {object} PluginDataWithConfig
  * @property {string} name
  * @property {string} customName - the name defined by config
  * @property {string} description
@@ -46,8 +46,8 @@ fs.ensureDirSync(tmpDir)
  * @property {string} id
  * @property {any} pluginConfigSchema
  * @property {any} processingConfigSchema
- * @property {Object} config
- * @property {Object} access
+ * @property {object} config
+ * @property {object} access
  */
 
 /**
@@ -82,7 +82,6 @@ const preparePluginInfo = async (pluginInfo) => {
 
 /**
  * Install a plugin - SuperAdmin only
- *
  * @param {import('express').Request} req
  * req.body: { name: string, description: string, version: string, distTag: string }
  * @param {import('express').Response} res

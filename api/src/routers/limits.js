@@ -36,7 +36,6 @@ export default router
  * Middleware to check the req.params (representing a user account or organization)
  * indeed belongs to the currently logged-in user,
  * or to an organization of which the currently logged-in user is a member.
- *
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  * @param {import('express').NextFunction} next

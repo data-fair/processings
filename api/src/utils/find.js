@@ -5,7 +5,7 @@ import permissions from './permissions.js'
 /**
  * @param {any} reqQuery - The query parameters from the request
  * @param {import('@data-fair/lib/express/index.js').SessionStateAuthenticated} sessionState
- * @param {Object<string, string>} fieldsMap
+ * @param {Record<string, string>} fieldsMap
  */
 const query = (reqQuery, sessionState, fieldsMap = {}) => {
   /** @type {any} */
@@ -40,7 +40,7 @@ const query = (reqQuery, sessionState, fieldsMap = {}) => {
 const sort = (sortStr) => {
   const sort = {}
   if (!sortStr) return sort
-  Object.assign(sort, ...sortStr.split(',').map((/** @type {String} */ s) => {
+  Object.assign(sort, ...sortStr.split(',').map((/** @type {string} */ s) => {
     const toks = s.split(':')
     return {
       [toks[0]]: Number(toks[1])
@@ -73,10 +73,10 @@ const pagination = (size, page, skip) => {
 
 /**
  * @param {any} selectStr
- * @returns {Object<string, number>}
+ * @returns {Record<string, number>}
  */
 const project = (selectStr) => {
-  /** @type {Object<string, number>} */
+  /** @type {Record<string, number>} */
   const select = {}
   if (selectStr) {
     selectStr.split(',').forEach((/** @type {string} */ s) => {

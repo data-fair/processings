@@ -39,7 +39,10 @@ export const start = async () => {
   if (npmHttpsProxy) await exec('npm config set https-proxy ' + npmHttpsProxy)
   await startWSServer(server, mongo.db, session)
 
-  console.log(`Processings API available on ${config.origin}/api/ (listening on port ${config.port})`)
+  console.log(`
+API server listening on port ${config.port}
+API available at ${config.origin}/processings/api/
+UI available at ${config.origin}/processings/`)
 }
 
 export const stop = async () => {

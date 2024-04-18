@@ -2,7 +2,7 @@ import { asyncHandler } from '@data-fair/lib/express/index.js'
 import { Router } from 'express'
 import axios from '@data-fair/lib/node/axios.js'
 import config from '../config.js'
-import memoize from 'memoize'
+import memoize from 'memoizee'
 
 const router = Router()
 export default router
@@ -23,10 +23,10 @@ if (config.npm?.httpsProxy) {
 
 /**
  * Search for plugins in the npm registry
- * @param {string} q - search query
+ * @param {string | undefined} q - search query
  * @param {boolean} showAll - if true, return all versions of each plugin
  */
-const search = memoize(async (q, showAll) => {
+const search = async (q, showAll) => {
   // see https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md#get-v1search
   const res = await axios.get('https://registry.npmjs.org/-/v1/search', {
     ...axiosOpts,
@@ -54,18 +54,15 @@ const search = memoize(async (q, showAll) => {
     count: results.length,
     results
   }
-}, {
-  cacheKey: arguments_ => arguments_.join(','),
+}
+const memoizedSearch = memoize(search, {
   maxAge: 5 * 60 * 1000 // cached for 5 minutes to be polite with npmjs
 })
 
-/**
- * Search for plugins in the npm registry
- * @route GET /plugins-registry
- * @param {string} q.query - search query
- * @param {boolean} showAll.query - if true, return all versions of each plugin
- * @returns {object} 200 - An object with the count of results and an array of plugins
- */
 router.get('/', asyncHandler(async (req, res) => {
-  res.send(await search(req.query.q, req.query.showAll === 'true' || false))
+  if (req.query.q && typeof req.query.q !== 'string') {
+    res.status(400).send('Invalid query')
+    return
+  }
+  res.send(await memoizedSearch(req.query.q, req.query.showAll === 'true' || false))
 }))

@@ -27,7 +27,7 @@ const cleanRun = (run, sessionState, host) => {
 }
 
 /**
- * @typedef {Object} getParams
+ * @typedef {object} getParams
  * @property {string} size
  * @property {string} page
  * @property {string} skip
