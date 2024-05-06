@@ -60,7 +60,12 @@
       "type": "string"
     },
     "scheduling": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "timeZone": {
+          "type": "string"
+        }
+      }
     },
     "title": {
       "type": "string"

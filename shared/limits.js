@@ -1,5 +1,3 @@
-import moment from 'moment'
-
 /**
  * @param {import('mongodb').Db} db
  * @param {any} consumer
@@ -7,7 +5,7 @@ import moment from 'moment'
  */
 export const getLimits = async (db, consumer, processingsSeconds = -1) => {
   const coll = db.collection('limits')
-  const now = moment()
+  const now = new Date()
   /** @type {any} */
   let limits = await coll.findOne({ type: consumer.type, id: consumer.id })
   if (!limits) {

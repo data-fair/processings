@@ -2,7 +2,7 @@ import { toCRON } from './scheduling.js'
 import { runType } from './types/index.js'
 import { CronJob } from 'cron'
 import { nanoid } from 'nanoid'
-import moment from 'moment'
+import dayjs from 'dayjs'
 
 /**
  * @param {import('mongodb').Db} db
@@ -35,7 +35,7 @@ export const createNext = async (db, processing, triggered = false, delaySeconds
       status: { $in: ['triggered', 'scheduled'] }
     })
     if (delaySeconds) {
-      const scheduledAt = moment()
+      const scheduledAt = dayjs()
       scheduledAt.add(delaySeconds, 'seconds')
       run.scheduledAt = scheduledAt.toISOString()
     } else {
@@ -46,8 +46,11 @@ export const createNext = async (db, processing, triggered = false, delaySeconds
     const cron = toCRON(processing.scheduling)
     const timeZone = processing.scheduling.timeZone || 'Europe/Paris'
     const job = new CronJob(cron, () => { }, () => { }, false, timeZone)
-    const nextDate = job.nextDates()
-    run.scheduledAt = nextDate.toISOString()
+    const nextDate = job.nextDate().toISODate()
+    if (!nextDate) {
+      throw new Error('No next date returned for processing scheduling ' + processing.scheduling)
+    }
+    run.scheduledAt = nextDate
   }
 
   runType.assertValid(run)
