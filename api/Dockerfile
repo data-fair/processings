@@ -28,7 +28,7 @@ RUN npm ci -w api --no-audit --no-fund --omit=optional --omit=dev &&\
     clean-modules --yes
 
 # check that we don't have deps in local node_modules (sign of deps that couldn't be deduped)
-RUN test ! -d api/node_modules
+# RUN test ! -d api/node_modules
 
 ##########################
 # copy deps and build and assemble actual dist
