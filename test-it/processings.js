@@ -6,7 +6,7 @@ import * as testSpies from '@data-fair/lib/node/test-spies.js'
 testSpies.registerModuleHooks()
 
 const directoryUrl = 'http://localhost:5600/simple-directory'
-const axiosOpts = { baseURL: 'http://localhost:5600' }
+const axiosOpts = { baseURL: 'http://localhost:5600/processings' }
 const superadmin = await axiosAuth({ email: 'superadmin@test.com', password: 'superpasswd', directoryUrl, adminMode: true, axiosOpts })
 
 console.log('Starting worker server...')

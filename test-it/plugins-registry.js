@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert'
 import { test } from 'node:test'
 import { axiosBuilder } from '@data-fair/lib/node/axios.js'
 
-const axiosOpts = { baseURL: 'http://localhost:5600' }
+const axiosOpts = { baseURL: 'http://localhost:5600/processings' }
 const anonymous = axiosBuilder(axiosOpts)
 
 await test('should search for plugins (just lastest) on npmjs', async function () {

@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import { axiosAuth } from '@data-fair/lib/node/axios-auth.js'
 
 const directoryUrl = 'http://localhost:5600/simple-directory'
-const axiosOpts = { baseURL: 'http://localhost:5600' }
+const axiosOpts = { baseURL: 'http://localhost:5600/processings' }
 const superadmin = await axiosAuth({ email: 'superadmin@test.com', password: 'superpasswd', directoryUrl, adminMode: true, axiosOpts })
 const admin1Koumoul = await axiosAuth({ email: 'admin1@test.com', password: 'passwd', directoryUrl, org: 'koumoul', axiosOpts })
 const contrib1Koumoul = await axiosAuth({ email: 'contrib1@test.com', password: 'passwd', directoryUrl, org: 'koumoul', axiosOpts })

@@ -4,7 +4,7 @@ import { axiosBuilder } from '@data-fair/lib/node/axios.js'
 import { axiosAuth } from '@data-fair/lib/node/axios-auth.js'
 
 const directoryUrl = 'http://localhost:5600/simple-directory'
-const axiosOpts = { baseURL: 'http://localhost:5600' }
+const axiosOpts = { baseURL: 'http://localhost:5600/processings' }
 const anonymous = await axiosBuilder(axiosOpts)
 const superadmin = await axiosAuth({ email: 'superadmin@test.com', password: 'superpasswd', directoryUrl, adminMode: true, axiosOpts })
 const dmeadus = await axiosAuth({ email: 'dmeadus0@answers.com', password: 'passwd', directoryUrl, axiosOpts })
