@@ -93,7 +93,7 @@ router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
   if (plugin.distTag !== 'latest') plugin.id += '-' + plugin.distTag
 
   const pluginDir = path.join(pluginsDir, plugin.id)
-  const dir = await tmp.dir({ unsafeCleanup: true, dir: tmpDir })
+  const dir = await tmp.dir({ unsafeCleanup: true, tmpdir: tmpDir })
 
   try {
     // create a pseudo npm package with a dependency to the plugin referenced from the registry
