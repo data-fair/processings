@@ -8,6 +8,7 @@ module.exports = {
     // -1 for unlimited storage
     processingsSeconds: -1
   },
+  privateDataFairUrl: null,
   getFromPrivateDataFairUrl: false,
   mails: {
     // transport is a full configuration object for createTransport of nodemailer
@@ -29,7 +30,6 @@ module.exports = {
     active: true,
     port: 9090
   },
-  privateDataFairUrl: null,
   worker: {
     // base interval for polling the database for new resources to work on
     interval: 2000,

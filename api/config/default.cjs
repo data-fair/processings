@@ -6,10 +6,10 @@ module.exports = {
     // -1 for unlimited storage
     processingsSeconds: -1
   },
-  privateDirectoryUrl: 'http://localhost:8080',
+  privateDirectoryUrl: 'http://simple-directory:8080',
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings',
-  origin: 'http://localhost:5600',
-  port: 8082,
+  origin: null,
+  port: 8080,
   observer: {
     active: true,
     port: 9090
