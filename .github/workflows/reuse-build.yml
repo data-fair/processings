@@ -1,0 +1,20 @@
+name: Build
+
+on:
+  workflow_call:
+
+jobs:
+  build-api:
+    uses: ./.github/workflows/reuse-build-image.yml
+    with:
+      workspace: api
+
+  build-worker:
+    uses: ./.github/workflows/reuse-build-image.yml
+    with:
+      workspace: worker
+
+  build-ui:
+    uses: ./.github/workflows/reuse-build-image.yml
+    with:
+      workspace: ui
