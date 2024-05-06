@@ -8,8 +8,11 @@ import { DataFairWsClient } from '@data-fair/lib/node/ws.js'
 import { httpAgent, httpsAgent } from '@data-fair/lib/node/http-agents.js'
 import { running } from '../utils/runs.js'
 
+fs.ensureDirSync(config.dataDir)
 const baseTmpDir = config.tmpDir || path.join(config.dataDir, 'tmp')
 fs.ensureDirSync(baseTmpDir)
+
+tmp.setGracefulCleanup()
 
 /** @type {any} */
 let pluginModule
@@ -171,7 +174,7 @@ export const run = async (db, mailTransport, wsPublish) => {
 
   const dir = resolvePath(processingsDir, processing._id)
   await fs.ensureDir(dir)
-  const tmpDir = await tmp.dir({ unsafeCleanup: true, tmpdir: baseTmpDir })
+  const tmpDir = await tmp.dir({ unsafeCleanup: true, tmpdir: baseTmpDir, prefix: `processing-run-${processing._id}-${run._id}` })
   const processingConfig = processing?.config || {}
 
   /** @type {import('@data-fair/lib/processings/types.js').ProcessingContext} */

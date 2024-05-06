@@ -1,5 +1,5 @@
 module.exports = {
-  dataDir: '../data',
+  dataDir: '/app/data',
   dataFairAdminMode: false,
   dataFairAPIKey: null,
   dataFairUrl: 'http://localhost:5600/data-fair',

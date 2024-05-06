@@ -1,5 +1,5 @@
 module.exports = {
-  dataDir: '../data/development',
+  dataDir: './data/development',
   origin: 'http://localhost:5600',
   port: 8082,
   privateDirectoryUrl: 'http://localhost:8080',

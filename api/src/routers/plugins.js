@@ -19,10 +19,13 @@ const exec = promisify(execCallback)
 const router = Router()
 export default router
 
-const pluginsDir = path.join(config.dataDir, 'plugins')
+fs.ensureDirSync(config.dataDir)
+const pluginsDir = path.resolve(config.dataDir, 'plugins')
 fs.ensureDirSync(pluginsDir)
-const tmpDir = config.tmpDir || path.join(config.dataDir, 'tmp')
+const tmpDir = config.tmpDir || path.resolve(config.dataDir, 'tmp')
 fs.ensureDirSync(tmpDir)
+
+tmp.setGracefulCleanup()
 
 /**
  * @typedef {object} PluginData
@@ -93,7 +96,7 @@ router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
   if (plugin.distTag !== 'latest') plugin.id += '-' + plugin.distTag
 
   const pluginDir = path.join(pluginsDir, plugin.id)
-  const dir = await tmp.dir({ unsafeCleanup: true, tmpdir: tmpDir })
+  const dir = await tmp.dir({ unsafeCleanup: true, tmpdir: tmpDir, prefix: 'plugin-install-' })
 
   try {
     // create a pseudo npm package with a dependency to the plugin referenced from the registry
@@ -110,7 +113,11 @@ router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
     await fs.writeFile(path.join(dir.path, 'plugin.json'), JSON.stringify(plugin, null, 2))
     await fs.move(dir.path, pluginDir, { overwrite: true })
   } finally {
-    await dir.cleanup()
+    try {
+      await dir.cleanup()
+    } catch (/** @type {any} */err) {
+      // ignore, directory was moved
+    }
   }
 
   const installedPlugin = /** @type {PluginDataWithConfig} */(await preparePluginInfo(plugin))

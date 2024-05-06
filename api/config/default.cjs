@@ -1,5 +1,5 @@
 module.exports = {
-  dataDir: '../data',
+  dataDir: '/app/data',
   tmpDir: null, // will be dataDir + '/tmp' if null
   defaultLimits: {
     // Maximum time spent running processings

@@ -1,5 +1,5 @@
 module.exports = {
-  dataDir: '../data/development',
+  dataDir: './data/development',
   dataFairAdminMode: true,
   dataFairAPIKey: 'dTpzdXBlcmFkbWluOlIzUFdaUkNhZEtqVks3eXk4MUdiWA',
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings-development',
