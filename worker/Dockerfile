@@ -79,7 +79,7 @@ COPY --from=builder /app/shared /app/shared
 COPY --from=builder /app/worker /app/worker
 COPY --from=installer /app/node_modules /app/node_modules
 
-ADD contract .
+ADD contract contract
 ADD README.md .
 ADD package.json .
 ADD LICENSE .
