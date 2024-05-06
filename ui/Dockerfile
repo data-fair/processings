@@ -22,7 +22,7 @@ FROM node:20.12.2-alpine3.19
 LABEL org.opencontainers.image.authors="contact@koumoul.com"
 
 ENV NODE_ENV production
-ENV PORT 3039
+ENV PORT 8080
 
 WORKDIR /app/
 
@@ -32,6 +32,11 @@ ADD README.md .
 ADD package.json .
 ADD LICENSE .
 
+WORKDIR /app/ui
+
 EXPOSE 8080
 
-CMD ["node", "--max-http-header-size", "64000", "ui/.output/server/index.mjs"]
+USER node
+
+CMD ["node", "--max-http-header-size", "64000", ".output/server/index.mjs"]
+
