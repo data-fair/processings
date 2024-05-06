@@ -33,45 +33,58 @@ RUN test -f /usr/lib/libproj.so
 # processing plugins should be able to install native dependencies themselves
 RUN apk add --no-cache python3 make g++
 
-######################################
-# Stage: install root dev deps and build types
-FROM nativedeps AS builder
+#################################
+# install root dev deps and build types
+FROM node:20.12.2-alpine3.19 AS builder
+
+WORKDIR /app/
+
+ADD /package.json .
+ADD /package-lock.json .
+RUN npm ci --workspaces=false --no-audit --no-fund --omit=optional
+
+ADD shared shared
+ADD worker worker
+RUN npm run build-types-worker
+
+##########################
+# install worker prod deps
+FROM node:20.12.2-alpine3.19 AS installer
 
 RUN npm i -g clean-modules@3.0.4
 
 WORKDIR /app/
+
 ADD /package.json .
 ADD /package-lock.json .
 ADD /worker/package.json worker/
+RUN npm pkg set scripts.prepare="echo 'skip prepare'"
+RUN npm ci -w worker --no-audit --no-fund --omit=optional --omit=dev &&\
+    clean-modules --yes
 
-RUN npm -w worker --include-workspace-root ci --no-audit --no-fund
-
-ADD /contract contract
-ADD /shared shared
-ADD /worker worker
-RUN npm run build-types-worker
+# check that we don't have deps in local node_modules (sign of deps that couldn't be deduped)
+RUN test ! -d worker/node_modules
 
 ##############################################
 # copy deps and build and assemble actual dist
 FROM node:20.12.2-alpine3.19
 LABEL org.opencontainers.image.authors="contact@koumoul.com"
 
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
+ENV NODE_ENV=production
 
 WORKDIR /app/
 
 COPY --from=nativedeps /usr/lib/libproj.so /usr/lib/libproj.so
-COPY --from=builder /app/contract /app/contract
 COPY --from=builder /app/shared /app/shared
 COPY --from=builder /app/worker /app/worker
-COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=installer /app/node_modules /app/node_modules
 
+ADD contract .
 ADD README.md .
 ADD package.json .
 ADD LICENSE .
 
-WORKDIR /app/
+WORKDIR /app/worker
 
 # USER node
 # This would be great to use, but not possible as the volumes are mounted as root
