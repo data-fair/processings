@@ -42,6 +42,7 @@ WORKDIR /app/
 COPY --from=builder /app/shared /app/shared
 COPY --from=builder /app/api /app/api
 COPY --from=installer /app/node_modules /app/node_modules
+COPY --from=installer /app/api/node_modules /app/api/node_modules
 
 ADD upgrade .
 ADD contract .
