@@ -165,8 +165,10 @@ const canAdmin = computed(() => {
 // --------------------------------
 
 onMounted(async () => {
-  await fetchInstalledPlugins()
-  await fetchProcessings()
+  await Promise.all([
+    fetchInstalledPlugins(),
+    fetchProcessings()
+  ])
 })
 
 eventBus.on('search', (/** @type {string} */ searchString) => {
@@ -194,9 +196,17 @@ eventBus.on('showAll', async (/** @type {boolean} */ show) => {
 
 async function fetchInstalledPlugins() {
   if (!canAdmin.value) return
-  /** @type {any} */
-  const pluginsResponse = await $fetch(`/api/v1/plugins?privateAccess=${ownerFilter.value}`)
-  installedPlugins.value = pluginsResponse.results || []
+  loading.value += 1
+  try {
+    /** @type {any} */
+    const pluginsResponse = await $fetch(`/api/v1/plugins?privateAccess=${ownerFilter.value}`)
+    installedPlugins.value = pluginsResponse.results || []
+  } catch (error) {
+    eventBus.emit('notification', { error, msg: 'Erreur pendant la récupération de la liste des plugins' })
+    installedPlugins.value = []
+  } finally {
+    loading.value -= 1
+  }
 }
 
 async function fetchProcessings() {
