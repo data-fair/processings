@@ -32,6 +32,14 @@ const /** @type {Record<string, any>} */ notification = ref(null)
 const showSnackbar = ref(false)
 const eventBus = useEventBus()
 
+function inIframe () {
+  try {
+    return window.top && window.self !== window.top
+  } catch (e) {
+    return false
+  }
+}
+
 onMounted(() => {
   eventBus.on('notification', async (/** @type {Record<string, any>} */ notif) => {
     if (showSnackbar.value) {
@@ -43,10 +51,15 @@ onMounted(() => {
     if (notif.error) {
       notif.type = 'error'
       notif.errorMsg = notif.error.response?.data || notif.error.data || notif.error.response?.status || notif.error.message || notif.error
+      delete notif.error
     }
     notif.type = notif.type || 'default'
-    notification.value = notif
-    showSnackbar.value = true
+    if (inIframe()) {
+      window.top?.postMessage({ vIframe: true, uiNotification: notification }, '*')
+    } else {
+      notification.value = notif
+      showSnackbar.value = true
+    }
   })
 })
 </script>
