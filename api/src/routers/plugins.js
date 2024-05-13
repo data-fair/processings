@@ -139,7 +139,11 @@ router.get('/', asyncHandler(async (req, res) => {
   for (const dir of dirs) {
     /** @type {PluginDataWithConfig} */
     const pluginInfo = await fs.readJson(path.join(pluginsDir, dir, 'plugin.json'))
-    const access = await fs.readJson(path.join(pluginsDir, dir + '-access.json'))
+    let access
+    const accessFilePath = path.join(pluginsDir, dir + '-access.json')
+    if (await fs.pathExists(accessFilePath)) {
+      access = await fs.readJson(path.join(pluginsDir, dir + '-access.json'))
+    }
 
     if (sessionState.user.adminMode) {
       const pluginConfigPath = path.join(pluginsDir, dir + '-config.json')
