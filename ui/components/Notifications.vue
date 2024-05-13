@@ -55,7 +55,7 @@ onMounted(() => {
     }
     notif.type = notif.type || 'default'
     if (inIframe()) {
-      window.top?.postMessage({ vIframe: true, uiNotification: notification }, '*')
+      window.top?.postMessage({ vIframe: true, uiNotification: notif }, '*')
     } else {
       notification.value = notif
       showSnackbar.value = true
