@@ -42,7 +42,7 @@ onMounted(() => {
     if (typeof notif === 'string') notif = { msg: notif }
     if (notif.error) {
       notif.type = 'error'
-      notif.errorMsg = notif.error.response?.data || notif.error.response?.status || notif.error.message || notif.error
+      notif.errorMsg = notif.error.response?.data || notif.error.data || notif.error.response?.status || notif.error.message || notif.error
     }
     notif.type = notif.type || 'default'
     notification.value = notif
