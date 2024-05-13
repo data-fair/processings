@@ -165,10 +165,8 @@ const canAdmin = computed(() => {
 // --------------------------------
 
 onMounted(async () => {
-  await Promise.all([
-    fetchInstalledPlugins(),
-    fetchProcessings()
-  ])
+  await fetchInstalledPlugins()
+  await fetchProcessings()
 })
 
 eventBus.on('search', (/** @type {string} */ searchString) => {
