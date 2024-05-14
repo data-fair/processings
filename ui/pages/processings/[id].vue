@@ -64,9 +64,9 @@
 </template>
 
 <script setup>
-import '@koumoul/vjsf-markdown'
 import contractProcessing from '../../../contract/processing'
 import Vjsf from '@koumoul/vjsf'
+import VjsfMarkdown from '@koumoul/vjsf-markdown'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSession } from '@data-fair/lib/vue/session.js'
@@ -144,6 +144,7 @@ const processingSchema = computed(() => {
 
 const vjsfOptions = computed(() => {
   return {
+    plugins: [VjsfMarkdown],
     context: {
       owner: processing.value?.owner,
       dataFairUrl: window.location.origin + '/data-fair',
@@ -155,7 +156,8 @@ const vjsfOptions = computed(() => {
     readOnlyPropertiesMode: 'remove',
     updateOn: 'blur',
     validateOn: 'blur',
-    locale: 'fr'
+    locale: 'fr',
+    titleDepth: 4
   }
 })
 

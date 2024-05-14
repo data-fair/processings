@@ -1,7 +1,13 @@
 const permissions = {
   type: 'array',
   title: 'Permissions',
-  'x-class': 'mb-8',
+  layout: {
+    options: {
+      messages: {
+        addItem: 'Ajouter une permission'
+      }
+    }
+  },
   items: {
     type: 'object',
     required: ['profile', 'target'],

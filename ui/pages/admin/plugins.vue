@@ -137,6 +137,7 @@
           >
             <vjsf
               v-model="result.config"
+              :options="vjsfOptions"
               :schema="result.pluginConfigSchema"
               @change="saveConfig(result)"
             />
@@ -210,10 +211,10 @@
 </template>
 
 <script setup>
-import '@koumoul/vjsf-markdown'
 import urlSearchParams from '@data-fair/lib/vue/reactive-search-params-global.js'
 import useEventBus from '~/composables/event-bus'
 import Vjsf from '@koumoul/vjsf'
+import VjsfMarkdown from '@koumoul/vjsf-markdown'
 import { computed, ref } from 'vue'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 import { useSession } from '@data-fair/lib/vue/session.js'
@@ -370,6 +371,15 @@ async function saveAccess(plugin) {
   })
   pluginLocked.value = null
 }
+
+const vjsfOptions = computed(() => {
+  return {
+    plugins: [VjsfMarkdown],
+    density: 'comfortable',
+    locale: 'fr',
+    titleDepth: 4
+  }
+})
 
 </script>
 
