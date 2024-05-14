@@ -1,7 +1,7 @@
 module.exports = {
-  dataDir: './data/development',
+  dataDir: '../data/development',
   dataFairAdminMode: true,
-  dataFairAPIKey: 'dTpzdXBlcmFkbWluOlIzUFdaUkNhZEtqVks3eXk4MUdiWA',
+  dataFairAPIKey: '', // override in local-development.cjs
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings-development',
   notificationsKeys: 'secret-notifications',
   notifyUrl: 'http://localhost:5600/notify',
