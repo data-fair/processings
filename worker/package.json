@@ -25,6 +25,7 @@
     "prom-client": "^15.1.2",
     "resolve-path": "^1.4.0",
     "tmp-promise": "^3.0.3",
-    "tree-kill": "^1.2.2"
+    "tree-kill": "^1.2.2",
+    "ws": "^8.17.0"
   }
 }
