@@ -45,6 +45,7 @@ export default defineNuxtConfig({
     { src: 'plugins/session', mode: 'client' },
     { src: 'plugins/reactive-search-params' },
     { src: 'plugins/v-iframe', mode: 'client' },
+    { src: 'plugins/iframe-resizer', mode: 'client' },
     { src: 'plugins/vuetify' },
     { src: 'plugins/ws', mode: 'client' }
   ],

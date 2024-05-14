@@ -211,6 +211,7 @@
 </template>
 
 <script setup>
+import setBreadcrumbs from '~/utils/breadcrumbs'
 import urlSearchParams from '@data-fair/lib/vue/reactive-search-params-global.js'
 import useEventBus from '~/composables/event-bus'
 import Vjsf from '@koumoul/vjsf'
@@ -228,6 +229,10 @@ if (!session.state.user) {
 if (!session.state.user?.adminMode) {
   throw createError({ status: 403, message: 'Vous n\'avez pas la permission d\'accéder à cette page, il faut avoir activé le mode super-administration.', fatal: true })
 }
+
+onMounted(() => {
+  setBreadcrumbs([{ text: 'plugins' }])
+})
 
 /**
  * @typedef AvailablePlugin

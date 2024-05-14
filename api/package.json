@@ -10,7 +10,7 @@
     "@types/ws": "^8.5.10"
   },
   "dependencies": {
-    "@data-fair/lib": "^0.32.1",
+    "@data-fair/lib": "^0.32.2",
     "@types/crypto-random-string": "^2.0.0",
     "agentkeepalive": "^4.5.0",
     "axios": "^1.6.8",

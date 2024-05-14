@@ -87,6 +87,7 @@
 </template>
 
 <script setup>
+import setBreadcrumbs from '~/utils/breadcrumbs'
 import getReactiveSearchParams from '@data-fair/lib/vue/reactive-search-params-global.js'
 import useEventBus from '~/composables/event-bus'
 import { computed, onMounted, ref } from 'vue'
@@ -165,6 +166,7 @@ const canAdmin = computed(() => {
 // --------------------------------
 
 onMounted(async () => {
+  setBreadcrumbs([{ text: 'traitements' }])
   await fetchInstalledPlugins()
   await fetchProcessings()
 })

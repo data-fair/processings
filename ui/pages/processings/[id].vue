@@ -64,6 +64,7 @@
 </template>
 
 <script setup>
+import setBreadcrumbs from '~/utils/breadcrumbs'
 import contractProcessing from '../../../contract/processing'
 import Vjsf from '@koumoul/vjsf'
 import VjsfMarkdown from '@koumoul/vjsf-markdown'
@@ -163,6 +164,12 @@ const vjsfOptions = computed(() => {
 
 onMounted(async () => {
   await fetchProcessing()
+  setBreadcrumbs([{
+    text: 'traitements',
+    to: '/processings'
+  }, {
+    text: processing.value?.title
+  }])
   await fetchPlugin()
 })
 

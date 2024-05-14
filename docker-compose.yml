@@ -55,8 +55,8 @@ services:
       - NOTIFY_URL=http://localhost:5600/notify
       - PUBLIC_URL=http://localhost:5600/data-fair
       - WS_PUBLIC_URL=ws://localhost:5600/data-fair
-      - EXTRA_NAV_ITEMS=[{"id":"processings","can":"contrib","iframe":"http://localhost:5600/processings","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
-      - EXTRA_ADMIN_NAV_ITEMS=[{"id":"processings","iframe":"http://localhost:5600/admin","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
+      - EXTRA_NAV_ITEMS=[{"id":"processings","can":"contrib","iframe":"http://localhost:5600/processings/processings","basePath":"/processings","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
+      - EXTRA_ADMIN_NAV_ITEMS=[{"id":"processings","iframe":"http://localhost:5600/processings/admin","basePath":"/processings","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
       - OBSERVER_ACTIVE=false
     volumes:
       - data-fair-data:/data

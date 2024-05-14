@@ -9,12 +9,6 @@
 </template>
 
 <script setup>
-import 'iframe-resizer/js/iframeResizer.contentWindow'
-
-globalThis.iFrameResizer = {
-  heightCalculationMethod: 'taggedElement'
-}
-
 const embed = (() => {
   try {
     return window.self !== window.top

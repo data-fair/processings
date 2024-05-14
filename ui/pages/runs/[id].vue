@@ -56,6 +56,7 @@
 </template>
 
 <script setup>
+import setBreadcrumbs from '~/utils/breadcrumbs'
 import useEventBus from '~/composables/event-bus'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -143,6 +144,16 @@ function getIcon(step) {
 
 onMounted(async () => {
   await refresh()
+  if (!run.value) return
+  setBreadcrumbs([{
+    text: 'traitements',
+    to: '/processings'
+  }, {
+    text: run.value.processing.title,
+    to: `/processings/${run.value.processing._id}`
+  }, {
+    text: 'exécution'
+  }])
 })
 
 onUnmounted(() => {
