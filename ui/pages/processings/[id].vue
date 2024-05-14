@@ -8,10 +8,9 @@
         <h2 class="text-h6">
           Traitement {{ processing.title }}
         </h2>
-        <v-form>
+        <v-form v-model="valid">
           <vjsf
             v-if="processingSchema"
-            :key="renderVjsfKey"
             v-model="editProcessing"
             :schema="processingSchema"
             :options="vjsfOptions"
@@ -72,12 +71,15 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSession } from '@data-fair/lib/vue/session.js'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
+import useEventBus from '~/composables/event-bus'
 
 const route = useRoute()
 const session = useSession()
+const eventBus = useEventBus()
 
 /** @typedef {import('../../../shared/types/processing/index.js').Processing} Processing */
 
+const valid = ref(false)
 const edited = ref(false)
 /** @type {Ref<Processing|null>} */
 const editProcessing = ref(null)
@@ -87,7 +89,6 @@ const processing = ref(null)
 const plugin = ref(null)
 /** @type {Ref<Record<string, any>|null>} */
 const runs = ref(null)
-const renderVjsfKey = ref(0)
 
 const canAdminProcessing = computed(() => {
   if (!processing.value) return false
@@ -148,13 +149,13 @@ const vjsfOptions = computed(() => {
       dataFairUrl: window.location.origin + '/data-fair',
       directoryUrl: window.location.origin + '/simple-directory'
     },
-    debounceInputMs: 1000,
     density: 'comfortable',
-    initialValidation: 'withData',
+    initialValidation: 'always',
     readOnly: !canAdminProcessing.value,
     readOnlyPropertiesMode: 'remove',
     updateOn: 'blur',
-    validateOn: 'blur'
+    validateOn: 'blur',
+    locale: 'fr'
   }
 })
 
@@ -183,18 +184,19 @@ async function handleTimeZoneChange(value) {
 }
 
 async function patch() {
+  if (!valid.value) return
   edited.value = true
   if (editProcessing.value?.scheduling && editProcessing.value.scheduling.type === 'weekly') {
     if (editProcessing.value.scheduling.dayOfWeek === '*') editProcessing.value.scheduling.dayOfWeek = '1'
-    renderVjsfKey.value += 1
   }
   try {
     await $fetch(`/api/v1/processings/${route.params.id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ ...editProcessing.value })
+      body: editProcessing.value
     })
+    if (processing.value) Object.assign(processing.value, editProcessing.value)
   } catch (error) {
-    console.error(error)
+    eventBus.emit('notification', { error, msg: 'Erreur pendant l\'enregistrement du traitement' })
   } finally {
     edited.value = false
   }
