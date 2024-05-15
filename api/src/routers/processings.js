@@ -235,10 +235,10 @@ router.patch('/:id', asyncHandler(async (req, res) => {
   /** @type {any} */
   const patch = {}
   for (const key in req.body) {
-    if (!req.body[key]) {
+    if (req.body[key] === null) {
       patch.$unset = patch.$unset || {}
-      patch.$unset[key] = undefined
-      req.body[key] = undefined
+      patch.$unset[key] = ''
+      delete req.body[key]
     } else {
       patch.$set = patch.$set || {}
       patch.$set[key] = req.body[key]
