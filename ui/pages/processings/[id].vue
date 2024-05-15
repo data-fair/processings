@@ -134,13 +134,19 @@ const processingSchema = computed(() => {
     title: 'Plugin ' + plugin.value.customName,
     'x-options': { deleteReadOnly: false }
   }
+  schema.required.push('config')
   if (session.state.user?.adminMode) delete schema.properties.debug?.readOnly
   if (!canAdminProcessing.value) {
     delete schema.properties.permissions
     delete schema.properties.config
     delete schema.properties.webhookKey
   }
-  return v2compat(schema)
+  const cleanSchema = v2compat(schema)
+  if (cleanSchema.properties.config.required) {
+    cleanSchema.properties.config.required = cleanSchema.properties.config.required
+      .filter((/** @type {string} */s) => s !== 'datasetMode')
+  }
+  return cleanSchema
 })
 
 const vjsfOptions = computed(() => {
