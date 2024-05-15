@@ -161,6 +161,7 @@ const vjsfOptions = computed(() => {
     initialValidation: 'always',
     readOnly: !canAdminProcessing.value,
     readOnlyPropertiesMode: 'remove',
+    removeAdditional: true,
     updateOn: 'blur',
     validateOn: 'blur',
     locale: 'fr',
