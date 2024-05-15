@@ -19,7 +19,7 @@ const embed = (() => {
   }
 })()
 
-globalThis.iFrameResizer = {
+window.iFrameResizer = {
   heightCalculationMethod: 'taggedElement'
 }
 
