@@ -75,7 +75,7 @@
     "notificationsKeys": {
       "type": "string"
     },
-    "notifyUrl": {
+    "privateNotifyUrl": {
       "type": "string"
     },
     "locks": {

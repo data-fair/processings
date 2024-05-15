@@ -21,7 +21,7 @@ module.exports = {
   },
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings',
   notificationsKeys: null,
-  notifyUrl: null,
+  privateNotifyUrl: null,
   locks: {
     // in seconds
     ttl: 60

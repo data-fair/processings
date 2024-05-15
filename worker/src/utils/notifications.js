@@ -11,12 +11,12 @@ const debugNotif = debug('notifications')
 export const send = async (notification) => {
   // @test:spy("notificationSend", notification)
   debugNotif(`send notification ${notification}`)
-  if (!config.notifyUrl) {
-    debugNotif('no notifyUrl in config')
+  if (!config.privateNotifyUrl) {
+    debugNotif('no privateNotifyUrl in config')
     return
   }
   if (process.env.NODE_ENV !== 'test') {
-    await axios.post(`${config.notifyUrl}/api/v1/notifications`, notification, { params: { key: config.notificationsKeys } })
+    await axios.post(`${config.privateNotifyUrl}/api/v1/notifications`, notification, { params: { key: config.notificationsKeys } })
       .catch(err => {
         internalError('notif-send', 'Failure to push notification', notification, err.response || err)
         console.error('Failure to push notification', notification, err.response || err)
