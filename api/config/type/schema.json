@@ -16,7 +16,8 @@
     "mongoUrl",
     "origin",
     "port",
-    "observer"
+    "observer",
+    "secretKeys"
   ],
   "properties": {
     "dataDir": {
@@ -46,6 +47,14 @@
     "privateDirectoryUrl": {
       "type": "string",
       "pattern": "^https?://"
+    },
+    "secretKeys": {
+      "type": "object",
+      "properties": {
+        "limits": {
+          "type": ["string", "null"]
+        }
+      }
     },
     "observer": {
       "type": "object",

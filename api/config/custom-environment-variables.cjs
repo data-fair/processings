@@ -8,6 +8,9 @@ module.exports = {
   origin: 'ORIGIN',
   port: 'PORT',
   privateDirectoryUrl: 'PRIVATE_DIRECTORY_URL',
+  secretKeys: {
+    limits: 'SECRET_LIMITS'
+  },
   observer: {
     active: 'OBSERVER_ACTIVE',
     port: 'OBSERVER_PORT'

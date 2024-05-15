@@ -7,6 +7,9 @@ module.exports = {
     processingsSeconds: -1
   },
   privateDirectoryUrl: 'http://simple-directory:8080',
+  secretKeys: {
+    limits: null
+  },
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings',
   origin: null,
   port: 8080,

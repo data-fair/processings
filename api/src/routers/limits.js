@@ -4,6 +4,7 @@ import { Router } from 'express'
 import mongo from '@data-fair/lib/node/mongo.js'
 import Ajv from 'ajv'
 import AjvFormats from 'ajv-formats'
+import config from '../config.js'
 
 // @ts-ignore
 const ajv = AjvFormats(new Ajv({ strict: false }))
@@ -41,6 +42,7 @@ export default router
  * @param {import('express').NextFunction} next
  */
 const isAccountMember = async (req, res, next) => {
+  if (req.query.key === config.secretKeys.limits) return next()
   const sessionState = await session.req(req)
   if (!sessionState.user) return res.status(401).send()
   if (sessionState.user.adminMode) return next()
@@ -57,7 +59,9 @@ const isAccountMember = async (req, res, next) => {
 
 // Endpoint for customers service to create/update limits
 router.post('/:type/:id', asyncHandler(async (req, res) => {
-  await session.reqAdminMode(req)
+  if (req.query.key !== config.secretKeys.limits) {
+    await session.reqAdminMode(req)
+  }
   req.body.type = req.params.type
   req.body.id = req.params.id
   const valid = validate(req.body)
@@ -77,7 +81,10 @@ router.get('/:type/:id', isAccountMember, asyncHandler(async (req, res) => {
 }))
 
 router.get('/', asyncHandler(async (req, res) => {
-  await session.reqAdminMode(req)
+  if (req.query.key !== config.secretKeys.limits) {
+    await session.reqAdminMode(req)
+  }
+
   const filter = {}
   if (req.query.type) filter.type = req.query.type
   if (req.query.id) filter.id = req.query.id

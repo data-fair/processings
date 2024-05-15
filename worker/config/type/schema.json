@@ -20,7 +20,8 @@
     "mongoUrl",
     "locks",
     "observer",
-    "worker"
+    "worker",
+    "secretKeys"
   ],
   "properties": {
     "dataDir": {
@@ -72,8 +73,13 @@
     "mongoUrl": {
       "type": "string"
     },
-    "notificationsKeys": {
-      "type": "string"
+    "secretKeys": {
+      "type": "object",
+      "properties": {
+        "notifications": {
+          "type": ["string", "null"]
+        }
+      }
     },
     "privateNotifyUrl": {
       "type": "string"
