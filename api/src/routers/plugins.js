@@ -53,6 +53,9 @@ tmp.setGracefulCleanup()
  * @property {object} access
  */
 
+/** @typedef {import('../types.js').Access} Access */
+/** @typedef {import('../types.js').PrivateAccess} PrivateAccess */
+
 /**
  * For compatibility with old plugins
  * @param {PluginData} plugin
@@ -139,7 +142,8 @@ router.get('/', asyncHandler(async (req, res) => {
   for (const dir of dirs) {
     /** @type {PluginDataWithConfig} */
     const pluginInfo = await fs.readJson(path.join(pluginsDir, dir, 'plugin.json'))
-    let access
+    /** @type {Access}  */
+    let access = { public: false, privateAccess: [] }
     const accessFilePath = path.join(pluginsDir, dir + '-access.json')
     if (await fs.pathExists(accessFilePath)) {
       access = await fs.readJson(path.join(pluginsDir, dir + '-access.json'))
