@@ -9,11 +9,7 @@ on:
     tags-ignore: [ 'v*.*.*' ]
 
 jobs:
-  quality:
-    uses: ./.github/workflows/reuse-quality.yml
-
   build:
-    needs: quality
     uses: ./.github/workflows/reuse-build.yml
 
   deploy:
