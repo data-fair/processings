@@ -8,7 +8,6 @@
         <h2 class="text-h6">
           Traitement {{ processing.title }}
         </h2>
-        {{ valid }}
         <v-form v-model="valid">
           <vjsf
             v-if="processingSchema"
@@ -158,7 +157,7 @@ const vjsfOptions = computed(() => {
       dataFairUrl: window.location.origin + '/data-fair',
       directoryUrl: window.location.origin + '/simple-directory'
     },
-    density: 'comfortable',
+    density: 'compact',
     initialValidation: 'always',
     readOnly: !canAdminProcessing.value,
     readOnlyPropertiesMode: 'remove',
