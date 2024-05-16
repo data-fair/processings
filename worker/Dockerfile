@@ -30,9 +30,6 @@ RUN test -f /usr/bin/ogr2ogr
 RUN ln -s /usr/lib/libproj.so.25 /usr/lib/libproj.so
 RUN test -f /usr/lib/libproj.so
 
-# processing plugins should be able to install native dependencies themselves
-RUN apk add --no-cache python3 make g++
-
 #################################
 # install root dev deps and build types
 FROM node:20.12.2-alpine3.19 AS builder

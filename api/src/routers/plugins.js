@@ -110,7 +110,7 @@ router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
         [plugin.name]: '^' + plugin.version
       }
     }, null, 2))
-    await exec('npm install --only=prod', { cwd: dir.path })
+    await exec('npm install --omit=dev', { cwd: dir.path })
     await fs.writeFile(path.join(dir.path, 'index.js'), `module.exports = require('${plugin.name}')`)
     plugin.pluginConfigSchema = await fs.readJson(path.join(dir.path, 'node_modules', plugin.name, 'plugin-config-schema.json'))
     plugin.processingConfigSchema = await fs.readJson(path.join(dir.path, 'node_modules', plugin.name, 'processing-config-schema.json'))

@@ -35,6 +35,9 @@ RUN npm ci -w api --no-audit --no-fund --omit=optional --omit=dev &&\
 FROM node:20.12.2-alpine3.19
 LABEL org.opencontainers.image.authors="contact@koumoul.com"
 
+# processing plugins should be able to install native dependencies themselves
+RUN apk add --no-cache python3 make g++
+
 ENV NODE_ENV production
 
 WORKDIR /app/
