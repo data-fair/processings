@@ -2,10 +2,8 @@ const permissions = {
   type: 'array',
   title: 'Permissions',
   layout: {
-    options: {
-      messages: {
-        addItem: 'Ajouter une permission'
-      }
+    messages: {
+      addItem: 'Ajouter une permission'
     }
   },
   items: {
