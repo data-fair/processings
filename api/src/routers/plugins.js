@@ -82,7 +82,8 @@ const injectPluginNameConfig = (plugin) => {
 const preparePluginInfo = async (pluginInfo) => {
   pluginInfo = injectPluginNameConfig(pluginInfo)
   const pluginConfigPath = path.join(pluginsDir, pluginInfo.id + '-config.json')
-  const customName = await fs.pathExists(pluginConfigPath) ? (await fs.readJson(pluginConfigPath)).pluginName : pluginInfo.pluginConfigSchema.properties.pluginName.default
+  let customName = await fs.pathExists(pluginConfigPath) ? (await fs.readJson(pluginConfigPath)).pluginName : pluginInfo.pluginConfigSchema.properties.pluginName.default
+  if (!customName) customName = pluginInfo.name.replace('@data-fair/processing-', '') + ' (' + pluginInfo.distTag + ' - ' + pluginInfo.version + ')'
   return { ...pluginInfo, customName }
 }
 
