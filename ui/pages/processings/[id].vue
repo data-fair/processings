@@ -8,6 +8,7 @@
         <h2 class="text-h6">
           Traitement {{ processing.title }}
         </h2>
+        {{ valid }}
         <v-form v-model="valid">
           <vjsf
             v-if="processingSchema"
@@ -200,6 +201,9 @@ async function handleTimeZoneChange(value) {
 }
 
 async function patch() {
+  // TODO: some problem in vjsf makes it necessary to wait when adding a permission for validity to be correct
+  await new Promise(resolve => setTimeout(resolve, 1))
+
   if (!valid.value) return
   edited.value = true
   if (editProcessing.value?.scheduling && editProcessing.value.scheduling.type === 'weekly') {
