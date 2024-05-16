@@ -166,8 +166,7 @@ const vjsfOptions = computed(() => {
     removeAdditional: true,
     updateOn: 'blur',
     validateOn: 'blur',
-    locale: 'fr',
-    titleDepth: 4
+    locale: 'fr'
   }
 })
 
