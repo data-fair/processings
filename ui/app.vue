@@ -9,8 +9,6 @@
 </template>
 
 <script setup>
-import 'iframe-resizer/js/iframeResizer.contentWindow'
-
 const embed = (() => {
   try {
     return window.self !== window.top
@@ -27,9 +25,9 @@ useHead({
     { hid: 'application', name: 'application-name', content: 'data-fair-processings' },
     { hid: 'description', name: 'description', content: 'Periodically import / export data between Data Fair and other services.' },
     { hid: 'robots', name: 'robots', content: 'noindex' }
-  ],
-  script: [
-    { children: "window.iFrameResizer = {heightCalculationMethod: 'taggedElement'}" }
   ]
 })
+
+window.iFrameResizer = { heightCalculationMethod: 'taggedElement' }
+import('iframe-resizer/js/iframeResizer.contentWindow.js')
 </script>
