@@ -195,7 +195,6 @@ eventBus.on('showAll', async (/** @type {boolean} */ show) => {
 })
 
 async function fetchInstalledPlugins() {
-  if (!canAdmin.value) return
   loading.value += 1
   try {
     /** @type {any} */

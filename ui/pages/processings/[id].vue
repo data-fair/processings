@@ -134,15 +134,17 @@ const processingSchema = computed(() => {
     title: 'Plugin ' + plugin.value.customName,
     'x-options': { deleteReadOnly: false }
   }
-  schema.required.push('config')
   if (session.state.user?.adminMode) delete schema.properties.debug?.readOnly
   if (!canAdminProcessing.value) {
     delete schema.properties.permissions
     delete schema.properties.config
     delete schema.properties.webhookKey
+    schema.properties.title.layout = 'none'
+  } else {
+    schema.required.push('config')
   }
   const cleanSchema = v2compat(schema)
-  if (cleanSchema.properties.config.required) {
+  if (cleanSchema.properties.config?.required) {
     cleanSchema.properties.config.required = cleanSchema.properties.config.required
       .filter((/** @type {string} */s) => s !== 'datasetMode')
   }
@@ -203,7 +205,7 @@ async function patch() {
   // TODO: some problem in vjsf makes it necessary to wait when adding a permission for validity to be correct
   await new Promise(resolve => setTimeout(resolve, 1))
 
-  if (!valid.value) return
+  if (!valid.value || !canAdminProcessing.value) return
   edited.value = true
   if (editProcessing.value?.scheduling && editProcessing.value.scheduling.type === 'weekly') {
     if (editProcessing.value.scheduling.dayOfWeek === '*') editProcessing.value.scheduling.dayOfWeek = '1'
