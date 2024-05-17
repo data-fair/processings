@@ -41,7 +41,7 @@ export const start = async () => {
   server.listen(config.port)
   await new Promise(resolve => server.once('listening', resolve))
   const npmHttpsProxy = config.npm?.httpsProxy || process.env.HTTPS_PROXY || process.env.https_proxy
-  if (npmHttpsProxy) await exec('npm config set https-proxy ' + npmHttpsProxy)
+  if (npmHttpsProxy) await exec('npm --workspaces=false --include-workspace-root config set https-proxy ' + npmHttpsProxy)
   await startWSServer(server, mongo.db, session)
 
   console.log(`
