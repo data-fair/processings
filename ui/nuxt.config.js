@@ -6,17 +6,17 @@ export default defineNuxtConfig({
   app: {
     baseURL: '/processings/'
   },
-  build: {
+  /* build: {
     transpile: [/@koumoul/, /@data-fair/, /vuetify/]
-  },
+  }, */
   css: ['@/assets/main.scss'],
   // Force enabling the dev tools on nuxi dev as the shortcut (Shift + Alt + D) is not working on non QWERTY keyboards, see https://github.com/nuxt/devtools/issues/601
-  devtools: {
+  /* devtools: {
     enabled: true,
     timeline: {
       enabled: true
     }
-  },
+  }, */
   modules: [
     ['@nuxtjs/google-fonts', {
       display: 'swap',

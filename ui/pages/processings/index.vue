@@ -88,7 +88,7 @@
 
 <script setup>
 import setBreadcrumbs from '~/utils/breadcrumbs'
-import getReactiveSearchParams from '@data-fair/lib/vue/reactive-search-params-global.js'
+import useReactiveSearchParams from '@data-fair/lib/vue/reactive-search-params.js'
 import useEventBus from '~/composables/event-bus'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -96,8 +96,8 @@ import { useSession } from '@data-fair/lib/vue/session.js'
 
 const eventBus = useEventBus()
 const route = useRoute()
-const urlSearchParams = getReactiveSearchParams
 const session = useSession()
+const urlSearchParams = useReactiveSearchParams()
 
 /**
  * @typedef InstalledPlugin

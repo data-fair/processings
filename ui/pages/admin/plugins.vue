@@ -212,7 +212,7 @@
 
 <script setup>
 import setBreadcrumbs from '~/utils/breadcrumbs'
-import urlSearchParams from '@data-fair/lib/vue/reactive-search-params-global.js'
+import useUrlSearchParams from '@data-fair/lib/vue/reactive-search-params.js'
 import useEventBus from '~/composables/event-bus'
 import Vjsf from '@koumoul/vjsf'
 import VjsfMarkdown from '@koumoul/vjsf-markdown'
@@ -222,6 +222,7 @@ import { useSession } from '@data-fair/lib/vue/session.js'
 
 const eventBus = useEventBus()
 const session = useSession()
+const urlSearchParams = useUrlSearchParams()
 
 if (!session.state.user) {
   throw createError({ status: 401, message: 'Authentification nécessaire', fatal: true })
