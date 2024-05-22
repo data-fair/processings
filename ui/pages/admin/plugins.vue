@@ -1,7 +1,7 @@
 <template>
   <v-container data-iframe-height>
     <v-text-field
-      v-model="urlSearchParams.search"
+      v-model="urlSearchParams.q"
       append-inner-icon="mdi-magnify"
       class="my-2"
       clearable
@@ -231,9 +231,7 @@ if (!session.state.user?.adminMode) {
   throw createError({ status: 403, message: 'Vous n\'avez pas la permission d\'accéder à cette page, il faut avoir activé le mode super-administration.', fatal: true })
 }
 
-onMounted(() => {
-  setBreadcrumbs([{ text: 'plugins' }])
-})
+onMounted(() => setBreadcrumbs([{ text: 'plugins' }]))
 
 /**
  * @typedef AvailablePlugin
@@ -276,14 +274,14 @@ const availablePlugins = computed(() => {
 })
 
 const filteredInstalledPlugins = computed(() => {
-  if (!urlSearchParams.search) return installedPlugins.value
+  if (!urlSearchParams.q) return installedPlugins.value
   return installedPlugins.value
-    .filter(r => r.name.includes(urlSearchParams.search) || (r.description && r.description.includes(urlSearchParams.search)))
+    .filter(r => r.name.includes(urlSearchParams.q) || (r.description && r.description.includes(urlSearchParams.q)))
 })
 
 const filteredAvailablePlugins = computed(() => {
-  if (!urlSearchParams.search) return availablePlugins.value
-  return availablePlugins.value.filter(/** @param {Record<string, any>} r */ r => r.name.includes(urlSearchParams.search) || (r.description && r.description.includes(urlSearchParams.search)))
+  if (!urlSearchParams.q) return availablePlugins.value
+  return availablePlugins.value.filter(/** @param {Record<string, any>} r */ r => r.name.includes(urlSearchParams.q) || (r.description && r.description.includes(urlSearchParams.q)))
 })
 
 /** @type {Ref<string | null>} */

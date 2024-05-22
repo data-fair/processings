@@ -49,10 +49,10 @@ export default defineNuxtConfig({
     { src: 'plugins/ws', mode: 'client' }
   ],
   // Avoids getting "WARN Sourcemap for "x" points to missing source files", see https://github.com/nuxt/nuxt/issues/14124#issuecomment-1517258360
-  sourcemap: {
+  /* sourcemap: {
     client: false,
     server: true
-  },
+  }, */
   ssr: false,
   telemetry: false,
   vite: {

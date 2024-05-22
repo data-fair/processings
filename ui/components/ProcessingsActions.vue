@@ -85,7 +85,6 @@
       placeholder="rechercher"
       style="max-width:400px;"
       variant="outlined"
-      @update:model-value="eventBus.emit('search', search)"
     />
     <v-select
       v-model="statusesSelected"
@@ -103,7 +102,6 @@
       rounded="xl"
       variant="outlined"
       style="max-width:400px;"
-      @update:model-value="eventBus.emit('status', statusesSelected)"
     />
     <v-select
       v-model="pluginsSelected"
@@ -121,7 +119,6 @@
       rounded="xl"
       variant="outlined"
       style="max-width:400px;"
-      @update:model-value="eventBus.emit('plugin', pluginsSelected)"
     />
     <v-switch
       v-if="adminMode"
@@ -130,43 +127,32 @@
       label="Voir tous les traitements"
       hide-details
       class="mt-4 mx-4 adminSwitch"
-      @update:model-value="eventBus.emit('showAll', showAll)"
     />
   </v-list>
 </template>
 
 <script setup lang="ts">
 import useEventBus from '~/composables/event-bus'
-import { onMounted, type PropType, ref } from 'vue'
+import { type PropType, ref } from 'vue'
 
 const eventBus = useEventBus()
 
 const processingsProps = defineProps({
   adminMode: Boolean,
-  cPluginsSelected: { type: Array as PropType<Array<String>>, default: () => [] },
-  cSearch: { type: String, default: '' },
-  cShowAll: { type: Boolean, default: false },
-  cStatusesSelected: { type: Array as PropType<Array<String>>, default: () => [] },
   facets: { type: Object as PropType<Record<string, any>>, required: true },
   installedPlugins: { type: Array as PropType<Array<Record<string, any>>>, required: true },
   isSmall: Boolean,
   processings: { type: Array as PropType<Array<Record<string, any>>>, required: true }
 })
 
+const search = defineModel('search', { type: String, default: '' })
+const showAll = defineModel('showAll', { type: Boolean, default: false })
+const pluginsSelected = defineModel('pluginsSelected', { type: Array, required: true })
+const statusesSelected = defineModel('statusesSelected', { type: Array, required: true })
+
 const inCreate = ref(false)
 const showCreateMenu = ref(false)
 const newProcessing: Ref<Record<string, any>> = ref({})
-const pluginsSelected: Ref<String[]> = ref([])
-const statusesSelected: Ref<String[]> = ref([])
-const search = ref('')
-const showAll = ref(false)
-
-onMounted(() => {
-  pluginsSelected.value = processingsProps.cPluginsSelected
-  search.value = processingsProps.cSearch
-  showAll.value = processingsProps.cShowAll
-  statusesSelected.value = processingsProps.cStatusesSelected
-})
 
 const statusesText: Record<string, string> = {
   error: 'En échec',
