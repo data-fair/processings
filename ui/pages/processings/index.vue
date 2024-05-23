@@ -101,18 +101,18 @@
 
 <script setup>
 import setBreadcrumbs from '~/utils/breadcrumbs'
-import { useReactiveSearchParams, stringSearchParam, booleanSearchParam, stringArrayParam } from '@data-fair/lib/vue/reactive-search-params.js'
+import { useStringSearchParam, useBooleanSearchParam, useStringsArraySearchParam } from '@data-fair/lib/vue/reactive-search-params.js'
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSessionAuthenticated } from '@data-fair/lib/vue/session.js'
+console.log('111')
 
 const route = useRoute()
 const session = useSessionAuthenticated(() => createError({ status: 401, message: 'Authentification nécessaire', fatal: true }))
-const urlSearchParams = useReactiveSearchParams()
-const showAll = booleanSearchParam(urlSearchParams, 'showAll')
-const search = stringSearchParam(urlSearchParams, 'q')
-const plugins = stringArrayParam(urlSearchParams, 'plugin')
-const status = stringArrayParam(urlSearchParams, 'status')
+const showAll = useBooleanSearchParam('showAll')
+const search = useStringSearchParam('q')
+const plugins = useStringsArraySearchParam('plugin')
+const status = useStringsArraySearchParam('status')
 
 onMounted(async () => setBreadcrumbs([{ text: 'traitements' }]))
 
