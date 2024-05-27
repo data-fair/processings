@@ -154,6 +154,20 @@ function updateCustomTimeZone(object) {
     }
   })
 }
+/**
+ * @param {Record<string, any>} object
+ */
+function recurseConfigSchema(object) {
+  Object.keys(object).forEach(key => {
+    const value = object[key]
+    if (key === 'props' && value?.type === 'password') {
+      value.autocomplete = 'new-password'
+    }
+    if (value && typeof value === 'object') {
+      recurseConfigSchema(value)
+    }
+  })
+}
 
 const processingSchema = computed(() => {
   if (!plugin.value || !processing.value) return
@@ -180,6 +194,7 @@ const processingSchema = computed(() => {
     schema.required.push('config')
   }
   const cleanSchema = v2compat(schema)
+  recurseConfigSchema(cleanSchema)
   if (cleanSchema.properties.config?.required) {
     cleanSchema.properties.config.required = cleanSchema.properties.config.required
       .filter((/** @type {string} */s) => s !== 'datasetMode')
