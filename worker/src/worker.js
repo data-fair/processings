@@ -228,7 +228,7 @@ async function iter (db, run) {
       stdio: ['ignore', 'pipe', 'pipe']
     })
     spawnPromise.childProcess.stdout?.on('data', data => {
-      debug('[spawned task stdout] ' + data)
+      process.stdout.write('[spawned task stdout] ' + data)
       if (data.includes('<running>')) {
         // @test:spy("isRunning")
       }

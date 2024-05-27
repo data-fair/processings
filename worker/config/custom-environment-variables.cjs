@@ -1,5 +1,6 @@
 module.exports = {
   dataDir: 'DATA_DIR',
+  tmpDir: 'TMP_DIR',
   dataFairAPIKey: 'DATA_FAIR_API_KEY',
   dataFairAdminMode: 'DATA_FAIR_ADMIN_MODE',
   dataFairUrl: 'DATA_FAIR_URL',
