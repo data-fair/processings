@@ -94,21 +94,18 @@ const plugin = ref(null)
 /** @type {Ref<Record<string, any>|null>} */
 const runs = ref(null)
 
-onMounted(async () => {
-  setBreadcrumbs([{
-    text: 'traitements',
-    to: '/processings'
-  }, {
-    text: processing.value?.title || ''
-  }])
-})
-
 /*
 Fetch initial data
 */
 
 onMounted(async () => {
   await fetchProcessing()
+  setBreadcrumbs([{
+    text: 'traitements',
+    to: '/processings'
+  }, {
+    text: processing.value?.title || ''
+  }])
   await fetchPlugin()
 })
 
