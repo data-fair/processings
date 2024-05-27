@@ -191,6 +191,7 @@ export const run = async (db, mailTransport, wsPublish) => {
       await log.debug('patch config', patch)
       Object.assign(processingConfig, patch)
       processingsCollection.updateOne({ _id: processing._id }, { $set: { config: processingConfig } })
+      await wsPublish(`processings/${processing._id}/patch-config`, { patch })
     },
     async sendMail (data) {
       return mailTransport.sendMail(data)

@@ -8,7 +8,10 @@
         <h2 class="text-h6">
           Traitement {{ processing.title }}
         </h2>
-        <v-form v-model="valid">
+        <v-form
+          v-model="valid"
+          autocomplete="off"
+        >
           <vjsf
             v-if="processingSchema"
             v-model="editProcessing"
@@ -91,15 +94,50 @@ const plugin = ref(null)
 /** @type {Ref<Record<string, any>|null>} */
 const runs = ref(null)
 
+onMounted(async () => {
+  setBreadcrumbs([{
+    text: 'traitements',
+    to: '/processings'
+  }, {
+    text: processing.value?.title || ''
+  }])
+})
+
+/*
+Fetch initial data
+*/
+
+onMounted(async () => {
+  await fetchProcessing()
+  await fetchPlugin()
+})
+
+async function fetchProcessing() {
+  processing.value = await $fetch(`/api/v1/processings/${route.params.id}`)
+  if (processing.value) editProcessing.value = { ...processing.value }
+}
+async function fetchPlugin() {
+  if (processing.value?.plugin) {
+    plugin.value = await $fetch(`/api/v1/plugins/${processing.value.plugin}`)
+  }
+}
+
+/*
+Permissions
+*/
+
 const canAdminProcessing = computed(() => {
   if (!processing.value) return false
   return processing.value.userProfile === 'admin'
 })
-
 const canExecProcessing = computed(() => {
   if (!processing.value) return false
   return ['admin', 'exec'].includes(processing.value.userProfile || '')
 })
+
+/*
+Preparation for the vjsf form
+*/
 
 /**
  * @param {Record<string, any>} object
@@ -107,11 +145,9 @@ const canExecProcessing = computed(() => {
 function updateCustomTimeZone(object) {
   Object.keys(object).forEach(key => {
     const value = object[key]
-
     if (value && typeof value === 'object') {
       updateCustomTimeZone(value)
     }
-
     if (key === 'x-display' && value === 'custom-time-zone') {
       object.layout = { slots: { component: 'custom-time-zone' } }
       delete object[key]
@@ -170,28 +206,6 @@ const vjsfOptions = computed(() => {
   }
 })
 
-onMounted(async () => {
-  await fetchProcessing()
-  setBreadcrumbs([{
-    text: 'traitements',
-    to: '/processings'
-  }, {
-    text: processing.value?.title
-  }])
-  await fetchPlugin()
-})
-
-async function fetchProcessing() {
-  processing.value = await $fetch(`/api/v1/processings/${route.params.id}`)
-  if (processing.value) editProcessing.value = { ...processing.value }
-}
-
-async function fetchPlugin() {
-  if (processing.value?.plugin) {
-    plugin.value = await $fetch(`/api/v1/plugins/${processing.value.plugin}`)
-  }
-}
-
 /**
  * @param {string} value
  */
@@ -221,6 +235,23 @@ async function patch() {
     edited.value = false
   }
 }
+
+/*
+A patch can be triggered server side
+*/
+
+const patchConfigWSChannel = `processings/${route.params.id}/patch-config`
+const onPatchConfig = () => {
+  fetchProcessing()
+}
+onMounted(() => {
+  eventBus.emit('subscribe', patchConfigWSChannel)
+  eventBus.on(patchConfigWSChannel, onPatchConfig)
+})
+onUnmounted(() => {
+  eventBus.emit('unsubscribe', patchConfigWSChannel)
+  eventBus.off(patchConfigWSChannel, onPatchConfig)
+})
 
 </script>
 

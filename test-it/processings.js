@@ -11,7 +11,7 @@ const superadmin = await axiosAuth({ email: 'superadmin@test.com', password: 'su
 
 console.log('Starting worker server...')
 process.env.NODE_CONFIG_DIR = 'worker/config/'
-const workerServer = await import('../worker/src/server.js')
+const workerServer = await import('../worker/src/worker.js')
 await workerServer.start()
 
 const plugin = (await superadmin.post('/api/v1/plugins', {

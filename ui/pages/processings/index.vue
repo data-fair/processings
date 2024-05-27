@@ -105,7 +105,6 @@ import { useStringSearchParam, useBooleanSearchParam, useStringsArraySearchParam
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSessionAuthenticated } from '@data-fair/lib/vue/session.js'
-console.log('111')
 
 const route = useRoute()
 const session = useSessionAuthenticated(() => createError({ status: 401, message: 'Authentification nécessaire', fatal: true }))

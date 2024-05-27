@@ -134,6 +134,7 @@
           <v-form
             v-if="result.pluginConfigSchema.properties && Object.keys(result.pluginConfigSchema.properties).length"
             :ref="'form-' + result.id"
+            autocomplete="off"
           >
             <vjsf
               v-model="result.config"
