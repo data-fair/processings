@@ -1,4 +1,5 @@
 import axios from 'axios'
+import axiosRetry from 'axios-retry'
 import config from '../config.js'
 import fs from 'fs-extra'
 import path from 'path'
@@ -177,6 +178,17 @@ export const run = async (db, mailTransport, wsPublish) => {
   const tmpDir = await tmp.dir({ unsafeCleanup: true, tmpdir: baseTmpDir, prefix: `processing-run-${processing._id}-${run._id}` })
   const processingConfig = processing?.config || {}
 
+  const axios = axiosInstance(processing)
+  axiosRetry(axios, {
+    retries: 3,
+    retryDelay: axiosRetry.exponentialDelay,
+    shouldResetTimeout: true,
+    onRetry: (retryCount, err, requestConfig) => {
+      const message = getHttpErrorMessage(err) || err.message || err
+      log.warning(`tentative ${retryCount} de requête ${requestConfig.method} ${requestConfig.url} : ${message}`)
+    }
+  })
+
   /** @type {import('@data-fair/lib/processings/types.js').ProcessingContext} */
   const context = {
     pluginConfig,
@@ -208,22 +220,8 @@ export const run = async (db, mailTransport, wsPublish) => {
     else await log.info('L\'exécution est terminée', '')
   } catch (/** @type {any} */ err) {
     process.chdir(cwd)
-    let httpMessage = err.status ?? err.statusCode
+    const httpMessage = getHttpErrorMessage(err)
     if (httpMessage) {
-      const statusText = err.statusText ?? err.statusMessage
-      if (statusText) httpMessage += ' - ' + statusText
-      if (err.data) {
-        if (typeof err.data === 'string') httpMessage += ' - ' + err.data
-        else httpMessage += ' - ' + JSON.stringify(err.data)
-      } else if (err.message) {
-        httpMessage += ' - ' + err.message
-      }
-
-      if (err.config && err.config.url) {
-        let url = err.config.url
-        url = url.replace(config.privateDataFairUrl, '')
-        httpMessage += ` (${url})`
-      }
       // console.error(httpMessage)
       // console.log(err)
       await log.error(httpMessage)
@@ -245,6 +243,29 @@ export const stop = async () => {
   if (pluginModule && pluginModule.stop) await pluginModule.stop()
   // grace period of 20s, either run() finishes in the interval or we shutdown
   await new Promise(resolve => setTimeout(resolve, config.worker.gracePeriod))
+}
+
+const getHttpErrorMessage = (err) => {
+  let httpMessage = err.status ?? err.statusCode
+  if (httpMessage) {
+    const statusText = err.statusText ?? err.statusMessage
+    if (statusText) httpMessage += ' - ' + statusText
+    if (err.data) {
+      if (typeof err.data === 'string') httpMessage += ' - ' + err.data
+      else httpMessage += ' - ' + JSON.stringify(err.data)
+    } else if (err.message) {
+      httpMessage += ' - ' + err.message
+    }
+    if (err.config && err.config.url) {
+      let url = err.config.url
+      url = url.replace(config.dataFairUrl, '')
+      if (config.privateDataFairUrl) {
+        url = url.replace(config.privateDataFairUrl, '')
+      }
+      httpMessage += ` (${url})`
+    }
+    return httpMessage
+  }
 }
 
 export default { run, stop }
