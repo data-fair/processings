@@ -3,6 +3,7 @@ const config = require('config')
 const path = require('path')
 const fs = require('fs-extra')
 const axios = require('axios')
+const axiosRetry = require('axios-retry')
 const tmp = require('tmp-promise')
 const WebSocket = require('ws')
 const resolvePath = require('resolve-path')
@@ -120,6 +121,15 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
     if (error.stack) response.stack = error.stack
     return Promise.reject(response)
   })
+  axiosRetry(axiosInstance, {
+    retries: 3,
+    retryDelay: axiosRetry.exponentialDelay,
+    shouldResetTimeout: true,
+    onRetry: (retryCount, err, requestConfig) => {
+      const message = getHttpErrorMessage(err) || err.message || err
+      log.warning(`tentative ${retryCount} de requête ${requestConfig.method} ${requestConfig.url} : ${message}`)
+    }
+  })
 
   const ws = new EventEmitter()
   ws._channels = []
@@ -225,25 +235,8 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
     else await log.info('terminé')
   } catch (err) {
     process.chdir(cwd)
-    let httpMessage = err.status ?? err.statusCode
+    const httpMessage = getHttpErrorMessage(err)
     if (httpMessage) {
-      const statusText = err.statusText ?? err.statusMessage
-      if (statusText) httpMessage += ' - ' + statusText
-      if (err.data) {
-        if (typeof err.data === 'string') httpMessage += ' - ' + err.data
-        else httpMessage += ' - ' + JSON.stringify(err.data)
-      } else if (err.message) {
-        httpMessage += ' - ' + err.message
-      }
-
-      if (err.config && err.config.url) {
-        let url = err.config.url
-        url = url.replace(config.dataFairUrl, '')
-        if (config.privateDataFairUrl) {
-          url = url.replace(config.privateDataFairUrl, '')
-        }
-        httpMessage += ` (${url})`
-      }
       console.error(httpMessage)
       console.log(err)
       await log.error(httpMessage)
@@ -266,4 +259,27 @@ exports.stop = async () => {
   if (pluginModule && pluginModule.stop) await pluginModule.stop()
   // grace period of 20s, either run() finishes in the interval or we shutdown
   await new Promise(resolve => setTimeout(resolve, config.worker.gracePeriod))
+}
+
+const getHttpErrorMessage = (err) => {
+  let httpMessage = err.status ?? err.statusCode
+  if (httpMessage) {
+    const statusText = err.statusText ?? err.statusMessage
+    if (statusText) httpMessage += ' - ' + statusText
+    if (err.data) {
+      if (typeof err.data === 'string') httpMessage += ' - ' + err.data
+      else httpMessage += ' - ' + JSON.stringify(err.data)
+    } else if (err.message) {
+      httpMessage += ' - ' + err.message
+    }
+    if (err.config && err.config.url) {
+      let url = err.config.url
+      url = url.replace(config.dataFairUrl, '')
+      if (config.privateDataFairUrl) {
+        url = url.replace(config.privateDataFairUrl, '')
+      }
+      httpMessage += ` (${url})`
+    }
+    return httpMessage
+  }
 }
