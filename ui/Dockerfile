@@ -1,6 +1,6 @@
 ##########################
 # install root dev deps and build
-FROM node:20.12.2-alpine3.19 AS builder
+FROM node:20.14.0-alpine3.20 AS builder
 
 RUN npm i -g clean-modules@3.0.4
 
@@ -17,7 +17,7 @@ RUN npm -w ui run build
 
 ##########################
 # copy built app and assemble actual dist
-FROM node:20.12.2-alpine3.19
+FROM node:20.14.0-alpine3.20
 
 LABEL org.opencontainers.image.authors="contact@koumoul.com"
 

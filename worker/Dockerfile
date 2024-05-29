@@ -1,30 +1,37 @@
-############################################################
-# Stage: install libraries for geographic data manipulations
-FROM node:20.12.2-alpine3.19 AS geodeps
-
-RUN apk add --no-cache curl cmake make g++ linux-headers
-RUN apk add --no-cache boost-dev gmp gmp-dev mpfr-dev
+####################################################################
+# Stage: build libraries and tools for geographic data manipulations
+FROM node:20.14.0-alpine3.20 AS nativedepsbuilder
 
 # build CGAL (not yet present in alpine repos)
+RUN apk add --no-cache curl cmake make g++ linux-headers boost-dev gmp gmp-dev mpfr-dev
 WORKDIR /tmp/
-
 RUN curl -L https://github.com/CGAL/cgal/releases/download/releases%2FCGAL-4.14.3/CGAL-4.14.3.tar.xz -o cgal.tar.xz
 RUN tar -xf cgal.tar.xz
-
 WORKDIR /tmp/CGAL-4.14.3/
-
 RUN cmake -D CMAKE_BUILD_TYPE=Release .
 RUN make
 RUN make install
+RUN test -f /usr/local/lib/libCGAL.so.13
+
+# build tippecanoe from source
+WORKDIR /tmp/
+RUN apk add git zlib-dev sqlite-dev bash
+RUN git clone https://github.com/mapbox/tippecanoe.git
+WORKDIR /tmp/tippecanoe
+RUN git checkout 1.36.0
+RUN make -j
+RUN make install
+RUN test -f /usr/local/bin/tippecanoe
 
 ############################################################################################################
 # Stage: prepare a base image with all native utils pre-installed, used both by builder and definitive image
 
-FROM node:20.12.2-alpine3.19 AS nativedeps
+FROM node:20.14.0-alpine3.20 AS nativedeps
 
-COPY --from=geodeps /usr/local/lib/libCGAL.so.13 /usr/local/lib/libCGAL.so.13
+COPY --from=nativedepsbuilder /usr/local/lib/libCGAL.so.13 /usr/local/lib/libCGAL.so.13
+COPY --from=nativedepsbuilder /usr/local/bin/tippecanoe /usr/local/bin/tippecanoe
+ENV TIPPECANOE_MAX_THREADS 1
 
-# some of these are also geodeps, but we need to install them here as they pull many dependencies
 RUN apk add --no-cache unzip p7zip dumb-init gmp gdal-tools proj
 RUN test -f /usr/bin/ogr2ogr
 RUN ln -s /usr/lib/libproj.so.25 /usr/lib/libproj.so
@@ -32,7 +39,7 @@ RUN test -f /usr/lib/libproj.so
 
 #################################
 # install root dev deps and build types
-FROM node:20.12.2-alpine3.19 AS builder
+FROM nativedeps AS builder
 
 WORKDIR /app/
 
@@ -46,7 +53,7 @@ RUN npm run build-types-worker
 
 ##########################
 # install worker prod deps
-FROM node:20.12.2-alpine3.19 AS installer
+FROM nativedeps AS installer
 
 RUN npm i -g clean-modules@3.0.4
 
@@ -64,7 +71,7 @@ RUN test ! -d worker/node_modules
 
 ##############################################
 # copy deps and build and assemble actual dist
-FROM node:20.12.2-alpine3.19
+FROM node:20.14.0-alpine3.20
 LABEL org.opencontainers.image.authors="contact@koumoul.com"
 
 ENV NODE_ENV=production
