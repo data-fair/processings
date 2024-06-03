@@ -169,12 +169,6 @@ function recurseConfigSchema(object) {
 const processingSchema = computed(() => {
   if (!plugin.value || !processing.value) return
   const schema = JSON.parse(JSON.stringify(contractProcessing))
-  Object.keys(schema.properties).forEach(key => {
-    if (schema.properties[key].readOnly) {
-      schema.required = schema.required.filter((/** @type {string} */k) => k !== key)
-      delete schema.properties[key]
-    }
-  })
   updateCustomTimeZone(schema)
   schema.properties.config = {
     ...plugin.value.processingConfigSchema,
@@ -190,6 +184,12 @@ const processingSchema = computed(() => {
   } else {
     schema.required.push('config')
   }
+  Object.keys(schema.properties).forEach(key => {
+    if (schema.properties[key].readOnly) {
+      schema.required = schema.required.filter((/** @type {string} */k) => k !== key)
+      delete schema.properties[key]
+    }
+  })
   const cleanSchema = v2compat(schema)
   recurseConfigSchema(cleanSchema)
   if (cleanSchema.properties.config?.required) {

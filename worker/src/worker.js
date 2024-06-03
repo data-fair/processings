@@ -235,7 +235,12 @@ async function iter (db, run) {
     })
     spawnPromise.childProcess.stderr?.on('data', data => {
       process.stderr.write('[spawned task stderr] ' + data)
-      stderr += data
+      if (stderr.length <= 2000) {
+        stderr += data
+        if (stderr.length > 2000) {
+          stderr = stderr.slice(0, 2000) + '...'
+        }
+      }
     })
     pids[run._id] = spawnPromise.childProcess.pid || -1
     await spawnPromise // wait for the task to finish
@@ -244,10 +249,12 @@ async function iter (db, run) {
     // Build back the original error message from the stderr of the child process
     const errorMessage = []
     if (stderr) {
-      stderr.split('\n').filter(line => !!line && !line.startsWith('worker:')).forEach(line => {
-        errorMessage.push(line)
-      })
-    } else {
+      stderr.split('\n')
+        .filter(line => !!line && !line.startsWith('worker:') && !line.includes('NODE_TLS_REJECT_UNAUTHORIZED'))
+        .forEach(line => errorMessage.push(line))
+    }
+
+    if (!errorMessage.length) {
       errorMessage.push(err.message)
     }
 

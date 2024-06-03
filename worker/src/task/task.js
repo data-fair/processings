@@ -126,7 +126,9 @@ const prepareLog = (runsCollection, wsPublish, processing, run) => {
     error: async (msg, extra = '') => await pushLog({ type: 'error', msg, extra }),
     warning: async (msg, extra = '') => await pushLog({ type: 'warning', msg, extra }),
     info: async (msg, extra = '') => await pushLog({ type: 'info', msg, extra }),
-    debug: async (msg, extra = '') => { if (!processing.debug) await pushLog({ type: 'debug', msg, extra }) },
+    debug: async (msg, extra = '') => {
+      if (processing.debug) await pushLog({ type: 'debug', msg, extra })
+    },
     task: async (msg) => await pushLog({ type: 'task', msg }),
     progress: async (msg, progress, total) => {
       const progressDate = new Date().toISOString()
@@ -222,17 +224,17 @@ export const run = async (db, mailTransport, wsPublish) => {
     process.chdir(cwd)
     const httpMessage = getHttpErrorMessage(err)
     if (httpMessage) {
-      // console.error(httpMessage)
-      // console.log(err)
+      console.log(httpMessage)
+      console.log(err)
       await log.error(httpMessage)
       await log.debug('axios error', err)
     } else {
-      // console.error(err.message)
-      // console.log(err)
+      console.log(err.message)
+      console.log(err)
       await log.error(err.message)
       await log.debug(err.stack)
     }
-    throw err
+    return err
   } finally {
     await tmpDir.cleanup()
   }

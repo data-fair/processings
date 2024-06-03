@@ -64,6 +64,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
   const run = await runsCollection.findOne({ _id: req.params.id })
   if (!run) return res.status(404).send()
   if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(run.owner, run.permissions, sessionState, req.headers.host) ?? '')) return res.status(403).send()
+  if (!sessionState.user.adminMode) run.log = run.log.filter(l => l.type !== 'debug')
   res.send(cleanRun(run, sessionState, req.headers.host))
 }))
 

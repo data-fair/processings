@@ -23,7 +23,8 @@ await mongo.connect(config.mongoUrl, { readPreference: 'primary', maxPoolSize: 1
 const mailTransport = nodemailer.createTransport(config.mails.transport)
 const wsPublish = await initPublisher(mongo.db)
 
-await run(mongo.db, mailTransport, wsPublish)
+const err = await run(mongo.db, mailTransport, wsPublish)
+if (err) exitCode = 1
 await mongo.client.close()
 mailTransport.close()
 
