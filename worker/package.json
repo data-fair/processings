@@ -13,6 +13,7 @@
     "@data-fair/lib": "^0.35.0",
     "agentkeepalive": "^4.5.0",
     "axios": "^1.6.8",
+    "axios-retry": "^4.4.0",
     "cacheable-lookup": "^6.1.0",
     "child-process-promise": "^2.2.1",
     "config": "^3.3.11",
