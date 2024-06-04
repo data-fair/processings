@@ -75,7 +75,7 @@ const getAxiosInstance = (processing) => {
 // WARNING: we used to do it in an interceptor, but it was incompatible with axios-retry
 const prepareAxiosError = (/** @type {any} */error) => {
   const response = error.response ?? error.request?.res ?? error.res
-  if (!response) return Promise.reject(error)
+  if (!response) return error
   delete response.request
   const headers = {}
   if (response.headers?.location) headers.location = response.headers.location
@@ -88,7 +88,7 @@ const prepareAxiosError = (/** @type {any} */error) => {
   if (response.data && response.data._readableState) delete response.data
   if (error.message) response.message = error.message
   if (error.stack) response.stack = error.stack
-  return Promise.reject(response)
+  return response
 }
 
 /**
@@ -187,8 +187,8 @@ export const run = async (db, mailTransport, wsPublish) => {
     retries: 3,
     retryDelay: axiosRetry.exponentialDelay,
     shouldResetTimeout: true,
-    onRetry: (retryCount, err, requestConfig) => {
-      prepareAxiosError(err)
+    onRetry: (retryCount, _err, requestConfig) => {
+      const err = prepareAxiosError(_err)
       const message = getHttpErrorMessage(err) || err.message || err
       log.warning(`tentative ${retryCount} de requête ${requestConfig.method} ${requestConfig.url} : ${message}`)
     }
@@ -223,9 +223,9 @@ export const run = async (db, mailTransport, wsPublish) => {
     process.chdir(cwd)
     if (_stopped) await log.error('L\'exécution a été interrompue', '')
     else await log.info('L\'exécution est terminée', '')
-  } catch (/** @type {any} */ err) {
+  } catch (/** @type {any} */ _err) {
     process.chdir(cwd)
-    prepareAxiosError(err)
+    const err = prepareAxiosError(_err)
     const httpMessage = getHttpErrorMessage(err)
     if (httpMessage) {
       console.log(httpMessage)
