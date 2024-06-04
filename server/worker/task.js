@@ -103,29 +103,13 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
     }
     return cfg
   }, error => Promise.reject(error))
-  // customize axios errors for shorter stack traces when a request fails
-  axiosInstance.interceptors.response.use(response => response, error => {
-    const response = error.response ?? error.request?.res ?? error.res
-    if (!response) return Promise.reject(error)
-    delete response.request
-    const headers = {}
-    if (response.headers?.location) headers.location = response.headers.location
-    response.headers = headers
-    response.config = response.config ?? error.config
-    if (response.config) {
-      response.config = { method: response.config.method, url: response.config.url, params: response.config.params, data: response.config.data }
-      if (response.config.data && response.config.data._writableState) delete response.config.data
-    }
-    if (response.data && response.data._readableState) delete response.data
-    if (error.message) response.message = error.message
-    if (error.stack) response.stack = error.stack
-    return Promise.reject(response)
-  })
+
   axiosRetry(axiosInstance, {
     retries: 3,
     retryDelay: axiosRetry.exponentialDelay,
     shouldResetTimeout: true,
-    onRetry: (retryCount, err, requestConfig) => {
+    onRetry: (retryCount, _err, requestConfig) => {
+      const err = prepareAxiosError(_err)
       const message = getHttpErrorMessage(err) || err.message || err
       log.warning(`tentative ${retryCount} de requête ${requestConfig.method} ${requestConfig.url} : ${message}`)
     }
@@ -233,8 +217,9 @@ exports.run = async ({ db, mailTransport, wsPublish }) => {
     process.chdir(cwd)
     if (_stopped) await log.error('interrompu')
     else await log.info('terminé')
-  } catch (err) {
+  } catch (_err) {
     process.chdir(cwd)
+    const err = prepareAxiosError(_err)
     const httpMessage = getHttpErrorMessage(err)
     if (httpMessage) {
       console.error(httpMessage)
@@ -259,6 +244,26 @@ exports.stop = async () => {
   if (pluginModule && pluginModule.stop) await pluginModule.stop()
   // grace period of 20s, either run() finishes in the interval or we shutdown
   await new Promise(resolve => setTimeout(resolve, config.worker.gracePeriod))
+}
+
+// customize axios errors for shorter stack traces when a request fails
+// WARNING: we used to do it in an interceptor, but it was incompatible with axios-retry
+const prepareAxiosError = (/** @type {any} */error) => {
+  const response = error.response ?? error.request?.res ?? error.res
+  if (!response) return error
+  delete response.request
+  const headers = {}
+  if (response.headers?.location) headers.location = response.headers.location
+  response.headers = headers
+  response.config = response.config ?? error.config
+  if (response.config) {
+    response.config = { method: response.config.method, url: response.config.url, params: response.config.params, data: response.config.data }
+    if (response.config.data && response.config.data._writableState) delete response.config.data
+  }
+  if (response.data && response.data._readableState) delete response.data
+  if (error.message) response.message = error.message
+  if (error.stack) response.stack = error.stack
+  return response
 }
 
 const getHttpErrorMessage = (err) => {
