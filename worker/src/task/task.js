@@ -28,7 +28,7 @@ const processingsDir = path.join(config.dataDir, 'processings')
  * @param {import('../../../shared/types/processing/index.js').Processing} processing
  * @returns {import('axios').AxiosInstance} Axios instance.
  */
-const axiosInstance = (processing) => {
+const getAxiosInstance = (processing) => {
   /** @type {any} */
   const headers = {
     'x-apiKey': config.dataFairAPIKey
@@ -67,26 +67,28 @@ const axiosInstance = (processing) => {
     }
     return cfg
   }, error => Promise.reject(error))
-  // customize axios errors for shorter stack traces when a request fails
-  axiosInstance.interceptors.response.use(response => response, error => {
-    const response = error.response ?? error.request?.res ?? error.res
-    if (!response) return Promise.reject(error)
-    delete response.request
-    const headers = {}
-    if (response.headers?.location) headers.location = response.headers.location
-    response.headers = headers
-    response.config = response.config ?? error.config
-    if (response.config) {
-      response.config = { method: response.config.method, url: response.config.url, params: response.config.params, data: response.config.data }
-      if (response.config.data && response.config.data._writableState) delete response.config.data
-    }
-    if (response.data && response.data._readableState) delete response.data
-    if (error.message) response.message = error.message
-    if (error.stack) response.stack = error.stack
-    return Promise.reject(response)
-  })
 
   return axiosInstance
+}
+
+// customize axios errors for shorter stack traces when a request fails
+// WARNING: we used to do it in an interceptor, but it was incompatible with axios-retry
+const prepareAxiosError = (/** @type {any} */error) => {
+  const response = error.response ?? error.request?.res ?? error.res
+  if (!response) return Promise.reject(error)
+  delete response.request
+  const headers = {}
+  if (response.headers?.location) headers.location = response.headers.location
+  response.headers = headers
+  response.config = response.config ?? error.config
+  if (response.config) {
+    response.config = { method: response.config.method, url: response.config.url, params: response.config.params, data: response.config.data }
+    if (response.config.data && response.config.data._writableState) delete response.config.data
+  }
+  if (response.data && response.data._readableState) delete response.data
+  if (error.message) response.message = error.message
+  if (error.stack) response.stack = error.stack
+  return Promise.reject(response)
 }
 
 /**
@@ -180,12 +182,13 @@ export const run = async (db, mailTransport, wsPublish) => {
   const tmpDir = await tmp.dir({ unsafeCleanup: true, tmpdir: baseTmpDir, prefix: `processing-run-${processing._id}-${run._id}` })
   const processingConfig = processing?.config || {}
 
-  const axios = axiosInstance(processing)
-  axiosRetry(axios, {
+  const axiosInstance = getAxiosInstance(processing)
+  axiosRetry(axiosInstance, {
     retries: 3,
     retryDelay: axiosRetry.exponentialDelay,
     shouldResetTimeout: true,
     onRetry: (retryCount, err, requestConfig) => {
+      prepareAxiosError(err)
       const message = getHttpErrorMessage(err) || err.message || err
       log.warning(`tentative ${retryCount} de requête ${requestConfig.method} ${requestConfig.url} : ${message}`)
     }
@@ -199,7 +202,7 @@ export const run = async (db, mailTransport, wsPublish) => {
     dir,
     tmpDir: tmpDir.path,
     log,
-    axios: axiosInstance(processing),
+    axios: axiosInstance,
     ws: wsInstance(log, processing?.owner),
     async patchConfig (patch) {
       await log.debug('patch config', patch)
@@ -222,6 +225,7 @@ export const run = async (db, mailTransport, wsPublish) => {
     else await log.info('L\'exécution est terminée', '')
   } catch (/** @type {any} */ err) {
     process.chdir(cwd)
+    prepareAxiosError(err)
     const httpMessage = getHttpErrorMessage(err)
     if (httpMessage) {
       console.log(httpMessage)
@@ -247,7 +251,7 @@ export const stop = async () => {
   await new Promise(resolve => setTimeout(resolve, config.worker.gracePeriod))
 }
 
-const getHttpErrorMessage = (err) => {
+const getHttpErrorMessage = (/** @type {any} */err) => {
   let httpMessage = err.status ?? err.statusCode
   if (httpMessage) {
     const statusText = err.statusText ?? err.statusMessage
