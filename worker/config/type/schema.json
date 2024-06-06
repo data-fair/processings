@@ -55,18 +55,7 @@
       "type": "object",
       "properties": {
         "transport": {
-          "type": "object",
-          "properties": {
-            "port": {
-              "type": "number"
-            },
-            "ignoreTLS": {
-              "type": "boolean"
-            },
-            "default": {
-              "type": "string"
-            }
-          }
+          "type": "object"
         }
       }
     },

@@ -10,9 +10,8 @@ module.exports = {
   getFromPrivateDataFairUrl: 'GET_FROM_PRIVATE_DATA_FAIR_URL',
   mails: {
     transport: {
-      port: 'MAILS_TRANSPORT_PORT',
-      ignoreTLS: 'MAILS_TRANSPORT_IGNORE_TLS',
-      default: 'MAILS_TRANSPORT_DEFAULT'
+      __name: 'MAILS_TRANSPORT',
+      __format: 'json'
     }
   },
   mongoUrl: 'MONGO_URL',
