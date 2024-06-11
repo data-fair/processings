@@ -13,7 +13,7 @@
   "devDependencies": {
     "@data-fair/lib": "^0.35.0",
     "@koumoul/v-iframe": "^2.4.3",
-    "@koumoul/vjsf": "^3.0.0-beta.24",
+    "@koumoul/vjsf": "^3.0.0-beta.25",
     "@koumoul/vjsf-markdown": "^0.2.0",
     "@mdi/font": "^7.4.47",
     "@nuxt/eslint-config": "^0.2.0",
