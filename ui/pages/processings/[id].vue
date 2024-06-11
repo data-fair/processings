@@ -18,14 +18,7 @@
             :schema="processingSchema"
             :options="vjsfOptions"
             @update:model-value="patch()"
-          >
-            <template #custom-time-zone>
-              <TimeZoneSelect
-                :value="editProcessing?.config?.timeZone"
-                @tzchange="handleTimeZoneChange"
-              />
-            </template>
-          </vjsf>
+          />
         </v-form>
         <processing-runs
           ref="runs"
@@ -67,6 +60,7 @@
 </template>
 
 <script setup>
+import timeZones from 'timezones.json'
 import setBreadcrumbs from '~/utils/breadcrumbs'
 import contractProcessing from '../../../contract/processing'
 import Vjsf from '@koumoul/vjsf'
@@ -82,6 +76,14 @@ const session = useSession()
 const eventBus = useEventBus()
 
 /** @typedef {import('../../../shared/types/processing/index.js').Processing} Processing */
+
+/** @type {string[]} */
+const utcs = []
+for (const tz of timeZones) {
+  for (const utc of tz.utc) {
+    if (!utcs.includes(utc)) utcs.push(utc)
+  }
+}
 
 const valid = ref(false)
 const edited = ref(false)
@@ -139,21 +141,6 @@ Preparation for the vjsf form
 /**
  * @param {Record<string, any>} object
  */
-function updateCustomTimeZone(object) {
-  Object.keys(object).forEach(key => {
-    const value = object[key]
-    if (value && typeof value === 'object') {
-      updateCustomTimeZone(value)
-    }
-    if (key === 'x-display' && value === 'custom-time-zone') {
-      object.layout = { slots: { component: 'custom-time-zone' } }
-      delete object[key]
-    }
-  })
-}
-/**
- * @param {Record<string, any>} object
- */
 function recurseConfigSchema(object) {
   Object.keys(object).forEach(key => {
     const value = object[key]
@@ -169,7 +156,6 @@ function recurseConfigSchema(object) {
 const processingSchema = computed(() => {
   if (!plugin.value || !processing.value) return
   const schema = JSON.parse(JSON.stringify(contractProcessing))
-  updateCustomTimeZone(schema)
   schema.properties.config = {
     ...plugin.value.processingConfigSchema,
     title: 'Plugin ' + plugin.value.customName,
@@ -205,7 +191,8 @@ const vjsfOptions = computed(() => {
     context: {
       owner: processing.value?.owner,
       dataFairUrl: window.location.origin + '/data-fair',
-      directoryUrl: window.location.origin + '/simple-directory'
+      directoryUrl: window.location.origin + '/simple-directory',
+      utcs
     },
     density: 'compact',
     initialValidation: 'always',
@@ -217,14 +204,6 @@ const vjsfOptions = computed(() => {
     locale: 'fr'
   }
 })
-
-/**
- * @param {string} value
- */
-async function handleTimeZoneChange(value) {
-  if (editProcessing.value?.config) editProcessing.value.config.timeZone = value
-  await patch()
-}
 
 async function patch() {
   // TODO: some problem in vjsf makes it necessary to wait when adding a permission for validity to be correct

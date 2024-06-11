@@ -46,11 +46,11 @@ export const createNext = async (db, processing, triggered = false, delaySeconds
     const cron = toCRON(processing.scheduling)
     const timeZone = processing.scheduling.timeZone || 'Europe/Paris'
     const job = new CronJob(cron, () => { }, () => { }, false, timeZone)
-    const nextDate = job.nextDate().toISO()
+    const nextDate = job.nextDate()?.toJSDate()
     if (!nextDate) {
       throw new Error('No next date returned for processing scheduling ' + processing.scheduling)
     }
-    run.scheduledAt = nextDate
+    run.scheduledAt = nextDate.toISOString()
   }
 
   runType.assertValid(run)
