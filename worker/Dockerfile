@@ -71,14 +71,13 @@ RUN test ! -d worker/node_modules
 
 ##############################################
 # copy deps and build and assemble actual dist
-FROM node:20.14.0-alpine3.20
+FROM nativedeps
 LABEL org.opencontainers.image.authors="contact@koumoul.com"
 
 ENV NODE_ENV=production
 
 WORKDIR /app/
 
-COPY --from=nativedeps /usr/lib/libproj.so /usr/lib/libproj.so
 COPY --from=builder /app/shared /app/shared
 COPY --from=builder /app/worker /app/worker
 COPY --from=installer /app/node_modules /app/node_modules
