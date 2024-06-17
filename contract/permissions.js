@@ -47,6 +47,7 @@ const permissions = {
               organization: {
                 type: 'object',
                 title: 'Organisation',
+                additionalProperties: true,
                 'x-fromUrl': '{context.directoryUrl}/api/organizations/{context.owner.id}',
                 'x-itemsProp': 'partners',
                 'x-itemKey': 'id',
