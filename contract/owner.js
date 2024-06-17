@@ -1,4 +1,4 @@
-exports.owner = {
+export default {
   type: 'object',
   title: 'Propriétaire',
   additionalProperties: true,
@@ -20,12 +20,3 @@ exports.owner = {
     }
   }
 }
-
-exports.editableOwner = (config) => ({
-  ...exports.owner,
-  readOnly: false,
-  'x-fromUrl': config.directoryUrl + '/api/organizations?size=1000',
-  'x-itemsProp': 'results',
-  'x-itemTitle': 'name',
-  'x-itemKey': 'id'
-})

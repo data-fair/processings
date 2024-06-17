@@ -1,4 +1,4 @@
-module.exports = {
+const scheduling = {
   title: 'Planification du traitement',
   type: 'object',
   oneOf: [
@@ -21,7 +21,7 @@ module.exports = {
           const: '*'
         },
         dayOfMonth: {
-          title: 'Jour du mois',
+          title: 'Jour du mois (de 1 à 28)',
           type: 'integer',
           minimum: 1,
           maximum: 28,
@@ -30,8 +30,7 @@ module.exports = {
           'x-class': 'pr-1'
         },
         hour: {
-          title: 'Heure de la journée',
-          description: 'de 0 à 23',
+          title: 'Heure de la journée (de 0 à 23)',
           type: 'integer',
           minimum: 0,
           maximum: 23,
@@ -39,8 +38,7 @@ module.exports = {
           'x-cols': 6
         },
         minute: {
-          title: 'Minute',
-          description: 'de 0 à 59',
+          title: 'Minute (de 0 à 59)',
           type: 'integer',
           minimum: 0,
           maximum: 59,
@@ -54,8 +52,13 @@ module.exports = {
         },
         timeZone: {
           type: 'string',
-          'x-cols': 6,
-          'x-display': 'custom-time-zone'
+          title: 'Fuseau horaire',
+          default: 'Europe/Paris',
+          layout: {
+            comp: 'autocomplete',
+            cols: 6,
+            getItems: 'context.utcs'
+          }
         }
       }
     },
@@ -95,8 +98,7 @@ module.exports = {
           'x-class': 'pr-1'
         },
         hour: {
-          title: 'Heure de la journée',
-          description: 'de 0 à 23',
+          title: 'Heure de la journée (de 0 à 23)',
           type: 'integer',
           minimum: 0,
           maximum: 23,
@@ -105,8 +107,7 @@ module.exports = {
           'x-class': 'pl-1'
         },
         minute: {
-          title: 'Minute',
-          description: 'de 0 à 59',
+          title: 'Minute (de 0 à 59)',
           type: 'integer',
           minimum: 0,
           maximum: 59,
@@ -124,8 +125,13 @@ module.exports = {
         },
         timeZone: {
           type: 'string',
-          'x-cols': 6,
-          'x-display': 'custom-time-zone'
+          title: 'Fuseau horaire',
+          default: 'Europe/Paris',
+          layout: {
+            comp: 'autocomplete',
+            cols: 6,
+            getItems: 'context.utcs'
+          }
         }
       }
     },
@@ -140,8 +146,7 @@ module.exports = {
           const: '*'
         },
         hour: {
-          title: 'Heure de la journée',
-          description: 'de 0 à 23',
+          title: 'Heure de la journée (de 0 à 23)',
           type: 'integer',
           minimum: 0,
           maximum: 23,
@@ -151,12 +156,16 @@ module.exports = {
         },
         timeZone: {
           type: 'string',
-          'x-cols': 6,
-          'x-display': 'custom-time-zone'
+          title: 'Fuseau horaire',
+          default: 'Europe/Paris',
+          layout: {
+            comp: 'autocomplete',
+            cols: 6,
+            getItems: 'context.utcs'
+          }
         },
         minute: {
-          title: 'Minute',
-          description: 'de 0 à 59',
+          title: 'Minute (de 0 à 59)',
           type: 'integer',
           minimum: 0,
           maximum: 59,
@@ -198,8 +207,7 @@ module.exports = {
           'x-class': 'pl-1'
         },
         minute: {
-          title: 'Minute',
-          description: 'de 0 à 59',
+          title: 'Minute (de 0 à 59)',
           type: 'integer',
           minimum: 0,
           maximum: 59,
@@ -219,3 +227,5 @@ module.exports = {
     }
   ]
 }
+
+export default scheduling

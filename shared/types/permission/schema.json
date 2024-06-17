@@ -1,0 +1,61 @@
+{
+  "$id": "https://github.com/data-fair/processings/permission",
+  "x-exports": [
+    "types",
+    "validate"
+  ],
+  "title": "permission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile", "target"
+  ],
+  "properties": {
+    "profile": {
+      "type": "string",
+      "enum": [
+        "read",
+        "exec"
+      ]
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "userEmail",
+            "partner"
+          ]
+        },
+        "email": {
+          "type": "string"
+        },
+        "organization": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          }
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "contrib",
+              "user"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

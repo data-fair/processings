@@ -1,9 +1,9 @@
-const { owner } = require('./owner')
-const permissions = require('./permissions')
+import owner from './owner.js'
+import permissions from './permissions.js'
 
-module.exports = {
+const run = {
   type: 'object',
-  additionalProperties: false,
+  additionalProperties: true,
   required: ['_id', 'owner', 'processing', 'createdAt', 'status', 'log'],
   properties: {
     _id: { type: 'string' },
@@ -63,3 +63,5 @@ module.exports = {
     permissions
   }
 }
+
+export default run

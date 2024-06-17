@@ -1,9 +1,7 @@
 data/
 node_modules/
-.nuxt
-config/local-*
-/nuxt-dist
-/dist
-
-public/assets/css/
-public/assets/fonts/
+worker/config/local-*
+api/config/local-*
+.config/
+.type/
+/test-*

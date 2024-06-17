@@ -1,0 +1,31 @@
+layout {
+    pane {
+      split_direction "vertical"
+      pane name="processings" borderless=true {
+        command "${DEV_SHELL}"
+        args "-ic" "nvm use > /dev/null 2>&1 && ${DEV_SHELL}"
+      }
+      pane name="deps" {
+        command "${DEV_SHELL}"
+        args "-ic" "nvm use > /dev/null 2>&1 && npm run dev-deps && mkdir -p data; touch data/zellij-deps-ready && docker compose logs -f"
+      }
+    }
+    pane {
+      split_direction "vertical"
+      pane name="ui" {
+        command "${DEV_SHELL}"
+        args "-ic" "nvm use > /dev/null 2>&1 && echo 'waiting for deps to start...' && while [ ! -f data/zellij-deps-ready ]; do sleep 1; done && npm -w ui run dev"
+      }
+      pane name="api" {
+        command "${DEV_SHELL}"
+        args "-ic" "nvm use > /dev/null 2>&1 && echo 'waiting for deps to start...' && while [ ! -f data/zellij-deps-ready ]; do sleep 1; done && npm -w api run dev"
+      }
+      pane name="worker" {
+        command "${DEV_SHELL}"
+        args "-ic" "nvm use > /dev/null 2>&1 && echo 'waiting for deps to start...' && while [ ! -f data/zellij-deps-ready ]; do sleep 1; done && npm -w worker run dev"
+      }
+    }
+    pane size=2 borderless=true {
+        plugin location="zellij:status-bar"
+    }
+}

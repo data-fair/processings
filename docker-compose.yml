@@ -1,24 +1,38 @@
-version: '3'
 services:
-  sd:
+
+  #####
+  # reverse proxy for the whole environment
+  #####
+  nginx:
+    image: nginx:1.23.1-alpine
+    network_mode: host
+    volumes:
+      - ./dev/resources/nginx.conf:/etc/nginx/nginx.conf:ro
+
+  #####
+  # related services from the data-fair stack
+  #####
+  simple-directory:
     profiles:
       - dev
       - test
     image: ghcr.io/data-fair/simple-directory:master
     network_mode: host
+    depends_on:
+      - mongo
     environment:
+      - DEBUG=session
       - ADMINS=["superadmin@test.com"]
       - PUBLIC_URL=http://localhost:5600/simple-directory
       - MAILDEV_ACTIVE=true
       - STORAGE_TYPE=file
-      - NO_UI=${NO_UI}
       - AUTHRATELIMIT_ATTEMPTS=200
-      - PROMETHEUS_ACTIVE=false
       - OBSERVER_ACTIVE=false
       - MANAGE_PARTNERS=true
+      - MANAGE_DEPARTMENTS=true
     volumes:
-      - ./test/resources/users.json:/webapp/data/users.json
-      - ./test/resources/organizations.json:/webapp/data/organizations.json
+      - ./dev/resources/users.json:/webapp/data/users.json
+      - ./dev/resources/organizations.json:/webapp/data/organizations.json
 
   data-fair:
     profiles:
@@ -28,21 +42,28 @@ services:
     restart: on-failure:10
     network_mode: host
     depends_on:
-      - sd
-      - mongo
+      mongo:
+        condition: service_started
+      elasticsearch:
+        condition: service_healthy
     environment:
       - PORT=8081
       - DEBUG=files
       - MONGO_URL=mongodb://localhost:27017/data-fair
       - OPENAPI_VIEWER_URL=http://localhost:5600/openapi-viewer/
       - DIRECTORY_URL=http://localhost:5600/simple-directory
+      - NOTIFY_URL=http://localhost:5600/notify
       - PUBLIC_URL=http://localhost:5600/data-fair
       - WS_PUBLIC_URL=ws://localhost:5600/data-fair
-      - EXTRA_NAV_ITEMS=[{"id":"processings","can":"contrib","iframe":"http://localhost:5600/embed/processings","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
-      - EXTRA_ADMIN_NAV_ITEMS=[{"id":"processings","iframe":"http://localhost:5600/","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
+      - EXTRA_NAV_ITEMS=[{"id":"processings","can":"contrib","iframe":"http://localhost:5600/processings/processings","basePath":"/processings","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
+      - EXTRA_ADMIN_NAV_ITEMS=[{"id":"processings","iframe":"http://localhost:5600/processings/admin","basePath":"/processings","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
       - OBSERVER_ACTIVE=false
     volumes:
       - data-fair-data:/data
+
+  #####
+  # db and search engine
+  #####
 
   elasticsearch:
     profiles:
@@ -54,6 +75,7 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms128m -Xmx128m"
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
     healthcheck:
@@ -66,9 +88,11 @@ services:
     profiles:
       - dev
       - test
-    image: mongo:4.1
+    image: mongo:4.2
     ports:
       - 27017:27017
+    volumes:
+      - mongo-data:/data/db
 
   notify:
     profiles:
@@ -82,10 +106,55 @@ services:
       - DIRECTORY_URL=http://localhost:5600/simple-directory
       - SECRET_NOTIFICATIONS=secret-notifications
       - SECRET_SENDMAILS=secret-sendmails
-      - PROMETHEUS_ACTIVE=false
       - OBSERVER_ACTIVE=false
 
+  #####
+  # Api, ui and worker in docker mode
+  #####
+  api:
+    build:
+      dockerfile: ./api/Dockerfile
+      args:
+        NODE_ENV: development
+    depends_on:
+      - data-fair
+    profiles:
+      - testImages
+    image: datafair/processings/api:dev
+    network_mode: host
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - processings-data:/app/data
+
+  ui:
+    build:
+      dockerfile: ./ui/Dockerfile
+    depends_on:
+      - data-fair
+    profiles:
+      - testImages
+    image: datafair/processings/ui:dev
+    network_mode: host
+
+  worker:
+    build:
+      dockerfile: ./worker/Dockerfile
+      args:
+        NODE_ENV: development
+    depends_on:
+      - data-fair
+    profiles:
+      - testImages
+    image: datafair/processings/worker:dev
+    network_mode: host
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - processings-data:/app/data
+
 volumes:
+  data-fair-data:
   elasticsearch-data:
   mongo-data:
-  data-fair-data:
+  processings-data:

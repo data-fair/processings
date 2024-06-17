@@ -1,0 +1,82 @@
+{
+  "$id": "https://github.com/data-fair/processings/api/config",
+  "x-exports": [
+    "types",
+    "validate"
+  ],
+  "x-ajv": {
+    "coerceTypes": "array"
+  },
+  "type": "object",
+  "title": "Api config",
+  "additionalProperties": false,
+  "required": [
+    "dataDir",
+    "privateDirectoryUrl",
+    "mongoUrl",
+    "origin",
+    "port",
+    "observer",
+    "secretKeys"
+  ],
+  "properties": {
+    "dataDir": {
+      "type": "string"
+    },
+    "tmpDir": {
+      "type": "string"
+    },
+    "defaultLimits": {
+      "type": "object",
+      "properties": {
+        "processingsSeconds": {
+          "type": "number"
+        }
+      }
+    },
+    "mongoUrl": {
+      "type": "string"
+    },
+    "origin": {
+      "type": "string",
+      "pattern": "^https?://"
+    },
+    "port": {
+      "type": "number"
+    },
+    "privateDirectoryUrl": {
+      "type": "string",
+      "pattern": "^https?://"
+    },
+    "secretKeys": {
+      "type": "object",
+      "properties": {
+        "limits": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "observer": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "type": "boolean"
+        },
+        "port": {
+          "type": "number"
+        }
+      }
+    },
+    "npm": {
+      "type": "object",
+      "properties": {
+        "httpsProxy": {
+          "type": "string"
+        }
+      }
+    },
+    "util": {},
+    "get": {},
+    "has": {}
+  }
+}

@@ -1,7 +1,11 @@
-module.exports = {
+const permissions = {
   type: 'array',
   title: 'Permissions',
-  'x-class': 'mb-8',
+  layout: {
+    messages: {
+      addItem: 'Ajouter une permission'
+    }
+  },
   items: {
     type: 'object',
     required: ['profile', 'target'],
@@ -72,3 +76,5 @@ module.exports = {
     }
   }
 }
+
+export default permissions

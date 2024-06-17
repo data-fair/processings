@@ -1,0 +1,136 @@
+{
+  "$id": "https://github.com/data-fair/processings/worker/config",
+  "x-exports": [
+    "types",
+    "validate"
+  ],
+  "x-ajv": {
+    "coerceTypes": "array"
+  },
+  "type": "object",
+  "title": "Worker config",
+  "additionalProperties": false,
+  "required": [
+    "dataDir",
+    "dataFairAPIKey",
+    "dataFairAdminMode",
+    "dataFairUrl",
+    "defaultLimits",
+    "mails",
+    "mongoUrl",
+    "locks",
+    "observer",
+    "worker",
+    "secretKeys"
+  ],
+  "properties": {
+    "dataDir": {
+      "type": "string"
+    },
+    "tmpDir": {
+      "type": "string"
+    },
+    "dataFairAPIKey": {
+      "type": "string"
+    },
+    "dataFairAdminMode": {
+      "type": "boolean"
+    },
+    "dataFairUrl": {
+      "type": "string",
+      "pattern": "^https?://"
+    },
+    "defaultLimits" : {
+      "type": "object",
+      "properties": {
+        "processingsSeconds": {
+          "type": "number"
+        }
+      }
+    },
+    "getFromPrivateDataFairUrl": {
+      "type": "boolean"
+    },
+    "mails": {
+      "type": "object",
+      "properties": {
+        "transport": {
+          "type": "object"
+        }
+      }
+    },
+    "mongoUrl": {
+      "type": "string"
+    },
+    "secretKeys": {
+      "type": "object",
+      "properties": {
+        "notifications": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "privateNotifyUrl": {
+      "type": "string"
+    },
+    "locks": {
+      "type": "object",
+      "required": [
+        "ttl"
+      ],
+      "properties": {
+        "ttl": {
+          "type": "number"
+        }
+      }
+    },
+    "observer": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "type": "boolean"
+        },
+        "port": {
+          "type": "number"
+        }
+      }
+    },
+    "privateDataFairUrl": {
+      "type": "string"
+    },
+    "worker": {
+      "type": "object",
+      "required": [
+        "interval",
+        "inactiveInterval",
+        "inactivityDelay",
+        "killInterval",
+        "concurrency",
+        "gracePeriod"
+      ],
+      "properties": {
+        "interval": {
+          "type": "number"
+        },
+        "inactiveInterval": {
+          "type": "number"
+        },
+        "inactivityDelay": {
+          "type": "number"
+        },
+        "killInterval": {
+          "type": "number"
+        },
+        "concurrency": {
+          "type": "number"
+        },
+        "gracePeriod": {
+          "type": "number"
+        }
+      }
+    },
+    "util": {},
+    "get": {},
+    "has": {}
+  }
+}
