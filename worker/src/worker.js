@@ -3,7 +3,7 @@ import { existsSync } from 'fs'
 import resolvePath from 'resolve-path'
 import mongo from '@data-fair/lib/node/mongo.js'
 import limits from './utils/limits.js'
-import locks from './utils/locks.js'
+import * as locks from '@data-fair/lib/node/locks.js'
 import config from './config.js'
 import kill from 'tree-kill'
 import { startObserver, stopObserver, internalError } from '@data-fair/lib/node/observer.js'
@@ -64,7 +64,7 @@ export const start = async () => {
 // Stop and wait for all workers to finish their current task
 export const stop = async () => {
   stopped = true
-  locks.stop()
+  await locks.stop()
   await Promise.all(promisePool.filter(p => !!p))
   await Promise.all([mainLoopPromise, killLoopPromise])
   await mongo.client.close()
@@ -164,7 +164,7 @@ async function killLoop (db) {
  */
 async function killRun (db, run) {
   if (!pids[run._id]) {
-    const ack = await locks.acquire(db, run.processing._id)
+    const ack = await locks.acquire(run.processing._id, 'worker-loop-kill')
     if (ack) {
       console.warn('the run should be killed, it is not locked by another worker and we have no running PID, mark it as already killed', run._id)
       debug('mark as already killed', run)
@@ -276,7 +276,7 @@ async function iter (db, run) {
   } finally {
     if (run) {
       delete pids[run._id]
-      locks.release(db, run.processing._id)
+      await locks.release(run.processing._id)
     }
     if (processing && processing.scheduling.type !== 'trigger') { // we create the next scheduled run
       try {
@@ -312,7 +312,7 @@ async function acquireNext (db) {
 
   while (await cursor.hasNext()) {
     let run = /** @type {Run} */(await cursor.next())
-    const ack = await locks.acquire(db, run.processing._id)
+    const ack = await locks.acquire(run.processing._id, 'worker-loop-iter')
     debug('acquire lock for run ?', run._id, ack)
 
     if (ack) {
@@ -321,7 +321,7 @@ async function acquireNext (db) {
       const runsCollection = db.collection('runs')
       run = /** @type {Run} */(await runsCollection.findOne({ _id: run._id }))
 
-      // if we could asquire the lock it means the task was brutally interrupted
+      // if we could acquire the lock it means the task was brutally interrupted
       if (run.status === 'running') {
         try {
           console.warn('we had to close a run that was stuck in running status', run)
@@ -329,7 +329,7 @@ async function acquireNext (db) {
           /** @type {import('mongodb').Collection<import('../../shared/types/processing/index.js').Processing>} */
           const processingsCollection = db.collection('processings')
           const processing = await processingsCollection.findOne({ _id: run.processing._id })
-          await locks.release(db, run.processing._id)
+          await locks.release(run.processing._id)
           if (processing && processing.scheduling.type !== 'trigger') {
             await createNext(db, processing) // we create the next scheduled run
           }
@@ -337,6 +337,9 @@ async function acquireNext (db) {
           internalError('worker-manage-running', 'failure while closing a run that was left in running status by error', { error: err })
           console.error('(manage-running) failure while closing a run that was left in running status by error', err)
         }
+        continue
+      }
+      if (run.status !== 'triggered' && run.status !== 'scheduled') {
         continue
       }
       return run
