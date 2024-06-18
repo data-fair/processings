@@ -2,11 +2,7 @@
   <v-container
     data-iframe-height
   >
-    <fetch-error
-      v-if="installedPluginsFetch.error.value"
-      :error="installedPluginsFetch.error.value"
-    />
-    <v-row v-else-if="!installedPluginsFetch.pending.value">
+    <v-row>
       <v-col>
         <v-container>
           <v-row
@@ -53,7 +49,6 @@
                 <ProcessingCard
                   :processing="processing"
                   :show-owner="showAll"
-                  :plugin-custom-name="installedPluginsFetch.data.value.results.find(p => p.id === processing.plugin)?.customName"
                   class="w-100"
                 />
               </v-col>
@@ -61,23 +56,22 @@
           </template>
         </v-container>
       </v-col>
-      <template v-if="processingsFetch.data.value">
+      <template v-if="processingsFetch.data.value && canAdmin">
         <LayoutNavigationRight v-if="$vuetify.display.lgAndUp">
           <ProcessingsActions
-            v-if="canAdmin"
             v-model:search="search"
             v-model:show-all="showAll"
             v-model:plugins-selected="plugins"
             v-model:statuses-selected="status"
+            :owner-filter="ownerFilter"
             :admin-mode="session.state.user?.adminMode"
             :facets="processingsFetch.data.value.facets"
             :is-small="false"
-            :installed-plugins="installedPluginsFetch.data.value.results"
             :processings="displayProcessings"
           />
         </LayoutNavigationRight>
         <LayoutActionsButton
-          v-else-if="canAdmin"
+          v-else
           class="pt-2"
         >
           <template #actions>
@@ -86,10 +80,10 @@
               v-model:show-all="showAll"
               v-model:plugins-selected="plugins"
               v-model:statuses-selected="status"
+              :owner-filter="ownerFilter"
               :admin-mode="session.state.user?.adminMode"
               :facets="processingsFetch.data.value.facets"
               :is-small="true"
-              :installed-plugins="installedPluginsFetch.data.value.results"
               :processings="displayProcessings"
             />
           </template>
@@ -114,18 +108,6 @@ const plugins = useStringsArraySearchParam('plugin')
 const status = useStringsArraySearchParam('status')
 
 onMounted(async () => setBreadcrumbs([{ text: 'traitements' }]))
-
-/**
- * @typedef InstalledPlugin
- * @property {string} name
- * @property {string} customName
- * @property {string} description
- * @property {string} version
- * @property {string} distTag
- * @property {string} id
- * @property {any} pluginConfigSchema
- * @property {any} processingConfigSchema
- */
 
 /*
 Permissions
@@ -159,9 +141,6 @@ const canAdmin = computed(() => {
 /*
 fetch and filter resources
 */
-
-/** @type {Awaited<ReturnType<typeof useFetch<{count: number, results: InstalledPlugin[]}>>>}  */
-const installedPluginsFetch = await useFetch(`/api/v1/plugins?privateAccess=${ownerFilter.value}`, { lazy: true })
 
 const processingsParams = computed(() => {
   /** @type {any} */

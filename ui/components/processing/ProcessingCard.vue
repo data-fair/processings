@@ -27,15 +27,37 @@
           density="compact"
           style="background-color: inherit;"
         >
-          <v-list-item>
+          <v-list-item v-if="pluginFetch.error.value && pluginFetch.error.value?.statusCode !== 404">
+            <fetch-error
+              :error="pluginFetch.error.value"
+            />
+          </v-list-item>
+          <v-list-item v-else-if="pluginFetch.pending.value">
+            <v-progress-circular
+              indeterminate
+              color="primary"
+              size="x-small"
+              width="3" />
+          </v-list-item>
+          <v-list-item v-else-if="pluginFetch.error.value?.statusCode">
             <template #prepend>
               <v-icon
                 icon="mdi-power-plug"
-                :color="pluginCustomName ? 'default' : 'error'"
+                color="error"
               />
             </template>
-            <span :class="!pluginCustomName ? 'text-error' : ''">
-              {{ pluginCustomName || 'Supprimé - ' + processing.plugin }}
+            <span class="text-error">
+              {{ 'Supprimé - ' + processing.plugin }}
+            </span>
+          </v-list-item>
+          <v-list-item v-else>
+            <template #prepend>
+              <v-icon
+                icon="mdi-power-plug"
+              />
+            </template>
+            <span>
+              {{ pluginFetch.data.value?.customName }}
             </span>
           </v-list-item>
 
@@ -134,9 +156,10 @@
 
 <script setup>
 import useDateFormat from '~/composables/date-format'
+import usePluginFetch from '~/composables/use-plugin-fetch'
 const format = useDateFormat()
 
-defineProps({
+const props = defineProps({
   pluginCustomName: {
     type: String,
     default: null
@@ -147,6 +170,8 @@ defineProps({
   },
   showOwner: Boolean
 })
+
+const pluginFetch = await usePluginFetch(props.processing.plugin)
 
 </script>
 

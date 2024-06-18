@@ -5,7 +5,20 @@
     :style="isSmall ? '' : 'background-color: transparent;'"
     data-iframe-height
   >
+    <v-list-item v-if="installedPluginsFetch.error.value">
+      <fetch-error
+        :error="installedPluginsFetch.error.value"
+      />
+    </v-list-item>
+    <v-list-item v-else-if="installedPluginsFetch.pending.value">
+      <v-progress-circular
+        indeterminate
+        color="primary"
+        size="x-small"
+        width="3" />
+    </v-list-item>
     <v-menu
+      v-else
       v-model="showCreateMenu"
       :close-on-content-click="false"
       min-width="500px"
@@ -139,8 +152,8 @@ const eventBus = useEventBus()
 
 const processingsProps = defineProps({
   adminMode: Boolean,
+  ownerFilter: { type: String, required: true },
   facets: { type: Object as PropType<Record<string, any>>, required: true },
-  installedPlugins: { type: Array as PropType<Array<Record<string, any>>>, required: true },
   isSmall: Boolean,
   processings: { type: Array as PropType<Array<Record<string, any>>>, required: true }
 })
@@ -165,6 +178,22 @@ const statusesText: Record<string, string> = {
   triggered: 'Déclenché'
 }
 
+/**
+ * @typedef InstalledPlugin
+ * @property {string} name
+ * @property {string} customName
+ * @property {string} description
+ * @property {string} version
+ * @property {string} distTag
+ * @property {string} id
+ * @property {any} pluginConfigSchema
+ * @property {any} processingConfigSchema
+ */
+
+/** @type {Awaited<ReturnType<typeof useFetch<{count: number, results: InstalledPlugin[]}>>>}  */
+const installedPluginsFetch = await useFetch(`/api/v1/plugins?privateAccess=${processingsProps.ownerFilter}`, { lazy: true })
+const installedPlugins = computed(() => installedPluginsFetch.data.value?.results)
+
 const statusesItems: Ref<{ display: String, statusKey: String }[]> = computed(() => {
   if (!processingsProps.facets.statuses) return []
 
@@ -177,13 +206,13 @@ const statusesItems: Ref<{ display: String, statusKey: String }[]> = computed(()
 })
 
 const pluginsItems: Ref<Record<string, any>[]> = computed(() => {
-  if (!processingsProps.installedPlugins) return []
+  if (!installedPlugins.value) return []
   if (!processingsProps.facets.plugins) return []
 
   return Object.entries(processingsProps.facets.plugins)
     .map(
       ([pluginKey, count]) => {
-        const customName = processingsProps.installedPlugins.find((plugin: Record<string, any>) => plugin.id === pluginKey)?.customName
+        const customName = installedPlugins.value.find((plugin: Record<string, any>) => plugin.id === pluginKey)?.customName
         return {
           display: `${customName || 'Supprimé - ' + pluginKey} (${count})`,
           pluginKey
