@@ -6,6 +6,7 @@ const permissions = {
       addItem: 'Ajouter une permission'
     }
   },
+  default: [],
   items: {
     type: 'object',
     required: ['profile', 'target'],
