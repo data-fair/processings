@@ -3,14 +3,14 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "NODE_ENV=development DEBUG=worker node --watch index.js"
+    "dev": "NODE_ENV=development DEBUG=worker,upgrade* node --watch index.js"
   },
   "devDependencies": {
     "@types/child-process-promise": "^2.2.6",
     "@types/nodemailer": "^6.4.14"
   },
   "dependencies": {
-    "@data-fair/lib": "^0.35.0",
+    "@data-fair/lib": "^0.36.1",
     "agentkeepalive": "^4.5.0",
     "axios": "^1.6.8",
     "axios-retry": "^4.4.0",
@@ -19,12 +19,14 @@
     "config": "^3.3.11",
     "cron": "^3.1.7",
     "dayjs": "^1.11.11",
+    "debug": "^4.3.5",
     "fs-extra": "^11.2.0",
     "mongodb": "^6.6.0",
     "nanoid": "^5.0.7",
     "nodemailer": "^6.9.12",
     "prom-client": "^15.1.2",
     "resolve-path": "^1.4.0",
+    "semver": "^7.6.2",
     "tmp-promise": "^3.0.3",
     "tree-kill": "^1.2.2",
     "ws": "^8.17.0"

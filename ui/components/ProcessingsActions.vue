@@ -15,7 +15,8 @@
         indeterminate
         color="primary"
         size="x-small"
-        width="3" />
+        width="3"
+      />
     </v-list-item>
     <v-menu
       v-else

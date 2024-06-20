@@ -43,7 +43,7 @@
   "devDependencies": {
     "@bcherny/json-schema-ref-parser": "^10.0.5-fork",
     "@commitlint/config-conventional": "^19.2.2",
-    "@data-fair/lib": "^0.35.0",
+    "@data-fair/lib": "^0.36.1",
     "@types/config": "^3.3.3",
     "@types/debug": "^4.1.12",
     "@types/fs-extra": "^11.0.4",
@@ -68,5 +68,10 @@
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^2.1.1",
     "ajv-i18n": "^4.2.0"
+  },
+  "overrides": {
+    "@data-fair/lib": {
+      "@vueuse/integrations": "10.9.0"
+    }
   }
 }

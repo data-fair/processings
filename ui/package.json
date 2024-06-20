@@ -11,7 +11,7 @@
     "start": "npm run build && PORT=3039 nuxi start"
   },
   "devDependencies": {
-    "@data-fair/lib": "^0.35.0",
+    "@data-fair/lib": "^0.36.1",
     "@koumoul/v-iframe": "^2.4.3",
     "@koumoul/vjsf": "^3.0.0-beta.26",
     "@koumoul/vjsf-markdown": "^0.2.0",

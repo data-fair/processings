@@ -4,6 +4,7 @@ import resolvePath from 'resolve-path'
 import mongo from '@data-fair/lib/node/mongo.js'
 import limits from './utils/limits.js'
 import * as locks from '@data-fair/lib/node/locks.js'
+import upgradeScripts from '@data-fair/lib/node/upgrade-scripts.js'
 import config from './config.js'
 import kill from 'tree-kill'
 import { startObserver, stopObserver, internalError } from '@data-fair/lib/node/observer.js'
@@ -42,6 +43,7 @@ export const start = async () => {
   await mongo.connect(config.mongoUrl, { readPreference: 'primary', maxPoolSize: 1 })
   const db = mongo.db
   await locks.init(db)
+  await upgradeScripts(db, '../')
   wsPublish = await initPublisher(db)
   if (config.observer.active) {
     await initMetrics(db)
@@ -228,13 +230,13 @@ async function iter (db, run) {
       stdio: ['ignore', 'pipe', 'pipe']
     })
     spawnPromise.childProcess.stdout?.on('data', data => {
-      process.stdout.write('[spawned task stdout] ' + data)
+      process.stdout.write(`[spawned task stdout] ${run.processing._id} / ${run._id}` + data)
       if (data.includes('<running>')) {
         // @test:spy("isRunning")
       }
     })
     spawnPromise.childProcess.stderr?.on('data', data => {
-      process.stderr.write('[spawned task stderr] ' + data)
+      process.stderr.write(`[spawned task stdout] ${run.processing._id} / ${run._id}` + data)
       if (stderr.length <= 2000) {
         stderr += data
         if (stderr.length > 2000) {
@@ -334,8 +336,9 @@ async function acquireNext (db) {
             await createNext(db, processing) // we create the next scheduled run
           }
         } catch (err) {
-          internalError('worker-manage-running', 'failure while closing a run that was left in running status by error', { error: err })
-          console.error('(manage-running) failure while closing a run that was left in running status by error', err)
+          const message = `failure while closing a run that was left in running status by error (${run.processing._id} / ${run._id})`
+          internalError('worker-manage-running', message, { error: err })
+          console.error('(worker-manage-running) ' + message, err)
         }
         continue
       }
