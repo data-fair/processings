@@ -1,5 +1,6 @@
 import axios from 'axios'
 import axiosRetry from 'axios-retry'
+import util from 'node:util'
 import config from '../config.js'
 import fs from 'fs-extra'
 import path from 'path'
@@ -227,13 +228,16 @@ export const run = async (db, mailTransport, wsPublish) => {
     process.chdir(cwd)
     const err = prepareAxiosError(_err)
     const httpMessage = getHttpErrorMessage(err)
+
     if (httpMessage) {
-      console.log(httpMessage)
-      console.log(err)
+      let errStr = util.inspect(err, { depth: 5 })
+      if (errStr.length > 10000) {
+        errStr = errStr.slice(0, 10000) + '...'
+      }
+      console.log(errStr)
       await log.error(httpMessage)
-      await log.debug('axios error', err)
+      await log.debug('axios error', errStr)
     } else {
-      console.log(err.message)
       console.log(err)
       await log.error(err.message)
       await log.debug(err.stack)
