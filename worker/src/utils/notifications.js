@@ -18,8 +18,7 @@ export const send = async (notification) => {
   if (process.env.NODE_ENV !== 'test') {
     await axios.post(`${config.privateNotifyUrl}/api/v1/notifications`, notification, { params: { key: config.secretKeys.notifications } })
       .catch(err => {
-        internalError('notif-send', 'Failure to push notification', notification, err.response || err)
-        console.error('Failure to push notification', notification, err.response || err)
+        internalError('notif-send', err, notification)
       })
   }
 }

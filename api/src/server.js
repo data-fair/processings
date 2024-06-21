@@ -4,6 +4,7 @@ import { app } from './app.js'
 import { startWSServer, stopWSServer } from './utils/wsServer.js'
 import { session } from '@data-fair/lib/express/index.js'
 import { startObserver, stopObserver } from '@data-fair/lib/node/observer.js'
+import * as locks from '@data-fair/lib/node/locks.js'
 import { createHttpTerminator } from 'http-terminator'
 import { exec as execCallback } from 'child_process'
 import { promisify } from 'util'
@@ -37,6 +38,7 @@ export const start = async () => {
       main: { 'owner.type': 1, 'owner.id': 1, 'processing._id': 1, createdAt: -1 }
     }
   })
+  await locks.init(mongo.db)
 
   server.listen(config.port)
   await new Promise(resolve => server.once('listening', resolve))

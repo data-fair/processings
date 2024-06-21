@@ -31,8 +31,11 @@ export const applyProcessing = async (db, processing) => {
     await runsCollection.deleteMany({ 'processing._id': processing._id, status: 'scheduled' })
     return
   }
-
-  await createNext(db, processing)
+  try {
+    await createNext(db, processing)
+  } catch (error) {
+    console.error('Error creating next run', error)
+  }
 }
 
 /**

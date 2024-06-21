@@ -116,8 +116,7 @@ async function mainLoop (db, lastActivity) {
       promisePool[freeSlot] = iter(db, run)
       // @ts-ignore -> we are sure that the slot is a Promise<void>
       promisePool[freeSlot].catch(err => {
-        internalError('worker-iter, error in worker iter', { error: err })
-        console.error('(worker-iter) error in worker iter', err)
+        internalError('worker-iter', err)
       })
       // always empty the slot after the promise is finished
       // @ts-ignore -> we are sure that the slot is a Promise<void>
@@ -146,11 +145,11 @@ async function killLoop (db) {
         const runsCollection = mongo.db.collection('runs')
         for await (const run of runsCollection.find({ status: 'kill' })) {
           killRun(db, run).catch(err => {
-            internalError('worker-task-kill', 'error while killing task', { error: err })
+            internalError('worker-task-kill', err)
           })
         }
       } catch (err) {
-        internalError('worker-loop-kill', 'error while killing task loop', { error: err })
+        internalError('worker-loop-kill', err)
         console.error('(loop-kill) error while killing task loop', err)
       }
     }
@@ -202,7 +201,6 @@ async function iter (db, run) {
 
   if (!processing) {
     internalError('worker-missing-processing', 'found a run without associated processing, weird')
-    console.error('(missing-processing) found a run without associated processing, weird')
     /** @type {import('mongodb').Collection<Run>} */
     const runsCollection = db.collection('runs')
     await runsCollection.deleteOne({ _id: run._id })
@@ -272,8 +270,7 @@ async function iter (db, run) {
         // @test:spy("isFailure")
       }
     } else {
-      internalError('worker', 'failure in worker', { error: err })
-      console.error('(worker) failure in worker', err)
+      internalError('worker', err)
     }
   } finally {
     if (run) {
@@ -284,8 +281,13 @@ async function iter (db, run) {
       try {
         await createNext(db, processing)
       } catch (err) {
-        internalError('worker-next-run', 'failure while creating next run', { error: err })
-        console.error('(next-run) failure while creating next run', err)
+        // retry once in case of failure, a concurrent call to createNext might have been made, but failed
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        try {
+          await createNext(db, processing)
+        } catch (err) {
+          internalError('worker-next-run', err)
+        }
       }
     }
   }
@@ -337,8 +339,7 @@ async function acquireNext (db) {
           }
         } catch (err) {
           const message = `failure while closing a run that was left in running status by error (${run.processing._id} / ${run._id})`
-          internalError('worker-manage-running', message, { error: err })
-          console.error('(worker-manage-running) ' + message, err)
+          internalError('worker-manage-running', err, message)
         }
         continue
       }
