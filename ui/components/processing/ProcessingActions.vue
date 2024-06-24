@@ -190,6 +190,7 @@
 
 <script setup>
 import useEventBus from '~/composables/event-bus'
+import 'iframe-resizer/js/iframeResizer'
 import VIframe from '@koumoul/v-iframe'
 import { computed, ref, watch } from 'vue'
 import { useSession } from '@data-fair/lib/vue/session.js'
