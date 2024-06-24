@@ -13,7 +13,7 @@ import dayjs from 'dayjs'
  * @returns {Promise<import('./types/run/index.js').Run>}
  */
 export const createNext = async (db, processing, triggered = false, delaySeconds = 0) => {
-  const ack = await locks.acquire(processing._id + '/next-run', 'worker-loop-kill')
+  const ack = await locks.acquire(processing._id + '/next-run')
   try {
     if (!ack) {
       throw new Error('une planification est déjà en cours')
