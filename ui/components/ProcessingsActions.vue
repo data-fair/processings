@@ -224,20 +224,19 @@ const pluginsItems: Ref<Record<string, any>[]> = computed(() => {
 })
 
 async function createProcessing () {
-  let processing: Record<string, any> = {}
   inCreate.value = true
   try {
-    processing = await $fetch('/api/v1/processings', {
+    const processing = await $fetch<any>('/api/v1/processings', {
       method: 'POST',
       body: JSON.stringify(newProcessing.value)
     })
+    return navigateTo({ path: `/processings/${processing._id}` })
   } catch (error) {
     eventBus.emit('notification', { error, msg: 'Erreur pendant la création du traitement' })
   } finally {
     showCreateMenu.value = false
     inCreate.value = false
   }
-  return navigateTo({ path: `/processings/${processing._id}` })
 }
 
 </script>

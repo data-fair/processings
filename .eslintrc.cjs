@@ -7,8 +7,9 @@ module.exports = {
     'standard',
     'plugin:jsdoc/recommended-typescript-flavor-error'
   ],
-  plugins: ['jsdoc'],
+  plugins: ['jsdoc', 'no-only-tests'],
   rules: {
+    'no-only-tests/no-only-tests': 'error',
     'jsdoc/require-param-description': 0,
     'jsdoc/require-property-description': 0,
     'jsdoc/require-jsdoc': 0,

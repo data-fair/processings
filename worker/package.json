@@ -10,7 +10,7 @@
     "@types/nodemailer": "^6.4.14"
   },
   "dependencies": {
-    "@data-fair/lib": "^0.36.1",
+    "@data-fair/lib": "^0.36.2",
     "agentkeepalive": "^4.5.0",
     "axios": "^1.6.8",
     "axios-retry": "^4.4.0",

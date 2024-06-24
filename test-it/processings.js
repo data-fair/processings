@@ -8,6 +8,7 @@ testSpies.registerModuleHooks()
 const directoryUrl = 'http://localhost:5600/simple-directory'
 const axiosOpts = { baseURL: 'http://localhost:5600/processings' }
 const superadmin = await axiosAuth({ email: 'superadmin@test.com', password: 'superpasswd', directoryUrl, adminMode: true, axiosOpts })
+const hlalonde = await axiosAuth({ email: 'hlalonde3@desdev.cn', password: 'passwd', org: 'KWqAGZ4mG', dep: 'dep1', directoryUrl, axiosOpts })
 
 console.log('Starting worker server...')
 process.env.NODE_CONFIG_DIR = 'worker/config/'
@@ -86,7 +87,7 @@ await test('should create a new processing, activate it and run it', async funct
   assert.ok(!processing.webhookKey)
 })
 
-await test.only('should kill a long run with SIGTERM', async function () {
+await test('should kill a long run with SIGTERM', async function () {
   const processing = (await superadmin.post('/api/v1/processings', {
     title: 'Hello processing',
     plugin: plugin.id,
@@ -185,5 +186,34 @@ await test('should fail a run if processings_seconds limit is exceeded', async f
   assert.equal(limits.processings_seconds.consumption, consumption)
 })
 
+await test('should manage a processing as a department admin', async function () {
+  const processing = (await hlalonde.post('/api/v1/processings', {
+    title: 'Hello processing',
+    plugin: plugin.id
+  })).data
+
+  const processings = (await hlalonde.get('/api/v1/processings')).data
+  assert.equal(processings.count, 1)
+  assert.equal(processings.results[0]._id, processing._id)
+  await hlalonde.patch(`/api/v1/processings/${processing._id}`, {
+    active: true,
+    config: {
+      datasetMode: 'create',
+      dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
+      overwrite: false,
+      message: 'Hello world test processing'
+    }
+  })
+
+  await Promise.all([
+    hlalonde.post(`/api/v1/processings/${processing._id}/_trigger`),
+    testSpies.waitFor('isFailure', 10000)
+  ])
+
+  const runs = (await hlalonde.get('/api/v1/runs', { params: { processing: processing._id } })).data
+  assert.equal(runs.count, 1)
+  // failure is normal we have no api key
+  assert.equal(runs.results[0].status, 'error')
+})
 await workerServer.stop()
 process.exit(0)

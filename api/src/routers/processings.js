@@ -184,7 +184,7 @@ router.post('', asyncHandler(async (req, res) => {
   const processing = { ...req.body }
   processing._id = nanoid()
   processing.owner = sessionState.account
-  if (!permissions.isAdmin(sessionState, processing.owner)) return res.status(403).send()
+  if (!permissions.isAdmin(sessionState, processing.owner)) return res.status(403).send('No permission to create a processing')
   processing.scheduling = processing.scheduling || { type: 'trigger' }
   processing.webhookKey = cryptoRandomString({ length: 16, type: 'url-safe' })
   processing.created = processing.updated = {
@@ -201,7 +201,7 @@ router.post('', asyncHandler(async (req, res) => {
   } else if (access && access.privateAccess && access.privateAccess.find((/** @type {any} */ p) => p.type === processing.owner.type && p.id === processing.owner.id)) {
     // ok, private access is granted
   } else {
-    return res.status(403).send()
+    return res.status(403).send('Access denied to this plugin')
   }
 
   await validateFullProcessing(processing)
