@@ -10,5 +10,6 @@ module.exports = {
   observer: {
     port: 9091
   },
-  privateDataFairUrl: 'http://localhost:8081'
+  privateDataFairUrl: 'http://localhost:8081',
+  upgradeRoot: '../'
 }

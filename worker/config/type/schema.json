@@ -21,7 +21,8 @@
     "locks",
     "observer",
     "worker",
-    "secretKeys"
+    "secretKeys",
+    "upgradeRoot"
   ],
   "properties": {
     "dataDir": {
@@ -128,6 +129,9 @@
           "type": "number"
         }
       }
+    },
+    "upgradeRoot": {
+      "type": "string"
     },
     "util": {},
     "get": {},

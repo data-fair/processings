@@ -43,7 +43,7 @@ export const start = async () => {
   await mongo.connect(config.mongoUrl, { readPreference: 'primary', maxPoolSize: 1 })
   const db = mongo.db
   await locks.init(db)
-  await upgradeScripts(db, '../')
+  await upgradeScripts(db, config.upgradeRoot)
   wsPublish = await initPublisher(db)
   if (config.observer.active) {
     await initMetrics(db)

@@ -213,6 +213,9 @@ async function patch() {
     return
   }
 
+  // TODO: some problem in vjsf makes it necessary to wait when adding a permission for validity to be correct
+  await new Promise(resolve => setTimeout(resolve, 1))
+
   if (!valid.value || !canAdminProcessing.value) return
   edited.value = true
   if (editProcessing.value?.scheduling && editProcessing.value.scheduling.type === 'weekly') {

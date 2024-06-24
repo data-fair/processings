@@ -12,5 +12,6 @@ module.exports = {
     killInterval: 2000,
     concurrency: 1,
     gracePeriod: 3000
-  }
+  },
+  upgradeRoot: './'
 }
