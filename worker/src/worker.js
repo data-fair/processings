@@ -167,10 +167,14 @@ async function killRun (db, run) {
   if (!pids[run._id]) {
     const ack = await locks.acquire(run.processing._id, 'worker-loop-kill')
     if (ack) {
-      console.warn('the run should be killed, it is not locked by another worker and we have no running PID, mark it as already killed', run._id)
-      debug('mark as already killed', run)
-      run.status = 'killed'
-      await finish(db, wsPublish, run)
+      try {
+        console.warn('the run should be killed, it is not locked by another worker and we have no running PID, mark it as already killed', run._id)
+        debug('mark as already killed', run)
+        run.status = 'killed'
+        await finish(db, wsPublish, run)
+      } finally {
+        await locks.release(run.processing._id)
+      }
     }
     return
   }
