@@ -244,7 +244,11 @@ export const run = async (db, mailTransport, wsPublish) => {
     }
     return err
   } finally {
-    await tmpDir.cleanup()
+    try {
+      await tmpDir.cleanup()
+    } catch (err) {
+      console.error('[task-tmp-cleanup]', err, { processingId: processing._id, runId: run._id })
+    }
   }
 }
 
