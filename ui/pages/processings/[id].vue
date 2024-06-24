@@ -205,9 +205,13 @@ const vjsfOptions = computed(() => {
   }
 })
 
+let initialPatch = true
 async function patch() {
-  // TODO: some problem in vjsf makes it necessary to wait when adding a permission for validity to be correct
-  await new Promise(resolve => setTimeout(resolve, 1))
+  // the first patch is always triggered becaure of removed additional properties
+  if (initialPatch) {
+    initialPatch = false
+    return
+  }
 
   if (!valid.value || !canAdminProcessing.value) return
   edited.value = true
