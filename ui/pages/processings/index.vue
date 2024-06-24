@@ -133,7 +133,7 @@ const ownerRole = computed(() => {
   const userOrg = user.organizations.find(/** @param {Record<string, any>} o */ o => o.id === owner.value.id)
   return userOrg ? userOrg.role : 'anonymous'
 })
-const ownerFilter = computed(() => `${owner.value.type}:${owner.value.id}`)
+const ownerFilter = computed(() => `${owner.value.type}:${owner.value.id}${owner.value.department ? ':' + owner.value.department : ''}`)
 const canAdmin = computed(() => {
   return ownerRole.value === 'admin' || !!session.state.user?.adminMode
 })

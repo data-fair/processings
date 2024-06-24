@@ -66,7 +66,7 @@ async function refresh() {
       processing: props.processing._id,
       size: 1000,
       sort: 'createdAt:-1',
-      owner: `${props.processing.owner.type}:${props.processing.owner.id}`
+      owner: `${props.processing.owner.type}:${props.processing.owner.id}${props.processing.owner.department ? ':' + props.processing.owner.department : ''}`
     }
   })
   loading.value = false
