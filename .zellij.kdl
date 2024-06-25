@@ -7,7 +7,7 @@ layout {
       }
       pane name="deps" {
         command "${DEV_SHELL}"
-        args "-ic" "nvm use > /dev/null 2>&1 && npm run dev-deps && mkdir -p data; touch data/zellij-deps-ready && docker compose logs -f"
+        args "-ic" "nvm use > /dev/null 2>&1 && npm run dev-deps && mkdir -p data; touch data/zellij-deps-ready &&  watch -n 4 docker compose ps"
       }
     }
     pane {
