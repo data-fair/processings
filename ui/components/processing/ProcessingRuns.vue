@@ -6,8 +6,8 @@
     <v-card-title>
       Exécutions
     </v-card-title>
-    <v-list class="py-0">
-      <template v-if="runs">
+    <template v-if="runs">
+      <v-list class="py-0">
         <template
           v-for="run in runs.results"
           :key="run._id"
@@ -19,8 +19,14 @@
             :can-exec="canExec"
           />
         </template>
-      </template>
-    </v-list>
+      </v-list>
+      <v-pagination
+        v-if="runs.count > size"
+        v-model="page"
+        :length="Math.ceil(runs.count / size)"
+        :total-visible="5"
+      />
+    </template>
   </v-card>
 </template>
 
@@ -59,12 +65,22 @@ function onRunPatch(runPatch) {
   }
 }
 
-async function refresh() {
+const size = 10
+const page = ref(1)
+watch(page, () => refresh(false))
+
+// todo: use useFetch ?
+async function refresh(reinit = true) {
+  if (reinit && page.value !== 1) {
+    page.value = 1
+    return
+  }
   loading.value = true
   runs.value = await $fetch('/api/v1/runs', {
     params: {
       processing: props.processing._id,
-      size: 1000,
+      size,
+      page: page.value,
       sort: 'createdAt:-1',
       owner: `${props.processing.owner.type}:${props.processing.owner.id}${props.processing.owner.department ? ':' + props.processing.owner.department : ''}`
     }

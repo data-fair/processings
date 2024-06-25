@@ -186,6 +186,7 @@ const processingSchema = computed(() => {
 })
 
 const vjsfOptions = computed(() => {
+  /** @type {import('@koumoul/vjsf').Options} */
   return {
     plugins: [VjsfMarkdown],
     context: {
@@ -201,7 +202,8 @@ const vjsfOptions = computed(() => {
     removeAdditional: true,
     updateOn: 'blur',
     validateOn: 'blur',
-    locale: 'fr'
+    locale: 'fr',
+    titleDepth: 3
   }
 })
 
