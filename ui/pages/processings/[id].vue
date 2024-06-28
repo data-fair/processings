@@ -161,6 +161,14 @@ const processingSchema = computed(() => {
     title: 'Plugin ' + plugin.value.customName,
     'x-options': { deleteReadOnly: false }
   }
+  if (plugin.value.processingConfigSchema.$defs) {
+    schema.$defs = { ...schema.$defs, ...plugin.value.processingConfigSchema.$defs }
+    delete schema.properties.config.$defs
+  }
+  if (plugin.value.processingConfigSchema.definitions) {
+    schema.definitions = { ...schema.definitions, ...plugin.value.processingConfigSchema.definitions }
+    delete schema.properties.config.definitions
+  }
   if (session.state.user?.adminMode) delete schema.properties.debug?.readOnly
   if (!canAdminProcessing.value) {
     delete schema.properties.permissions
