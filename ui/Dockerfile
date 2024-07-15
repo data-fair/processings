@@ -1,13 +1,14 @@
 ##########################
 # install root dev deps and build
-FROM node:20.14.0-alpine3.20 AS builder
+FROM node:20.15.1-alpine3.20 AS builder
 
 WORKDIR /app/
 ADD /package.json .
 ADD /package-lock.json .
 ADD /ui/package.json ui/
 
-RUN npm -w ui ci --no-audit --no-fund
+RUN npm pkg set scripts.prepare="echo 'skip prepare'"
+RUN npm -w ui ci --no-audit --no-fund --omit=optional
 ADD /ui/ ui/
 ADD /contract contract
 ADD /shared shared
@@ -15,7 +16,7 @@ RUN npm -w ui run build
 
 ##########################
 # copy built app and assemble actual dist
-FROM node:20.14.0-alpine3.20
+FROM node:20.15.1-alpine3.20
 
 LABEL org.opencontainers.image.authors="contact@koumoul.com"
 

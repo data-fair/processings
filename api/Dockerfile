@@ -1,6 +1,6 @@
 #################################
 # install root dev deps and build types
-FROM node:20.14.0-alpine3.20 AS builder
+FROM node:20.15.1-alpine3.20 AS builder
 
 WORKDIR /app/
 
@@ -14,7 +14,7 @@ RUN npm run build-types-api
 
 ##########################
 # install api prod deps
-FROM node:20.14.0-alpine3.20 AS installer
+FROM node:20.15.1-alpine3.20 AS installer
 
 RUN npm i -g clean-modules@3.0.5
 
@@ -31,7 +31,7 @@ RUN mkdir -p /app/api/node_modules
 
 ##########################
 # copy deps and build and assemble actual dist
-FROM node:20.14.0-alpine3.20
+FROM node:20.15.1-alpine3.20
 LABEL org.opencontainers.image.authors="contact@koumoul.com"
 
 # processing plugins should be able to install native dependencies themselves

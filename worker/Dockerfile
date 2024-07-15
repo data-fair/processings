@@ -1,6 +1,6 @@
 ####################################################################
 # Stage: build libraries and tools for geographic data manipulations
-FROM node:20.14.0-alpine3.20 AS nativedepsbuilder
+FROM node:20.15.1-alpine3.20 AS nativedepsbuilder
 
 # build CGAL (not yet present in alpine repos)
 RUN apk add --no-cache curl cmake make g++ linux-headers boost-dev gmp gmp-dev mpfr-dev
@@ -26,7 +26,7 @@ RUN test -f /usr/local/bin/tippecanoe
 ############################################################################################################
 # Stage: prepare a base image with all native utils pre-installed, used both by builder and definitive image
 
-FROM node:20.14.0-alpine3.20 AS nativedeps
+FROM node:20.15.1-alpine3.20 AS nativedeps
 
 COPY --from=nativedepsbuilder /usr/local/lib/libCGAL.so.13 /usr/local/lib/libCGAL.so.13
 COPY --from=nativedepsbuilder /usr/local/bin/tippecanoe /usr/local/bin/tippecanoe
