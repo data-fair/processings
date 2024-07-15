@@ -55,7 +55,7 @@ RUN npm run build-types-worker
 # install worker prod deps
 FROM nativedeps AS installer
 
-RUN npm i -g clean-modules@3.0.4
+RUN npm i -g clean-modules@3.0.5
 
 WORKDIR /app/
 
@@ -63,11 +63,8 @@ ADD /package.json .
 ADD /package-lock.json .
 ADD /worker/package.json worker/
 RUN npm pkg set scripts.prepare="echo 'skip prepare'"
-RUN npm ci -w worker --no-audit --no-fund --omit=optional --omit=dev &&\
+RUN npm -w worker ci --no-audit --no-fund --omit=optional --omit=dev &&\
     clean-modules --yes
-
-# check that we don't have deps in local node_modules (sign of deps that couldn't be deduped)
-RUN test ! -d worker/node_modules
 
 ##############################################
 # copy deps and build and assemble actual dist

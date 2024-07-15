@@ -2,14 +2,12 @@
 # install root dev deps and build
 FROM node:20.14.0-alpine3.20 AS builder
 
-RUN npm i -g clean-modules@3.0.4
-
 WORKDIR /app/
 ADD /package.json .
 ADD /package-lock.json .
 ADD /ui/package.json ui/
 
-RUN npm -w ui --include-workspace-root ci --no-audit --no-fund
+RUN npm -w ui ci --no-audit --no-fund
 ADD /ui/ ui/
 ADD /contract contract
 ADD /shared shared

@@ -11,7 +11,7 @@
 1) Install npm dependencies for all workspaces :
 
 ```sh
-npm i -g rimraf && npm run i
+npm i
 ```
 
 2) Pull images at first and then once in a while :

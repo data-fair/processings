@@ -16,7 +16,7 @@ RUN npm run build-types-api
 # install api prod deps
 FROM node:20.14.0-alpine3.20 AS installer
 
-RUN npm i -g clean-modules@3.0.4
+RUN npm i -g clean-modules@3.0.5
 
 WORKDIR /app/
 
@@ -24,11 +24,8 @@ ADD /package.json .
 ADD /package-lock.json .
 ADD /api/package.json api/
 RUN npm pkg set scripts.prepare="echo 'skip prepare'"
-RUN npm ci -w api --no-audit --no-fund --omit=optional --omit=dev &&\
+RUN npm -w api --no-audit --no-fund --omit=optional --omit=dev &&\
     clean-modules --yes
-
-# check that we don't have deps in local node_modules (sign of deps that couldn't be deduped)
-# RUN test ! -d api/node_modules
 
 ##########################
 # copy deps and build and assemble actual dist
