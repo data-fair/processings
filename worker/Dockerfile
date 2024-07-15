@@ -79,6 +79,7 @@ WORKDIR /app/
 COPY --from=builder /app/shared /app/shared
 COPY --from=builder /app/worker /app/worker
 COPY --from=installer /app/node_modules /app/node_modules
+COPY --from=installer /app/worker/node_modules /app/worker/node_modules
 
 ADD upgrade upgrade
 ADD contract contract
