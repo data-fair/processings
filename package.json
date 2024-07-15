@@ -45,10 +45,6 @@
     "@types/debug": "^4.1.12",
     "@types/fs-extra": "^11.0.4",
     "@types/resolve-path": "^1.4.2",
-    "ajv": "^8.13.0",
-    "ajv-errors": "^3.0.0",
-    "ajv-formats": "^2.1.1",
-    "ajv-i18n": "^4.2.0",
     "commitlint": "^19.2.2",
     "eslint": "^8.57.0",
     "eslint-config-standard": "^17.1.0",
@@ -60,6 +56,10 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@data-fair/lib": "^0.37.3"
+    "@data-fair/lib": "^0.37.3",
+    "ajv": "^8.13.0",
+    "ajv-errors": "^3.0.0",
+    "ajv-formats": "^2.1.1",
+    "ajv-i18n": "^4.2.0"
   }
 }
