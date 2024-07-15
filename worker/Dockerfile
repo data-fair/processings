@@ -63,7 +63,7 @@ ADD /package.json .
 ADD /package-lock.json .
 ADD /worker/package.json worker/
 RUN npm pkg set scripts.prepare="echo 'skip prepare'"
-RUN npm -w worker ci --no-audit --no-fund --omit=optional --omit=dev &&\
+RUN npm -w worker --include-workspace-root ci --no-audit --no-fund --omit=optional --omit=dev &&\
     clean-modules --yes
 # it might not exist, depending on the dependencies versions
 RUN mkdir -p /app/worker/node_modules

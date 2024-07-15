@@ -8,7 +8,7 @@ ADD /package-lock.json .
 ADD /ui/package.json ui/
 
 RUN npm pkg set scripts.prepare="echo 'skip prepare'"
-RUN npm -w ui ci --no-audit --no-fund --omit=optional
+RUN npm -w ui --include-workspace-root ci --no-audit --no-fund
 ADD /ui/ ui/
 ADD /contract contract
 ADD /shared shared
