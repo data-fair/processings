@@ -26,6 +26,8 @@ ADD /api/package.json api/
 RUN npm pkg set scripts.prepare="echo 'skip prepare'"
 RUN npm -w api ci --no-audit --no-fund --omit=optional --omit=dev &&\
     clean-modules --yes
+# it might not exist, depending on the dependencies versions
+RUN mkdir -p /app/api/node_modules
 
 ##########################
 # copy deps and build and assemble actual dist
