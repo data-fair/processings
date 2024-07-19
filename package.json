@@ -21,7 +21,7 @@
     "test-images": "docker compose --profile dev --profile testImages up -d --wait",
     "stop-dev-deps": "docker compose --profile dev stop",
     "check-types": "tsc",
-    "prepare": "husky && npx relative-deps",
+    "prepare": "husky",
     "quality": "npm run test-deps && npm run lint && npm run test && npm audit --omit=dev --audit-level=critical"
   },
   "repository": {

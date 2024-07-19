@@ -183,7 +183,6 @@ router.post('', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const processing = { ...req.body }
   processing._id = nanoid()
-  console.log('processing owner ?', processing)
   processing.owner = processing.owner ?? sessionState.account
   if (!permissions.isAdmin(sessionState, processing.owner)) return res.status(403).send('No permission to create a processing')
   processing.scheduling = processing.scheduling || { type: 'trigger' }
