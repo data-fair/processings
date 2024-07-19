@@ -62,6 +62,7 @@ const getOwnerPermissionFilter = (sessionState, owner) => {
     'owner.type': owner.type,
     'owner.id': owner.id
   }
+  if (owner.department) filter['owner.department'] = owner.department
   if (sessionState.user.adminMode || ['admin', 'contrib'].includes(getOwnerRole(sessionState, owner) || '')) return filter
   /** @type {any[]} */
   const or = [{ 'target.type': 'userEmail', 'target.email': sessionState.user.email }]

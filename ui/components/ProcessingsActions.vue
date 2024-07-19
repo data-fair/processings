@@ -54,7 +54,6 @@
           <v-form>
             <v-text-field
               v-model="newProcessing.title"
-              name="title"
               label="Titre"
             />
             <v-autocomplete
@@ -65,6 +64,10 @@
               item-title="customName"
               item-value="id"
               clearable
+            />
+            <owner-pick
+              v-model="newProcessing.owner"
+              v-model:ready="ownersReady"
             />
           </v-form>
         </v-card-text>
@@ -78,7 +81,7 @@
             Annuler
           </v-btn>
           <v-btn
-            :disabled="!newProcessing.title || !newProcessing.plugin || inCreate"
+            :disabled="!ownersReady || !newProcessing.title || !newProcessing.plugin || inCreate"
             color="primary"
             @click="createProcessing()"
           >
@@ -145,18 +148,19 @@
   </v-list>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import useEventBus from '~/composables/event-bus'
-import { type PropType, ref } from 'vue'
+import { ref } from 'vue'
+import OwnerPick from '@data-fair/lib/vuetify/owner-pick.vue'
 
 const eventBus = useEventBus()
 
 const processingsProps = defineProps({
   adminMode: Boolean,
   ownerFilter: { type: String, required: true },
-  facets: { type: Object as PropType<Record<string, any>>, required: true },
+  facets: { type: Object, required: true },
   isSmall: Boolean,
-  processings: { type: Array as PropType<Array<Record<string, any>>>, required: true }
+  processings: { type: Array, required: true }
 })
 
 const search = defineModel('search', { type: String, default: '' })
@@ -166,9 +170,10 @@ const statusesSelected = defineModel('statusesSelected', { type: Array, required
 
 const inCreate = ref(false)
 const showCreateMenu = ref(false)
-const newProcessing: Ref<Record<string, any>> = ref({})
+const newProcessing = ref({})
+const ownersReady = ref(false)
 
-const statusesText: Record<string, string> = {
+const statusesText = {
   error: 'En échec',
   finished: 'Terminé',
   kill: 'Interruption',
@@ -195,7 +200,7 @@ const statusesText: Record<string, string> = {
 const installedPluginsFetch = await useFetch(`/api/v1/plugins?privateAccess=${processingsProps.ownerFilter}`, { lazy: true })
 const installedPlugins = computed(() => installedPluginsFetch.data.value?.results)
 
-const statusesItems: Ref<{ display: String, statusKey: String }[]> = computed(() => {
+const statusesItems = computed(() => {
   if (!processingsProps.facets.statuses) return []
 
   return Object.entries(processingsProps.facets.statuses)
@@ -206,14 +211,14 @@ const statusesItems: Ref<{ display: String, statusKey: String }[]> = computed(()
     .sort((a, b) => a.display.localeCompare(b.display))
 })
 
-const pluginsItems: Ref<Record<string, any>[]> = computed(() => {
+const pluginsItems = computed(() => {
   if (!installedPlugins.value) return []
   if (!processingsProps.facets.plugins) return []
 
   return Object.entries(processingsProps.facets.plugins)
     .map(
       ([pluginKey, count]) => {
-        const customName = installedPlugins.value.find((plugin: Record<string, any>) => plugin.id === pluginKey)?.customName
+        const customName = installedPlugins.value.find((plugin) => plugin.id === pluginKey)?.customName
         return {
           display: `${customName || 'Supprimé - ' + pluginKey} (${count})`,
           pluginKey
@@ -226,7 +231,7 @@ const pluginsItems: Ref<Record<string, any>[]> = computed(() => {
 async function createProcessing () {
   inCreate.value = true
   try {
-    const processing = await $fetch<any>('/api/v1/processings', {
+    const processing = await $fetch('/api/v1/processings', {
       method: 'POST',
       body: JSON.stringify(newProcessing.value)
     })

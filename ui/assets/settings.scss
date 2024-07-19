@@ -1,9 +1,5 @@
 // Specific Vuetify scss settings
 @forward 'vuetify/settings' with (
   $color-pack: false,
-  $body-font-family: 'Nunito',
-  $card-border-color: 'red'
+  $body-font-family: 'Nunito'
 );
-.skeleton {
-  background: rgb(var(--v-theme-surface-light));
-}

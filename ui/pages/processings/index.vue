@@ -48,7 +48,7 @@
               >
                 <ProcessingCard
                   :processing="processing"
-                  :show-owner="showAll"
+                  :show-owner="showAll || (processing.owner.department && !session.state.account.department)"
                   class="w-100"
                 />
               </v-col>

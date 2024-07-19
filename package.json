@@ -21,7 +21,7 @@
     "test-images": "docker compose --profile dev --profile testImages up -d --wait",
     "stop-dev-deps": "docker compose --profile dev stop",
     "check-types": "tsc",
-    "prepare": "husky",
+    "prepare": "husky && npx relative-deps",
     "quality": "npm run test-deps && npm run lint && npm run test && npm audit --omit=dev --audit-level=critical"
   },
   "repository": {
@@ -53,13 +53,17 @@
     "husky": "^9.0.11",
     "json-schema-to-typescript": "^11.0.5",
     "nock": "^13.0.6",
+    "relative-deps": "^1.0.7",
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@data-fair/lib": "^0.37.3",
+    "@data-fair/lib": "^0.38.0",
     "ajv": "^8.13.0",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^2.1.1",
     "ajv-i18n": "^4.2.0"
+  },
+  "relativeDependencies": {
+    "@data-fair/lib": "../lib"
   }
 }

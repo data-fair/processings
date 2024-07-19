@@ -203,7 +203,7 @@ const vjsfOptions = computed(() => {
       directoryUrl: window.location.origin + '/simple-directory',
       utcs
     },
-    density: 'compact',
+    density: 'comfortable',
     initialValidation: 'always',
     readOnly: !canAdminProcessing.value,
     readOnlyPropertiesMode: 'remove',

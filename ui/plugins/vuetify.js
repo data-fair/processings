@@ -8,12 +8,7 @@ import { defineNuxtPlugin, useCookie } from '#app'
 export default defineNuxtPlugin((nuxtApp) => {
   const reactiveSearchParams = useReactiveSearchParams()
   const cookie = useCookie('theme_dark', { watch: false })
-  const options = defaultOptions(reactiveSearchParams, cookie.value === 'true')
-  options.defaults = {
-    VCard: {
-      rounded: 'sm'
-    }
-  }
+  const options = defaultOptions(reactiveSearchParams, (cookie.value + '') === 'true')
   const vuetify = createVuetify(options)
   nuxtApp.vueApp.use(vuetify)
 })
