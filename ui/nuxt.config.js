@@ -36,11 +36,13 @@ export default defineNuxtConfig({
     }],
     (_options, nuxt) => {
       nuxt.hooks.hook('vite:extendConfig', (config) => {
-        // @ts-expect-error
-        config.plugins.push(vuetify({
-          autoImport: true,
-          styles: { configFile: new URL('assets/settings.scss', import.meta.url).pathname }
-        }))
+        const vuetifyPluginConfig = {}
+        // building components styles in dev mode is too slow
+        // comment the "if" to see the customized styles in dev mode
+        if (process.env.NODE_ENV !== 'development') {
+          vuetifyPluginConfig.styles = { configFile: new URL('assets/settings.scss', import.meta.url).pathname }
+        }
+        config.plugins?.push(vuetify(vuetifyPluginConfig))
       })
     }
   ],
