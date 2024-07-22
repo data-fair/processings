@@ -8,7 +8,7 @@ const processingsDir = path.resolve(config.dataDir, 'processings')
 
 /**
  * Stop all pending runs for a processing if it is deactivated
- * Cancel job that might have been scheduled previously if processing is set on manual trigger
+ * Cancel job that might have been scheduled previously
  * @param {import('mongodb').Db} db
  * @param {import('../../../shared/types/processing/index.js').Processing} processing
  * @returns {Promise<void>} nothing
@@ -25,12 +25,6 @@ export const applyProcessing = async (db, processing) => {
     return
   }
 
-  // if processing is set on manual trigger, cancel job that might have been scheduled previously
-  if (processing.scheduling.type === 'trigger') {
-    await processingsCollection.updateOne({ _id: processing._id }, { $unset: { nextRun: '' } })
-    await runsCollection.deleteMany({ 'processing._id': processing._id, status: 'scheduled' })
-    return
-  }
   try {
     await createNext(db, processing)
   } catch (error) {

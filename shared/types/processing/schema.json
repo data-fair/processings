@@ -60,10 +60,13 @@
       "type": "string"
     },
     "scheduling": {
-      "type": "object",
-      "properties": {
-        "timeZone": {
-          "type": "string"
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timeZone": {
+            "type": "string"
+          }
         }
       }
     },

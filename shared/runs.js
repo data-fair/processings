@@ -53,14 +53,21 @@ export const createNext = async (db, processing, triggered = false, delaySeconds
         throw new Error('une exécution manuelle est déjà demandée')
       }
       await runsCollection.deleteMany({ 'processing._id': processing._id, status: 'scheduled' })
-      const cron = toCRON(processing.scheduling)
-      const timeZone = processing.scheduling.timeZone || 'Europe/Paris'
-      const job = new CronJob(cron, () => { }, () => { }, false, timeZone)
-      const nextDate = job.nextDate()?.toJSDate()
-      if (!nextDate) {
-        throw new Error('No next date returned for processing scheduling ' + processing.scheduling)
+      let nextDate = null
+      for (const scheduling of processing.scheduling) {
+        const cron = toCRON(scheduling)
+        const timeZone = scheduling.timeZone || 'Europe/Paris'
+        const job = new CronJob(cron, () => { }, () => { }, false, timeZone)
+        const nextDateCandidate = job.nextDate()?.toJSDate()
+        if (!nextDateCandidate) {
+          throw new Error('No next date returned for processing scheduling ' + JSON.stringify(scheduling))
+        }
+        if (!nextDate || nextDateCandidate < nextDate) {
+          nextDate = nextDateCandidate
+        }
       }
-      run.scheduledAt = nextDate.toISOString()
+
+      if (nextDate) run.scheduledAt = nextDate.toISOString()
     }
 
     runType.assertValid(run)

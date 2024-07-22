@@ -281,7 +281,7 @@ async function iter (db, run) {
       delete pids[run._id]
       await locks.release(run.processing._id)
     }
-    if (processing && processing.scheduling.type !== 'trigger') { // we create the next scheduled run
+    if (processing && processing.scheduling.length) { // we create the next scheduled run
       try {
         await createNext(db, processing)
       } catch (err) {
@@ -338,7 +338,7 @@ async function acquireNext (db) {
           const processingsCollection = db.collection('processings')
           const processing = await processingsCollection.findOne({ _id: run.processing._id })
           await locks.release(run.processing._id)
-          if (processing && processing.scheduling.type !== 'trigger') {
+          if (processing && processing.scheduling.length) {
             await createNext(db, processing) // we create the next scheduled run
           }
         } catch (err) {

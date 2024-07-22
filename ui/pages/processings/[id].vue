@@ -228,9 +228,7 @@ async function patch() {
 
   if (!valid.value || !canAdminProcessing.value) return
   edited.value = true
-  if (editProcessing.value?.scheduling && editProcessing.value.scheduling.type === 'weekly') {
-    if (editProcessing.value.scheduling.dayOfWeek === '*') editProcessing.value.scheduling.dayOfWeek = '1'
-  }
+
   try {
     await $fetch(`/api/v1/processings/${route.params.id}`, {
       method: 'PATCH',
