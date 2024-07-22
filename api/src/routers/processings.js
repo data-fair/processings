@@ -185,7 +185,7 @@ router.post('', asyncHandler(async (req, res) => {
   processing._id = nanoid()
   processing.owner = processing.owner ?? sessionState.account
   if (!permissions.isAdmin(sessionState, processing.owner)) return res.status(403).send('No permission to create a processing')
-  processing.scheduling = processing.scheduling || { type: 'trigger' }
+  processing.scheduling = processing.scheduling || []
   processing.webhookKey = cryptoRandomString({ length: 16, type: 'url-safe' })
   processing.created = processing.updated = {
     id: sessionState.user.id,

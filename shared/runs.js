@@ -10,7 +10,7 @@ import dayjs from 'dayjs'
  * @param {import('./types/processing/index.js').Processing} processing
  * @param {boolean} triggered
  * @param {number} delaySeconds
- * @returns {Promise<import('./types/run/index.js').Run>}
+ * @returns {Promise<import('./types/run/index.js').Run | null>}
  */
 export const createNext = async (db, processing, triggered = false, delaySeconds = 0) => {
   const ack = await locks.acquire(processing._id + '/next-run')
@@ -38,9 +38,13 @@ export const createNext = async (db, processing, triggered = false, delaySeconds
 
     /** @type {import('mongodb').Collection<import('./types/run/index.js').Run>} */
     const runsCollection = db.collection('runs')
+    /** @type {import('mongodb').Collection<import('./types/processing/index.js').Processing>} */
+    const processingsCollection = db.collection('processings')
+
     // cancel one that might have been scheduled previously
     if (triggered) {
       await runsCollection.deleteMany({ 'processing._id': processing._id, status: { $in: ['triggered', 'scheduled'] } })
+      await processingsCollection.updateOne({ _id: run.processing._id }, { $unset: { nextRun: 1 } })
       if (delaySeconds) {
         const scheduledAt = dayjs()
         scheduledAt.add(delaySeconds, 'seconds')
@@ -53,6 +57,7 @@ export const createNext = async (db, processing, triggered = false, delaySeconds
         throw new Error('une exécution manuelle est déjà demandée')
       }
       await runsCollection.deleteMany({ 'processing._id': processing._id, status: 'scheduled' })
+      await processingsCollection.updateOne({ _id: run.processing._id }, { $unset: { nextRun: 1 } })
       let nextDate = null
       for (const scheduling of processing.scheduling) {
         const cron = toCRON(scheduling)
@@ -70,23 +75,25 @@ export const createNext = async (db, processing, triggered = false, delaySeconds
       if (nextDate) run.scheduledAt = nextDate.toISOString()
     }
 
-    runType.assertValid(run)
-    await runsCollection.insertOne(run)
-    const nextRun = {
-      _id: run._id,
-      createdAt: run.createdAt,
-      status: run.status,
-      permissions: run.permissions,
-      scheduledAt: run.scheduledAt
-    }
+    if (run.scheduledAt) {
+      runType.assertValid(run)
+      await runsCollection.insertOne(run)
+      const nextRun = {
+        _id: run._id,
+        createdAt: run.createdAt,
+        status: run.status,
+        permissions: run.permissions,
+        scheduledAt: run.scheduledAt
+      }
 
-    /** @type {import('mongodb').Collection<import('./types/processing/index.js').Processing>} */
-    const processingsCollection = db.collection('processings')
-    await processingsCollection.updateOne(
-      { _id: run.processing._id },
-      { $set: { nextRun } }
-    )
-    return run
+      await processingsCollection.updateOne(
+        { _id: run.processing._id },
+        { $set: { nextRun } }
+      )
+      return run
+    } else {
+      return null
+    }
   } finally {
     await locks.release(processing._id + '/next-run')
   }

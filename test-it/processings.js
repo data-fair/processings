@@ -29,7 +29,7 @@ await test('should create a new processing, activate it and run it', async funct
     plugin: plugin.id
   })).data
   assert.ok(processing._id)
-  assert.equal(processing.scheduling.type, 'trigger')
+  assert.deepEqual(processing.scheduling, [])
   assert.ok(!processing.webhookKey)
 
   const processings = (await superadmin.get('/api/v1/processings')).data
@@ -52,17 +52,18 @@ await test('should create a new processing, activate it and run it', async funct
     }
   })
   runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+  console.log(runs)
   assert.equal(runs.count, 0)
 
   // active and with scheduling = a scheduled run
   await superadmin.patch(`/api/v1/processings/${processing._id}`, {
-    scheduling: { type: 'monthly', dayOfWeek: '*', dayOfMonth: 1, month: '*', hour: 0, minute: 0 }
+    scheduling: [{ type: 'monthly', dayOfWeek: '*', dayOfMonth: 1, month: '*', hour: 0, minute: 0 }]
   })
   runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
   assert.equal(runs.count, 1)
   assert.equal(runs.results[0].status, 'scheduled')
 
-  await superadmin.patch(`/api/v1/processings/${processing._id}`, { scheduling: { type: 'trigger' } })
+  await superadmin.patch(`/api/v1/processings/${processing._id}`, { scheduling: [] })
   await Promise.all([
     superadmin.post(`/api/v1/processings/${processing._id}/_trigger`),
     testSpies.waitFor('isRunning', 10000)
