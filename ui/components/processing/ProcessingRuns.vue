@@ -1,6 +1,6 @@
 <template>
   <v-card
-    rounded="lg"
+    :rounded="false"
     :loading="loading ? 'primary' : false"
   >
     <v-card-title>
