@@ -57,7 +57,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@data-fair/lib": "^0.38.0",
+    "@data-fair/lib": "^0.38.1",
     "ajv": "^8.13.0",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^2.1.1",
