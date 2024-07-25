@@ -74,6 +74,7 @@ import useEventBus from '~/composables/event-bus'
 const route = useRoute()
 const session = useSession()
 const eventBus = useEventBus()
+const runtimeConfig = useRuntimeConfig()
 
 /** @typedef {import('../../../shared/types/processing/index.js').Processing} Processing */
 
@@ -193,12 +194,16 @@ const processingSchema = computed(() => {
   return cleanSchema
 })
 
+const owner = computed(() => processing.value?.owner)
+const ownerFilter = computed(() => `${owner.value?.type}:${owner.value?.id}${owner.value?.department ? ':' + owner.value?.department : ''}`)
+
 const vjsfOptions = computed(() => {
   /** @type {import('@koumoul/vjsf').Options} */
   return {
     plugins: [VjsfMarkdown],
     context: {
       owner: processing.value?.owner,
+      ownerFilter: runtimeConfig.public.dataFairAdminMode ? `owner=${ownerFilter.value}` : '',
       dataFairUrl: window.location.origin + '/data-fair',
       directoryUrl: window.location.origin + '/simple-directory',
       utcs

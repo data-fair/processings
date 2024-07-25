@@ -5,9 +5,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "build-types": "df-build-types ./shared/ && df-build-types api && df-build-types worker",
+    "build-types": "df-build-types ./shared/ && df-build-types api && df-build-types worker && df-build-types ui",
     "build-types-api": "df-build-types ./shared/ && df-build-types api",
     "build-types-worker": "df-build-types ./shared/ && df-build-types worker",
+    "build-types-ui": "df-build-types ./shared/ && df-build-types ui",
     "dev-api": "npm -w api run dev",
     "dev-deps": "docker compose --profile dev up -d --wait",
     "dev-ui": "npm -w ui run dev",
