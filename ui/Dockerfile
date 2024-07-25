@@ -12,7 +12,6 @@ RUN npm -w ui --include-workspace-root ci --no-audit --no-fund
 ADD /ui/ ui/
 ADD /contract contract
 ADD /shared shared
-RUN npm run build-types-ui
 RUN npm -w ui run build
 
 ##########################
