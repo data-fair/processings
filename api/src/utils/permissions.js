@@ -8,7 +8,6 @@ import config from '../config.js'
  */
 const getOwnerRole = (sessionState, owner) => {
   if (!sessionState) return null
-  if (sessionState.user.adminMode) return 'admin'
   if (sessionState.account.type !== owner.type || sessionState.account.id !== owner.id) return null
   if (sessionState.account.type === 'user') return 'admin'
   if (sessionState.account.department && sessionState.account.department !== owner.department) return null
@@ -99,7 +98,7 @@ const matchPermissionTarget = (target, sessionState) => {
  */
 const getUserResourceProfile = (owner, permissions, sessionState, host) => {
   // this line is first, a manual permission cannot demote an admin
-  const ownerRole = getOwnerRole(sessionState, owner)
+  const ownerRole = sessionState?.user.adminMode ? 'admin' : getOwnerRole(sessionState, owner)
   if (ownerRole === 'admin') {
     if (new URL(config.origin).host !== host) return 'exec' // no admin functionality in portals
     return 'admin'
