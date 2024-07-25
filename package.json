@@ -62,8 +62,7 @@
     "ajv": "^8.13.0",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^2.1.1",
-    "ajv-i18n": "^4.2.0",
-    "config": "^3.3.12"
+    "ajv-i18n": "^4.2.0"
   },
   "relativeDependencies": {
     "@data-fair/lib": "../lib"
