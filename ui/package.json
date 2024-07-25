@@ -4,7 +4,7 @@
   "scripts": {
     "analyze": "rm -rf .output && nuxi analyze",
     "build": "rm -rf .output && nuxi build",
-    "dev": "nuxi dev -p 3039",
+    "dev": "NUXT_PUBLIC_DATA_FAIR_ADMIN_MODE=true nuxi dev -p 3039",
     "generate": "nuxi generate",
     "prepare": "nuxi prepare",
     "preview": "nuxi preview",

@@ -1,7 +1,6 @@
 import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import { commonjsDeps } from '@koumoul/vjsf/utils/build.js'
 import { defineNuxtConfig } from 'nuxt/config'
-import config from './config.js'
 
 export default defineNuxtConfig({
   app: {
@@ -14,7 +13,12 @@ export default defineNuxtConfig({
   },
   css: ['@/assets/main.scss'],
 
-  runtimeConfig: { public: config },
+  runtimeConfig: {
+    public: {
+      // overwrite using NUXT_PUBLIC_DATA_FAIR_ADMIN_MODE env var
+      dataFairAdminMode: false
+    }
+  },
 
   // Force enabling the dev tools on nuxi dev as the shortcut (Shift + Alt + D) is not working on non QWERTY keyboards, see https://github.com/nuxt/devtools/issues/601
   /* devtools: {
