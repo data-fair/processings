@@ -16,9 +16,9 @@ RUN test -f /usr/local/lib/libCGAL.so.13
 # build tippecanoe from source
 WORKDIR /tmp/
 RUN apk add git zlib-dev sqlite-dev bash
-RUN git clone https://github.com/mapbox/tippecanoe.git
+RUN git clone https://github.com/felt/tippecanoe.git
 WORKDIR /tmp/tippecanoe
-RUN git checkout 1.36.0
+RUN git checkout 2.57.0
 RUN make -j
 RUN make install
 RUN test -f /usr/local/bin/tippecanoe
