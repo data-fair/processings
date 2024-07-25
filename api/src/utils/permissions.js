@@ -8,6 +8,7 @@ import config from '../config.js'
  */
 const getOwnerRole = (sessionState, owner) => {
   if (!sessionState) return null
+  if (sessionState.user.adminMode) return 'admin'
   if (sessionState.account.type !== owner.type || sessionState.account.id !== owner.id) return null
   if (sessionState.account.type === 'user') return 'admin'
   if (sessionState.account.department && sessionState.account.department !== owner.department) return null
