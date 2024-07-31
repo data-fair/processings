@@ -1,6 +1,7 @@
 <template>
   <v-container
     data-iframe-height
+    style="min-height:500px"
   >
     <v-row>
       <v-col>
