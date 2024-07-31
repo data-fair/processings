@@ -39,6 +39,7 @@
       <v-card
         v-if="newProcessing"
         rounded="lg"
+        data-iframe-height
       >
         <v-card-title primary-title>
           <h3 class="text-h5 mb-0">
