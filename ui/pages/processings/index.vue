@@ -131,7 +131,12 @@ const ownerRole = computed(() => {
     if (owner.value.id === user.id) return 'admin'
     else return 'anonymous'
   }
-  const userOrg = user.organizations.find(/** @param {Record<string, any>} o */ o => o.id === owner.value.id)
+  const userOrg = user.organizations.find(/** @param {Record<string, any>} o */ o => {
+    if (o.id !== owner.value.id) return false
+    if (!o.department) return true
+    if (o.department === owner.value.department) return true
+    return false
+  })
   return userOrg ? userOrg.role : 'anonymous'
 })
 const ownerFilter = computed(() => `${owner.value.type}:${owner.value.id}${owner.value.department ? ':' + owner.value.department : ''}`)
