@@ -55,6 +55,7 @@ UI available at ${config.origin}/processings/`)
 export const stop = async () => {
   await httpTerminator.terminate()
   if (config.observer.active) await stopObserver()
+  await locks.stop()
   await mongo.client.close()
   await stopWSServer()
 }

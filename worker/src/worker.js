@@ -113,16 +113,11 @@ async function mainLoop (db, lastActivity) {
 
       if (stopped) continue
 
-      promisePool[freeSlot] = iter(db, run)
-      // @ts-ignore -> we are sure that the slot is a Promise<void>
-      promisePool[freeSlot].catch(err => {
-        internalError('worker-iter', err)
-      })
-      // always empty the slot after the promise is finished
-      // @ts-ignore -> we are sure that the slot is a Promise<void>
-      promisePool[freeSlot].finally(() => {
-        promisePool[freeSlot] = null
-      })
+      const iterPromise = iter(db, run)
+      promisePool[freeSlot] = iterPromise
+      // empty the slot after the promise is finished
+      // do not catch failure, they should trigger a restart of the loop
+      iterPromise.then(() => { promisePool[freeSlot] = null })
 
       await new Promise(resolve => setTimeout(resolve, config.worker.interval))
     }
@@ -287,11 +282,7 @@ async function iter (db, run) {
       } catch (err) {
         // retry once in case of failure, a concurrent call to createNext might have been made, but failed
         await new Promise(resolve => setTimeout(resolve, 2000))
-        try {
-          await createNext(db, processing)
-        } catch (err) {
-          internalError('worker-next-run', err)
-        }
+        await createNext(db, processing)
       }
     }
   }
