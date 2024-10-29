@@ -13,8 +13,8 @@
     "dev-ui": "npm -w ui run dev",
     "dev-worker": "npm -w worker run dev",
     "dev-zellij": "export DEV_SHELL=$(basename \"$SHELL\") && zellij --layout .zellij.kdl && rm data/zellij-deps-ready",
-    "lint": "eslint --ext js,vue --ignore-path .gitignore .",
-    "lint-fix": "eslint --ext js,vue --ignore-path .gitignore --fix .",
+    "lint": "eslint .",
+    "lint-fix": "eslint --fix . && npm -w ui run lint-fix",
     "test": "NODE_ENV=test node test-it/index.js",
     "test-only": "NODE_ENV=test node test-it/index.js --test-only",
     "test-deps": "docker compose --profile test up -d --wait",
@@ -39,29 +39,19 @@
     "url": "https://github.com/data-fair/processings/issues"
   },
   "homepage": "https://github.com/data-fair/processings#readme",
+  "dependencies": {
+    "@data-fair/lib-types-builder": "^1.3.0"
+  },
   "devDependencies": {
-    "@commitlint/config-conventional": "^19.2.2",
-    "@types/config": "^3.3.3",
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "@types/config": "^3.3.5",
     "@types/debug": "^4.1.12",
     "@types/fs-extra": "^11.0.4",
-    "@types/resolve-path": "^1.4.2",
-    "commitlint": "^19.2.2",
-    "eslint": "^8.57.0",
-    "eslint-config-standard": "^17.1.0",
-    "eslint-plugin-jsdoc": "^48.2.3",
-    "eslint-plugin-no-only-tests": "^3.1.0",
-    "husky": "^9.0.11",
-    "json-schema-to-typescript": "^11.0.5",
-    "nock": "^13.0.6",
-    "relative-deps": "^1.0.7",
-    "typescript": "^5.4.5"
-  },
-  "dependencies": {
-    "@data-fair/lib": "^0.38.1",
-    "ajv": "^8.13.0",
-    "ajv-errors": "^3.0.0",
-    "ajv-formats": "^2.1.1",
-    "ajv-i18n": "^4.2.0"
+    "eslint": "^9.13.0",
+    "husky": "^9.1.6",
+    "neostandard": "^0.11.7",
+    "typescript": "^5.6.3"
   },
   "relativeDependencies": {
     "@data-fair/lib": "../lib"
