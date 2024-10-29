@@ -2,14 +2,14 @@ import { existsSync } from 'fs'
 import resolvePath from 'resolve-path'
 import { app } from './app.js'
 import { startWSServer, stopWSServer } from './utils/wsServer.js'
-import { session } from '@data-fair/lib/express/index.js'
-import { startObserver, stopObserver } from '@data-fair/lib/node/observer.js'
-import * as locks from '@data-fair/lib/node/locks.js'
+import { session } from '@data-fair/lib-express/index.js'
+import { startObserver, stopObserver } from '@data-fair/lib-node/observer.js'
+import * as locks from '@data-fair/lib-node/locks.js'
 import { createHttpTerminator } from 'http-terminator'
 import { exec as execCallback } from 'child_process'
 import { promisify } from 'util'
-import config from './config.js'
-import mongo from '@data-fair/lib/node/mongo.js'
+import config from './config.ts'
+import mongo from './mongo.ts'
 import http from 'http'
 
 const exec = promisify(execCallback)
@@ -28,16 +28,7 @@ export const start = async () => {
   }
   if (config.observer.active) await startObserver(config.observer.port)
   session.init(config.privateDirectoryUrl)
-  await mongo.connect(config.mongoUrl)
-  await mongo.configure({
-    processings: {
-      fulltext: { title: 'text' },
-      main: { 'owner.type': 1, 'owner.id': 1 }
-    },
-    runs: {
-      main: { 'owner.type': 1, 'owner.id': 1, 'processing._id': 1, createdAt: -1 }
-    }
-  })
+  await mongo.init()
   await locks.init(mongo.db)
 
   server.listen(config.port)
@@ -47,9 +38,9 @@ export const start = async () => {
   await startWSServer(server, mongo.db, session)
 
   console.log(`
-API server listening on port ${config.port}
-API available at ${config.origin}/processings/api/
-UI available at ${config.origin}/processings/`)
+  API server listening on port ${config.port}
+  API available at ${config.origin}/processings/api/
+  UI available at ${config.origin}/processings/`)
 }
 
 export const stop = async () => {

@@ -1,4 +1,4 @@
-import { session, errorHandler } from '@data-fair/lib/express/index.js'
+import { session, errorHandler } from '@data-fair/lib-express/index.js'
 import express from 'express'
 
 import pluginsRegistryRouter from './routers/plugins-registry.js'
