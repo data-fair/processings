@@ -1,9 +1,11 @@
 import type { Limit } from '#api/types'
-import type { ProcessingsMongo } from '../api/src/mongo.ts'
+import type { Account } from '@data-fair/lib-express'
+import { Collection, Db } from 'mongodb'
 
-export const getLimits = async (mongo: ProcessingsMongo, consumer: Record<string, string>, processingsSeconds:number = -1) => {
+export const getLimits = async (db: Db, consumer: Account, processingsSeconds:number = -1) => {
   const now = new Date()
-  let limits = await mongo.limits.findOne({ type: consumer.type, id: consumer.id }) as Limit
+  const limitsCollection = db.collection('limits') as Collection<Limit>
+  let limits = await limitsCollection.findOne({ type: consumer.type, id: consumer.id }) as Limit
   if (!limits) {
     limits = {
       type: consumer.type,
@@ -13,7 +15,7 @@ export const getLimits = async (mongo: ProcessingsMongo, consumer: Record<string
       defaults: true
     }
     try {
-      await mongo.limits.insertOne(limits)
+      await limitsCollection.insertOne(limits)
     } catch (err: any) {
       if (err.code !== 11000) throw err
     }

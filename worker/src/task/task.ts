@@ -5,7 +5,6 @@ import type { Collection, Db } from 'mongodb'
 import axios from 'axios'
 import axiosRetry from 'axios-retry'
 import util from 'node:util'
-import config from '../config.js'
 import fs from 'fs-extra'
 import path from 'path'
 import resolvePath from 'resolve-path'
@@ -13,7 +12,8 @@ import tmp from 'tmp-promise'
 import { DataFairWsClient } from '@data-fair/lib-node/ws-client.js'
 import { httpAgent, httpsAgent } from '@data-fair/lib-node/http-agents.js'
 import { running } from '../utils/runs.js'
-import { Processing, Run } from '../../../api/types/index.ts'
+import config from '#config'
+import { Processing, Run } from '#types'
 
 fs.ensureDirSync(config.dataDir)
 const baseTmpDir = config.tmpDir || path.join(config.dataDir, 'tmp')

@@ -1,14 +1,12 @@
-import config from '../config.js'
-import axios from '@data-fair/lib/node/axios.js'
+import type { Notification } from '@data-fair/lib-common-types/notification'
+import { internalError } from '@data-fair/lib-node/observer.js'
+import axios from '@data-fair/lib-node/axios.js'
+import config from '#config'
 import debug from 'debug'
-import { internalError } from '@data-fair/lib/node/observer.js'
 
 const debugNotif = debug('notifications')
-/**
- * @param {any} notification the notification to send
- * @returns {Promise<void>} nothing
- */
-export const send = async (notification) => {
+
+export const send = async (notification: Notification) => {
   // @test:spy("notificationSend", notification)
   debugNotif(`send notification ${notification}`)
   if (!config.privateNotifyUrl) {

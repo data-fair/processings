@@ -1,46 +1,43 @@
 /* eslint-disable no-async-promise-executor */
-import { existsSync } from 'fs'
-import resolvePath from 'resolve-path'
-import mongo from '@data-fair/lib/node/mongo.js'
-import limits from './utils/limits.js'
-import * as locks from '@data-fair/lib/node/locks.js'
-import upgradeScripts from '@data-fair/lib/node/upgrade-scripts.js'
-import config from './config.js'
-import kill from 'tree-kill'
-import { startObserver, stopObserver, internalError } from '@data-fair/lib/node/observer.js'
-import { createNext } from '../../shared/runs.js'
-import { initPublisher } from '../../shared/ws.js'
-import { initMetrics } from './utils/metrics.js'
-import { finish } from './utils/runs.js'
+import type { AggregationCursor, Collection, Db } from 'mongodb'
+
 import { spawn } from 'child-process-promise'
 import Debug from 'debug'
+import { existsSync } from 'fs'
+import resolvePath from 'resolve-path'
+import kill from 'tree-kill'
+
+import * as locks from '@data-fair/lib-node/locks.js'
+import { startObserver, stopObserver, internalError } from '@data-fair/lib-node/observer.js'
+import upgradeScripts from '@data-fair/lib-node/upgrade-scripts.js'
+import config from '#config'
+import mongo from '#mongo'
+import { Processing, Run } from '#types'
+import { createNext } from '../../shared/runs.ts'
+import { initPublisher } from '../../shared/ws.js'
+import limits from './utils/limits.js'
+import { initMetrics } from './utils/metrics.js'
+import { finish } from './utils/runs.js'
+
 const debug = Debug('worker')
 const debugLoop = Debug('worker-loop')
 
-/** @typedef {import('../../shared/types/run/index.js').Run} Run */
-
-/** @type {boolean} */
 let stopped = false
-/** @type {[Promise<void> | null]} */
-const promisePool = [null]
-/** @type {Record<string, number>} */
-const pids = {}
+const promisePool: [Promise<void> | null] = [null]
+const pids: Record<string, number> = {}
 
-/** @type {(channel: string, data: any) => Promise<void>} */
-let wsPublish
+let wsPublish: (channel: string, data: any) => Promise<void>
 
 // Loop promises, resolved when stopped
-/** @type {Promise<void>} */
-let mainLoopPromise
-/** @type {Promise<void>} */
-let killLoopPromise
+let mainLoopPromise: Promise<void>
+let killLoopPromise: Promise<void>
 
 // Start the worker (start the mail loop and all dependencies)
 export const start = async () => {
   if (!existsSync(config.dataDir) && process.env.NODE_ENV === 'production') {
     throw new Error(`Data directory ${resolvePath(config.dataDir)} was not mounted`)
   }
-  await mongo.connect(config.mongoUrl, { readPreference: 'primary', maxPoolSize: 1 })
+  await mongo.init()
   const db = mongo.db
   await locks.init(db)
   await upgradeScripts(db, config.upgradeRoot)
@@ -77,10 +74,10 @@ export const stop = async () => {
  * Main loop
  * Check for available runs to process and start a task for each run
  * If the worker is inactive, wait for a longer delay
- * @param {import('mongodb').Db} db
- * @param {number} lastActivity the timestamp of the last activity of the worker
+ * @param db
+ * @param lastActivity the timestamp of the last activity of the worker
  */
-async function mainLoop (db, lastActivity) {
+async function mainLoop (db: Db, lastActivity: number) {
   mainLoopPromise = new Promise(async (resolve) => {
     // eslint-disable-next-line no-unmodified-loop-condition
     while (!stopped) {
@@ -127,17 +124,14 @@ async function mainLoop (db, lastActivity) {
 
 /**
  * A secondary loop to handle killing tasks
- * @param {import('mongodb').Db} db
- * @returns {Promise<void>}
  */
-async function killLoop (db) {
+async function killLoop (db: Db) {
   killLoopPromise = new Promise(async (resolve) => {
     // eslint-disable-next-line no-unmodified-loop-condition
     while (!stopped) {
       await new Promise(resolve => setTimeout(resolve, config.worker.killInterval))
       try {
-        /** @type {import('mongodb').Collection<Run>} */
-        const runsCollection = mongo.db.collection('runs')
+        const runsCollection = mongo.db.collection('runs') as Collection<Run>
         for await (const run of runsCollection.find({ status: 'kill' })) {
           killRun(db, run).catch(err => {
             internalError('worker-task-kill', err)
@@ -154,11 +148,8 @@ async function killLoop (db) {
 
 /**
  * Kill a run
- * @param {import('mongodb').Db} db
- * @param {Run} run the run to kill
- * @returns {Promise<void>}
  */
-async function killRun (db, run) {
+async function killRun (db: Db, run: Run) {
   if (!pids[run._id]) {
     const ack = await locks.acquire(run.processing._id, 'worker-loop-kill')
     if (ack) {
@@ -188,21 +179,14 @@ async function killRun (db, run) {
 
 /**
  * Manage a run
- * @param {import('mongodb').Db} db
- * @param {Run} run the run to start
- * @returns {Promise<void>}
  */
-async function iter (db, run) {
+async function iter (db: Db, run: Run) {
   let stderr = ''
-  /** @type {import('mongodb').Collection<import('../../shared/types/processing/index.js').Processing>} */
-  const processingsCollection = db.collection('processings')
-  const processing = await processingsCollection.findOne({ _id: run.processing._id })
+  const processing = await db.collection<Processing>('processings').findOne({ _id: run.processing._id })
 
   if (!processing) {
     internalError('worker-missing-processing', 'found a run without associated processing, weird')
-    /** @type {import('mongodb').Collection<Run>} */
-    const runsCollection = db.collection('runs')
-    await runsCollection.deleteOne({ _id: run._id })
+    await db.collection<Run>('runs').deleteOne({ _id: run._id })
     return
   }
   if (!processing.active) {
@@ -244,7 +228,7 @@ async function iter (db, run) {
     pids[run._id] = spawnPromise.childProcess.pid || -1
     await spawnPromise // wait for the task to finish
     await finish(db, wsPublish, run)
-  } catch (/** @type {any} */ err) {
+  } catch (err: any) {
     // Build back the original error message from the stderr of the child process
     const errorMessage = []
     if (stderr) {
@@ -291,13 +275,12 @@ async function iter (db, run) {
 /**
  * Acquire the next run to process, if a run is already running, check if the lock was released,
  * meaning the task was brutally interrupted
- * @param {import('mongodb').Db} db
- * @returns {Promise<Run | undefined>} the next run to process
+ * @param db
+ * @returns the next run to process
  */
-async function acquireNext (db) {
+async function acquireNext (db: Db): Promise<Run | undefined> {
   // Random sort prevents from insisting on the same failed dataset again and again
-  /** @type {import('mongodb').AggregationCursor<Run>} */
-  const cursor = db.collection('runs')
+  const cursor = db.collection<Run>('runs')
     .aggregate([{
       $match: {
         $or: [
@@ -307,27 +290,25 @@ async function acquireNext (db) {
           { status: 'running' }
         ]
       }
-    }, { $sample: { size: 100 } }])
+    }, { $sample: { size: 100 } }]) as AggregationCursor<Run>
 
   while (await cursor.hasNext()) {
-    let run = /** @type {Run} */(await cursor.next())
+    let run = (await cursor.next())!
     const ack = await locks.acquire(run.processing._id, 'worker-loop-iter')
     debug('acquire lock for run ?', run._id, ack)
 
     if (ack) {
       // re-fetch run to prevent some race condition
-      /** @type {import('mongodb').Collection<Run>} */
-      const runsCollection = db.collection('runs')
-      run = /** @type {Run} */(await runsCollection.findOne({ _id: run._id }))
+      const foundRun = await db.collection<Run>('runs').findOne({ _id: run._id })
+      if (!foundRun) continue
+      run = foundRun
 
       // if we could acquire the lock it means the task was brutally interrupted
       if (run.status === 'running') {
         try {
           console.warn('we had to close a run that was stuck in running status', run)
           await finish(db, wsPublish, run, 'le traitement a été interrompu suite à une opération de maintenance', 'error')
-          /** @type {import('mongodb').Collection<import('../../shared/types/processing/index.js').Processing>} */
-          const processingsCollection = db.collection('processings')
-          const processing = await processingsCollection.findOne({ _id: run.processing._id })
+          const processing = await db.collection<Processing>('processings').findOne({ _id: run.processing._id })
           await locks.release(run.processing._id)
           if (processing && processing.scheduling.length) {
             await createNext(db, processing) // we create the next scheduled run
