@@ -1,15 +1,11 @@
+import type { SessionStateAuthenticated } from '@data-fair/lib-express/index.js'
+
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import permissions from './permissions.js'
 
 // Util functions shared accross the main find (GET on collection) endpoints
-/**
- * @param {any} reqQuery - The query parameters from the request
- * @param {import('@data-fair/lib/express/index.js').SessionStateAuthenticated} sessionState
- * @param {Record<string, string>} fieldsMap
- */
-const query = (reqQuery, sessionState, fieldsMap = {}) => {
-  /** @type {any} */
-  const query = {}
+const query = (reqQuery: any, sessionState: SessionStateAuthenticated, fieldsMap: Record<string, string> = {}) => {
+  const query: Record<string, any> = {}
 
   if (reqQuery.q) query.$text = { $search: reqQuery.q }
 
@@ -18,7 +14,6 @@ const query = (reqQuery, sessionState, fieldsMap = {}) => {
     throw httpError(400, 'Only super admins can override permissions filter with showAll parameter')
   }
   if (!showAll) {
-    /** @type {any} */
     let owner = sessionState.account
     if (reqQuery.owner) {
       const ownerParts = reqQuery.owner.split(':')
@@ -33,14 +28,10 @@ const query = (reqQuery, sessionState, fieldsMap = {}) => {
   return query
 }
 
-/**
- * @param {any} sortStr
- * @returns {any}
- */
-const sort = (sortStr) => {
+const sort = (sortStr:string) => {
   const sort = {}
   if (!sortStr) return sort
-  Object.assign(sort, ...sortStr.split(',').map((/** @type {string} */ s) => {
+  Object.assign(sort, ...sortStr.split(',').map((s:string) => {
     const toks = s.split(':')
     return {
       [toks[0]]: Number(toks[1])
@@ -49,13 +40,7 @@ const sort = (sortStr) => {
   return sort
 }
 
-/**
- * @param {string|undefined} size
- * @param {string|undefined} page
- * @param {string|undefined} skip
- * @returns {[number, number]} - [size, skip]
- */
-const pagination = (size, page, skip) => {
+const pagination = (size: string | undefined, page: string | undefined, skip: string | undefined): [number, number] => {
   let sizeInt = 10
   if (size && !isNaN(parseInt(size))) {
     sizeInt = parseInt(size)
@@ -71,15 +56,10 @@ const pagination = (size, page, skip) => {
   return [sizeInt, skipInt]
 }
 
-/**
- * @param {any} selectStr
- * @returns {Record<string, number>}
- */
-const project = (selectStr) => {
-  /** @type {Record<string, number>} */
-  const select = {}
+const project = (selectStr: string) => {
+  const select: Record<string, number> = {}
   if (selectStr) {
-    selectStr.split(',').forEach((/** @type {string} */ s) => {
+    selectStr.split(',').forEach(s => {
       select[s] = 1
     })
   }

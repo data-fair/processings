@@ -1,5 +1,5 @@
 import type { Processing } from '#types'
-import type { SessionState } from '@data-fair/lib-express/index.js'
+import type { SessionStateAuthenticated } from '@data-fair/lib-express/index.js'
 
 import Ajv from 'ajv'
 import ajvFormats from 'ajv-formats'
@@ -57,7 +57,7 @@ const validateFullProcessing = async (processing: Processing) => {
  * @param host the req.headers.host
  * @returns the cleaned processing object
  */
-const cleanProcessing = (processing: Processing, sessionState: SessionState, host: string | undefined) => {
+const cleanProcessing = (processing: Processing, sessionState: SessionStateAuthenticated, host: string | undefined) => {
   delete processing.webhookKey
   processing.userProfile = permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState, host)
   if (processing.userProfile !== 'admin') {

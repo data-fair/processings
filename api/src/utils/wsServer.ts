@@ -17,20 +17,14 @@ import { channel } from '../../../shared/ws.js'
 import { WebSocketServer } from 'ws'
 import permissions from './permissions.js'
 
-/** @type {any} */
-let cursor
-/** @type {WebSocketServer} */
-let wss
-const subscribers = {}
-const clients = {}
+let cursor: any
+let wss: WebSocketServer
+const subscribers: Record<string, Record<string, number>> = {}
+const clients: Record<string, any> = {}
 
 let stopped = false
-/**
- * @param {any} server
- * @param {any} db
- * @param {any} session
- */
-export const startWSServer = async (server, db, session) => {
+
+export const startWSServer = async (server: any, db: any, session: any) => {
   wss = new WebSocketServer({ server })
   wss.on('connection', async (ws, req) => {
     // Associate ws connections to ids for subscriptions
@@ -41,7 +35,7 @@ export const startWSServer = async (server, db, session) => {
     ws.on('message', async str => {
       try {
         if (stopped) return
-        const message = JSON.parse(str)
+        const message = JSON.parse(str.toString())
         if (!message.type || ['subscribe', 'unsubscribe'].indexOf(message.type) === -1) {
           return ws.send(JSON.stringify({ type: 'error', data: 'type should be "subscribe" or "unsubscribe"' }))
         }
@@ -65,7 +59,7 @@ export const startWSServer = async (server, db, session) => {
           delete subscribers[message.channel][clientId]
           return ws.send(JSON.stringify({ type: 'unsubscribe-confirm', channel: message.channel }))
         }
-      } catch (err) {
+      } catch (err: any) {
         return ws.send(JSON.stringify({ type: 'error', data: err.message }))
       }
     })
@@ -107,13 +101,10 @@ export const stopWSServer = async () => {
 
 // Listen to pubsub channel based on mongodb to support scaling on multiple processes
 let startDate = new Date().toISOString()
-/**
- * @param {import('mongodb').Db} db
- * @param {import('mongodb').Collection} mongoChannel
- */
-const initCursor = async (db, mongoChannel) => {
+
+const initCursor = async (db: any, mongoChannel: any) => {
   cursor = mongoChannel.find({}, { tailable: true, awaitData: true })
-  cursor.forEach((/** @type {import('mongodb').Document} */ doc) => {
+  cursor.forEach((doc: any) => {
     if (stopped) return
     if (doc && doc.type === 'message') {
       if (doc.data.date && doc.data.date < startDate) return
@@ -122,7 +113,7 @@ const initCursor = async (db, mongoChannel) => {
         if (clients[sub]) clients[sub].send(JSON.stringify(doc))
       })
     }
-  }, async (/** @type {any} */ err) => {
+  }, async (err: any) => {
     if (stopped) return
     startDate = new Date().toISOString()
     await new Promise(resolve => setTimeout(resolve, 1000))

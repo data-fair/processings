@@ -1,12 +1,11 @@
-import { session } from '@data-fair/lib/express/index.js'
+import type { SessionStateAuthenticated, Account } from '@data-fair/lib-express/index.js'
+import type { NextFunction, Request, Response } from 'express'
+import type { Permission } from '#types/permission/index.js'
+
+import { session } from '@data-fair/lib-express/index.js'
 import config from '../config.js'
 
-/**
- * @param {import('@data-fair/lib/express/index.js').SessionStateAuthenticated} sessionState
- * @param {import('@data-fair/lib/express/index.js').Account} owner
- * @returns {string|null}
- */
-const getOwnerRole = (sessionState, owner) => {
+const getOwnerRole = (sessionState: SessionStateAuthenticated, owner: Account) => {
   if (!sessionState) return null
   if (sessionState.account.type !== owner.type || sessionState.account.id !== owner.id) return null
   if (sessionState.account.type === 'user') return 'admin'
@@ -16,56 +15,44 @@ const getOwnerRole = (sessionState, owner) => {
 
 /**
  * Middleware to check if the user is a super admin
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- * @param {import('express').NextFunction} next
- * @returns {Promise<void>}
  */
-const isSuperAdmin = async (req, res, next) => {
+const isSuperAdmin = async (req: Request, res: Response, next: NextFunction) => {
   await session.reqAdminMode(req)
   next()
 }
 
-/**
- * @param {import('@data-fair/lib/express/index.js').SessionStateAuthenticated} sessionState
- * @param {import('@data-fair/lib/express/index.js').Account} owner
- * @returns {boolean}
- */
-const isAdmin = (sessionState, owner) => {
+const isAdmin = (sessionState: SessionStateAuthenticated, owner: Account): boolean => {
   return (!!sessionState.user.adminMode || getOwnerRole(sessionState, owner) === 'admin')
 }
-/**
- * @param {import('@data-fair/lib/express/index.js').SessionStateAuthenticated} sessionState
- * @param {import('@data-fair/lib/express/index.js').Account} owner
- * @returns {boolean}
- */
-const isContrib = (sessionState, owner) => {
+
+const isContrib = (sessionState: SessionStateAuthenticated, owner: Account) => {
   return (!!sessionState.user.adminMode || ['admin', 'contrib'].includes(getOwnerRole(sessionState, owner) || ''))
 }
-/**
- * @param {import('@data-fair/lib/express/index.js').SessionStateAuthenticated} sessionState
- * @param {import('@data-fair/lib/express/index.js').Account} owner
- * @returns {boolean}
- */
-const isMember = (sessionState, owner) => {
+
+const isMember = (sessionState: SessionStateAuthenticated, owner: Account):boolean => {
   return (!!sessionState.user.adminMode || !!getOwnerRole(sessionState, owner))
 }
 
-/**
- * @param {import('@data-fair/lib/express/index.js').SessionStateAuthenticated} sessionState
- * @param {import('@data-fair/lib/express/index.js').Account} owner
- * @returns {any}
- */
-const getOwnerPermissionFilter = (sessionState, owner) => {
-  /** @type {any} */
-  const filter = {
+const getOwnerPermissionFilter = (sessionState: SessionStateAuthenticated, owner: Account) => {
+  interface Filter {
+    'owner.type': string
+    'owner.id': string
+    'owner.department'?: string
+    permissions?: {
+      $elemMatch: {
+        profile: { $in: ['read', 'exec'] }
+        $or: Array<{ [key: string]: any }>
+      }
+    }
+  }
+
+  const filter: Filter = {
     'owner.type': owner.type,
     'owner.id': owner.id
   }
   if (owner.department) filter['owner.department'] = owner.department
   if (sessionState.user.adminMode || ['admin', 'contrib'].includes(getOwnerRole(sessionState, owner) || '')) return filter
-  /** @type {any[]} */
-  const or = [{ 'target.type': 'userEmail', 'target.email': sessionState.user.email }]
+  const or: Array<{ [key: string]: any }> = [{ 'target.type': 'userEmail', 'target.email': sessionState.user.email }]
   if (sessionState.account.type === 'organization') {
     or.push({ 'target.type': 'partner', 'target.organization.id': sessionState.account.id, 'target.roles': sessionState.accountRole })
   }
@@ -78,25 +65,13 @@ const getOwnerPermissionFilter = (sessionState, owner) => {
   return filter
 }
 
-/**
- * @param {any} target
- * @param {import('@data-fair/lib/express/index.js').SessionStateAuthenticated} sessionState
- * @returns {boolean}
- */
-const matchPermissionTarget = (target, sessionState) => {
+const matchPermissionTarget = (target: any, sessionState: SessionStateAuthenticated): boolean => {
   if (target.type === 'userEmail' && target.email === sessionState.user.email) return true
   if (target.type === 'partner' && sessionState.account.type === 'organization' && sessionState.account.id === target.organization.id && target.roles.includes(sessionState.accountRole)) return true
   return false
 }
 
-/**
- * @param {import('@data-fair/lib/express/index.js').Account} owner
- * @param {import('../../../shared/types/permission/index.js').Permission[] | undefined} permissions
- * @param {import('@data-fair/lib/express/index.js').SessionStateAuthenticated} sessionState
- * @param {string|undefined} host req.headers.host
- * @returns {string | undefined}
- */
-const getUserResourceProfile = (owner, permissions, sessionState, host) => {
+const getUserResourceProfile = (owner: Account, permissions: Permission[] | undefined, sessionState: SessionStateAuthenticated, host: string | undefined): string | undefined => {
   // this line is first, a manual permission cannot demote an admin
   const ownerRole = sessionState?.user.adminMode ? 'admin' : getOwnerRole(sessionState, owner)
   if (ownerRole === 'admin') {
