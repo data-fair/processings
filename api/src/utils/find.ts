@@ -1,10 +1,11 @@
-import type { SessionStateAuthenticated } from '@data-fair/lib-express/index.js'
+import type { SessionStateAuthenticated } from '@data-fair/lib-express'
 
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import permissions from './permissions.js'
+import { AccountKeys } from '#types'
 
 // Util functions shared accross the main find (GET on collection) endpoints
-const query = (reqQuery: any, sessionState: SessionStateAuthenticated, fieldsMap: Record<string, string> = {}) => {
+const query = (reqQuery: Record<string, string>, sessionState: SessionStateAuthenticated, fieldsMap: Record<string, string> = {}) => {
   const query: Record<string, any> = {}
 
   if (reqQuery.q) query.$text = { $search: reqQuery.q }
@@ -14,9 +15,12 @@ const query = (reqQuery: any, sessionState: SessionStateAuthenticated, fieldsMap
     throw httpError(400, 'Only super admins can override permissions filter with showAll parameter')
   }
   if (!showAll) {
-    let owner = sessionState.account
+    let owner: AccountKeys = sessionState.account
     if (reqQuery.owner) {
       const ownerParts = reqQuery.owner.split(':')
+      if (!(ownerParts[0] === 'user' || ownerParts[0] === 'organization')) {
+        throw httpError(400, 'Owner type must be user or organization')
+      }
       owner = { type: ownerParts[0], id: ownerParts[1], department: ownerParts[2] }
     }
     Object.assign(query, permissions.getOwnerPermissionFilter(sessionState, owner))

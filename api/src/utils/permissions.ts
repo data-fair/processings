@@ -1,11 +1,12 @@
-import type { SessionStateAuthenticated, Account } from '@data-fair/lib-express/index.js'
+import type { SessionStateAuthenticated, Account } from '@data-fair/lib-express'
 import type { NextFunction, Request, Response } from 'express'
 import type { Permission } from '#types/permission/index.js'
 
 import { session } from '@data-fair/lib-express/index.js'
 import config from '../config.js'
+import { AccountKeys } from '#types'
 
-const getOwnerRole = (sessionState: SessionStateAuthenticated, owner: Account) => {
+const getOwnerRole = (sessionState: SessionStateAuthenticated, owner: AccountKeys) => {
   if (!sessionState) return null
   if (sessionState.account.type !== owner.type || sessionState.account.id !== owner.id) return null
   if (sessionState.account.type === 'user') return 'admin'
@@ -33,7 +34,7 @@ const isMember = (sessionState: SessionStateAuthenticated, owner: Account):boole
   return (!!sessionState.user.adminMode || !!getOwnerRole(sessionState, owner))
 }
 
-const getOwnerPermissionFilter = (sessionState: SessionStateAuthenticated, owner: Account) => {
+const getOwnerPermissionFilter = (sessionState: SessionStateAuthenticated, owner: AccountKeys) => {
   interface Filter {
     'owner.type': string
     'owner.id': string
@@ -79,7 +80,7 @@ const getUserResourceProfile = (owner: Account, permissions: Permission[] | unde
     return 'admin'
   }
   for (const profile of ['read', 'exec']) {
-    if (permissions && permissions.find((/** @type {import('../../../shared/types/permission/index.js').Permission} */ p) => p.profile === profile && matchPermissionTarget(p.target, sessionState))) {
+    if (permissions && permissions.find((p) => p.profile === profile && matchPermissionTarget(p.target, sessionState))) {
       return profile
     }
   }

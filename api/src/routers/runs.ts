@@ -27,24 +27,15 @@ const cleanRun = (run: Run, sessionState: SessionStateAuthenticated, host: strin
   return run
 }
 
-interface GetParams {
-  size: string
-  page: string
-  skip: string
-  showAll: string
-  sort: string
-  select: string
-}
-
 // Get the list of runs (without logs)
 router.get('', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
-  const params: GetParams = req.query as any
+  const params = (await import ('#doc/runs/get-req/index.ts')).returnValid(req.query)
   const sort = findUtils.sort(params.sort)
   const [size, skip] = findUtils.pagination(params.size, params.page, params.skip)
   // implicit showAll on runs if we are looking at a processing in adminMode
   if (sessionState.user.adminMode) params.showAll = 'true'
-  const query = findUtils.query(req.query, sessionState, { processing: 'processing._id' }) // Check permissions on processing
+  const query = findUtils.query(params, sessionState, { processing: 'processing._id' }) // Check permissions on processing
   const project = { log: 0 }
   const [runs, count] = await Promise.all([
     size > 0 ? mongo.runs.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),

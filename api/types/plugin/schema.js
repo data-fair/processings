@@ -37,7 +37,25 @@ export default {
       type: 'string'
     },
     pluginConfigSchema: {
-      type: 'object'
+      type: 'object',
+      required: ['properties'],
+      properties: {
+        properties: {
+          type: 'object',
+          required: ['pluginName'],
+          properties: {
+            pluginName: {
+              type: 'object',
+              required: ['default'],
+              properties: {
+                default: {
+                  type: 'string'
+                }
+              }
+            },
+          }
+        }
+      }
     },
     processingConfigSchema: {
       type: 'object'

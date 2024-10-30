@@ -35,9 +35,10 @@ tmp.setGracefulCleanup()
  * For compatibility with old plugins
  */
 const injectPluginNameConfig = (plugin: Plugin): Plugin => {
-  if (!plugin.pluginConfigSchema.properties.pluginName) {
+  if (!plugin.pluginConfigSchema.properties?.pluginName) {
     const version = plugin.distTag === 'latest' ? plugin.version : `${plugin.distTag} - ${plugin.version}`
     const defaultName = plugin.name.replace('@data-fair/processing-', '') + ' (' + version + ')'
+    plugin.pluginConfigSchema.properties = plugin.pluginConfigSchema.properties || {}
     plugin.pluginConfigSchema.properties.pluginName = {
       type: 'string',
       title: 'Nom du plugin',
