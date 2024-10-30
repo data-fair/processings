@@ -1,8 +1,9 @@
 import type { Db } from 'mongodb'
+import type { Run, Processing } from '#types'
+
 import { incrementConsumption } from './limits.ts'
 import { runsMetrics } from './metrics.ts'
 import notifications from './notifications.ts'
-import { Run, Processing } from '../../../api/types/index.ts'
 
 export const running = async (db: Db, wsPublish: (channel: string, data: any) => Promise<void>, run: Run) => {
   const patch = { status: 'running' as Run['status'], startedAt: new Date().toISOString() }

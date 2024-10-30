@@ -1,5 +1,6 @@
 /* eslint-disable no-async-promise-executor */
 import type { AggregationCursor, Collection, Db } from 'mongodb'
+import type { Processing, Run } from '#types'
 
 import { spawn } from 'child-process-promise'
 import Debug from 'debug'
@@ -12,12 +13,11 @@ import { startObserver, stopObserver, internalError } from '@data-fair/lib-node/
 import upgradeScripts from '@data-fair/lib-node/upgrade-scripts.js'
 import config from '#config'
 import mongo from '#mongo'
-import { Processing, Run } from '#types'
 import { createNext } from '../../shared/runs.ts'
 import { initPublisher } from '../../shared/ws.js'
-import limits from './utils/limits.js'
-import { initMetrics } from './utils/metrics.js'
-import { finish } from './utils/runs.js'
+import limits from './utils/limits.ts'
+import { initMetrics } from './utils/metrics.ts'
+import { finish } from './utils/runs.ts'
 
 const debug = Debug('worker')
 const debugLoop = Debug('worker-loop')

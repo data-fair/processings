@@ -1,9 +1,9 @@
 {
   "name": "worker",
-  "main": "index.js",
+  "main": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "NODE_ENV=development DEBUG=worker,upgrade* node --watch index.js"
+    "dev": "NODE_ENV=development DEBUG=worker,upgrade* node --watch --experimental-strip-types index.ts"
   },
   "imports": {
     "#config": "./src/config.ts",
@@ -17,6 +17,7 @@
   "dependencies": {
     "@data-fair/lib-node": "^1.4.0",
     "axios-retry": "^4.5.0",
+    "child-process-promise": "^2.2.1",
     "tree-kill": "^1.2.2"
   }
 }
