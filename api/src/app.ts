@@ -1,11 +1,11 @@
 import { session, errorHandler } from '@data-fair/lib-express/index.js'
 import express from 'express'
 
-import pluginsRegistryRouter from './routers/plugins-registry.js'
-import pluginsRouter from './routers/plugins.js'
-import processingsRouter from './routers/processings.js'
-import runsRouter from './routers/runs.js'
-import limitsRouter from './routers/limits.js'
+import limitsRouter from './routers/limits.ts'
+import pluginsRegistryRouter from './routers/plugins-registry.ts'
+import pluginsRouter from './routers/plugins.ts'
+import processingsRouter from './routers/processings.ts'
+import runsRouter from './routers/runs.ts'
 
 export const app = express()
 

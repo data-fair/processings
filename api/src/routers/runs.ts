@@ -4,8 +4,8 @@ import type { SessionStateAuthenticated } from '@data-fair/lib-express/index.js'
 import { session, asyncHandler } from '@data-fair/lib-express/index.js'
 import { Router } from 'express'
 import mongo from '#mongo'
-import findUtils from '../utils/find.js'
-import permissions from '../utils/permissions.js'
+import findUtils from '../utils/find.ts'
+import permissions from '../utils/permissions.ts'
 
 const router = Router()
 export default router
@@ -41,7 +41,7 @@ router.get('', asyncHandler(async (req, res) => {
     size > 0 ? mongo.runs.find(query).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
     mongo.runs.countDocuments(query)
   ])
-  res.send({ results: runs.map((r: Run) => cleanRun(r, sessionState, req.headers.host)), count })
+  res.send({ results: runs.map((r) => cleanRun(r as Run, sessionState, req.headers.host)), count })
 }))
 
 // Get a run (with logs)

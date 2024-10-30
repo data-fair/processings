@@ -66,6 +66,36 @@
         "properties": {
           "timeZone": {
             "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "minute": {
+            "type": "integer"
+          },
+          "minuteStep": {
+            "type": "integer"
+          },
+          "hour": {
+            "type": "integer"
+          },
+          "hourStep": {
+            "type": "integer"
+          },
+          "dayOfMonth": {
+            "type": "integer"
+          },
+          "dayOfMonthStep": {
+            "type": "integer"
+          },
+          "month": {
+            "type": "integer"
+          },
+          "monthStep": {
+            "type": "integer"
+          },
+          "dayOfWeek": {
+            "type": "integer"
           }
         }
       }

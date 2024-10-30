@@ -1,4 +1,4 @@
-import { start, stop } from './src/server.js'
+import { start, stop } from './src/server.ts'
 
 start().then(() => {}, err => {
   console.error('Failure while starting service', err)

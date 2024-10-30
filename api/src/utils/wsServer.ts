@@ -15,7 +15,7 @@ Downstream examples:
 import { nanoid } from 'nanoid'
 import { channel } from '../../../shared/ws.js'
 import { WebSocketServer } from 'ws'
-import permissions from './permissions.js'
+import permissions from './permissions.ts'
 
 let cursor: any
 let wss: WebSocketServer

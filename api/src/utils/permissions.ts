@@ -1,10 +1,9 @@
 import type { SessionStateAuthenticated, Account } from '@data-fair/lib-express'
 import type { NextFunction, Request, Response } from 'express'
-import type { Permission } from '#types/permission/index.js'
+import type { AccountKeys, Permission } from '#types'
 
 import { session } from '@data-fair/lib-express/index.js'
-import config from '../config.js'
-import { AccountKeys } from '#types'
+import config from '#config'
 
 const getOwnerRole = (sessionState: SessionStateAuthenticated, owner: AccountKeys) => {
   if (!sessionState) return null

@@ -1,18 +1,23 @@
-import { toCRON } from './scheduling.js'
-import { runType } from './types/index.js'
-import * as locks from '@data-fair/lib/node/locks.js'
+import type { Collection, Db } from 'mongodb'
+import type { Run, Processing } from '#api/types'
+
+import * as locks from '@data-fair/lib-node/locks.js'
 import { CronJob } from 'cron'
 import { nanoid } from 'nanoid'
 import dayjs from 'dayjs'
+import { assertValid } from '../api/types/run/index.ts'
 
-/**
- * @param {import('mongodb').Db} db
- * @param {import('./types/processing/index.js').Processing} processing
- * @param {boolean} triggered
- * @param {number} delaySeconds
- * @returns {Promise<import('./types/run/index.js').Run | null>}
- */
-export const createNext = async (db, processing, triggered = false, delaySeconds = 0) => {
+const toCRON = (scheduling: Processing['scheduling'][0]): string => {
+  if (!scheduling || scheduling.type === 'manual') return 'Invalid CRON expression'
+  const minute = scheduling.minute + (scheduling.minuteStep ? `/${scheduling.minuteStep}` : '')
+  const hour = scheduling.hour + (scheduling.hourStep ? `/${scheduling.hourStep}` : '')
+  const dayOfMonth = scheduling.dayOfMonth + (scheduling.dayOfMonthStep ? `/${scheduling.dayOfMonthStep}` : '')
+  const month = scheduling.month + (scheduling.monthStep ? `/${scheduling.monthStep}` : '')
+  const dayOfWeek = scheduling.dayOfWeek
+  return `${minute} ${hour} ${dayOfMonth} ${month} ${dayOfWeek}`
+}
+
+export const createNext = async (db: Db, processing: Processing, triggered: boolean = false, delaySeconds:number = 0): Promise<Run | null> => {
   const ack = await locks.acquire(processing._id + '/next-run')
   try {
     if (!ack) {
@@ -22,7 +27,6 @@ export const createNext = async (db, processing, triggered = false, delaySeconds
       throw new Error('une exécution est déjà en cours')
     }
 
-    /** @type {import('./types/run/index.js').Run} */
     const run = {
       _id: nanoid(),
       owner: processing.owner,
@@ -34,12 +38,10 @@ export const createNext = async (db, processing, triggered = false, delaySeconds
       status: triggered ? 'triggered' : 'scheduled',
       log: [],
       permissions: processing.permissions || []
-    }
+    } as Run
 
-    /** @type {import('mongodb').Collection<import('./types/run/index.js').Run>} */
-    const runsCollection = db.collection('runs')
-    /** @type {import('mongodb').Collection<import('./types/processing/index.js').Processing>} */
-    const processingsCollection = db.collection('processings')
+    const runsCollection = db.collection('runs') as Collection<Run>
+    const processingsCollection = db.collection('processings') as Collection<Processing>
 
     // cancel one that might have been scheduled previously
     if (triggered) {
@@ -76,7 +78,7 @@ export const createNext = async (db, processing, triggered = false, delaySeconds
     }
 
     if (run.scheduledAt) {
-      runType.assertValid(run)
+      assertValid(run)
       await runsCollection.insertOne(run)
       const nextRun = {
         _id: run._id,

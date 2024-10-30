@@ -1,4 +1,4 @@
-import type { Processing, Run } from '#types'
+import type { Processing, Run, Limit } from '#types'
 
 import mongo from '@data-fair/lib-node/mongo.js'
 import config from '#config'
@@ -21,7 +21,7 @@ export class ProcessingsMongo {
   }
 
   get limits () {
-    return mongo.db.collection('limits')
+    return mongo.db.collection<Limit>('limits')
   }
 
   init = async () => {

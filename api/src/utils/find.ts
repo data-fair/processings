@@ -1,8 +1,8 @@
 import type { SessionStateAuthenticated } from '@data-fair/lib-express'
+import type { AccountKeys } from '#types'
 
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
-import permissions from './permissions.js'
-import { AccountKeys } from '#types'
+import permissions from './permissions.ts'
 
 // Util functions shared accross the main find (GET on collection) endpoints
 const query = (reqQuery: Record<string, string>, sessionState: SessionStateAuthenticated, fieldsMap: Record<string, string> = {}) => {

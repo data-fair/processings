@@ -12,13 +12,13 @@ import { nanoid } from 'nanoid'
 
 import { session, asyncHandler } from '@data-fair/lib-express/index.js'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
-import { createNext } from '../../../shared/runs.js'
-import { applyProcessing, deleteProcessing } from '../utils/runs.js'
+import { createNext } from '../../../shared/runs.ts'
+import { applyProcessing, deleteProcessing } from '../utils/runs.ts'
 import processingSchema from '../../../contract/processing.js'
 import mongo from '#mongo'
 import config from '#config'
-import findUtils from '../utils/find.js'
-import permissions from '../utils/permissions.js'
+import findUtils from '../utils/find.ts'
+import permissions from '../utils/permissions.ts'
 
 const router = Router()
 export default router
@@ -153,7 +153,7 @@ router.get('', asyncHandler(async (req, res) => {
 
   const facets = aggregationResult[0] || { statuses: {}, plugins: {} }
 
-  res.json({ results: results.map((p: Processing) => cleanProcessing(p, sessionState, req.headers.host)), facets, count })
+  res.json({ results: results.map((p) => cleanProcessing(p as Processing, sessionState, req.headers.host)), facets, count })
 }))
 
 router.post('', asyncHandler(async (req, res) => {
@@ -206,11 +206,11 @@ router.patch('/:id', asyncHandler(async (req, res) => {
     date: new Date().toISOString()
   }
 
-  const patch: { $unset?: { [key: string]: string }, $set?: { [key: string]: any } } = {}
+  const patch: { $unset?: { [key: string]: true }, $set?: { [key: string]: any } } = {}
   for (const key in req.body) {
     if (req.body[key] === null) {
       patch.$unset = patch.$unset || {}
-      patch.$unset[key] = ''
+      patch.$unset[key] = true
       delete req.body[key]
     } else {
       patch.$set = patch.$set || {}
@@ -220,8 +220,8 @@ router.patch('/:id', asyncHandler(async (req, res) => {
   const patchedProcessing = { ...processing, ...req.body }
   await validateFullProcessing(patchedProcessing)
   await mongo.processings.updateOne({ _id: req.params.id }, patch)
-  await mongo.db.collection('runs').updateMany({ 'processing._id': processing._id }, { $set: { permissions: patchedProcessing.permissions || [] } })
-  await applyProcessing(mongo.db, patchedProcessing)
+  await mongo.runs.updateMany({ 'processing._id': processing._id }, { $set: { permissions: patchedProcessing.permissions || [] } })
+  await applyProcessing(mongo, patchedProcessing)
   res.status(200).json(cleanProcessing(patchedProcessing, sessionState, req.headers.host))
 }))
 
@@ -241,7 +241,7 @@ router.delete('/:id', asyncHandler(async (req, res) => {
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState, req.headers.host) !== 'admin') return res.status(403).send()
   await mongo.processings.deleteOne({ _id: req.params.id })
-  if (processing) await deleteProcessing(mongo.db, processing)
+  if (processing) await deleteProcessing(mongo, processing)
   res.sendStatus(204)
 }))
 

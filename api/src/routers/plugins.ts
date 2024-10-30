@@ -14,7 +14,7 @@ import tmp from 'tmp-promise'
 import { session, asyncHandler } from '@data-fair/lib-express/index.js'
 import mongo from '#mongo'
 import config from '#config'
-import permissions from '../utils/permissions.js'
+import permissions from '../utils/permissions.ts'
 
 // @ts-ignore
 const ajv = ajvFormats(new Ajv({ strict: false }))
