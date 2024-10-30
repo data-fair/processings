@@ -1,4 +1,4 @@
-import { start, stop } from './src/worker.js'
+import { start, stop } from './src/worker.ts'
 
 start().then(() => {}, err => {
   console.error('Failure while starting worker', err)

@@ -1,8 +1,8 @@
-import mongo from '@data-fair/lib/node/mongo.js'
+import mongo from '@data-fair/lib-node/mongo.js'
 import nodemailer from 'nodemailer'
 import { initPublisher } from '../../../shared/ws.js'
-import config from '../config.js'
-import { run, stop } from './task.js'
+import config from '#config'
+import { run, stop } from './task.ts'
 
 let exitCode = 0
 
