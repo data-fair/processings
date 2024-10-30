@@ -1,20 +1,24 @@
-import { createNext } from '../../../shared/runs.js'
-import { applyProcessing, deleteProcessing } from '../utils/runs.js'
-import { session, asyncHandler } from '@data-fair/lib/express/index.js'
-import { Router } from 'express'
-import { nanoid } from 'nanoid'
-import processingSchema from '../../../contract/processing.js'
-import config from '../config.js'
-import findUtils from '../utils/find.js'
-import permissions from '../utils/permissions.js'
-import mongo from '@data-fair/lib/node/mongo.js'
+import type { Processing } from '#types'
+import type { SessionState } from '@data-fair/lib-express/index.js'
+
 import Ajv from 'ajv'
 import ajvFormats from 'ajv-formats'
 import cryptoRandomString from 'crypto-random-string'
+import { Router } from 'express'
 import fs from 'fs-extra'
-import createError from 'http-errors'
 import path from 'path'
 import resolvePath from 'resolve-path'
+import { nanoid } from 'nanoid'
+
+import { session, asyncHandler } from '@data-fair/lib-express/index.js'
+import { httpError } from '@data-fair/lib-utils/http-errors.js'
+import { createNext } from '../../../shared/runs.js'
+import { applyProcessing, deleteProcessing } from '../utils/runs.js'
+import processingSchema from '../../../contract/processing.js'
+import mongo from '#mongo'
+import config from '#config'
+import findUtils from '../utils/find.js'
+import permissions from '../utils/permissions.js'
 
 const router = Router()
 export default router
@@ -25,67 +29,47 @@ const pluginsDir = path.join(config.dataDir, 'plugins')
 
 const sensitiveParts = ['permissions', 'webhookKey', 'config']
 
-/** @typedef {import('../../../shared/types/processing/index.js').Processing} Processing */
-
 /**
  * Check that a processing object is valid
  * Check if the plugin exists
  * Check if the config is valid (only if the processing is activated)
- * @param {Processing} processing
- * @returns {Promise<void>}
  */
-const validateFullProcessing = async (processing) => {
+const validateFullProcessing = async (processing: Processing) => {
   // config is required only after the processing was activated
   const schema = processing.active
     ? { ...processingSchema, required: [...processingSchema.required, 'config'] }
     : processingSchema
   const validate = ajv.compile(schema)
   const valid = validate(processing)
-  if (!valid) throw createError(400, JSON.stringify(validate.errors))
-  if (!await fs.pathExists(path.join(pluginsDir, processing.plugin))) throw createError(400, 'Plugin not found')
+  if (!valid) throw httpError(400, JSON.stringify(validate.errors))
+  if (!await fs.pathExists(path.join(pluginsDir, processing.plugin))) throw httpError(400, 'Plugin not found')
   if (!processing.config) return // no config to validate
   const pluginInfo = await fs.readJson(path.join(pluginsDir, path.join(processing.plugin, 'plugin.json')))
   const configValidate = ajv.compile(pluginInfo.processingConfigSchema)
   const configValid = configValidate(processing.config)
-  if (!configValid) throw createError(400, JSON.stringify(configValidate.errors))
+  if (!configValid) throw httpError(400, JSON.stringify(configValidate.errors))
 }
 
 /**
  * Remove sensitive parts from a processing object (permissions, webhookKey and config)
- * @param {Processing} processing the processing object to clean
- * @param {import('@data-fair/lib/express/index.js').SessionStateAuthenticated} sessionState the session state
- * @param {string|undefined} host the req.headers.host
- * @returns {Processing} the cleaned processing object
+ * @param processing the processing object to clean
+ * @param sessionState the session state
+ * @param host the req.headers.host
+ * @returns the cleaned processing object
  */
-const cleanProcessing = (processing, sessionState, host) => {
+const cleanProcessing = (processing: Processing, sessionState: SessionState, host: string | undefined) => {
   delete processing.webhookKey
   processing.userProfile = permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState, host)
   if (processing.userProfile !== 'admin') {
-    // @ts-ignore
-    for (const part of sensitiveParts) delete processing[part]
+    for (const part of sensitiveParts) delete (processing as any)[part]
   }
   return processing
 }
 
-/**
- * @typedef {object} getParams
- * @property {string} size
- * @property {string} page
- * @property {string} skip
- * @property {string} showAll
- * @property {string} sort
- * @property {string} select
- * @property {string} q
- * @property {string} statuses
- * @property {string} plugins
- */
-
 // Get the list of processings
 router.get('', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
-  /** @type {import('mongodb').Collection<Processing>} */
-  const processingsCollection = mongo.db.collection('processings')
-  const params = /** @type {getParams} */(req.query)
+  const params = (await import ('#doc/processings/get-req/index.ts')).returnValid(req.query)
   const sort = findUtils.sort(params.sort)
   const [size, skip] = findUtils.pagination(params.size, params.page, params.skip)
   const project = findUtils.project(params.select)
@@ -109,11 +93,11 @@ router.get('', asyncHandler(async (req, res) => {
 
   // Get the processings
   const [results, count] = await Promise.all([
-    size > 0 ? processingsCollection.find(queryWithFilters).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
-    processingsCollection.countDocuments(query)
+    size > 0 ? mongo.processings.find(queryWithFilters).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
+    mongo.processings.countDocuments(query)
   ])
 
-  const aggregationResult = await processingsCollection.aggregate([
+  const aggregationResult = await mongo.processings.aggregate([
     { $match: query },
     {
       $facet: {
@@ -157,7 +141,7 @@ router.get('', asyncHandler(async (req, res) => {
         newRoot: {
           statuses: {
             $mergeObjects: [
-              { scheduled: { $arrayElemAt: ['$scheduled.count', 0] || 0 } },
+              { scheduled: { $ifNull: [{ $arrayElemAt: ['$scheduled.count', 0] }, 0] } },
               { $arrayToObject: { $map: { input: '$otherStatuses', as: 'el', in: { k: '$$el._id', v: '$$el.count' } } } }
             ]
           },
@@ -169,16 +153,9 @@ router.get('', asyncHandler(async (req, res) => {
 
   const facets = aggregationResult[0] || { statuses: {}, plugins: {} }
 
-  // @ts-ignore -> p is a processing
-  res.json({ results: results.map((p) => cleanProcessing(p, sessionState, req.headers.host)), facets, count })
+  res.json({ results: results.map((p: Processing) => cleanProcessing(p, sessionState, req.headers.host)), facets, count })
 }))
 
-/**
- * Create a processing
- * @param {import('express').Request} req
- * req.body { plugin: string, title: string, ...optionals scheduling: object}
- * @param {import('express').Response} res 403 if the user is not an admin
- */
 router.post('', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const processing = { ...req.body }
@@ -198,25 +175,21 @@ router.post('', asyncHandler(async (req, res) => {
     // ok for super admins
   } else if (access && access.public) {
     // ok, this plugin is public
-  } else if (access && access.privateAccess && access.privateAccess.find((/** @type {any} */ p) => p.type === processing.owner.type && p.id === processing.owner.id)) {
+  } else if (access && access.privateAccess && access.privateAccess.find((p: any) => p.type === processing.owner.type && p.id === processing.owner.id)) {
     // ok, private access is granted
   } else {
     return res.status(403).send('Access denied to this plugin')
   }
 
   await validateFullProcessing(processing)
-  /** @type {import('mongodb').Collection<Processing>} */
-  const processingsCollection = mongo.db.collection('processings')
-  await processingsCollection.insertOne(processing)
+  await mongo.processings.insertOne(processing)
   res.status(200).json(cleanProcessing(processing, sessionState, req.headers.host))
 }))
 
 // Patch some of the attributes of a processing
 router.patch('/:id', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
-  /** @type {import('mongodb').Collection<Processing>} */
-  const processingsCollection = mongo.db.collection('processings')
-  const processing = await processingsCollection.findOne({ _id: req.params.id })
+  const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState, req.headers.host) !== 'admin') return res.status(403).send()
 
@@ -232,8 +205,8 @@ router.patch('/:id', asyncHandler(async (req, res) => {
     name: sessionState.user.name,
     date: new Date().toISOString()
   }
-  /** @type {any} */
-  const patch = {}
+
+  const patch: { $unset?: { [key: string]: string }, $set?: { [key: string]: any } } = {}
   for (const key in req.body) {
     if (req.body[key] === null) {
       patch.$unset = patch.$unset || {}
@@ -246,7 +219,7 @@ router.patch('/:id', asyncHandler(async (req, res) => {
   }
   const patchedProcessing = { ...processing, ...req.body }
   await validateFullProcessing(patchedProcessing)
-  await processingsCollection.updateOne({ _id: req.params.id }, patch)
+  await mongo.processings.updateOne({ _id: req.params.id }, patch)
   await mongo.db.collection('runs').updateMany({ 'processing._id': processing._id }, { $set: { permissions: patchedProcessing.permissions || [] } })
   await applyProcessing(mongo.db, patchedProcessing)
   res.status(200).json(cleanProcessing(patchedProcessing, sessionState, req.headers.host))
@@ -255,9 +228,7 @@ router.patch('/:id', asyncHandler(async (req, res) => {
 // Get a processing
 router.get('/:id', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
-  /** @type {import('mongodb').Collection<Processing>} */
-  const processingsCollection = mongo.db.collection('processings')
-  const processing = await processingsCollection.findOne({ _id: req.params.id })
+  const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState, req.headers.host) ?? '')) return res.status(403).send()
   res.status(200).json(cleanProcessing(processing, sessionState, req.headers.host))
@@ -266,21 +237,17 @@ router.get('/:id', asyncHandler(async (req, res) => {
 // Delete a processing
 router.delete('/:id', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
-  /** @type {import('mongodb').Collection<Processing>} */
-  const processingsCollection = mongo.db.collection('processings')
-  const processing = await processingsCollection.findOne({ _id: req.params.id })
+  const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState, req.headers.host) !== 'admin') return res.status(403).send()
-  await processingsCollection.deleteOne({ _id: req.params.id })
+  await mongo.processings.deleteOne({ _id: req.params.id })
   if (processing) await deleteProcessing(mongo.db, processing)
   res.sendStatus(204)
 }))
 
 router.get('/:id/webhook-key', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
-  /** @type {import('mongodb').Collection<Processing>} */
-  const processingsCollection = mongo.db.collection('processings')
-  const processing = await processingsCollection.findOne({ _id: req.params.id })
+  const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState, req.headers.host) !== 'admin') return res.status(403).send()
   res.send(processing.webhookKey)
@@ -288,13 +255,11 @@ router.get('/:id/webhook-key', asyncHandler(async (req, res) => {
 
 router.delete('/:id/webhook-key', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
-  /** @type {import('mongodb').Collection<Processing>} */
-  const processingsCollection = mongo.db.collection('processings')
-  const processing = await processingsCollection.findOne({ _id: req.params.id })
+  const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState, req.headers.host) !== 'admin') return res.status(403).send()
   const webhookKey = cryptoRandomString({ length: 16, type: 'url-safe' })
-  await processingsCollection.updateOne(
+  await mongo.processings.updateOne(
     { _id: processing._id },
     { $set: { webhookKey } }
   )
@@ -302,9 +267,7 @@ router.delete('/:id/webhook-key', asyncHandler(async (req, res) => {
 }))
 
 router.post('/:id/_trigger', asyncHandler(async (req, res) => {
-  /** @type {import('mongodb').Collection<Processing>} */
-  const processingsCollection = mongo.db.collection('processings')
-  const processing = await processingsCollection.findOne({ _id: req.params.id })
+  const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (req.query.key && req.query.key !== processing.webhookKey) {
     return res.status(403).send('Mauvaise clé de déclenchement')

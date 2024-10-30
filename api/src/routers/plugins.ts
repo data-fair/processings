@@ -1,19 +1,23 @@
-import { session, asyncHandler } from '@data-fair/lib/express/index.js'
+import type { Plugin } from '#types/plugin/index.ts'
+
 import { exec as execCallback } from 'child_process'
 import { promisify } from 'util'
 import { Router } from 'express'
-import config from '../config.js'
-import permissions from '../utils/permissions.js'
 import Ajv from 'ajv'
+import ajvFormats from 'ajv-formats'
 import fs from 'fs-extra'
-import mongo from '@data-fair/lib/node/mongo.js'
 import path from 'path'
-import resolvePath from 'resolve-path'
 import semver from 'semver'
+import resolvePath from 'resolve-path'
 import tmp from 'tmp-promise'
 
+import { session, asyncHandler } from '@data-fair/lib-express/index.js'
+import mongo from '#mongo'
+import config from '#config'
+import permissions from '../utils/permissions.js'
+
 // @ts-ignore
-const ajv = new Ajv({ strict: false })
+const ajv = ajvFormats(new Ajv({ strict: false }))
 const exec = promisify(execCallback)
 
 const router = Router()
@@ -28,40 +32,9 @@ fs.ensureDirSync(tmpDir)
 tmp.setGracefulCleanup()
 
 /**
- * @typedef {object} PluginData
- * @property {string} name
- * @property {string} customName - the name defined by config
- * @property {string} description
- * @property {string} version
- * @property {string} distTag
- * @property {string} id
- * @property {any} pluginConfigSchema
- * @property {any} processingConfigSchema
- */
-
-/**
- * @typedef {object} PluginDataWithConfig
- * @property {string} name
- * @property {string} customName - the name defined by config
- * @property {string} description
- * @property {string} version
- * @property {string} distTag
- * @property {string} id
- * @property {any} pluginConfigSchema
- * @property {any} processingConfigSchema
- * @property {object} config
- * @property {object} access
- */
-
-/** @typedef {import('../types.js').Access} Access */
-/** @typedef {import('../types.js').PrivateAccess} PrivateAccess */
-
-/**
  * For compatibility with old plugins
- * @param {PluginData} plugin
- * @returns {PluginData}
  */
-const injectPluginNameConfig = (plugin) => {
+const injectPluginNameConfig = (plugin: Plugin): Plugin => {
   if (!plugin.pluginConfigSchema.properties.pluginName) {
     const version = plugin.distTag === 'latest' ? plugin.version : `${plugin.distTag} - ${plugin.version}`
     const defaultName = plugin.name.replace('@data-fair/processing-', '') + ' (' + version + ')'
@@ -75,11 +48,7 @@ const injectPluginNameConfig = (plugin) => {
   return plugin
 }
 
-/**
- * @param {PluginData | PluginDataWithConfig} pluginInfo
- * @returns {Promise<PluginData | PluginDataWithConfig>}
- */
-const preparePluginInfo = async (pluginInfo) => {
+const preparePluginInfo = async (pluginInfo: Plugin): Promise<Plugin> => {
   pluginInfo = injectPluginNameConfig(pluginInfo)
   const pluginConfigPath = path.join(pluginsDir, pluginInfo.id + '-config.json')
   let customName = await fs.pathExists(pluginConfigPath) ? (await fs.readJson(pluginConfigPath)).pluginName : pluginInfo.pluginConfigSchema.properties.pluginName.default
@@ -87,15 +56,8 @@ const preparePluginInfo = async (pluginInfo) => {
   return { ...pluginInfo, customName }
 }
 
-/**
- * Install a plugin - SuperAdmin only
- * @param {import('express').Request} req
- * req.body: { name: string, description: string, version: string, distTag: string }
- * @param {import('express').Response} res
- */
 router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
-  /** @type {PluginData} */
-  const plugin = req.body
+  const plugin: Plugin = (await import ('#types/plugin/index.ts')).returnValid(req.body)
   plugin.id = plugin.name.replace('/', '-') + '-' + semver.major(plugin.version)
   if (plugin.distTag !== 'latest') plugin.id += '-' + plugin.distTag
 
@@ -119,12 +81,12 @@ router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
   } finally {
     try {
       await dir.cleanup()
-    } catch (/** @type {any} */err) {
+    } catch (err) {
       // ignore, directory was moved
     }
   }
 
-  const installedPlugin = /** @type {PluginDataWithConfig} */(await preparePluginInfo(plugin))
+  const installedPlugin: Plugin = await preparePluginInfo(plugin)
   installedPlugin.access = { public: false, privateAccess: [] }
   const accessFilePath = path.join(pluginsDir, installedPlugin.id + '-access.json')
   if (!await fs.pathExists(accessFilePath)) await fs.writeJson(accessFilePath, installedPlugin.access)
@@ -134,16 +96,15 @@ router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
   res.send(installedPlugin)
 }))
 
-// List installed plugins (optional: privateAccess=[type]:[id)
+// List installed plugins (optional: privateAccess=[type]:[id])
 router.get('/', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
 
   const dirs = (await fs.readdir(pluginsDir)).filter(p => !p.endsWith('.json'))
-  const results = []
+  const results: Plugin[] = []
   for (const dir of dirs) {
-    /** @type {PluginDataWithConfig} */
-    const pluginInfo = await fs.readJson(path.join(pluginsDir, dir, 'plugin.json'))
-    /** @type {Access}  */
+    const pluginInfo: Plugin = await fs.readJson(path.join(pluginsDir, dir, 'plugin.json'))
+
     let access = { public: false, privateAccess: [] }
     const accessFilePath = path.join(pluginsDir, dir + '-access.json')
     if (await fs.pathExists(accessFilePath)) {
@@ -159,7 +120,7 @@ router.get('/', asyncHandler(async (req, res) => {
       if (type !== sessionState.account.type || id !== sessionState.account.id) {
         return res.status(403).send('privateAccess does not match current account')
       }
-      if (!access.public && !access.privateAccess.find((/** @type {{type: string, id: string}} */p) => p.type === type && p.id === id)) {
+      if (!access.public && !access.privateAccess.find((p: any) => p.type === type && p.id === id)) {
         continue // pass to next plugin
       }
     } else {
@@ -168,9 +129,14 @@ router.get('/', asyncHandler(async (req, res) => {
     results.push(await preparePluginInfo(pluginInfo))
   }
 
-  const aggregationResult = (await mongo.db.collection('processings').aggregate([
-    { $group: { _id: '$plugin', count: { $sum: 1 } } }
-  ]).toArray()).reduce((acc, { _id, count }) => { acc[_id] = count; return acc }, {})
+  const aggregationResult = (
+    await mongo.processings
+      .aggregate([{ $group: { _id: '$plugin', count: { $sum: 1 } } }])
+      .toArray()
+  ).reduce((acc:any, { _id, count }: any) => {
+    acc[_id] = count
+    return acc
+  }, {})
 
   res.send({
     count: results.length,
@@ -183,10 +149,9 @@ router.get('/', asyncHandler(async (req, res) => {
 router.get('/:id', asyncHandler(async (req, res) => {
   await session.reqAuthenticated(req)
   try {
-    /** @type {PluginData} */
-    const pluginInfo = await fs.readJson(resolvePath(pluginsDir, path.join(req.params.id, 'plugin.json')))
+    const pluginInfo: Plugin = await fs.readJson(resolvePath(pluginsDir, path.join(req.params.id, 'plugin.json')))
     res.send(await preparePluginInfo(pluginInfo))
-  } catch (/** @type {any} */ e) {
+  } catch (e: any) {
     if (e.code === 'ENOENT') res.status(404).send('Plugin not found')
     else throw e
   }

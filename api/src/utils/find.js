@@ -1,4 +1,4 @@
-import createError from 'http-errors'
+import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import permissions from './permissions.js'
 
 // Util functions shared accross the main find (GET on collection) endpoints
@@ -15,7 +15,7 @@ const query = (reqQuery, sessionState, fieldsMap = {}) => {
 
   const showAll = reqQuery.showAll === 'true'
   if (showAll && !sessionState.user.adminMode) {
-    throw createError(400, 'Only super admins can override permissions filter with showAll parameter')
+    throw httpError(400, 'Only super admins can override permissions filter with showAll parameter')
   }
   if (!showAll) {
     /** @type {any} */

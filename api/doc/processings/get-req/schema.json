@@ -1,0 +1,46 @@
+{
+  "$id": "https://github.com/data-fair/processings/processings/get-req",
+  "title": "Get processings parameters",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "size",
+    "page",
+    "skip",
+    "showAll",
+    "sort",
+    "select",
+    "q",
+    "statuses",
+    "plugins"
+  ],
+  "properties": {
+    "size": {
+      "type": "string"
+    },
+    "page": {
+      "type": "string"
+    },
+    "skip": {
+      "type": "string"
+    },
+    "showAll": {
+      "type": "string"
+    },
+    "sort": {
+      "type": "string"
+    },
+    "select": {
+      "type": "string"
+    },
+    "q": {
+      "type": "string"
+    },
+    "statuses": {
+      "type": "string"
+    },
+    "plugins": {
+      "type": "string"
+    }
+  }
+}

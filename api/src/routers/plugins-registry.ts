@@ -1,14 +1,15 @@
-import { asyncHandler } from '@data-fair/lib/express/index.js'
+import type { AxiosRequestConfig } from 'axios'
 import { Router } from 'express'
-import axios from '@data-fair/lib/node/axios.js'
-import config from '../config.js'
 import memoize from 'memoizee'
+
+import { asyncHandler } from '@data-fair/lib-express/index.js'
+import axios from '@data-fair/lib-node/axios.js'
+import config from '#config'
 
 const router = Router()
 export default router
 
-/** @type {import('axios').AxiosRequestConfig} */
-const axiosOpts = {}
+const axiosOpts: AxiosRequestConfig = {}
 
 if (config.npm?.httpsProxy) {
   const proxyUrl = new URL(config.npm?.httpsProxy)
@@ -23,10 +24,10 @@ if (config.npm?.httpsProxy) {
 
 /**
  * Search for plugins in the npm registry
- * @param {string | undefined} q - search query
- * @param {boolean} showAll - if true, return all versions of each plugin
+ * @param q - search query
+ * @param showAll - if true, return all versions of each plugin
  */
-const search = async (q, showAll) => {
+const search = async (q: string | undefined, showAll: boolean) => {
   // see https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md#get-v1search
   const res = await axios.get('https://registry.npmjs.org/-/v1/search', {
     ...axiosOpts,
@@ -41,7 +42,6 @@ const search = async (q, showAll) => {
     const plugin = { name: o.package.name, description: o.package.description, version: o.package.version }
 
     if (showAll) {
-      // @ts-ignore
       const distTags = (await axios.get('https://registry.npmjs.org/-/package/' + o.package.name + '/dist-tags', axiosOpts)).data
       for (const distTag in distTags) {
         results.push({ ...plugin, version: distTags[distTag], distTag })
