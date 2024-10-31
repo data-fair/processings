@@ -1,7 +1,4 @@
-/**
- * @param {{text: string, to?: string}[]} breadcrumbs
- */
-export const setBreadcrumbs = (breadcrumbs) => {
+export const setBreadcrumbs = (breadcrumbs: { name: string; path: string }[]) => {
   if (window.parent) parent.postMessage({ breadcrumbs }, '*')
   else console.log('Breadcrumbs:', breadcrumbs)
 }

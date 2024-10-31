@@ -5,7 +5,6 @@ import VueRouter from 'unplugin-vue-router/vite'
 import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
-import { unheadVueComposablesImports } from '@unhead/vue'
 import Unfonts from 'unplugin-fonts/vite'
 import Vuetify from 'vite-plugin-vuetify'
 import microTemplate from '@data-fair/lib-utils/micro-template.js'
@@ -34,7 +33,6 @@ export default defineConfig({
       vueTemplate: true,
       imports: [
         ...(autoImports as any),
-        unheadVueComposablesImports,
         {
           '~/context': ['$uiConfig', '$sitePath', '$siteUrl', '$sdUrl', '$apiPath', '$fetch'],
           '@mdi/js': [] // TODO: Add only the icons used in the project
