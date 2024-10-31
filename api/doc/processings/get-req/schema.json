@@ -3,17 +3,6 @@
   "title": "Get processings parameters",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "size",
-    "page",
-    "skip",
-    "showAll",
-    "sort",
-    "select",
-    "q",
-    "statuses",
-    "plugins"
-  ],
   "properties": {
     "size": {
       "type": "string"

@@ -10,7 +10,10 @@ export default {
   properties: {
     body:
       jsonSchema(PluginSchema)
-        .pickProperties(['distTag', 'name', 'version'])
+        .pickProperties(['distTag', 'name', 'version', 'description'])
+        .removeFromRequired([
+          'description'
+        ])
         .removeId()
         .appendTitle(' post')
         .schema

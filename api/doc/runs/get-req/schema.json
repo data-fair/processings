@@ -3,15 +3,10 @@
   "title": "Get runs parameters",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "size",
-    "page",
-    "skip",
-    "showAll",
-    "sort",
-    "select"
-  ],
   "properties": {
+    "processing": {
+      "type": "string"
+    },
     "size": {
       "type": "string"
     },

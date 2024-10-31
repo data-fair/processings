@@ -15,8 +15,8 @@
     "dev-zellij": "export DEV_SHELL=$(basename \"$SHELL\") && zellij --layout .zellij.kdl && rm data/zellij-deps-ready",
     "lint": "eslint .",
     "lint-fix": "eslint --fix . && npm -w ui run lint-fix",
-    "test": "NODE_ENV=test node test-it/index.js",
-    "test-only": "NODE_ENV=test node test-it/index.js --test-only",
+    "test": "NODE_ENV=test node --experimental-strip-types --test-force-exit --test-concurrency=1 --test --test-reporter=spec test-it/*.ts",
+    "test-only": "NODE_ENV=test node --experimental-strip-types --test-force-exit --test-concurrency=1 --test",
     "test-deps": "docker compose --profile test up -d --wait",
     "test-images": "docker compose --profile dev --profile testImages up -d --wait",
     "stop-dev-deps": "docker compose --profile dev stop",
@@ -50,12 +50,13 @@
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",
     "@commitlint/config-conventional": "^19.5.0",
+    "@data-fair/lib-utils": "^1.1.0",
     "@types/config": "^3.3.5",
     "@types/debug": "^4.1.12",
-    "@types/fs-extra": "^11.0.4",
     "eslint": "^9.13.0",
     "husky": "^9.1.6",
     "neostandard": "^0.11.7",
+    "tough-cookie": "^5.0.0",
     "typescript": "^5.6.3"
   },
   "relativeDependencies": {
