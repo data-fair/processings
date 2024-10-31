@@ -19,14 +19,14 @@ import 'iframe-resizer/js/iframeResizer.contentWindow.js'
 (async function () {
   const router = createRouter({ history: createWebHistory($sitePath + '/processings/'), routes })
   const reactiveSearchParams = createReactiveSearchParams(router)
-  const session = await createSession({ directoryUrl: $sitePath + '/processings', siteInfo: true })
+  const session = await createSession({ directoryUrl: $sitePath + '/simple-directory' })
   const localeDayjs = createLocaleDayjs(session.state.lang)
   const uiNotif = createUiNotif()
   const vuetify = createVuetify({
     ...defaultOptions(reactiveSearchParams.state, session.state.dark),
     icons: { defaultSet: 'mdi', aliases, sets: { mdi, } }
   })
-  const i18n = createI18n({ locale: session.state.lang, messages: $uiConfig.publicMessages })
+  const i18n = createI18n({ locale: session.state.lang });
 
   (window as any).vIframeOptions = { router }
 

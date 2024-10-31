@@ -141,7 +141,7 @@
 </template>
 
 <script setup>
-import OwnerAvatar from '@data-fair/lib/vuetify/owner-avatar.vue'
+import OwnerAvatar from '@data-fair/lib-vuetify/owner-avatar.vue'
 import useDateFormat from '~/composables/date-format'
 import usePluginFetch from '~/composables/use-plugin-fetch'
 const format = useDateFormat()

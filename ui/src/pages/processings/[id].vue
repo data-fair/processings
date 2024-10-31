@@ -67,7 +67,7 @@ import Vjsf from '@koumoul/vjsf'
 import VjsfMarkdown from '@koumoul/vjsf-markdown'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { useSession } from '@data-fair/lib/vue/session.js'
+import { useSession } from '@data-fair/lib-vue/session.js'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 import useEventBus from '~/composables/event-bus'
 

@@ -60,7 +60,7 @@ import setBreadcrumbs from '~/utils/breadcrumbs'
 import useEventBus from '~/composables/event-bus'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { useSession } from '@data-fair/lib/vue/session.js'
+import { useSession } from '@data-fair/lib-vue/session.js'
 
 const eventBus = useEventBus()
 const route = useRoute()

@@ -8,9 +8,7 @@ export {}
 declare global {
   const $apiPath: typeof import('~/context')['$apiPath']
   const $fetch: typeof import('~/context')['$fetch']
-  const $sdUrl: typeof import('~/context')['$sdUrl']
   const $sitePath: typeof import('~/context')['$sitePath']
-  const $siteUrl: typeof import('~/context')['$siteUrl']
   const $uiConfig: typeof import('~/context')['$uiConfig']
   const EffectScope: typeof import('vue')['EffectScope']
   const breadcrumbs: typeof import('../src/utils/breadcrumbs')['default']
@@ -109,9 +107,7 @@ declare module 'vue' {
   interface ComponentCustomProperties {
     readonly $apiPath: UnwrapRef<typeof import('~/context')['$apiPath']>
     readonly $fetch: UnwrapRef<typeof import('~/context')['$fetch']>
-    readonly $sdUrl: UnwrapRef<typeof import('~/context')['$sdUrl']>
     readonly $sitePath: UnwrapRef<typeof import('~/context')['$sitePath']>
-    readonly $siteUrl: UnwrapRef<typeof import('~/context')['$siteUrl']>
     readonly $uiConfig: UnwrapRef<typeof import('~/context')['$uiConfig']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly breadcrumbs: UnwrapRef<typeof import('../src/utils/breadcrumbs')['default']>

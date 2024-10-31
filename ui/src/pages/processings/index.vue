@@ -96,10 +96,10 @@
 
 <script setup>
 import setBreadcrumbs from '~/utils/breadcrumbs'
-import { useStringSearchParam, useBooleanSearchParam, useStringsArraySearchParam } from '@data-fair/lib/vue/reactive-search-params.js'
+import { useStringSearchParam, useBooleanSearchParam, useStringsArraySearchParam } from '@data-fair/lib-vue/reactive-search-params.js'
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useSessionAuthenticated } from '@data-fair/lib/vue/session.js'
+import { useSessionAuthenticated } from '@data-fair/lib-vue/session.js'
 
 const route = useRoute()
 const session = useSessionAuthenticated(() => createError({ status: 401, message: 'Authentification nécessaire', fatal: true }))
@@ -114,13 +114,13 @@ onMounted(async () => setBreadcrumbs([{ text: 'traitements' }]))
 Permissions
 */
 
-/** @typedef {import('@data-fair/lib/express/index.js').User} User */
+/** @typedef {import('@data-fair/lib-express/index.js').User} User */
 
 const owner = computed(() => {
   const owner = /** @type {string} */(route.query.owner)
   if (owner) {
     const parts = owner.split(':')
-    return /** @type {import('@data-fair/lib/express/index.js').Account} */({ type: parts[0], id: parts[1] })
+    return /** @type {import('@data-fair/lib-express/index.js').Account} */({ type: parts[0], id: parts[1] })
   } else {
     return session.state.account
   }

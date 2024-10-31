@@ -152,7 +152,7 @@
 <script setup>
 import useEventBus from '~/composables/event-bus'
 import { ref } from 'vue'
-import OwnerPick from '@data-fair/lib/vuetify/owner-pick.vue'
+import OwnerPick from '@data-fair/lib-vuetify/owner-pick.vue'
 
 const eventBus = useEventBus()
 

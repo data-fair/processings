@@ -2,8 +2,8 @@
   <v-app>
     <LayoutAppBar v-if="!embed" />
     <v-main>
-      <NuxtPage />
-      <Notifications />
+      <RouterView />
+      <notifications />
     </v-main>
   </v-app>
 </template>
@@ -16,18 +16,4 @@ const embed = (() => {
     return true
   }
 })()
-
-useHead({
-  title: 'Data Fair Processings',
-  meta: [
-    { charset: 'utf-8' },
-    { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-    { hid: 'application', name: 'application-name', content: 'data-fair-processings' },
-    { hid: 'description', name: 'description', content: 'Periodically import / export data between Data Fair and other services.' },
-    { hid: 'robots', name: 'robots', content: 'noindex' }
-  ]
-})
-
-window.iFrameResizer = { heightCalculationMethod: 'taggedElement' }
-import('iframe-resizer/js/iframeResizer.contentWindow.js')
 </script>

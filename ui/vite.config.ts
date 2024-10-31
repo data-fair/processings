@@ -34,7 +34,7 @@ export default defineConfig({
       imports: [
         ...(autoImports as any),
         {
-          '~/context': ['$uiConfig', '$sitePath', '$siteUrl', '$sdUrl', '$apiPath', '$fetch'],
+          '~/context': ['$uiConfig', '$sitePath', '$apiPath', '$fetch'],
           '@mdi/js': [] // TODO: Add only the icons used in the project
         }
       ],

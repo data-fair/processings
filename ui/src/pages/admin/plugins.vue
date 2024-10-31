@@ -213,13 +213,13 @@
 
 <script setup>
 import setBreadcrumbs from '~/utils/breadcrumbs'
-import useUrlSearchParams from '@data-fair/lib/vue/reactive-search-params.js'
+import useUrlSearchParams from '@data-fair/lib-vue/reactive-search-params.js'
 import useEventBus from '~/composables/event-bus'
 import Vjsf from '@koumoul/vjsf'
 import VjsfMarkdown from '@koumoul/vjsf-markdown'
 import { computed, ref } from 'vue'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
-import { useSession } from '@data-fair/lib/vue/session.js'
+import { useSession } from '@data-fair/lib-vue/session.js'
 
 const eventBus = useEventBus()
 const session = useSession()
