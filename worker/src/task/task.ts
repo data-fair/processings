@@ -1,6 +1,7 @@
 import type { LogFunctions, ProcessingContext } from '@data-fair/lib-common-types/processings.ts'
 import type { Account } from '@data-fair/lib-express/index.js'
 import type { Collection, Db } from 'mongodb'
+import type { Processing, Run } from '#types'
 
 import axios from 'axios'
 import axiosRetry from 'axios-retry'
@@ -12,9 +13,8 @@ import tmp from 'tmp-promise'
 import { DataFairWsClient } from '@data-fair/lib-node/ws-client.js'
 import { httpAgent, httpsAgent } from '@data-fair/lib-node/http-agents.js'
 import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
-import { running } from '../utils/runs.js'
+import { running } from '../utils/runs.ts'
 import config from '#config'
-import { Processing, Run } from '#types'
 
 fs.ensureDirSync(config.dataDir)
 const baseTmpDir = config.tmpDir || path.join(config.dataDir, 'tmp')

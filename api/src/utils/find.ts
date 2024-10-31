@@ -32,7 +32,7 @@ const query = (reqQuery: Record<string, string>, sessionState: SessionStateAuthe
   return query
 }
 
-const sort = (sortStr:string) => {
+const sort = (sortStr:string | undefined) => {
   const sort = {}
   if (!sortStr) return sort
   Object.assign(sort, ...sortStr.split(',').map((s:string) => {
@@ -60,7 +60,7 @@ const pagination = (size: string | undefined, page: string | undefined, skip: st
   return [sizeInt, skipInt]
 }
 
-const project = (selectStr: string) => {
+const project = (selectStr: string | undefined) => {
   const select: Record<string, number> = {}
   if (selectStr) {
     selectStr.split(',').forEach(s => {

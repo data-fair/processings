@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
-import { Router } from 'express'
+import type { Limit } from '#types'
 
+import { Router } from 'express'
 import { asyncHandler, session } from '@data-fair/lib-express/index.js'
 import { getLimits } from '../../../shared/limits.ts'
 import mongo from '#mongo'
@@ -35,21 +36,23 @@ router.post('/:type/:id', asyncHandler(async (req, res) => {
   if (req.query.key !== config.secretKeys.limits) {
     await session.reqAdminMode(req)
   }
-  const body = (await import ('#doc/limits/post-req/index.ts')).returnValid(req.body, { name: 'req' })
-
-  body.type = req.params.type
-  body.id = req.params.id
+  const { body } = (await import('#doc/limits/post-req/index.ts')).returnValid(req, { name: 'req' })
+  const newLimit: Limit = {
+    ...body,
+    type: req.params.type,
+    id: req.params.id,
+  }
   await mongo.limits
-    .replaceOne({ type: req.params.type, id: req.params.id }, body, { upsert: true })
+    .replaceOne({ type: req.params.type, id: req.params.id }, newLimit, { upsert: true })
   res.send(body)
 }))
 
 // A user can get limits information for himself only
 router.get('/:type/:id', isAccountMember, asyncHandler(async (req, res) => {
-  const consumer = { type: req.params.type, id: req.params.id }
-  const limits = await getLimits(mongo, consumer)
+  const consumer = { type: req.params.type as 'organization' | 'user', id: req.params.id, name: req.params.id, department: '' }
+  const limits = await getLimits(mongo.db, consumer)
   if (!limits) return res.status(404).send()
-  delete limits._id
+  if ('_id' in limits) delete limits._id
   res.send(limits)
 }))
 

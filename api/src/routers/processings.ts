@@ -69,7 +69,7 @@ const cleanProcessing = (processing: Processing, sessionState: SessionStateAuthe
 // Get the list of processings
 router.get('', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
-  const params = (await import ('#doc/processings/get-req/index.ts')).returnValid(req.query)
+  const params = (await import('#doc/processings/get-req/index.ts')).returnValid(req.query)
   const sort = findUtils.sort(params.sort)
   const [size, skip] = findUtils.pagination(params.size, params.page, params.skip)
   const project = findUtils.project(params.select)

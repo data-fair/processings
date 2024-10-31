@@ -30,7 +30,7 @@ const cleanRun = (run: Run, sessionState: SessionStateAuthenticated, host: strin
 // Get the list of runs (without logs)
 router.get('', asyncHandler(async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
-  const params = (await import ('#doc/runs/get-req/index.ts')).returnValid(req.query)
+  const params = (await import('#doc/runs/get-req/index.ts')).returnValid(req.query)
   const sort = findUtils.sort(params.sort)
   const [size, skip] = findUtils.pagination(params.size, params.page, params.skip)
   // implicit showAll on runs if we are looking at a processing in adminMode

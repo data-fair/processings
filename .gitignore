@@ -4,4 +4,3 @@ worker/config/local-*
 api/config/local-*
 .config/
 .type/
-/test-*
