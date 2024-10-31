@@ -28,9 +28,6 @@
     "type": "git",
     "url": "git+ssh://git@github.com/data-fair/processings.git"
   },
-  "imports": {
-    "#api/types": "./api/types/index.ts"
-  },
   "author": "",
   "license": "AGPL-3.0-only",
   "workspaces": [

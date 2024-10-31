@@ -14,7 +14,7 @@
       "type": "string"
     },
     "showAll": {
-      "type": "string"
+      "type": "boolean"
     },
     "sort": {
       "type": "string"
@@ -29,6 +29,9 @@
       "type": "string"
     },
     "plugins": {
+      "type": "string"
+    },
+    "owner": {
       "type": "string"
     }
   }

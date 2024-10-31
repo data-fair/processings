@@ -10,18 +10,21 @@ const contrib1Koumoul = await axiosAuth({ email: 'contrib1@test.com', org: 'koum
 const user1Koumoul = await axiosAuth({ email: 'user1@test.com', org: 'koumoul' })
 const dmeadusOrg = await axiosAuth({ email: 'dmeadus0@answers.com', org: 'KWqAGZ4mG' })
 
-// Setup a public plugin for the tests
-const plugin = (await superadmin.post('/api/v1/plugins', {
-  name: '@data-fair/processing-hello-world',
-  version: '0.12.2',
-  distTag: 'latest',
-  description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.'
-})).data
-await superadmin.put(`/api/v1/plugins/${plugin.id}/access`, { public: true })
+let plugin
+const createTestPlugin = async () => {
+  plugin = (await superadmin.post('/api/v1/plugins', {
+    name: '@data-fair/processing-hello-world',
+    version: '0.12.2',
+    distTag: 'latest',
+    description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.'
+  })).data
+  await superadmin.put(`/api/v1/plugins/${plugin.id}/access`, { public: true })
+}
 
 describe('processing', () => {
   before(startApiServer)
   beforeEach(clean)
+  beforeEach(createTestPlugin)
   after(stopApiServer)
 
   it('should create a new processing and work on it as admin of an organization', async function () {
@@ -40,7 +43,7 @@ describe('processing', () => {
         overwrite: false,
         message: 'Hello world test processing'
       },
-      scheduling: { type: 'monthly', dayOfWeek: '*', dayOfMonth: 1, month: '*', hour: 0, minute: 0 }
+      scheduling: [{ type: 'monthly', dayOfWeek: '*', dayOfMonth: 1, month: '*', hour: 0, minute: 0 }]
     })
     // list permission for admins and contribs in orga
     assert.equal((await admin1Koumoul.get('/api/v1/processings')).data.count, 1)

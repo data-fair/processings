@@ -8,7 +8,10 @@
     "strict": true,
     "allowJs": true,
     "checkJs": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "#types": ["./api/types/index.ts"],
+    }
   },
   "exclude": ["node_modules", ".type", "ui", "dev", "data", "test-it"]
 }
