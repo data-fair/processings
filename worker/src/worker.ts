@@ -8,13 +8,13 @@ import { existsSync } from 'fs'
 import resolvePath from 'resolve-path'
 import kill from 'tree-kill'
 
+import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import * as locks from '@data-fair/lib-node/locks.js'
 import { startObserver, stopObserver, internalError } from '@data-fair/lib-node/observer.js'
 import upgradeScripts from '@data-fair/lib-node/upgrade-scripts.js'
 import config from '#config'
 import mongo from '#mongo'
 import { createNext } from '../../shared/runs.ts'
-import { initPublisher } from '../../shared/ws.js'
 import limits from './utils/limits.ts'
 import { initMetrics } from './utils/metrics.ts'
 import { finish } from './utils/runs.ts'
@@ -25,8 +25,6 @@ const debugLoop = Debug('worker-loop')
 let stopped = false
 const promisePool: [Promise<void> | null] = [null]
 const pids: Record<string, number> = {}
-
-let wsPublish: (channel: string, data: any) => Promise<void>
 
 // Loop promises, resolved when stopped
 let mainLoopPromise: Promise<void>
@@ -41,7 +39,7 @@ export const start = async () => {
   const db = mongo.db
   await locks.init(db)
   await upgradeScripts(db, config.upgradeRoot)
-  wsPublish = await initPublisher(db)
+  await wsEmitter.init(db)
   if (config.observer.active) {
     await initMetrics(db)
     await startObserver(config.observer.port)
@@ -157,7 +155,7 @@ async function killRun (db: Db, run: Run) {
         console.warn('the run should be killed, it is not locked by another worker and we have no running PID, mark it as already killed', run._id)
         debug('mark as already killed', run)
         run.status = 'killed'
-        await finish(db, wsPublish, run)
+        await finish(db, run)
       } finally {
         await locks.release(run.processing._id)
       }
@@ -190,7 +188,7 @@ async function iter (db: Db, run: Run) {
     return
   }
   if (!processing.active) {
-    await finish(db, wsPublish, run, 'le traitement a été désactivé', 'error')
+    await finish(db, run, 'le traitement a été désactivé', 'error')
     return
   }
 
@@ -199,7 +197,7 @@ async function iter (db: Db, run: Run) {
   try {
     const remaining = await limits.remaining(db, processing.owner)
     if (remaining.processingsSeconds === 0) {
-      await finish(db, wsPublish, run, 'le temps de traitement autorisé est épuisé', 'error')
+      await finish(db, run, 'le temps de traitement autorisé est épuisé', 'error')
       // @test:spy("processingsSecondsExceeded")
       return
     }
@@ -227,7 +225,7 @@ async function iter (db: Db, run: Run) {
     })
     pids[run._id] = spawnPromise.childProcess.pid || -1
     await spawnPromise // wait for the task to finish
-    await finish(db, wsPublish, run)
+    await finish(db, run)
   } catch (err: any) {
     // Build back the original error message from the stderr of the child process
     const errorMessage = []
@@ -245,11 +243,11 @@ async function iter (db: Db, run: Run) {
       // case of interruption by a SIGTERM
       if (err.code === 143) {
         run.status = 'killed'
-        await finish(db, wsPublish, run)
+        await finish(db, run)
         // @test:spy("isKilled")
       } else {
         console.warn(`failure ${processing.title} > ${run._id}`, errorMessage.join('\n'))
-        await finish(db, wsPublish, run, errorMessage.join('\n'))
+        await finish(db, run, errorMessage.join('\n'))
         // @test:spy("isFailure")
       }
     } else {
@@ -307,7 +305,7 @@ async function acquireNext (db: Db): Promise<Run | undefined> {
       if (run.status === 'running') {
         try {
           console.warn('we had to close a run that was stuck in running status', run)
-          await finish(db, wsPublish, run, 'le traitement a été interrompu suite à une opération de maintenance', 'error')
+          await finish(db, run, 'le traitement a été interrompu suite à une opération de maintenance', 'error')
           const processing = await db.collection<Processing>('processings').findOne({ _id: run.processing._id })
           await locks.release(run.processing._id)
           if (processing && processing.scheduling.length) {

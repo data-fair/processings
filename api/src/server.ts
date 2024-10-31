@@ -1,8 +1,8 @@
 import { existsSync } from 'fs'
 import resolvePath from 'resolve-path'
 import { app } from './app.ts'
-import { startWSServer, stopWSServer } from './utils/wsServer.ts'
 import { session } from '@data-fair/lib-express/index.js'
+import * as wsServer from '@data-fair/lib-express/ws-server.js'
 import { startObserver, stopObserver } from '@data-fair/lib-node/observer.js'
 import * as locks from '@data-fair/lib-node/locks.js'
 import { createHttpTerminator } from 'http-terminator'
@@ -31,11 +31,17 @@ export const start = async () => {
   await mongo.init()
   await locks.init(mongo.db)
 
+  await wsServer.start(server, mongo.db, async (channel, sessionState) => {
+    const [ownerType, ownerId] = channel.split('/')
+    if (!sessionState.user) return false
+    if (sessionState.user.adminMode) return true
+    return (['admin', 'contrib'].includes(ownerType) && ownerId === sessionState.user.id)
+  })
+
   server.listen(config.port)
   await new Promise(resolve => server.once('listening', resolve))
   const npmHttpsProxy = config.npm?.httpsProxy || process.env.HTTPS_PROXY || process.env.https_proxy
   if (npmHttpsProxy) await exec('npm --workspaces=false --include-workspace-root config set https-proxy ' + npmHttpsProxy)
-  await startWSServer(server, mongo.db, session)
 
   console.log(`
   API server listening on port ${config.port}
@@ -48,5 +54,5 @@ export const stop = async () => {
   if (config.observer.active) await stopObserver()
   await locks.stop()
   await mongo.client.close()
-  await stopWSServer()
+  await wsServer.stop()
 }

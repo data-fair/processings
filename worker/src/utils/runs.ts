@@ -1,18 +1,19 @@
 import type { Db } from 'mongodb'
 import type { Run, Processing } from '#types'
 
+import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import { incrementConsumption } from './limits.ts'
 import { runsMetrics } from './metrics.ts'
 import notifications from './notifications.ts'
 
-export const running = async (db: Db, wsPublish: (channel: string, data: any) => Promise<void>, run: Run) => {
+export const running = async (db: Db, run: Run) => {
   const patch = { status: 'running' as Run['status'], startedAt: new Date().toISOString() }
   const lastRun = db.collection<Run>('runs').findOneAndUpdate(
     { _id: run._id },
     { $set: patch, $unset: { finishedAt: '' } },
     { returnDocument: 'after', projection: { log: 0, processing: 0, owner: 0 } }
   )
-  await wsPublish(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch })
+  await wsEmitter.emit(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch })
   await db.collection<Processing>('processings')
     .updateOne({ _id: run.processing._id }, { $set: { lastRun }, $unset: { nextRun: '' } })
 }
@@ -20,7 +21,7 @@ export const running = async (db: Db, wsPublish: (channel: string, data: any) =>
 /**
  * Update the database when a run is finished (edit status, log, duration, etc.)
  */
-export const finish = async (db: Db, wsPublish: (channel: string, data: any) => Promise<void>, run: Run, errorMessage: string | undefined = undefined, errorLogType: string = 'debug') => {
+export const finish = async (db: Db, run: Run, errorMessage: string | undefined = undefined, errorLogType: string = 'debug') => {
   const query: Record<string, any> = {
     $set: {
       status: 'finished',
@@ -44,7 +45,7 @@ export const finish = async (db: Db, wsPublish: (channel: string, data: any) => 
       { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
     )) as Run
   }
-  await wsPublish(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch: query.$set })
+  await wsEmitter.emit(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch: query.$set })
   const duration = (new Date(lastRun.finishedAt!).getTime() - new Date(lastRun.startedAt!).getTime()) / 1000
   runsMetrics.labels(({ status: query.$set.status, owner: run.owner.name })).observe(duration)
   await incrementConsumption(db, run.owner, 'processings_seconds', Math.round(duration))

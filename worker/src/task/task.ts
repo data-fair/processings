@@ -11,6 +11,7 @@ import resolvePath from 'resolve-path'
 import tmp from 'tmp-promise'
 import { DataFairWsClient } from '@data-fair/lib-node/ws-client.js'
 import { httpAgent, httpsAgent } from '@data-fair/lib-node/http-agents.js'
+import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import { running } from '../utils/runs.js'
 import config from '#config'
 import { Processing, Run } from '#types'
@@ -105,11 +106,11 @@ const wsInstance = (log: LogFunctions, owner: Account): DataFairWsClient => {
 /**
  * Prepare log functions.
  */
-const prepareLog = (runsCollection: Collection<Run>, wsPublish: (channel: string, data: any) => Promise<void>, processing: Processing, run: Run): LogFunctions => {
+const prepareLog = (runsCollection: Collection<Run>, processing: Processing, run: Run): LogFunctions => {
   const pushLog = async (log: any) => {
     log.date = new Date().toISOString()
     await runsCollection.updateOne({ _id: run._id }, { $push: { log } })
-    await wsPublish(`processings/${processing._id}/run-log`, { _id: run._id, log })
+    await wsEmitter.emit(`processings/${processing._id}/run-log`, { _id: run._id, log })
   }
 
   return {
@@ -125,7 +126,7 @@ const prepareLog = (runsCollection: Collection<Run>, wsPublish: (channel: string
       const progressDate = new Date().toISOString()
       await runsCollection.updateOne({ _id: run._id, log: { $elemMatch: { type: 'task', msg } } },
         { $set: { 'log.$.progress': progress, 'log.$.total': total, 'log.$.progressDate': progressDate } })
-      await wsPublish(`processings/${processing._id}/run-log`, { _id: run._id, log: { type: 'task', msg, progressDate, progress, total } })
+      await wsEmitter.emit(`processings/${processing._id}/run-log`, { _id: run._id, log: { type: 'task', msg, progressDate, progress, total } })
     }
   }
 }
@@ -133,7 +134,7 @@ const prepareLog = (runsCollection: Collection<Run>, wsPublish: (channel: string
 /**
  * Run a processing.
  */
-export const run = async (db: Db, mailTransport: any, wsPublish: (channel: string, data: any) => Promise<void>) => {
+export const run = async (db: Db, mailTransport: any) => {
   const runsCollection = db.collection('runs') as Collection<Run>
   const processingsCollection = db.collection('processings') as Collection<Processing>
   const [run, processing] = await Promise.all([
@@ -143,13 +144,13 @@ export const run = async (db: Db, mailTransport: any, wsPublish: (channel: strin
   if (!run) throw new Error('Run not found')
   if (!processing) throw new Error('Processing not found')
 
-  const log = prepareLog(runsCollection, wsPublish, processing, run)
+  const log = prepareLog(runsCollection, processing, run)
   // @ts-expect-error -> warn is deprecated
   log.warn = log.warning // for compatibility with old plugins
   if (run.status === 'running') {
     await log.step('Reprise après interruption.')
   }
-  await running(db, wsPublish, run)
+  await running(db, run)
   console.log('<running>')
   const pluginDir = path.resolve(config.dataDir, 'plugins', processing?.plugin)
   let pluginConfig = {}
@@ -190,7 +191,7 @@ export const run = async (db: Db, mailTransport: any, wsPublish: (channel: strin
       await log.debug('patch config', patch)
       Object.assign(processingConfig, patch)
       processingsCollection.updateOne({ _id: processing._id }, { $set: { config: processingConfig } })
-      await wsPublish(`processings/${processing._id}/patch-config`, { patch })
+      await wsEmitter.emit(`processings/${processing._id}/patch-config`, { patch })
     },
     async sendMail (data) {
       return mailTransport.sendMail(data)
