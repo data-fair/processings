@@ -58,7 +58,8 @@ const preparePluginInfo = async (pluginInfo: Plugin): Promise<Plugin> => {
 }
 
 router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
-  const plugin: Plugin = (await import ('#types/plugin/index.ts')).returnValid(req.body)
+  const { body } = (await import('#doc/plugin/post-req/index.ts')).returnValid(req)
+  const plugin = body as Record<string, any>
   plugin.id = plugin.name.replace('/', '-') + '-' + semver.major(plugin.version)
   if (plugin.distTag !== 'latest') plugin.id += '-' + plugin.distTag
 
@@ -87,7 +88,7 @@ router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
     }
   }
 
-  const installedPlugin: Plugin = await preparePluginInfo(plugin)
+  const installedPlugin: Plugin = await preparePluginInfo(plugin as Plugin)
   installedPlugin.access = { public: false, privateAccess: [] }
   const accessFilePath = path.join(pluginsDir, installedPlugin.id + '-access.json')
   if (!await fs.pathExists(accessFilePath)) await fs.writeJson(accessFilePath, installedPlugin.access)
