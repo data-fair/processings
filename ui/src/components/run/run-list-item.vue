@@ -14,31 +14,31 @@
       <v-avatar v-if="run.status === 'finished'">
         <v-icon
           color="success"
-          icon="mdi-check-circle"
+          :icon="mdi-check-circle"
         />
       </v-avatar>
       <v-avatar v-if="run.status === 'error'">
         <v-icon
           color="error"
-          icon="mdi-alert"
+          :icon="mdi-alert"
         />
       </v-avatar>
       <v-avatar v-if="run.status === 'scheduled'">
         <v-icon
           color="primary"
-          icon="mdi-clock"
+          :icon="mdi-clock"
         />
       </v-avatar>
       <v-avatar v-if="run.status === 'triggered'">
         <v-icon
           color="primary"
-          icon="mdi-play-circle"
+          :icon="mdi-play-circle"
         />
       </v-avatar>
       <v-avatar v-if="run.status === 'kill' || run.status === 'killed'">
         <v-icon
           color="accent"
-          icon="mdi-stop"
+          :icon="mdi-stop"
         />
       </v-avatar>
     </template>
@@ -78,7 +78,7 @@
     >
       <v-btn
         color="warning"
-        icon="mdi-stop"
+        :icon="mdi-stop"
         size="x-small"
         title="interrompre"
         @click.prevent="kill()"

@@ -24,7 +24,7 @@
         <v-list-item v-else-if="pluginFetch.error.value?.statusCode">
           <template #prepend>
             <v-icon
-              icon="mdi-power-plug"
+              :icon="mdiPowerPlug"
               color="error"
             />
           </template>
@@ -34,7 +34,7 @@
         </v-list-item>
         <v-list-item v-else>
           <template #prepend>
-            <v-icon icon="mdi-power-plug" />
+            <v-icon :icon="mdiPowerPlug" />
           </template>
           <span>
             {{ pluginFetch.data.value?.customName }}
@@ -59,7 +59,7 @@
             <template #prepend>
               <v-icon
                 color="success"
-                icon="mdi-check-circle"
+                :icon="mdiCheckCircle"
               />
             </template>
             <span>Dernière exécution terminée {{ dayjs(processing.lastRun.finishedAt).fromNow() }}</span>
@@ -69,7 +69,7 @@
             <template #prepend>
               <v-icon
                 color="error"
-                icon="mdi-alert"
+                :icon="mdiAlert"
               />
             </template>
             <span>Dernière exécution en échec {{ dayjs(processing.lastRun.finishedAt).fromNow() }}</span>
@@ -79,7 +79,7 @@
             <template #prepend>
               <v-icon
                 color="accent"
-                icon="mdi-stop"
+                :icon="mdiStop"
               />
             </template>
             <span>Dernière exécution interrompue {{ dayjs(processing.lastRun.finishedAt).fromNow() }}</span>
@@ -90,7 +90,7 @@
           <template #prepend>
             <v-icon
               color="primary"
-              icon="mdi-information"
+              :icon="mdiInformation"
             />
           </template>
           <span>Aucune exécution dans l'historique</span>
@@ -101,7 +101,7 @@
             <template #prepend>
               <v-icon
                 color="primary"
-                icon="mdi-clock"
+                :icon="mdiClock"
               />
             </template>
             <span>Prochaine exécution planifiée {{ dayjs(processing.nextRun.scheduledAt).fromNow() }}</span>
@@ -111,7 +111,7 @@
             <template #prepend>
               <v-icon
                 color="primary"
-                icon="mdi-play-circle"
+                :icon="mdiPlayCircle"
               />
             </template>
             <span>

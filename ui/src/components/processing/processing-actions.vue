@@ -20,7 +20,7 @@
           <template #prepend>
             <v-icon
               color="primary"
-              icon="mdi-play"
+              :icon="mdiPlay"
             />
           </template>
           <span>Exécuter</span>
@@ -87,7 +87,7 @@
           <template #prepend>
             <v-icon
               color="warning"
-              icon="mdi-delete"
+              :icon="mdiDelete"
             />
           </template>
           Supprimer
@@ -135,7 +135,7 @@
       <template #prepend>
         <v-icon
           color="primary"
-          icon="mdi-open-in-new"
+          :icon="mdiOpenInNew"
         />
       </template>
       Voir le jeu de données
@@ -155,7 +155,7 @@
           <template #prepend>
             <v-icon
               color="primary"
-              icon="mdi-bell"
+              :icon="mdiBell"
             />
           </template>
           Notifications

@@ -25,7 +25,7 @@
           <template #prepend>
             <v-icon
               color="primary"
-              icon="mdi-plus-circle"
+              :icon="mdiPlusCircle"
             />
           </template>
           Créer un nouveau traitement
@@ -88,7 +88,7 @@
     </v-menu>
     <v-text-field
       v-model="search"
-      append-inner-icon="mdi-magnify"
+      :append-inner-icon="mdiMagnify"
       class="mt-4 mx-4"
       clearable
       color="primary"

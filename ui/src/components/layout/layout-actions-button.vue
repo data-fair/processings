@@ -11,7 +11,7 @@
           v-bind="props"
           size="small"
           color="primary"
-          icon="mdi-dots-vertical"
+          :icon="mdiDotsVertical"
         />
       </template>
       <slot name="actions" />

@@ -32,11 +32,22 @@ declare global {
   const isReadonly: typeof import('vue')['isReadonly']
   const isRef: typeof import('vue')['isRef']
   const markRaw: typeof import('vue')['markRaw']
-  const mdi: typeof import('@mdi/js')['mdi']
+  const mdiAlert: typeof import('@mdi/js')['mdiAlert']
+  const mdiCheckCircle: typeof import('@mdi/js')['mdiCheckCircle']
+  const mdiClock: typeof import('@mdi/js')['mdiClock']
+  const mdiDelete: typeof import('@mdi/js')['mdiDelete']
   const mdiDotsVertical: typeof import('@mdi/js')['mdiDotsVertical']
+  const mdiDownload: typeof import('@mdi/js')['mdiDownload']
+  const mdiInformation: typeof import('@mdi/js')['mdiInformation']
   const mdiMagnify: typeof import('@mdi/js')['mdiMagnify']
+  const mdiOpenInNew: typeof import('@mdi/js')['mdiOpenInNew']
+  const mdiPlay: typeof import('@mdi/js')['mdiPlay']
+  const mdiPlayCircle: typeof import('@mdi/js')['mdiPlayCircle']
   const mdiPlus: typeof import('@mdi/js')['mdiPlus']
   const mdiPlusCircle: typeof import('@mdi/js')['mdiPlusCircle']
+  const mdiPowerPlug: typeof import('@mdi/js')['mdiPowerPlug']
+  const mdiStop: typeof import('@mdi/js')['mdiStop']
+  const mdiUpdate: typeof import('@mdi/js')['mdiUpdate']
   const nextTick: typeof import('vue')['nextTick']
   const onActivated: typeof import('vue')['onActivated']
   const onBeforeMount: typeof import('vue')['onBeforeMount']
@@ -134,9 +145,21 @@ declare module 'vue' {
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
+    readonly mdiAlert: UnwrapRef<typeof import('@mdi/js')['mdiAlert']>
+    readonly mdiCheckCircle: UnwrapRef<typeof import('@mdi/js')['mdiCheckCircle']>
+    readonly mdiClock: UnwrapRef<typeof import('@mdi/js')['mdiClock']>
+    readonly mdiDelete: UnwrapRef<typeof import('@mdi/js')['mdiDelete']>
     readonly mdiDotsVertical: UnwrapRef<typeof import('@mdi/js')['mdiDotsVertical']>
+    readonly mdiDownload: UnwrapRef<typeof import('@mdi/js')['mdiDownload']>
+    readonly mdiInformation: UnwrapRef<typeof import('@mdi/js')['mdiInformation']>
     readonly mdiMagnify: UnwrapRef<typeof import('@mdi/js')['mdiMagnify']>
+    readonly mdiOpenInNew: UnwrapRef<typeof import('@mdi/js')['mdiOpenInNew']>
+    readonly mdiPlay: UnwrapRef<typeof import('@mdi/js')['mdiPlay']>
+    readonly mdiPlayCircle: UnwrapRef<typeof import('@mdi/js')['mdiPlayCircle']>
     readonly mdiPlusCircle: UnwrapRef<typeof import('@mdi/js')['mdiPlusCircle']>
+    readonly mdiPowerPlug: UnwrapRef<typeof import('@mdi/js')['mdiPowerPlug']>
+    readonly mdiStop: UnwrapRef<typeof import('@mdi/js')['mdiStop']>
+    readonly mdiUpdate: UnwrapRef<typeof import('@mdi/js')['mdiUpdate']>
     readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>
     readonly onActivated: UnwrapRef<typeof import('vue')['onActivated']>
     readonly onBeforeMount: UnwrapRef<typeof import('vue')['onBeforeMount']>

@@ -2,7 +2,7 @@
   <v-container data-iframe-height>
     <v-text-field
       v-model="urlSearchParams.q"
-      append-inner-icon="mdi-magnify"
+      :append-inner-icon="mdiMagnify"
       class="my-2"
       clearable
       color="primary"
@@ -65,7 +65,7 @@
           <v-btn
             v-if="updateAvailable(result)[0]"
             :title="`Mettre à jour (${updateAvailable(result)[1]})`"
-            icon="mdi-update"
+            :icon="mdiUpdate"
             color="primary"
             :disabled="!!pluginLocked"
             @click="update(result)"
@@ -79,7 +79,7 @@
               <v-btn
                 v-bind="props"
                 title="Désinstaller"
-                icon="mdi-delete"
+                :icon="mdiDelete"
                 color="warning"
                 :disabled="!!pluginLocked"
                 @click="deleteMenuShowed = result.id"
@@ -188,7 +188,7 @@
           {{ result.version }}
           <v-btn
             title="Installer"
-            icon="mdi-download"
+            :icon="mdiDownload"
             color="primary"
             :disabled="!!pluginLocked"
             @click="install(result)"

@@ -35,7 +35,23 @@ export default defineConfig({
         ...(autoImports as any),
         {
           '~/context': ['$uiConfig', '$sitePath', '$apiPath', '$fetch'],
-          '@mdi/js': ['mdiMagnify', 'mdiDotsVertical', 'mdiPlusCircle'] // TODO: Add only the icons used in the project
+          '@mdi/js': [
+            'mdiAlert',
+            'mdiCheckCircle',
+            'mdiClock',
+            'mdiDotsVertical',
+            'mdiDownload',
+            'mdiInformation',
+            'mdiMagnify',
+            'mdiOpenInNew',
+            'mdiPlay',
+            'mdiPlayCircle',
+            'mdiPlusCircle',
+            'mdiPowerPlug',
+            'mdiStop',
+            'mdiUpdate',
+            'mdiDelete'
+          ]
         }
       ],
       dirs: [
