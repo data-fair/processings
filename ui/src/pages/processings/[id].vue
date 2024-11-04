@@ -59,7 +59,7 @@
 import type { Plugin, Processing } from '#api/types'
 
 import timeZones from 'timezones.json'
-import contractProcessing from '../../../contract/processing'
+import contractProcessing from '../../../../contract/processing'
 import Vjsf from '@koumoul/vjsf'
 import VjsfMarkdown from '@koumoul/vjsf-markdown'
 import { v2compat } from '@koumoul/vjsf/compat/v2'

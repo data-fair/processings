@@ -210,6 +210,7 @@
 <script setup lang="ts">
 import setBreadcrumbs from '~/utils/breadcrumbs'
 import useUrlSearchParams from '@data-fair/lib-vue/reactive-search-params.js'
+import Vjsf from '@koumoul/vjsf'
 import VjsfMarkdown from '@koumoul/vjsf-markdown'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 import { httpError } from '@data-fair/lib-utils/http-errors'
@@ -261,9 +262,12 @@ const installedPlugins = computed(() => {
   }))
 })
 
-const availablePluginsFetch = useFetch<AvailablePlugin[]>(`${$apiPath}/plugins-registry`, { query: { showAll: urlSearchParams.showAll } })
+const availablePluginsFetch = useFetch<{
+  results: AvailablePlugin[],
+  count: number
+}>(`${$apiPath}/plugins-registry`, { query: { showAll: urlSearchParams.showAll } })
 const availablePlugins = computed(() => {
-  const results = availablePluginsFetch.data.value || []
+  const results = availablePluginsFetch.data.value?.results || []
   results.sort((a, b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
   return results
 })

@@ -49,9 +49,5 @@
 <script setup>
 </script>
 
-<style scoped lang="scss">
-.main-app-bar .v-toolbar__content {
-  padding-left: 0;
-  padding-right: 0;
-}
+<style>
 </style>

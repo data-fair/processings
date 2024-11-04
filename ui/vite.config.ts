@@ -9,11 +9,12 @@ import Unfonts from 'unplugin-fonts/vite'
 import Vuetify from 'vite-plugin-vuetify'
 import microTemplate from '@data-fair/lib-utils/micro-template.js'
 import { autoImports } from '@data-fair/lib-vuetify/vite.js'
+import { commonjsDeps } from '@koumoul/vjsf/utils/build.js'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '/processings',
-  optimizeDeps: { include: ['debug'] },
+  optimizeDeps: { include: ['debug', ...commonjsDeps] },
   resolve: {
     alias: {
       '~': path.resolve(__dirname, 'src/')

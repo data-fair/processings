@@ -40,9 +40,7 @@
   },
   "homepage": "https://github.com/data-fair/processings#readme",
   "dependencies": {
-    "@data-fair/lib-types-builder": "^1.4.0",
-    "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1"
+    "@data-fair/lib-types-builder": "^1.4.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",
