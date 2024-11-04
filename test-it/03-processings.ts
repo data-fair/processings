@@ -10,7 +10,7 @@ const hlalonde = await axiosAuth({ email: 'hlalonde3@desdev.cn', org: 'KWqAGZ4mG
 
 let plugin
 const createTestPlugin = async () => {
-  plugin = (await superadmin.post('/api/v1/plugins', {
+  plugin = (await superadmin.post('/api/plugins', {
     name: '@data-fair/processing-hello-world',
     version: '0.12.2',
     distTag: 'latest',
@@ -28,7 +28,7 @@ describe('processing', () => {
   after(stopWorkerServer)
 
   it('should create a new processing, activate it and run it', async () => {
-    let processing = (await superadmin.post('/api/v1/processings', {
+    let processing = (await superadmin.post('/api/processings', {
       title: 'Hello processing',
       plugin: plugin.id
     })).data
@@ -36,13 +36,13 @@ describe('processing', () => {
     assert.deepEqual(processing.scheduling, [])
     assert.ok(!processing.webhookKey)
 
-    const processings = (await superadmin.get('/api/v1/processings')).data
+    const processings = (await superadmin.get('/api/processings')).data
     assert.equal(processings.count, 1)
     assert.equal(processings.results[0]._id, processing._id)
     assert.ok(!processings.results[0].webhookKey)
 
     // no run at first
-    let runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+    let runs = (await superadmin.get('/api/runs', { params: { processing: processing._id } })).data
     assert.equal(runs.count, 0)
 
     // active but without scheduling = still no run
@@ -55,7 +55,7 @@ describe('processing', () => {
         message: 'Hello world test processing'
       }
     })
-    runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+    runs = (await superadmin.get('/api/runs', { params: { processing: processing._id } })).data
     console.log(runs)
     assert.equal(runs.count, 0)
 
@@ -63,7 +63,7 @@ describe('processing', () => {
     await superadmin.patch(`/api/v1/processings/${processing._id}`, {
       scheduling: [{ type: 'monthly', dayOfWeek: '*', dayOfMonth: 1, month: '*', hour: 0, minute: 0 }]
     })
-    runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+    runs = (await superadmin.get('/api/runs', { params: { processing: processing._id } })).data
     assert.equal(runs.count, 1)
     assert.equal(runs.results[0].status, 'scheduled')
 
@@ -72,7 +72,7 @@ describe('processing', () => {
       superadmin.post(`/api/v1/processings/${processing._id}/_trigger`),
       testSpies.waitFor('isRunning', 10000)
     ])
-    runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+    runs = (await superadmin.get('/api/runs', { params: { processing: processing._id } })).data
     assert.equal(runs.count, 1)
     assert.equal(runs.results[0].status, 'running')
 
@@ -81,7 +81,7 @@ describe('processing', () => {
     assert.equal(notif.topic.key, `processings:processing-finish-error:${processing._id}`)
     await testSpies.waitFor('isFailure', 10000)
 
-    const run = (await superadmin.get('/api/v1/runs/' + runs.results[0]._id)).data
+    const run = (await superadmin.get('/api/runs/' + runs.results[0]._id)).data
     assert.equal(run.status, 'error')
     assert.equal(run.log[0].type, 'step')
     assert.equal(run.log[1].type, 'error')
@@ -93,7 +93,7 @@ describe('processing', () => {
   })
 
   it('should kill a long run with SIGTERM', async () => {
-    const processing = (await superadmin.post('/api/v1/processings', {
+    const processing = (await superadmin.post('/api/processings', {
       title: 'Hello processing',
       plugin: plugin.id,
       active: true,
@@ -109,7 +109,7 @@ describe('processing', () => {
       superadmin.post(`/api/v1/processings/${processing._id}/_trigger`),
       testSpies.waitFor('isRunning', 10000) // We wait for the run to be triggered
     ])
-    const runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+    const runs = (await superadmin.get('/api/runs', { params: { processing: processing._id } })).data
     assert.equal(runs.count, 1)
     let run = runs.results[0]
     assert.equal(run.status, 'running')
@@ -122,13 +122,13 @@ describe('processing', () => {
     assert.equal(run.log.length, 4)
 
     // limits were updated
-    const limits = (await superadmin.get('/api/v1/limits/user/superadmin')).data
+    const limits = (await superadmin.get('/api/limits/user/superadmin')).data
     assert.ok(limits.processings_seconds.consumption >= 1)
     assert.equal(limits.processings_seconds.limit, -1)
   })
 
   it('should kill a long run with SIGTERM and wait for grace period', async () => {
-    const processing = (await superadmin.post('/api/v1/processings', {
+    const processing = (await superadmin.post('/api/processings', {
       title: 'Hello processing',
       plugin: plugin.id,
       active: true,
@@ -146,7 +146,7 @@ describe('processing', () => {
       testSpies.waitFor('isRunning', 10000) // We wait for the run to be triggered
     ])
     await new Promise(resolve => setTimeout(resolve, 1000))
-    const runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+    const runs = (await superadmin.get('/api/runs', { params: { processing: processing._id } })).data
     assert.equal(runs.count, 1)
     let run = runs.results[0]
     assert.equal(run.status, 'running')
@@ -160,12 +160,12 @@ describe('processing', () => {
   })
 
   it('should fail a run if processings_seconds limit is exceeded', async () => {
-    await superadmin.post('/api/v1/limits/user/superadmin', {
+    await superadmin.post('/api/limits/user/superadmin', {
       processings_seconds: { limit: 1 },
       lastUpdate: new Date().toISOString()
     })
 
-    const processing = (await superadmin.post('/api/v1/processings', {
+    const processing = (await superadmin.post('/api/processings', {
       title: 'Hello processing',
       plugin: plugin.id,
       active: true,
@@ -181,23 +181,23 @@ describe('processing', () => {
     await superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
     await testSpies.waitFor('isFailure', 10000)
 
-    let limits = (await superadmin.get('/api/v1/limits/user/superadmin')).data
+    let limits = (await superadmin.get('/api/limits/user/superadmin')).data
     const consumption = limits.processings_seconds.consumption
     assert.ok(consumption >= 1)
 
     superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
     await testSpies.waitFor('processingsSecondsExceeded', 10000)
-    limits = (await superadmin.get('/api/v1/limits/user/superadmin')).data
+    limits = (await superadmin.get('/api/limits/user/superadmin')).data
     assert.equal(limits.processings_seconds.consumption, consumption)
   })
 
   it('should manage a processing as a department admin', async () => {
-    const processing = (await hlalonde.post('/api/v1/processings', {
+    const processing = (await hlalonde.post('/api/processings', {
       title: 'Hello processing',
       plugin: plugin.id
     })).data
 
-    const processings = (await hlalonde.get('/api/v1/processings')).data
+    const processings = (await hlalonde.get('/api/processings')).data
     assert.equal(processings.count, 1)
     assert.equal(processings.results[0]._id, processing._id)
     await hlalonde.patch(`/api/v1/processings/${processing._id}`, {
@@ -215,7 +215,7 @@ describe('processing', () => {
       testSpies.waitFor('isFailure', 10000)
     ])
 
-    const runs = (await hlalonde.get('/api/v1/runs', { params: { processing: processing._id } })).data
+    const runs = (await hlalonde.get('/api/runs', { params: { processing: processing._id } })).data
     assert.equal(runs.count, 1)
     // failure is normal we have no api key
     assert.equal(runs.results[0].status, 'error')

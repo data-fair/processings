@@ -222,7 +222,7 @@ const createProcessing = withUiNotif(
   async () => {
     inCreate.value = true
 
-    const processing = await $fetch('/api/v1/processings', {
+    const processing = await $fetch(`${$apiPath}/processings`, {
       method: 'POST',
       body: JSON.stringify(newProcessing.value)
     })

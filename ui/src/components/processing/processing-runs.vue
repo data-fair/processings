@@ -63,7 +63,7 @@ const page = ref(1)
 const runs = useFetch<{
   results: Run[],
   count: number
-}>('/api/v1/runs', {
+}>(`${$apiPath}/runs`, {
   query: computed(() => ({
     processing: props.processing._id,
     size,

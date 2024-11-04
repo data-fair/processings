@@ -249,7 +249,7 @@ const installedPluginsFetch = useFetch<{
   results: InstalledPlugin[],
   facets: { usages: Record < string, number> },
   count: number
-}>('/api/v1/plugins')
+}>(`${$apiPath}/plugins`)
 
 const installedPlugins = computed(() => {
   const results = installedPluginsFetch.data.value?.results || []
@@ -261,7 +261,7 @@ const installedPlugins = computed(() => {
   }))
 })
 
-const availablePluginsFetch = useFetch<AvailablePlugin[]>('/api/v1/plugins-registry', { query: { showAll: urlSearchParams.showAll } })
+const availablePluginsFetch = useFetch<AvailablePlugin[]>(`${$apiPath}/plugins-registry`, { query: { showAll: urlSearchParams.showAll } })
 const availablePlugins = computed(() => {
   const results = availablePluginsFetch.data.value || []
   results.sort((a, b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
@@ -285,7 +285,7 @@ const pluginLocked = ref(null) as Ref<string | null>
 const install = withUiNotif(
   async (plugin: AvailablePlugin) => {
     pluginLocked.value = `${plugin.name}-${plugin.distTag}`
-    await $fetch('/api/v1/plugins', {
+    await $fetch(`${$apiPath}/plugins`, {
       method: 'POST',
       body: JSON.stringify(plugin)
     })

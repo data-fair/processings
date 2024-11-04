@@ -155,7 +155,7 @@ const processingsFetch = useFetch<{
   results: Processing[],
   facets: { usages: Record <string, number > },
   count: number
-}>('/api/v1/processings', { query: processingsParams })
+}>(`${$apiPath}/processings`, { query: processingsParams })
 const displayProcessings = computed(() => {
   const processings = (processingsFetch.data.value?.results ?? [])
   if (!search.value) return processings
