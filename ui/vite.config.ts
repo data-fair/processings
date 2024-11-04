@@ -35,7 +35,7 @@ export default defineConfig({
         ...(autoImports as any),
         {
           '~/context': ['$uiConfig', '$sitePath', '$apiPath', '$fetch'],
-          '@mdi/js': [] // TODO: Add only the icons used in the project
+          '@mdi/js': ['mdiMagnify', 'mdiDotsVertical', 'mdiPlusCircle'] // TODO: Add only the icons used in the project
         }
       ],
       dirs: [
@@ -46,7 +46,7 @@ export default defineConfig({
     Components(),
     {
       name: 'inject-site-context',
-      async transformIndexHtml(html) {
+      async transformIndexHtml (html) {
         // in production this injection will be performed by an express middleware
         if (process.env.NODE_ENV !== 'development') return html
         const { uiConfig } = await import('../api/src/config')
@@ -55,7 +55,7 @@ export default defineConfig({
     }
   ],
   experimental: {
-    renderBuiltUrl(filename, { hostType }) {
+    renderBuiltUrl (filename, { hostType }) {
       if (hostType === 'html') return '{SITE_PATH}/processings/' + filename
       return { relative: true }
     }

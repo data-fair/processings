@@ -148,7 +148,7 @@ onUnmounted(() => {
 
 async function refresh () {
   loading.value = true
-  run.value = await $fetch(`/api/v1/runs/${route.params.id}`)
+  run.value = await $fetch(`${$apiPath}/runs/${route.params.id}`)
 
   ws?.subscribe(wsLogChannel, onRunLog)
   ws?.subscribe(wsPatchChannel, onRunPatch)

@@ -145,6 +145,8 @@
 </template>
 
 <script setup lang="ts">
+import OwnerPick from '@data-fair/lib-vuetify/owner-pick.vue'
+
 const processingsProps = defineProps({
   adminMode: Boolean,
   ownerFilter: { type: String, required: true },
@@ -187,7 +189,7 @@ type InstalledPlugin = {
   processingConfigSchema: any
 }
 
-const installedPluginsFetch = useFetch<{ results: InstalledPlugin[], count: number }>(`/api/v1/plugins?privateAccess=${processingsProps.ownerFilter}`)
+const installedPluginsFetch = useFetch<{ results: InstalledPlugin[], count: number }>(`${$apiPath}/plugins?privateAccess=${processingsProps.ownerFilter}`)
 const installedPlugins = computed(() => installedPluginsFetch.data.value?.results)
 
 const statusesItems = computed(() => {

@@ -38,21 +38,21 @@ describe('plugin', () => {
     res = await dmeadus.get('/api/plugins?privateAccess=user:dmeadus0')
     assert.equal(res.data.results.length, 0)
 
-    await superadmin.put(`/api/v1/plugins/${plugin.id}/access`, { public: true })
+    await superadmin.put(`/api/plugins/${plugin.id}/access`, { public: true })
 
     res = await dmeadus.get('/api/plugins?privateAccess=user:dmeadus0')
     assert.equal(res.data.results.length, 1)
     res = await dmeadusOrg.get('/api/plugins?privateAccess=organization:KWqAGZ4mG')
     assert.equal(res.data.results.length, 1)
 
-    await superadmin.put(`/api/v1/plugins/${plugin.id}/access`, { public: false, privateAccess: [{ type: 'user', id: 'dmeadus0' }] })
+    await superadmin.put(`/api/plugins/${plugin.id}/access`, { public: false, privateAccess: [{ type: 'user', id: 'dmeadus0' }] })
 
     res = await dmeadus.get('/api/plugins?privateAccess=user:dmeadus0')
     assert.equal(res.data.results.length, 1)
     res = await dmeadusOrg.get('/api/plugins?privateAccess=organization:KWqAGZ4mG')
     assert.equal(res.data.results.length, 0)
 
-    await superadmin.delete(`/api/v1/plugins/${plugin.id}`)
+    await superadmin.delete(`/api/plugins/${plugin.id}`)
     res = await superadmin.get('/api/plugins')
     assert.equal(res.data.count, 0)
   })

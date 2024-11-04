@@ -16,7 +16,7 @@ const createTestPlugin = async () => {
     distTag: 'latest',
     description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.'
   })).data
-  await superadmin.put(`/api/v1/plugins/${plugin.id}/access`, { public: true })
+  await superadmin.put(`/api/plugins/${plugin.id}/access`, { public: true })
 }
 
 describe('processing', () => {
@@ -46,7 +46,7 @@ describe('processing', () => {
     assert.equal(runs.count, 0)
 
     // active but without scheduling = still no run
-    await superadmin.patch(`/api/v1/processings/${processing._id}`, {
+    await superadmin.patch(`/api/processings/${processing._id}`, {
       active: true,
       config: {
         datasetMode: 'create',
@@ -60,16 +60,16 @@ describe('processing', () => {
     assert.equal(runs.count, 0)
 
     // active and with scheduling = a scheduled run
-    await superadmin.patch(`/api/v1/processings/${processing._id}`, {
+    await superadmin.patch(`/api/processings/${processing._id}`, {
       scheduling: [{ type: 'monthly', dayOfWeek: '*', dayOfMonth: 1, month: '*', hour: 0, minute: 0 }]
     })
     runs = (await superadmin.get('/api/runs', { params: { processing: processing._id } })).data
     assert.equal(runs.count, 1)
     assert.equal(runs.results[0].status, 'scheduled')
 
-    await superadmin.patch(`/api/v1/processings/${processing._id}`, { scheduling: [] })
+    await superadmin.patch(`/api/processings/${processing._id}`, { scheduling: [] })
     await Promise.all([
-      superadmin.post(`/api/v1/processings/${processing._id}/_trigger`),
+      superadmin.post(`/api/processings/${processing._id}/_trigger`),
       testSpies.waitFor('isRunning', 10000)
     ])
     runs = (await superadmin.get('/api/runs', { params: { processing: processing._id } })).data
@@ -86,7 +86,7 @@ describe('processing', () => {
     assert.equal(run.log[0].type, 'step')
     assert.equal(run.log[1].type, 'error')
 
-    processing = (await superadmin.get(`/api/v1/processings/${processing._id}`)).data
+    processing = (await superadmin.get(`/api/processings/${processing._id}`)).data
     assert.ok(processing.lastRun)
     assert.equal(processing.lastRun.status, 'error')
     assert.ok(!processing.webhookKey)
@@ -106,18 +106,18 @@ describe('processing', () => {
     })).data
 
     await Promise.all([
-      superadmin.post(`/api/v1/processings/${processing._id}/_trigger`),
+      superadmin.post(`/api/processings/${processing._id}/_trigger`),
       testSpies.waitFor('isRunning', 10000) // We wait for the run to be triggered
     ])
     const runs = (await superadmin.get('/api/runs', { params: { processing: processing._id } })).data
     assert.equal(runs.count, 1)
     let run = runs.results[0]
     assert.equal(run.status, 'running')
-    await superadmin.post(`/api/v1/runs/${run._id}/_kill`)
-    run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
+    await superadmin.post(`/api/runs/${run._id}/_kill`)
+    run = (await superadmin.get(`/api/runs/${run._id}`)).data
     assert.equal(run.status, 'kill')
     await testSpies.waitFor('isKilled', 10000)
-    run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
+    run = (await superadmin.get(`/api/runs/${run._id}`)).data
     assert.equal(run.status, 'killed')
     assert.equal(run.log.length, 4)
 
@@ -142,7 +142,7 @@ describe('processing', () => {
     })).data
 
     await Promise.all([
-      superadmin.post(`/api/v1/processings/${processing._id}/_trigger`),
+      superadmin.post(`/api/processings/${processing._id}/_trigger`),
       testSpies.waitFor('isRunning', 10000) // We wait for the run to be triggered
     ])
     await new Promise(resolve => setTimeout(resolve, 1000))
@@ -150,11 +150,11 @@ describe('processing', () => {
     assert.equal(runs.count, 1)
     let run = runs.results[0]
     assert.equal(run.status, 'running')
-    await superadmin.post(`/api/v1/runs/${run._id}/_kill`)
-    run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
+    await superadmin.post(`/api/runs/${run._id}/_kill`)
+    run = (await superadmin.get(`/api/runs/${run._id}`)).data
     assert.equal(run.status, 'kill')
     await testSpies.waitFor('isKilled', 10000)
-    run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
+    run = (await superadmin.get(`/api/runs/${run._id}`)).data
     assert.equal(run.status, 'killed')
     assert.equal(run.log.length, 2)
   })
@@ -178,14 +178,14 @@ describe('processing', () => {
       }
     })).data
 
-    await superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
+    await superadmin.post(`/api/processings/${processing._id}/_trigger`)
     await testSpies.waitFor('isFailure', 10000)
 
     let limits = (await superadmin.get('/api/limits/user/superadmin')).data
     const consumption = limits.processings_seconds.consumption
     assert.ok(consumption >= 1)
 
-    superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)
+    superadmin.post(`/api/processings/${processing._id}/_trigger`)
     await testSpies.waitFor('processingsSecondsExceeded', 10000)
     limits = (await superadmin.get('/api/limits/user/superadmin')).data
     assert.equal(limits.processings_seconds.consumption, consumption)
@@ -200,7 +200,7 @@ describe('processing', () => {
     const processings = (await hlalonde.get('/api/processings')).data
     assert.equal(processings.count, 1)
     assert.equal(processings.results[0]._id, processing._id)
-    await hlalonde.patch(`/api/v1/processings/${processing._id}`, {
+    await hlalonde.patch(`/api/processings/${processing._id}`, {
       active: true,
       config: {
         datasetMode: 'create',
@@ -211,7 +211,7 @@ describe('processing', () => {
     })
 
     await Promise.all([
-      hlalonde.post(`/api/v1/processings/${processing._id}/_trigger`),
+      hlalonde.post(`/api/processings/${processing._id}/_trigger`),
       testSpies.waitFor('isFailure', 10000)
     ])
 

@@ -99,12 +99,12 @@ onMounted(async () => {
 })
 
 async function fetchProcessing () {
-  processing.value = await $fetch(`/api/v1/processings/${processingId}`)
+  processing.value = await $fetch(`${$apiPath}/processings/${processingId}`)
   if (processing.value) editProcessing.value = { ...processing.value }
 }
 async function fetchPlugin () {
   if (processing.value?.plugin) {
-    plugin.value = await $fetch(`/api/v1/plugins/${processing.value.plugin}`)
+    plugin.value = await $fetch(`${$apiPath}/plugins/${processing.value.plugin}`)
   }
 }
 
@@ -217,7 +217,7 @@ const patch = withUiNotif(
     if (!valid.value || !canAdminProcessing.value) return
     edited.value = true
 
-    await $fetch(`/api/v1/processings/${processingId}`, {
+    await $fetch(`${$apiPath}/processings/${processingId}`, {
       method: 'PATCH',
       body: editProcessing.value
     })
