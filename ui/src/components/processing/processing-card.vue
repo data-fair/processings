@@ -13,12 +13,7 @@
         density="compact"
         style="background-color: inherit;"
       >
-        <v-list-item v-if="pluginFetch.error.value && pluginFetch.error.value?.statusCode !== 404">
-          <fetch-error
-            :error="pluginFetch.error.value"
-          />
-        </v-list-item>
-        <v-list-item v-else-if="pluginFetch.pending.value">
+        <v-list-item v-if="pluginFetch.loading.value">
           <v-progress-circular
             indeterminate
             color="primary"
@@ -39,9 +34,7 @@
         </v-list-item>
         <v-list-item v-else>
           <template #prepend>
-            <v-icon
-              icon="mdi-power-plug"
-            />
+            <v-icon icon="mdi-power-plug" />
           </template>
           <span>
             {{ pluginFetch.data.value?.customName }}
@@ -57,7 +50,9 @@
                 size="24"
               />
             </template>
-            <span style="padding-left: 1.8rem; display: inline-block;">Exécution commencée {{ format.fromNow(processing.lastRun.startedAt) }}</span>
+            <span style="padding-left: 1.8rem; display: inline-block;">
+              Exécution commencée {{ dayjs(processing.lastRun.startedAt).fromNow() }}
+            </span>
           </v-list-item>
 
           <v-list-item v-if="processing.lastRun.status === 'finished'">
@@ -67,7 +62,7 @@
                 icon="mdi-check-circle"
               />
             </template>
-            <span>Dernière exécution terminée {{ format.fromNow(processing.lastRun.finishedAt) }}</span>
+            <span>Dernière exécution terminée {{ dayjs(processing.lastRun.finishedAt).fromNow() }}</span>
           </v-list-item>
 
           <v-list-item v-if="processing.lastRun.status === 'error'">
@@ -77,7 +72,7 @@
                 icon="mdi-alert"
               />
             </template>
-            <span>Dernière exécution en échec {{ format.fromNow(processing.lastRun.finishedAt) }}</span>
+            <span>Dernière exécution en échec {{ dayjs(processing.lastRun.finishedAt).fromNow() }}</span>
           </v-list-item>
 
           <v-list-item v-if="processing.lastRun.status === 'kill' || processing.lastRun.status === 'killed'">
@@ -87,7 +82,7 @@
                 icon="mdi-stop"
               />
             </template>
-            <span>Dernière exécution interrompue {{ format.fromNow(processing.lastRun.finishedAt) }}</span>
+            <span>Dernière exécution interrompue {{ dayjs(processing.lastRun.finishedAt).fromNow() }}</span>
           </v-list-item>
         </template>
 
@@ -109,7 +104,7 @@
                 icon="mdi-clock"
               />
             </template>
-            <span>Prochaine exécution planifiée {{ format.fromNow(processing.nextRun.scheduledAt, true) }}</span>
+            <span>Prochaine exécution planifiée {{ dayjs(processing.nextRun.scheduledAt).fromNow() }}</span>
           </v-list-item>
 
           <v-list-item v-if="processing.nextRun.status === 'triggered'">
@@ -120,8 +115,13 @@
               />
             </template>
             <span>
-              Prochaine exécution déclenchée manuellement {{ format.fromNow(processing.nextRun.createdAt) }}
-              <template v-if="processing.nextRun.scheduledAt && processing.nextRun.scheduledAt !== processing.nextRun.createdAt"> - planifiée {{ format.fromNow(processing.nextRun.scheduledAt, true) }}</template>
+              Prochaine exécution déclenchée manuellement {{ dayjs(processing.nextRun.createdAt).fromNow()
+              }}
+              <template
+                v-if="processing.nextRun.scheduledAt && processing.nextRun.scheduledAt !== processing.nextRun.createdAt"
+              >
+                - planifiée {{ dayjs(processing.nextRun.scheduledAt).fromNow() }}
+              </template>
             </span>
           </v-list-item>
         </template>
@@ -132,17 +132,14 @@
       v-if="showOwner"
       class="pl-3 pt-0"
     >
-      <owner-avatar
-        :owner="processing.owner"
-      />
+      <owner-avatar :owner="processing.owner" />
       <v-spacer />
     </v-card-actions>
   </v-card>
 </template>
 
-<script setup>
-import OwnerAvatar from '@data-fair/lib-vuetify/owner-avatar.vue'
-const format = useDateFormat()
+<script setup lang="ts">
+const { dayjs } = useLocaleDayjs()
 
 const props = defineProps({
   pluginCustomName: {
@@ -157,8 +154,4 @@ const props = defineProps({
 })
 
 const pluginFetch = await usePluginFetch(props.processing.plugin)
-
 </script>
-
-<style>
-</style>

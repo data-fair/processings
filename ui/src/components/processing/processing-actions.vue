@@ -142,7 +142,7 @@
     </v-list-item>
 
     <v-menu
-      v-if="notifUrl && processing?.owner.type === activeAccount.type && processing?.owner.id === activeAccount.id && !activeAccount.department"
+      v-if="notifUrl && processing?.owner.type === activeAccount?.type && processing?.owner.id === activeAccount?.id && !activeAccount?.department"
       v-model="showNotifMenu"
       :close-on-content-click="false"
       max-width="500"
@@ -188,13 +188,7 @@
   </v-list>
 </template>
 
-<script setup>
-import useEventBus from '~/composables/event-bus'
-import 'iframe-resizer/js/iframeResizer'
-import VIframe from '@koumoul/v-iframe'
-import { computed, ref, watch } from 'vue'
-import { useSession } from '@data-fair/lib-vue/session.js'
-
+<script setup lang="ts">
 const emit = defineEmits(['triggered'])
 
 const properties = defineProps({
@@ -212,8 +206,6 @@ const properties = defineProps({
   }
 })
 
-const eventBus = useEventBus()
-
 const inDelete = ref(false)
 const hasTriggered = ref(false)
 const showDeleteMenu = ref(false)
@@ -222,8 +214,9 @@ const showTriggerMenu = ref(false)
 const triggerDelay = ref(0)
 const webhookKey = ref('')
 
+const router = useRouter()
 const session = useSession()
-const /** @type {Record<string, any>} */ activeAccount = computed(() => session.state.account)
+const activeAccount = computed(() => session.state.account)
 
 const notifUrl = computed(() => {
   const topics = [
@@ -241,40 +234,43 @@ const webhookLink = computed(() => {
   return link
 })
 
-const confirmRemove = async () => {
-  inDelete.value = true
-  try {
+const confirmRemove = withUiNotif(
+  async () => {
+    inDelete.value = true
+
     await $fetch(`/api/v1/processings/${properties.processing?._id}`, {
       method: 'DELETE'
     })
-    return navigateTo({ path: '/processings' })
-  } catch (error) {
-    eventBus.emit('notification', { error, msg: 'Erreur pendant la suppression du traitement' })
-  } finally {
+
+    // Redirection après la suppression
+    await router.push('/processings')
+
     showDeleteMenu.value = false
     inDelete.value = false
-  }
-}
+  },
+  'Erreur pendant la suppression du traitement',
+  { msg: 'Traitement supprimé avec succès !' }
+)
 
 const getWebhookKey = async () => {
   webhookKey.value = await $fetch(`/api/v1/processings/${properties.processing?._id}/webhook-key`)
 }
 
-const triggerExecution = async () => {
-  hasTriggered.value = true
-  try {
+const triggerExecution = withUiNotif(
+  async () => {
+    hasTriggered.value = true
     let link = `/api/v1/processings/${properties.processing?._id}/_trigger`
     if (triggerDelay.value > 0) link += `?delay=${triggerDelay.value}`
 
     await $fetch(link, { method: 'POST' })
     emit('triggered')
     showTriggerMenu.value = false
-  } catch (error) {
-    eventBus.emit('notification', { error, msg: 'Erreur pendant le déclenchement du traitement' })
-  } finally {
+
     hasTriggered.value = false
-  }
-}
+  },
+  'Erreur pendant le déclenchement du traitement',
+  { msg: 'Traitement déclenché avec succès !' }
+)
 
 watch(showTriggerMenu, async (newValue) => {
   if (newValue && properties.canAdmin) {

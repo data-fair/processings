@@ -59,11 +59,9 @@
 import type { Plugin, Processing } from '#api/types'
 
 import timeZones from 'timezones.json'
-import setBreadcrumbs from '~/utils/breadcrumbs'
 import contractProcessing from '../../../contract/processing'
 import Vjsf from '@koumoul/vjsf'
 import VjsfMarkdown from '@koumoul/vjsf-markdown'
-import { computed, onMounted, ref } from 'vue'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 
 const route = useRoute()
@@ -237,16 +235,15 @@ const patch = withUiNotif(
 */
 
 const patchConfigWSChannel = `processings/${processingId}/patch-config`
+const ws = useWS('/processings')
 const onPatchConfig = () => {
   fetchProcessing()
 }
 onMounted(() => {
-  eventBus.emit('subscribe', patchConfigWSChannel)
-  eventBus.on(patchConfigWSChannel, onPatchConfig)
+  ws?.subscribe(patchConfigWSChannel, onPatchConfig)
 })
 onUnmounted(() => {
-  eventBus.emit('unsubscribe', patchConfigWSChannel)
-  eventBus.off(patchConfigWSChannel, onPatchConfig)
+  ws?.unsubscribe(patchConfigWSChannel, onPatchConfig)
 })
 
 </script>

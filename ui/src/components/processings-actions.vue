@@ -5,12 +5,7 @@
     :style="isSmall ? '' : 'background-color: transparent;'"
     data-iframe-height
   >
-    <v-list-item v-if="installedPluginsFetch.error.value">
-      <fetch-error
-        :error="installedPluginsFetch.error.value"
-      />
-    </v-list-item>
-    <v-list-item v-else-if="installedPluginsFetch.pending.value">
+    <v-list-item v-if="installedPluginsFetch.loading.value">
       <v-progress-circular
         indeterminate
         color="primary"
@@ -149,13 +144,7 @@
   </v-list>
 </template>
 
-<script setup>
-import useEventBus from '~/composables/event-bus'
-import { ref } from 'vue'
-import OwnerPick from '@data-fair/lib-vuetify/owner-pick.vue'
-
-const eventBus = useEventBus()
-
+<script setup lang="ts">
 const processingsProps = defineProps({
   adminMode: Boolean,
   ownerFilter: { type: String, required: true },
@@ -169,12 +158,14 @@ const showAll = defineModel('showAll', { type: Boolean, default: false })
 const pluginsSelected = defineModel('pluginsSelected', { type: Array, required: true })
 const statusesSelected = defineModel('statusesSelected', { type: Array, required: true })
 
+const router = useRouter()
+
 const inCreate = ref(false)
 const showCreateMenu = ref(false)
-const newProcessing = ref({})
+const newProcessing: Ref<Record<string, string>> = ref({})
 const ownersReady = ref(false)
 
-const statusesText = {
+const statusesText: Record<string, string> = {
   error: 'En échec',
   finished: 'Terminé',
   kill: 'Interruption',
@@ -185,20 +176,18 @@ const statusesText = {
   triggered: 'Déclenché'
 }
 
-/**
- * @typedef InstalledPlugin
- * @property {string} name
- * @property {string} customName
- * @property {string} description
- * @property {string} version
- * @property {string} distTag
- * @property {string} id
- * @property {any} pluginConfigSchema
- * @property {any} processingConfigSchema
- */
+type InstalledPlugin = {
+  name: string
+  customName: string
+  description: string
+  version: string
+  distTag: string
+  id: string
+  pluginConfigSchema: any
+  processingConfigSchema: any
+}
 
-/** @type {Awaited<ReturnType<typeof useFetch<{count: number, results: InstalledPlugin[]}>>>}  */
-const installedPluginsFetch = await useFetch(`/api/v1/plugins?privateAccess=${processingsProps.ownerFilter}`, { lazy: true })
+const installedPluginsFetch = useFetch<{ results: InstalledPlugin[], count: number }>(`/api/v1/plugins?privateAccess=${processingsProps.ownerFilter}`)
 const installedPlugins = computed(() => installedPluginsFetch.data.value?.results)
 
 const statusesItems = computed(() => {
@@ -219,7 +208,7 @@ const pluginsItems = computed(() => {
   return Object.entries(processingsProps.facets.plugins)
     .map(
       ([pluginKey, count]) => {
-        const customName = installedPlugins.value.find((plugin) => plugin.id === pluginKey)?.customName
+        const customName = installedPlugins.value?.find((plugin) => plugin.id === pluginKey)?.customName
         return {
           display: `${customName || 'Supprimé - ' + pluginKey} (${count})`,
           pluginKey
@@ -236,7 +225,7 @@ async function createProcessing () {
       method: 'POST',
       body: JSON.stringify(newProcessing.value)
     })
-    return navigateTo({ path: `/processings/${processing._id}` })
+    return router.push({ path: `/processings/${processing._id}` })
   } catch (error) {
     eventBus.emit('notification', { error, msg: 'Erreur pendant la création du traitement' })
   } finally {

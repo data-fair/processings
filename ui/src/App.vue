@@ -1,14 +1,16 @@
 <template>
   <v-app>
-    <LayoutAppBar v-if="!embed" />
+    <layout-app-bar v-if="!embed" />
     <v-main>
       <RouterView />
-      <notifications />
+      <ui-notif />
     </v-main>
   </v-app>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import uiNotif from '@data-fair/lib-vuetify/ui-notif.vue'
+
 const embed = (() => {
   try {
     return window.self !== window.top

@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-card
-      v-for="log in logs"
+      v-for="log in logs as LogEntry[]"
       :key="log.date"
       class="mb-2"
       variant="text"
@@ -54,8 +54,8 @@
           <v-spacer />
           <div style="white-space: nowrap;">
             <span class="pl-2">
-              {{ format.date(log.date, 'lll') }}
-              <span v-if="log.progressDate">- {{ format.date(log.progressDate, 'lll') }}</span>
+              {{ formatDate(log.date) }}
+              <span v-if="log.progressDate">- {{ formatDate(log.progressDate) }}</span>
             </span>
           </div>
         </div>
@@ -64,32 +64,28 @@
   </div>
 </template>
 
-<script setup>
-import useDateFormat from '~/composables/date-format'
-const format = useDateFormat()
+<script setup lang="ts">
+const { dayjs } = useLocaleDayjs()
 
-/**
- * Defines a log entry in the logs array.
- * @typedef {object} LogEntry
- * @property {string} date - The date of the log.
- * @property {string} type - The type of the log.
- * @property {Record<string, any>} msg - The message of the log.
- * @property {number} progress - The progress of the log.
- * @property {number} total - The total of the log.
- * @property {string} progressDate - The progress date of the log.
- */
+type LogEntry = {
+  date: string
+  type: string
+  msg: Record<string, any>
+  progress: number
+  total: number
+  progressDate: string
+}
 
-/**
- * @type {{logs: LogEntry[]}}
- */
 defineProps({
   logs: { type: Array, required: true }
 })
 
-const taskColor = (/** @type {Record<string, any>} */ log) => {
+const taskColor = (log: LogEntry) => {
   if (log.progress && log.progress === log.total) return 'success'
   return 'primary'
 }
+
+const formatDate = (date: string) => dayjs(date).format('lll')
 </script>
 
 <style scoped>

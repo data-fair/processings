@@ -1,7 +1,7 @@
 <template>
   <v-card
     :rounded="false"
-    :loading="loading ? 'primary' : false"
+    :loading="runs.loading.value ? 'primary' : false"
   >
     <v-card-title>
       Exécutions
@@ -9,11 +9,11 @@
     <template v-if="runs">
       <v-list class="py-0">
         <template
-          v-for="run in runs.results"
+          v-for="run in runs.data.value?.results"
           :key="run._id"
         >
           <v-divider />
-          <RunListItem
+          <run-list-item
             :run="run"
             :link="true"
             :can-exec="canExec"
@@ -21,18 +21,17 @@
         </template>
       </v-list>
       <v-pagination
-        v-if="runs.count > size"
+        v-if="runs.data.value?.count > size"
         v-model="page"
-        :length="Math.ceil(runs.count / size)"
+        :length="Math.ceil((runs.data.value?.count ?? 0) / size)"
         :total-visible="5"
       />
     </template>
   </v-card>
 </template>
 
-<script setup>
-import useEventBus from '~/composables/event-bus'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+<script setup lang="ts">
+import type { Run } from '#api/types'
 
 const props = defineProps({
   canExec: Boolean,
@@ -42,23 +41,16 @@ const props = defineProps({
   }
 })
 
-const eventBus = useEventBus()
-
-const loading = ref(false)
-const /** @type {Ref<Record<string, any>|null>} */ runs = ref(null)
-
+const ws = useWS('/processings')
 const wsChannel = computed(() => `processings/${props.processing._id}/run-patch`)
 
-/**
- * @param {Record<string, any>} runPatch
- */
-function onRunPatch(runPatch) {
+function onRunPatch (runPatch: { _id: string, patch: Record<string, any> }) {
   console.log('message from', wsChannel.value, runPatch)
-  if (!runs.value) return
-  const matchingRun = runs.value.results.find(/** @param {Record<string, any>} run */ run => run._id === runPatch._id)
+  if (!runs.data.value) return
+  const matchingRun = runs.data.value.results.find(run => run._id === runPatch._id)
   if (!matchingRun) {
     console.log('received info from WS about an unknown run, refresh list')
-    return refresh()
+    return runs.refresh()
   }
   for (const key of Object.keys(runPatch.patch)) {
     matchingRun[key] = runPatch.patch[key]
@@ -67,41 +59,28 @@ function onRunPatch(runPatch) {
 
 const size = 10
 const page = ref(1)
-watch(page, () => refresh(false))
 
-// todo: use useFetch ?
-async function refresh(reinit = true) {
-  if (reinit && page.value !== 1) {
-    page.value = 1
-    return
-  }
-  loading.value = true
-  runs.value = await $fetch('/api/v1/runs', {
-    params: {
-      processing: props.processing._id,
-      size,
-      page: page.value,
-      sort: 'createdAt:-1',
-      owner: `${props.processing.owner.type}:${props.processing.owner.id}${props.processing.owner.department ? ':' + props.processing.owner.department : ''}`
-    }
-  })
-  loading.value = false
-}
+const runs = useFetch<{
+  results: Run[],
+  count: number
+}>('/api/v1/runs', {
+  query: computed(() => ({
+    processing: props.processing._id,
+    size,
+    page: page.value,
+    sort: 'createdAt:-1',
+    owner: `${props.processing.owner.type}:${props.processing.owner.id}${props.processing.owner.department ? ':' + props.processing.owner.department : ''}`
+  }))
+})
 
 onMounted(async () => {
-  eventBus.emit('subscribe', wsChannel.value)
-  eventBus.on(wsChannel.value, onRunPatch)
-  await refresh()
+  ws?.subscribe(wsChannel.value, onRunPatch)
+  await runs.refresh()
 })
 
 onUnmounted(() => {
-  eventBus.emit('unsubscribe', wsChannel.value)
-  eventBus.off(wsChannel.value, onRunPatch)
+  ws?.unsubscribe(wsChannel.value, onRunPatch)
 })
-
-watch(props.processing, refresh, { deep: true })
-
-defineExpose({ refresh })
 </script>
 
 <style>

@@ -57,11 +57,10 @@
 
 <script setup lang="ts">
 import type { Run } from '#api/types'
-import setBreadcrumbs from '~/utils/breadcrumbs'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 const route = useRoute()
 const session = useSession()
+const ws = useWS('/processings')
 
 const loading = ref(false)
 const run: Ref<Run | null> = ref(null)
@@ -73,13 +72,8 @@ const canExec = computed(() => {
   return ['admin', 'exec'].includes(run.value.userProfile as string)
 })
 
-const wsLogChannel = computed(() => {
-  return run.value && `processings/${run.value.processing._id}/run-log`
-})
-
-const wsPatchChannel = computed(() => {
-  return run.value && `processings/${run.value.processing._id}/run-patch`
-})
+const wsLogChannel = `processings/${run.value?.processing._id}/run-log`
+const wsPatchChannel = `processings/${run.value?.processing._id}/run-patch`
 
 const steps = computed(() => {
   if (!run.value) return []
@@ -148,20 +142,16 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  eventBus.emit('unsubscribe', wsLogChannel.value)
-  eventBus.emit('unsubscribe', wsPatchChannel.value)
-  eventBus.off(wsLogChannel.value, onRunLog)
-  eventBus.off(wsPatchChannel.value, onRunPatch)
+  ws?.unsubscribe(wsLogChannel, onRunLog)
+  ws?.unsubscribe(wsPatchChannel, onRunPatch)
 })
 
 async function refresh () {
   loading.value = true
   run.value = await $fetch(`/api/v1/runs/${route.params.id}`)
 
-  eventBus.emit('subscribe', wsLogChannel.value)
-  eventBus.on(wsLogChannel.value, onRunLog)
-  eventBus.emit('subscribe', wsPatchChannel.value)
-  eventBus.on(wsPatchChannel.value, onRunPatch)
+  ws?.subscribe(wsLogChannel, onRunLog)
+  ws?.subscribe(wsPatchChannel, onRunPatch)
 
   loading.value = false
 }

@@ -37,10 +37,6 @@
       type="list-item-two-line"
       :class="$vuetify.theme.current.dark ? 'my-4' : 'my-4 skeleton'"
     />
-    <fetch-error
-      v-else-if="installedPluginsFetch.error.value"
-      :error="installedPluginsFetch.error.value"
-    />
     <template
       v-for="result in filteredInstalledPlugins"
       v-else
@@ -214,7 +210,6 @@
 <script setup lang="ts">
 import setBreadcrumbs from '~/utils/breadcrumbs'
 import useUrlSearchParams from '@data-fair/lib-vue/reactive-search-params.js'
-import Vjsf from '@koumoul/vjsf'
 import VjsfMarkdown from '@koumoul/vjsf-markdown'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 

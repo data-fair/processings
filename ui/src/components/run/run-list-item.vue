@@ -44,32 +44,32 @@
     </template>
 
     <v-list-item-title v-if="run.status === 'running'">
-      Démarrée {{ format.fromNow(run.startedAt) }}
+      Démarrée {{ fromNow(run.startedAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="run.status === 'finished'">
-      Terminée - {{ format.date(run.finishedAt) }}
+      Terminée - {{ formatDate(run.finishedAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="run.status === 'error'">
-      En échec - {{ format.date(run.finishedAt) }}
+      En échec - {{ formatDate(run.finishedAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="run.status === 'scheduled'">
-      Planifiée - {{ format.date(run.scheduledAt) }}
+      Planifiée - {{ formatDate(run.scheduledAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="run.status === 'triggered'">
-      Déclenchée manuellement {{ format.fromNow(run.createdAt) }}
+      Déclenchée manuellement {{ fromNow(run.createdAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="run.status === 'kill'">
       Interruption demandée
     </v-list-item-title>
     <v-list-item-title v-if="run.status === 'killed'">
-      Interrompue manuellement - {{ format.date(run.finishedAt) }}
+      Interrompue manuellement - {{ formatDate(run.finishedAt) }}
     </v-list-item-title>
 
     <v-list-item-subtitle v-if="run.status === 'finished' || run.status === 'error' || run.status === 'killed'">
-      Durée : {{ format.from(run.startedAt, run.finishedAt) }}
+      Durée : {{ duration(run.startedAt, run.finishedAt) }}
     </v-list-item-subtitle>
     <v-list-item-subtitle v-if="run.status === 'triggered' && run.scheduledAt && run.scheduledAt !== run.createdAt">
-      Planifiée {{ format.fromNow(run.scheduledAt, true) }}
+      Planifiée {{ fromNow(run.scheduledAt) }}
     </v-list-item-subtitle>
 
     <template
@@ -87,9 +87,8 @@
   </v-list-item>
 </template>
 
-<script setup>
-import useDateFormat from '~/composables/date-format'
-const format = useDateFormat()
+<script setup lang="ts">
+const { dayjs } = useLocaleDayjs()
 
 const props = defineProps({
   canExec: Boolean,
@@ -100,6 +99,10 @@ const props = defineProps({
   }
 })
 
+const fromNow = (date: string) => dayjs(date).fromNow()
+const formatDate = (date: string) => dayjs(date).format('DD/MM/YYYY HH:mm')
+const duration = (start: string, end: string) => dayjs(end).from(dayjs(start), true)
+
 const kill = async () => {
   await $fetch(`/api/v1/runs/${props.run._id}/_kill`, {
     method: 'POST'
@@ -108,5 +111,4 @@ const kill = async () => {
 }
 </script>
 
-<style>
-</style>
+<style></style>

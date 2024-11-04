@@ -1,31 +1,31 @@
 <template>
   <v-row class="ma-0">
     <v-checkbox
-      v-model="patch.public"
+      v-model="localPatch.public"
       :label="t('public')"
       hide-details
       class="ml-2 mb-2 mr-4"
       color="primary"
-      @update:model-value="onChange()"
+      @update:model-value="onChange"
     />
     <v-autocomplete
-      v-if="!patch.public"
-      v-model="patch.privateAccess"
+      v-if="!localPatch.public"
+      v-model="localPatch.privateAccess"
       v-model:search="search"
       :items="suggestions"
       :loading="loading ? 'primary' : false"
       :custom-filter="() => true"
       :multiple="true"
       :clearable="true"
-      :item-title="(/** @type {Record<String, any>} */ item) => item && `${item.name || item.id} (${item.type})`"
-      :item-value="(/** @type {Record<String, any>} */ item) => item && `${item.type}:${item.id}`"
+      :item-title="(item: any) => item && `${item.name || item.id} (${item.type})`"
+      :item-value="(item: any) => item && `${item.type}:${item.id}`"
       :label="t('privateAccess')"
       :placeholder="t('searchName')"
       return-object
       style="max-width:450px;"
       hide-details
       hide-no-data
-      @update:model-value="onChange()"
+      @update:model-value="onChange"
     />
   </v-row>
 </template>
@@ -41,14 +41,14 @@ en:
   searchName: Search an organization name / a user name
 </i18n>
 
-<script setup>
-import { onMounted, ref, watch } from 'vue'
+<script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { ref, watch, onMounted } from 'vue'
 
 const props = defineProps({
   patch: {
     type: Object,
-    default: null
+    default: () => ({})
   }
 })
 const emit = defineEmits(['change'])
@@ -59,41 +59,44 @@ const loading = ref(false)
 const search = ref('')
 const suggestions = ref([])
 
+const localPatch = ref({ ...props.patch })
+
+watch(localPatch, (newValue) => {
+  emit('change', newValue)
+}, { deep: true })
+
 watch(search, async () => {
   await listSuggestions()
 })
 
 onMounted(async () => {
-  if (!props.patch.privateAccess) {
-    props.patch.privateAccess = []
-    emit('change', props.patch)
+  if (!localPatch.value.privateAccess) {
+    localPatch.value.privateAccess = []
   }
   await listSuggestions()
 })
 
-async function listSuggestions() {
+async function listSuggestions () {
   if (!search.value || search.value.length < 3) {
-    suggestions.value = props.patch.privateAccess
+    suggestions.value = localPatch.value.privateAccess
     return
   }
 
   loading.value = true
-  const /** @type {Record<string, any>} */ orgsResponse = await $fetch('/simple-directory/api/organizations', {
+  const orgsResponse = await $fetch('/simple-directory/api/organizations', {
     params: { q: search.value }
   })
-  const orgs = orgsResponse.results.map(/** @param {any} r */ r => ({ ...r, type: 'organization' }))
-  const /** @type {Record<string, any>} */ usersResponse = await $fetch('/simple-directory/api/users', {
+  const orgs = orgsResponse.results.map((r: any) => ({ ...r, type: 'organization' }))
+  const usersResponse = await $fetch('/simple-directory/api/users', {
     params: { q: search.value }
   })
-  const users = usersResponse.results.map(/** @param {any} r */ r => ({ ...r, type: 'user' }))
-  suggestions.value = props.patch.privateAccess.concat(orgs, users)
-  emit('change', props.patch)
+  const users = usersResponse.results.map((r: any) => ({ ...r, type: 'user' }))
+  suggestions.value = localPatch.value.privateAccess.concat(orgs, users)
   loading.value = false
 }
 
-function onChange() {
+function onChange () {
   search.value = ''
-  emit('change', props.patch)
 }
 </script>
 

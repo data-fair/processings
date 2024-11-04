@@ -25,10 +25,6 @@
               />
             </v-col>
           </v-row>
-          <fetch-error
-            v-else-if="processingsFetch.error.value"
-            :error="processingsFetch.error.value"
-          />
           <template v-else>
             <v-list-subheader v-if="displayProcessings.length > 1">
               {{ displayProcessings.length }}/{{ processingsFetch.data.value?.count }} traitements affichés
@@ -95,7 +91,6 @@
 <script setup lang="ts">
 import type { Processing } from '#api/types'
 import setBreadcrumbs from '~/utils/breadcrumbs'
-import { computed, onMounted } from 'vue'
 
 const route = useRoute()
 const session = useSessionAuthenticated(() => createError({ status: 401, message: 'Authentification nécessaire', fatal: true }))
