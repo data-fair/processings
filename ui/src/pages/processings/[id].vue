@@ -27,10 +27,8 @@
           class="mt-4"
         />
       </v-col>
-      <LayoutNavigationRight
-        v-if="$vuetify.display.lgAndUp"
-      >
-        <ProcessingActions
+      <layout-navigation-right v-if="$vuetify.display.lgAndUp">
+        <processing-actions
           :processing="processing"
           :processing-schema="processingSchema"
           :can-admin="canAdminProcessing"
@@ -39,12 +37,10 @@
           :is-small="false"
           @triggered="runs && runs.refresh()"
         />
-      </LayoutNavigationRight>
-      <LayoutActionsButton
-        v-else
-      >
+      </layout-navigation-right>
+      <layout-actions-button v-else>
         <template #actions>
-          <ProcessingActions
+          <processing-actions
             :processing="processing"
             :processing-schema="processingSchema"
             :can-admin="canAdminProcessing"
@@ -54,32 +50,28 @@
             @triggered="runs && runs.refresh()"
           />
         </template>
-      </LayoutActionsButton>
+      </layout-actions-button>
     </v-row>
   </v-container>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { Plugin, Processing } from '#api/types'
+
 import timeZones from 'timezones.json'
 import setBreadcrumbs from '~/utils/breadcrumbs'
 import contractProcessing from '../../../contract/processing'
 import Vjsf from '@koumoul/vjsf'
 import VjsfMarkdown from '@koumoul/vjsf-markdown'
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
-import { useSession } from '@data-fair/lib-vue/session.js'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
-import useEventBus from '~/composables/event-bus'
 
 const route = useRoute()
 const session = useSession()
-const eventBus = useEventBus()
 const runtimeConfig = useRuntimeConfig()
 
-/** @typedef {import('../../../shared/types/processing/index.js').Processing} Processing */
-
-/** @type {string[]} */
-const utcs = []
+const processingId = (route.params as { id: string }).id
+const utcs: string[] = []
 for (const tz of timeZones) {
   for (const utc of tz.utc) {
     if (!utcs.includes(utc)) utcs.push(utc)
@@ -88,17 +80,13 @@ for (const tz of timeZones) {
 
 const valid = ref(false)
 const edited = ref(false)
-/** @type {Ref<Processing|null>} */
-const editProcessing = ref(null)
-/** @type {Ref<Processing|null>} */
-const processing = ref(null)
-/** @type {Ref<Record<string, any>|null>} */
-const plugin = ref(null)
-/** @type {Ref<Record<string, any>|null>} */
-const runs = ref(null)
+const editProcessing: Ref<Processing | null> = ref(null)
+const processing: Ref<Processing | null> = ref(null)
+const plugin: Ref<Plugin | null> = ref(null)
+const runs: Ref<Record<string, any>> = ref([])
 
 /*
-Fetch initial data
+  Fetch initial data
 */
 
 onMounted(async () => {
@@ -112,18 +100,18 @@ onMounted(async () => {
   await fetchPlugin()
 })
 
-async function fetchProcessing() {
-  processing.value = await $fetch(`/api/v1/processings/${route.params.id}`)
+async function fetchProcessing () {
+  processing.value = await $fetch(`/api/v1/processings/${processingId}`)
   if (processing.value) editProcessing.value = { ...processing.value }
 }
-async function fetchPlugin() {
+async function fetchPlugin () {
   if (processing.value?.plugin) {
     plugin.value = await $fetch(`/api/v1/plugins/${processing.value.plugin}`)
   }
 }
 
 /*
-Permissions
+  Permissions
 */
 
 const canAdminProcessing = computed(() => {
@@ -136,13 +124,10 @@ const canExecProcessing = computed(() => {
 })
 
 /*
-Preparation for the vjsf form
+  Preparation for the vjsf form
 */
 
-/**
- * @param {Record<string, any>} object
- */
-function recurseConfigSchema(object) {
+function recurseConfigSchema (object: Record<string, any>) {
   Object.keys(object).forEach(key => {
     const value = object[key]
     if (key === 'props' && value?.type === 'password') {
@@ -181,7 +166,7 @@ const processingSchema = computed(() => {
   }
   Object.keys(schema.properties).forEach(key => {
     if (schema.properties[key].readOnly) {
-      schema.required = schema.required.filter((/** @type {string} */k) => k !== key)
+      schema.required = schema.required.filter((k: any) => k !== key)
       delete schema.properties[key]
     }
   })
@@ -189,7 +174,7 @@ const processingSchema = computed(() => {
   recurseConfigSchema(cleanSchema)
   if (cleanSchema.properties.config?.required) {
     cleanSchema.properties.config.required = cleanSchema.properties.config.required
-      .filter((/** @type {string} */s) => s !== 'datasetMode')
+      .filter((s: any) => s !== 'datasetMode')
   }
   return cleanSchema
 })
@@ -198,7 +183,6 @@ const owner = computed(() => processing.value?.owner)
 const ownerFilter = computed(() => `${owner.value?.type}:${owner.value?.id}${owner.value?.department ? ':' + owner.value?.department : ''}`)
 
 const vjsfOptions = computed(() => {
-  /** @type {import('@koumoul/vjsf').Options} */
   return {
     plugins: [VjsfMarkdown],
     context: {
@@ -221,37 +205,38 @@ const vjsfOptions = computed(() => {
 })
 
 let initialPatch = true
-async function patch() {
-  // the first patch is always triggered becaure of removed additional properties
-  if (initialPatch) {
-    initialPatch = false
-    return
-  }
+const patch = withUiNotif(
+  async () => {
+    // the first patch is always triggered because of removed additional properties
+    if (initialPatch) {
+      initialPatch = false
+      return
+    }
 
-  // TODO: some problem in vjsf makes it necessary to wait when adding a permission for validity to be correct
-  await new Promise(resolve => setTimeout(resolve, 1))
+    // TODO: some problem in vjsf makes it necessary to wait when adding a permission for validity to be correct
+    await new Promise(resolve => setTimeout(resolve, 1))
 
-  if (!valid.value || !canAdminProcessing.value) return
-  edited.value = true
+    if (!valid.value || !canAdminProcessing.value) return
+    edited.value = true
 
-  try {
-    await $fetch(`/api/v1/processings/${route.params.id}`, {
+    await $fetch(`/api/v1/processings/${processingId}`, {
       method: 'PATCH',
       body: editProcessing.value
     })
+
     if (processing.value) Object.assign(processing.value, editProcessing.value)
-  } catch (error) {
-    eventBus.emit('notification', { error, msg: 'Erreur pendant l\'enregistrement du traitement' })
-  } finally {
+
     edited.value = false
-  }
-}
+  },
+  "Erreur pendant l'enregistrement du traitement",
+  { msg: 'Traitement enregistré avec succès !' }
+)
 
 /*
-A patch can be triggered server side
+  A patch can be triggered server side
 */
 
-const patchConfigWSChannel = `processings/${route.params.id}/patch-config`
+const patchConfigWSChannel = `processings/${processingId}/patch-config`
 const onPatchConfig = () => {
   fetchProcessing()
 }

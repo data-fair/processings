@@ -76,7 +76,7 @@ declare global {
   const useLocaleDayjs: typeof import('@data-fair/lib-vue/locale-dayjs.js')['useLocaleDayjs']
   const useModel: typeof import('vue')['useModel']
   const useNumberSearchParam: typeof import('@data-fair/lib-vue/reactive-search-params.js')['useNumberSearchParam']
-  const usePluginFetch: typeof import('../src/composables/use-plugin-fetch.js')['default']
+  const usePluginFetch: typeof import('../src/composables/use-plugin-fetch')['default']
   const useReactiveSearchParams: typeof import('@data-fair/lib-vue/reactive-search-params.js')['useReactiveSearchParams']
   const useRoute: typeof import('vue-router')['useRoute']
   const useRouter: typeof import('vue-router')['useRouter']
@@ -114,14 +114,12 @@ declare module 'vue' {
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
     readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
-    readonly dateFormat: UnwrapRef<typeof import('../src/composables/date-format.js')['default']>
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
     readonly dfPersonalMenu: UnwrapRef<typeof import('@data-fair/lib-vuetify/personal-menu.vue')['default']>
     readonly dfTutorialAlert: UnwrapRef<typeof import('@data-fair/lib-vuetify/tutorial-alert.vue')['default']>
     readonly dfUserAvatar: UnwrapRef<typeof import('@data-fair/lib-vuetify/user-avatar.vue')['default']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
-    readonly eventBus: UnwrapRef<typeof import('../src/composables/event-bus.js')['default']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
@@ -175,7 +173,7 @@ declare module 'vue' {
     readonly useLocaleDayjs: UnwrapRef<typeof import('@data-fair/lib-vue/locale-dayjs.js')['useLocaleDayjs']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly useNumberSearchParam: UnwrapRef<typeof import('@data-fair/lib-vue/reactive-search-params.js')['useNumberSearchParam']>
-    readonly usePluginFetch: UnwrapRef<typeof import('../src/composables/use-plugin-fetch.js')['default']>
+    readonly usePluginFetch: UnwrapRef<typeof import('../src/composables/use-plugin-fetch')['default']>
     readonly useReactiveSearchParams: UnwrapRef<typeof import('@data-fair/lib-vue/reactive-search-params.js')['useReactiveSearchParams']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>

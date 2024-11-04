@@ -2,11 +2,10 @@
   <div />
 </template>
 
-<script setup>
-import { onMounted } from 'vue'
-
+<script setup lang="ts">
 // Foolproof routing
+const router = useRouter()
 onMounted(() => {
-  navigateTo('/admin/plugins')
+  router.push('/admin/plugins')
 })
 </script>

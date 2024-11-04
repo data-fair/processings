@@ -7,7 +7,7 @@
       <v-col>
         <v-container>
           <v-row
-            v-if="processingsFetch.pending.value"
+            v-if="processingsFetch.loading.value"
             class="d-flex align-stretch"
           >
             <v-col
@@ -31,14 +31,12 @@
           />
           <template v-else>
             <v-list-subheader v-if="displayProcessings.length > 1">
-              {{ displayProcessings.length }}/{{ processingsFetch.data.value.count }} traitements affichés
+              {{ displayProcessings.length }}/{{ processingsFetch.data.value?.count }} traitements affichés
             </v-list-subheader>
             <v-list-subheader v-else>
-              {{ displayProcessings.length }}/{{ processingsFetch.data.value.count }} traitement affiché
+              {{ displayProcessings.length }}/{{ processingsFetch.data.value?.count }} traitement affiché
             </v-list-subheader>
-            <v-row
-              class="d-flex align-stretch"
-            >
+            <v-row class="d-flex align-stretch">
               <v-col
                 v-for="processing in displayProcessings"
                 :key="processing._id"
@@ -47,7 +45,7 @@
                 cols="12"
                 class="d-flex"
               >
-                <ProcessingCard
+                <processing-card
                   :processing="processing"
                   :show-owner="showAll || (processing.owner.department && !session.state.account.department)"
                   class="w-100"
@@ -58,8 +56,8 @@
         </v-container>
       </v-col>
       <template v-if="processingsFetch.data.value && canAdmin">
-        <LayoutNavigationRight v-if="$vuetify.display.lgAndUp">
-          <ProcessingsActions
+        <layout-navigation-right v-if="$vuetify.display.lgAndUp">
+          <processings-actions
             v-model:search="search"
             v-model:show-all="showAll"
             v-model:plugins-selected="plugins"
@@ -70,13 +68,13 @@
             :is-small="false"
             :processings="displayProcessings"
           />
-        </LayoutNavigationRight>
-        <LayoutActionsButton
+        </layout-navigation-right>
+        <layout-actions-button
           v-else
           class="pt-2"
         >
           <template #actions>
-            <ProcessingsActions
+            <processings-actions
               v-model:search="search"
               v-model:show-all="showAll"
               v-model:plugins-selected="plugins"
@@ -88,18 +86,16 @@
               :processings="displayProcessings"
             />
           </template>
-        </LayoutActionsButton>
+        </layout-actions-button>
       </template>
     </v-row>
   </v-container>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { Processing } from '#api/types'
 import setBreadcrumbs from '~/utils/breadcrumbs'
-import { useStringSearchParam, useBooleanSearchParam, useStringsArraySearchParam } from '@data-fair/lib-vue/reactive-search-params.js'
 import { computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { useSessionAuthenticated } from '@data-fair/lib-vue/session.js'
 
 const route = useRoute()
 const session = useSessionAuthenticated(() => createError({ status: 401, message: 'Authentification nécessaire', fatal: true }))
@@ -111,16 +107,14 @@ const status = useStringsArraySearchParam('status')
 onMounted(async () => setBreadcrumbs([{ text: 'traitements' }]))
 
 /*
-Permissions
+  Permissions
 */
 
-/** @typedef {import('@data-fair/lib-express/index.js').User} User */
-
 const owner = computed(() => {
-  const owner = /** @type {string} */(route.query.owner)
+  const owner = route.query.owner as string | null
   if (owner) {
     const parts = owner.split(':')
-    return /** @type {import('@data-fair/lib-express/index.js').Account} */({ type: parts[0], id: parts[1] })
+    return { type: parts[0], id: parts[1] } as { type: 'user' | 'organization', id: string, department?: string }
   } else {
     return session.state.account
   }
@@ -131,7 +125,7 @@ const ownerRole = computed(() => {
     if (owner.value.id === user.id) return 'admin'
     else return 'anonymous'
   }
-  const userOrg = user.organizations.find(/** @param {Record<string, any>} o */ o => {
+  const userOrg = user.organizations.find(o => {
     if (o.id !== owner.value.id) return false
     if (!o.department) return true
     if (o.department === owner.value.department) return true
@@ -145,12 +139,11 @@ const canAdmin = computed(() => {
 })
 
 /*
-fetch and filter resources
+  fetch and filter resources
 */
 
 const processingsParams = computed(() => {
-  /** @type {any} */
-  const params = {
+  const params: Record<string, any> = {
     size: '10000',
     showAll: showAll.value,
     sort: 'updated.date:-1',
@@ -162,8 +155,11 @@ const processingsParams = computed(() => {
   return params
 })
 
-/** @type {Awaited<ReturnType<typeof useFetch<{count: number, results: import('../../../shared/types/processing/index.js').Processing[], facets: {statuses: Record<string, number>, plugins: Record<string, number>}}>>>}  */
-const processingsFetch = await useFetch('/api/v1/processings', { params: processingsParams, lazy: true })
+const processingsFetch = useFetch<{
+  results: Processing[],
+  facets: { usages: Record <string, number > },
+  count: number
+}>('/api/v1/processings', { query: processingsParams })
 const displayProcessings = computed(() => {
   const processings = (processingsFetch.data.value?.results ?? [])
   if (!search.value) return processings

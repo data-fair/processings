@@ -10,12 +10,12 @@
     </v-row>
     <v-row>
       <v-col>
-        <RunListItem
+        <run-list-item
           class="mb-4"
           :run="run"
           :can-exec="canExec"
         />
-        <RunLogsList
+        <run-logs-list
           v-if="steps.length === 1 && !steps[0].msg"
           :logs="steps[0].children"
         />
@@ -46,7 +46,7 @@
               </span>
             </v-expansion-panel-title>
             <v-expansion-panel-text v-if="step.children.length">
-              <RunLogsList :logs="step.children" />
+              <run-logs-list :logs="step.children" />
             </v-expansion-panel-text>
           </v-expansion-panel>
         </v-expansion-panels>
@@ -55,25 +55,22 @@
   </v-container>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { Run } from '#api/types'
 import setBreadcrumbs from '~/utils/breadcrumbs'
-import useEventBus from '~/composables/event-bus'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
-import { useSession } from '@data-fair/lib-vue/session.js'
 
-const eventBus = useEventBus()
 const route = useRoute()
 const session = useSession()
 
 const loading = ref(false)
-const /** @type {Ref<Record<string, any> | null>} */ run = ref(null)
+const run: Ref<Run | null> = ref(null)
 
-const /** @type {Record<string, any>} */ user = computed(() => session.state.user)
+const user = computed(() => session.state.user)
 
 const canExec = computed(() => {
   if (!run.value) return false
-  return ['admin', 'exec'].includes(run.value.userProfile)
+  return ['admin', 'exec'].includes(run.value.userProfile as string)
 })
 
 const wsLogChannel = computed(() => {
@@ -84,12 +81,12 @@ const wsPatchChannel = computed(() => {
   return run.value && `processings/${run.value.processing._id}/run-patch`
 })
 
-const /** @type {Record<string, any>} */ steps = computed(() => {
+const steps = computed(() => {
   if (!run.value) return []
   const steps = []
-  let lastStep
+  let lastStep: Record<string, any> | null = null
   for (const log of run.value.log) {
-    if (log.type === 'debug' && !user.value.adminMode) continue
+    if (log.type === 'debug' && !user.value?.adminMode) continue
     if (log.type === 'step') {
       lastStep = { ...log, children: [] }
       steps.push(lastStep)
@@ -104,10 +101,7 @@ const /** @type {Record<string, any>} */ steps = computed(() => {
   return steps
 })
 
-/**
- * @param {Record<string, any>} step
- */
-function getColor(step) {
+function getColor (step: Record<string, any>) {
   let color = 'success'
 
   for (const child of step.children) {
@@ -123,10 +117,7 @@ function getColor(step) {
   return color
 }
 
-/**
- * @param {Record<string, any>} step
- */
-function getIcon(step) {
+function getIcon (step: Record<string, any>) {
   let icon = 'mdi-check-circle'
 
   for (const child of step.children) {
@@ -163,7 +154,7 @@ onUnmounted(() => {
   eventBus.off(wsPatchChannel.value, onRunPatch)
 })
 
-async function refresh() {
+async function refresh () {
   loading.value = true
   run.value = await $fetch(`/api/v1/runs/${route.params.id}`)
 
@@ -175,23 +166,17 @@ async function refresh() {
   loading.value = false
 }
 
-/**
- * @param {Record<string, any>} runPatch
- */
-function onRunPatch(runPatch) {
+function onRunPatch (runPatch: Record<string, any>) {
   if (!run.value || run.value._id !== runPatch._id) return
   for (const key of Object.keys(runPatch.patch)) {
     run.value[key] = runPatch.patch[key]
   }
 }
 
-/**
- * @param {Record<string, any>} runLog
- */
-function onRunLog(runLog) {
+function onRunLog (runLog: Record<string, any>) {
   if (!run.value || run.value._id !== runLog._id) return
   if (runLog.log.type === 'task') {
-    const matchingTaskIndex = run.value.log.findIndex(/** @param {Record<string, any>} l */ l => l.type === 'task' && l.msg === runLog.log.msg)
+    const matchingTaskIndex = run.value.log.findIndex((l: any) => l.type === 'task' && l.msg === runLog.log.msg)
     if (matchingTaskIndex !== -1) {
       for (const key of Object.keys(runLog.log)) {
         run.value.log[matchingTaskIndex][key] = runLog.log[key]

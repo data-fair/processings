@@ -14,7 +14,7 @@
     />
     <v-list-subheader>
       <v-progress-circular
-        v-if="installedPluginsFetch.pending.value"
+        v-if="installedPluginsFetch.loading.value"
         indeterminate
         size="16"
         width="2"
@@ -32,7 +32,7 @@
       plugins installés
     </v-list-subheader>
     <v-skeleton-loader
-      v-if="installedPluginsFetch.pending.value"
+      v-if="installedPluginsFetch.loading.value"
       :height="100"
       type="list-item-two-line"
       :class="$vuetify.theme.current.dark ? 'my-4' : 'my-4 skeleton'"
@@ -158,7 +158,7 @@
         />
       </v-row>
     </v-col>
-    <v-col v-if="availablePluginsFetch.pending.value">
+    <v-col v-if="availablePluginsFetch.loading.value">
       <v-skeleton-loader
         v-for="n in 4"
         :key="n"
@@ -173,7 +173,7 @@
       :key="'available-' + result.name + '-' + result.version"
     >
       <v-card
-        v-if="!installedPlugins.find(/** @param {Record<String, any>} r */ r => r.name === result.name && r.distTag === result.distTag)"
+        v-if="!installedPlugins.find(r => r.name === result.name && r.distTag === result.distTag)"
         class="mb-4"
       >
         <v-progress-linear
@@ -211,17 +211,13 @@
   </v-container>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import setBreadcrumbs from '~/utils/breadcrumbs'
 import useUrlSearchParams from '@data-fair/lib-vue/reactive-search-params.js'
-import useEventBus from '~/composables/event-bus'
 import Vjsf from '@koumoul/vjsf'
 import VjsfMarkdown from '@koumoul/vjsf-markdown'
-import { computed, ref } from 'vue'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
-import { useSession } from '@data-fair/lib-vue/session.js'
 
-const eventBus = useEventBus()
 const session = useSession()
 const urlSearchParams = useUrlSearchParams()
 
@@ -234,42 +230,44 @@ if (!session.state.user?.adminMode) {
 
 onMounted(() => setBreadcrumbs([{ text: 'plugins' }]))
 
-/**
- * @typedef AvailablePlugin
- * @property {string} name
- * @property {string} description
- * @property {string} distTag
- * @property {string} version
- */
+type AvailablePlugin = {
+  name: string
+  description: string
+  distTag: string
+  version: string
+}
 
-/**
- * @typedef InstalledPlugin
- * @property {number} usages
- * @property {string} name
- * @property {string} description
- * @property {string} distTag
- * @property {string} version
- * @property {string} id
- * @property {Record<string, any>} config
- * @property {Record<string, any>} access
- * @property {Record<string, any>} pluginConfigSchema
- */
+type InstalledPlugin = {
+  usages: number
+  name: string
+  description: string
+  distTag: string
+  version: string
+  id: string
+  config: Record<string, any>
+  access: Record<string, any>
+  pluginConfigSchema: Record<string, any>
+}
 
-/** @type {Awaited<ReturnType<typeof useFetch<{count: number, results: InstalledPlugin[], facets: {usages: Record<string, number>}}>>>}  */
-const installedPluginsFetch = await useFetch('/api/v1/plugins', { lazy: true })
+const installedPluginsFetch = useFetch<{
+  results: InstalledPlugin[],
+  facets: { usages: Record < string, number> },
+  count: number
+}>('/api/v1/plugins')
+
 const installedPlugins = computed(() => {
-  const results = installedPluginsFetch.data.value?.results ?? []
-  return results?.map(r => ({
+  const results = installedPluginsFetch.data.value?.results || []
+  const usages = installedPluginsFetch.data.value?.facets.usages || {}
+  return results.map(r => ({
     ...r,
     pluginConfigSchema: v2compat(r.pluginConfigSchema),
-    usages: installedPluginsFetch.data.value?.facets.usages[r.id] ?? 0
+    usages: usages[r.id] || 0
   }))
 })
 
-/** @type {Awaited<ReturnType<typeof useFetch<{count: number, results: AvailablePlugin[]}>>>}  */
-const availablePluginsFetch = await useFetch('/api/v1/plugins-registry', { lazy: true, query: { showAll: urlSearchParams.showAll } })
+const availablePluginsFetch = useFetch<AvailablePlugin[]>('/api/v1/plugins-registry', { query: { showAll: urlSearchParams.showAll } })
 const availablePlugins = computed(() => {
-  const results = availablePluginsFetch.data.value?.results ?? []
+  const results = availablePluginsFetch.data.value || []
   results.sort((a, b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
   return results
 })
@@ -282,81 +280,64 @@ const filteredInstalledPlugins = computed(() => {
 
 const filteredAvailablePlugins = computed(() => {
   if (!urlSearchParams.q) return availablePlugins.value
-  return availablePlugins.value.filter(/** @param {Record<string, any>} r */ r => r.name.includes(urlSearchParams.q) || (r.description && r.description.includes(urlSearchParams.q)))
+  return availablePlugins.value.filter(r => r.name.includes(urlSearchParams.q) || (r.description && r.description.includes(urlSearchParams.q)))
 })
 
-/** @type {Ref<string | null>} */
-const deleteMenuShowed = ref(null)
-/** @type {Ref<string | null>} */
-const pluginLocked = ref(null)
+const deleteMenuShowed = ref(null) as Ref<string | null>
+const pluginLocked = ref(null) as Ref<string | null>
 
-/**
- * @param {AvailablePlugin} plugin
- */
-async function install(plugin) {
-  pluginLocked.value = `${plugin.name}-${plugin.distTag}`
-  try {
-    /** @type {InstalledPlugin} */
+const install = withUiNotif(
+  async (plugin: AvailablePlugin) => {
+    pluginLocked.value = `${plugin.name}-${plugin.distTag}`
     await $fetch('/api/v1/plugins', {
       method: 'POST',
       body: JSON.stringify(plugin)
     })
     installedPluginsFetch.refresh()
-  } catch (error) {
-    eventBus.emit('notification', { error, msg: 'Erreur pendant l\'installation du plugin' })
-  } finally {
     pluginLocked.value = null
-  }
-}
+  },
+  "Erreur pendant l'installation du plugin",
+  { msg: 'Plugin installé avec succès !' }
+)
 
-/**
- * @param {InstalledPlugin} plugin
- */
-async function uninstall(plugin) {
-  pluginLocked.value = `${plugin.name}-${plugin.distTag}`
-  try {
+const uninstall = withUiNotif(
+  async (plugin: InstalledPlugin) => {
+    pluginLocked.value = `${plugin.name}-${plugin.distTag}`
     await $fetch(`/api/v1/plugins/${plugin.id}`, {
       method: 'DELETE'
     })
     installedPluginsFetch.refresh()
-  } catch (error) {
-    eventBus.emit('notification', { error, msg: 'Erreur pendant l\'installation du plugin' })
-  } finally {
     pluginLocked.value = null
     deleteMenuShowed.value = null
-  }
-}
+  },
+  'Erreur pendant la désinstallation du plugin',
+  { msg: 'Plugin désinstallé avec succès !' }
+)
 
 /**
  * Check if an update is available for a plugin (same distTag, same name, different version)
- * @param {Record<string, any>} plugin
- * @returns {[boolean, string]} - A tuple with a boolean indicating if an update is available and the new version
+ * @param plugin - The plugin to check
+ * @returns - A tuple with a boolean indicating if an update is available and the new version
  */
-function updateAvailable(plugin) {
+function updateAvailable (plugin: InstalledPlugin): [boolean, string] {
   if (availablePlugins.value.length === 0) return [false, '']
-  const availablePlugin = availablePlugins.value.find(/** @param {AvailablePlugin} r */ r => (r.name === plugin.name && r.distTag === plugin.distTag))
+  const availablePlugin = availablePlugins.value.find(r => (r.name === plugin.name && r.distTag === plugin.distTag))
   if (availablePlugin &&
     availablePlugin.version !== plugin.version) return [true, availablePlugin.version]
   return [false, '']
 }
 
-/**
- * @param {Record<string, any>} plugin
- */
-async function update(plugin) {
+async function update (plugin: InstalledPlugin) {
   pluginLocked.value = `${plugin.name}-${plugin.distTag}`
   if (availablePlugins.value.length === 0) return false
-  const availablePlugin = availablePlugins.value.find(/** @param {Record<string, any>} r */ r => r.name === plugin.name)
+  const availablePlugin = availablePlugins.value.find(r => r.name === plugin.name)
   if (availablePlugin && availablePlugin.version !== plugin.version) {
     await install(availablePlugin)
   }
   pluginLocked.value = null
 }
 
-/**
- * @param {Record<string, any>} plugin
- */
-async function saveConfig(plugin) {
+async function saveConfig (plugin: InstalledPlugin) {
   pluginLocked.value = `${plugin.name}-${plugin.distTag}`
   await $fetch(`/api/v1/plugins/${plugin.id}/config`, {
     method: 'PUT',
@@ -365,10 +346,7 @@ async function saveConfig(plugin) {
   pluginLocked.value = null
 }
 
-/**
- * @param {Record<string, any>} plugin
- */
-async function saveAccess(plugin) {
+async function saveAccess (plugin: InstalledPlugin) {
   pluginLocked.value = `${plugin.name}-${plugin.distTag}`
   await $fetch(`/api/v1/plugins/${plugin.id}/access`, {
     method: 'PUT',
