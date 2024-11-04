@@ -212,15 +212,16 @@ import setBreadcrumbs from '~/utils/breadcrumbs'
 import useUrlSearchParams from '@data-fair/lib-vue/reactive-search-params.js'
 import VjsfMarkdown from '@koumoul/vjsf-markdown'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
+import { httpError } from '@data-fair/lib-utils/http-errors'
 
 const session = useSession()
 const urlSearchParams = useUrlSearchParams()
 
 if (!session.state.user) {
-  throw createError({ status: 401, message: 'Authentification nécessaire', fatal: true })
+  throw httpError(401, 'Authentification nécessaire')
 }
 if (!session.state.user?.adminMode) {
-  throw createError({ status: 403, message: 'Vous n\'avez pas la permission d\'accéder à cette page, il faut avoir activé le mode super-administration.', fatal: true })
+  throw httpError(403, 'Vous n\'avez pas la permission d\'accéder à cette page, il faut avoir activé le mode super-administration.')
 }
 
 onMounted(() => setBreadcrumbs([{ text: 'plugins' }]))

@@ -7,13 +7,13 @@
     <v-toolbar-items>
       <v-btn
         variant="text"
-        :to="{ name: 'processings' }"
+        href="/processings/processings"
       >
         Traitements
       </v-btn>
       <v-btn
         variant="text"
-        :to="{ name: 'admin-plugins' }"
+        href="/processings/admin/plugins"
         color="admin"
       >
         Plugins

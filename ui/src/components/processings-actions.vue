@@ -218,21 +218,22 @@ const pluginsItems = computed(() => {
     .sort((a, b) => a.display.localeCompare(b.display))
 })
 
-async function createProcessing () {
-  inCreate.value = true
-  try {
+const createProcessing = withUiNotif(
+  async () => {
+    inCreate.value = true
+
     const processing = await $fetch('/api/v1/processings', {
       method: 'POST',
       body: JSON.stringify(newProcessing.value)
     })
-    return router.push({ path: `/processings/${processing._id}` })
-  } catch (error) {
-    eventBus.emit('notification', { error, msg: 'Erreur pendant la création du traitement' })
-  } finally {
+
+    await router.push({ path: `/processings/${processing._id}` })
     showCreateMenu.value = false
     inCreate.value = false
-  }
-}
+  },
+  'Erreur pendant la création du traitement',
+  { msg: 'Traitement créé avec succès !' }
+)
 
 </script>
 
