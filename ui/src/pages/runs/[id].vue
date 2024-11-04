@@ -112,15 +112,15 @@ function getColor (step: Record<string, any>) {
 }
 
 function getIcon (step: Record<string, any>) {
-  let icon = 'mdi-check-circle'
+  let icon = mdiCheckCircle
 
   for (const child of step.children) {
     if (child.type === 'error') {
-      icon = 'mdi-alert'
+      icon = mdiAlert
       break
     }
     if (child.type === 'warning') {
-      icon = 'mdi-alert-circle'
+      icon = mdiAlertCircle
     }
   }
 

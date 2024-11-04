@@ -23,9 +23,8 @@
       <v-icon
         v-else-if="installedPluginsFetch.error.value"
         color="error"
-      >
-        mdi-alert
-      </v-icon>
+        :icon="mdiAlert"
+      />
       <template v-else-if="installedPluginsFetch.data.value">
         {{ installedPluginsFetch.data.value.count }}
       </template>

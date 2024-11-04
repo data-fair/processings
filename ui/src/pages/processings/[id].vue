@@ -66,7 +66,7 @@ import { v2compat } from '@koumoul/vjsf/compat/v2'
 
 const route = useRoute()
 const session = useSession()
-const runtimeConfig = useRuntimeConfig()
+// const runtimeConfig = useRuntimeConfig()
 
 const processingId = (route.params as { id: string }).id
 const utcs: string[] = []
@@ -185,7 +185,8 @@ const vjsfOptions = computed(() => {
     plugins: [VjsfMarkdown],
     context: {
       owner: processing.value?.owner,
-      ownerFilter: runtimeConfig.public.dataFairAdminMode ? `owner=${ownerFilter.value}` : '',
+      // ownerFilter: runtimeConfig.public.dataFairAdminMode ? `owner=${ownerFilter.value}` : '',
+      ownerFilter: `owner=${ownerFilter.value}`,
       dataFairUrl: window.location.origin + '/data-fair',
       directoryUrl: window.location.origin + '/simple-directory',
       utcs
@@ -226,9 +227,7 @@ const patch = withUiNotif(
 
     edited.value = false
   },
-  "Erreur pendant l'enregistrement du traitement",
-  { msg: 'Traitement enregistré avec succès !' }
-)
+  "Erreur pendant l'enregistrement du traitement")
 
 /*
   A patch can be triggered server side

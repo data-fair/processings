@@ -38,6 +38,7 @@ export default defineConfig({
           '~/context': ['$uiConfig', '$sitePath', '$apiPath', '$fetch'],
           '@mdi/js': [
             'mdiAlert',
+            'mdiAlertCircle',
             'mdiCheckCircle',
             'mdiClock',
             'mdiDotsVertical',

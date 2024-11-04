@@ -2,7 +2,7 @@ import type { Plugin } from '#api/types'
 
 const fetches: Record<string, ReturnType<typeof useFetch<Plugin>>> = {}
 
-export const usePluginFetch = async (pluginId: string) => {
+export const usePluginFetch = (pluginId: string) => {
   if (!fetches[pluginId]) {
     const pluginFetch = useFetch<Plugin>(`${$apiPath}/plugins/${pluginId}`)
     fetches[pluginId] = pluginFetch
