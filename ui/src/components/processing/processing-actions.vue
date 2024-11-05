@@ -190,6 +190,7 @@
 
 <script setup lang="ts">
 import 'iframe-resizer/js/iframeResizer'
+// @ts-ignore
 import VIframe from '@koumoul/v-iframe'
 const emit = defineEmits(['triggered'])
 

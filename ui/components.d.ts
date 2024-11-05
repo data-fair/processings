@@ -7,12 +7,8 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    FetchError: typeof import('./src/components/fetch-error.vue')['default']
     LayoutActionsButton: typeof import('./src/components/layout/layout-actions-button.vue')['default']
-    LayoutAppBar: typeof import('./src/components/layout/layout-app-bar.vue')['default']
-    'LayoutAppBar.client': typeof import('./src/components/layout/layout-app-bar.client.vue')['default']
     LayoutNavigationRight: typeof import('./src/components/layout/layout-navigation-right.vue')['default']
-    Notifications: typeof import('./src/components/notifications.vue')['default']
     PrivateAccess: typeof import('./src/components/private-access.vue')['default']
     ProcessingActions: typeof import('./src/components/processing/processing-actions.vue')['default']
     ProcessingCard: typeof import('./src/components/processing/processing-card.vue')['default']
