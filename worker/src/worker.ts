@@ -1,6 +1,6 @@
 /* eslint-disable no-async-promise-executor */
 import type { AggregationCursor, Collection, Db } from 'mongodb'
-import type { Processing, Run } from '#types'
+import type { Processing, Run } from '#api/types'
 
 import { spawn } from 'child-process-promise'
 import Debug from 'debug'

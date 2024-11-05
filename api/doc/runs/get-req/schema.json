@@ -17,7 +17,7 @@
       "type": "string"
     },
     "showAll": {
-      "type": "boolean"
+      "type": "string"
     },
     "owner": {
       "type": "string"

@@ -1,4 +1,4 @@
-import type { Processing, Run } from '#types'
+import type { Processing, Run } from '#api/types'
 
 import mongo from '@data-fair/lib-node/mongo.js'
 import config from '#config'

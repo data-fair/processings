@@ -1,4 +1,5 @@
-/** @type {import('@data-fair/lib/node/upgrade-scripts.js').UpgradeScript} */
+import type { UpgradeScript } from '@data-fair/lib-node/upgrade-scripts.js'
+
 export default {
   description: 'Scheduling rules are now stored in an array',
   async exec (db, debug) {
@@ -10,4 +11,4 @@ export default {
       }
     }
   }
-}
+} as UpgradeScript

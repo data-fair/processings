@@ -1,5 +1,5 @@
 import type { Db } from 'mongodb'
-import type { Run, Processing } from '#types'
+import type { Run, Processing } from '#api/types'
 
 import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import { incrementConsumption } from './limits.ts'

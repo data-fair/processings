@@ -1,7 +1,7 @@
 import type { LogFunctions, ProcessingContext } from '@data-fair/lib-common-types/processings.ts'
 import type { Account } from '@data-fair/lib-express/index.js'
 import type { Collection, Db } from 'mongodb'
-import type { Processing, Run } from '#types'
+import type { Processing, Run } from '#api/types'
 
 import axios from 'axios'
 import axiosRetry from 'axios-retry'

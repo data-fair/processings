@@ -1,4 +1,4 @@
-import type { Limit } from '#types'
+import type { Limit } from '#api/types'
 import type { Account } from '@data-fair/lib-express'
 import { Collection, Db } from 'mongodb'
 
