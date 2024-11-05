@@ -70,7 +70,8 @@ const runs = useFetch<{
     page: page.value,
     sort: 'createdAt:-1',
     owner: `${props.processing.owner.type}:${props.processing.owner.id}${props.processing.owner.department ? ':' + props.processing.owner.department : ''}`
-  }))
+  })),
+  watch: false
 })
 
 onMounted(async () => {
