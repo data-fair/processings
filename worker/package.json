@@ -20,6 +20,7 @@
     "child-process-promise": "^2.2.1",
     "config": "^3.3.12",
     "cron": "^3.1.9",
+    "dayjs": "^1.11.13",
     "debug": "^4.3.7",
     "nanoid": "^5.0.8",
     "nodemailer": "^6.9.16",

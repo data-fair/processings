@@ -78,6 +78,7 @@ RUN npm ci -w worker --prefer-offline --omit=dev --omit=optional --omit=peer --n
 # =============================
 FROM base AS main
 
+RUN mkdir -p /app/data && chown -R node:node /app/data
 COPY --from=api-installer /app/node_modules node_modules
 COPY api api
 COPY shared shared
@@ -100,7 +101,9 @@ FROM base AS worker
 COPY --from=worker-installer /app/node_modules node_modules
 COPY worker worker
 COPY shared shared
+COPY upgrade upgrade
 COPY --from=types /app/worker/config config
+COPY --from=types /app/api/types api/types
 COPY package.json README.md LICENSE ./
 USER node
 WORKDIR /app/worker
