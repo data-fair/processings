@@ -19,5 +19,6 @@ module.exports = {
   },
   npm: {
     httpsProxy: null
-  }
+  },
+  serveUi: true
 }

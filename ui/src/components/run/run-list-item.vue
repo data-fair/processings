@@ -78,7 +78,7 @@
     >
       <v-btn
         color="warning"
-        :icon="mdi-stop"
+        :icon="mdiStop"
         size="x-small"
         title="interrompre"
         @click.prevent="kill()"

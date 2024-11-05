@@ -189,6 +189,8 @@
 </template>
 
 <script setup lang="ts">
+import 'iframe-resizer/js/iframeResizer'
+import VIframe from '@koumoul/v-iframe'
 const emit = defineEmits(['triggered'])
 
 const properties = defineProps({
@@ -229,7 +231,7 @@ const notifUrl = computed(() => {
 })
 
 const webhookLink = computed(() => {
-  let link = `${window.location.origin}/api/v1/processings/${properties.processing?._id}/_trigger?key=${webhookKey.value}`
+  let link = `${window.location.origin}/api/processings/${properties.processing?._id}/_trigger?key=${webhookKey.value}`
   if (triggerDelay.value > 0) link += `&delay=${triggerDelay.value}`
   return link
 })
@@ -259,7 +261,7 @@ const getWebhookKey = async () => {
 const triggerExecution = withUiNotif(
   async () => {
     hasTriggered.value = true
-    let link = `/api/v1/processings/${properties.processing?._id}/_trigger`
+    let link = `${$apiPath}/processings/${properties.processing?._id}/_trigger`
     if (triggerDelay.value > 0) link += `?delay=${triggerDelay.value}`
 
     await $fetch(link, { method: 'POST' })

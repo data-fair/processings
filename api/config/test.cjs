@@ -6,5 +6,6 @@ module.exports = {
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings-test',
   observer: {
     port: 9092
-  }
+  },
+  serveUi: false
 }

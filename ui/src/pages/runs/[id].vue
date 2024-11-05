@@ -60,7 +60,7 @@ import type { Run } from '#api/types'
 
 const route = useRoute()
 const session = useSession()
-const ws = useWS('/processings')
+const ws = useWS('/processings/api/')
 
 const loading = ref(false)
 const run: Ref<Run | null> = ref(null)
@@ -72,6 +72,7 @@ const canExec = computed(() => {
   return ['admin', 'exec'].includes(run.value.userProfile as string)
 })
 
+const runId = (route.params as { id: string }).id
 const wsLogChannel = `processings/${run.value?.processing._id}/run-log`
 const wsPatchChannel = `processings/${run.value?.processing._id}/run-patch`
 
@@ -148,7 +149,7 @@ onUnmounted(() => {
 
 async function refresh () {
   loading.value = true
-  run.value = await $fetch(`${$apiPath}/runs/${route.params.id}`)
+  run.value = await $fetch(`${$apiPath}/runs/${runId}`)
 
   ws?.subscribe(wsLogChannel, onRunLog)
   ws?.subscribe(wsPatchChannel, onRunPatch)

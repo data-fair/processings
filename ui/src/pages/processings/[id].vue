@@ -234,7 +234,7 @@ const patch = withUiNotif(
 */
 
 const patchConfigWSChannel = `processings/${processingId}/patch-config`
-const ws = useWS('/processings')
+const ws = useWS('/processings/api/')
 const onPatchConfig = () => {
   fetchProcessing()
 }

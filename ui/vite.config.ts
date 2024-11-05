@@ -39,6 +39,7 @@ export default defineConfig({
           '@mdi/js': [
             'mdiAlert',
             'mdiAlertCircle',
+            'mdiBell',
             'mdiCheckCircle',
             'mdiClock',
             'mdiDotsVertical',

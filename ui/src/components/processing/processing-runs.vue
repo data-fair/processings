@@ -41,7 +41,7 @@ const props = defineProps({
   }
 })
 
-const ws = useWS('/processings')
+const ws = useWS('/processings/api/')
 const wsChannel = computed(() => `processings/${props.processing._id}/run-patch`)
 
 function onRunPatch (runPatch: { _id: string, patch: Record<string, any> }) {
@@ -81,6 +81,8 @@ onMounted(async () => {
 onUnmounted(() => {
   ws?.unsubscribe(wsChannel.value, onRunPatch)
 })
+
+defineExpose({ refresh: () => runs.refresh() })
 </script>
 
 <style>
