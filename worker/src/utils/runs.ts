@@ -8,11 +8,12 @@ import notifications from './notifications.ts'
 
 export const running = async (db: Db, run: Run) => {
   const patch = { status: 'running' as Run['status'], startedAt: new Date().toISOString() }
-  const lastRun = db.collection<Run>('runs').findOneAndUpdate(
+  const lastRun = await db.collection<Run>('runs').findOneAndUpdate(
     { _id: run._id },
     { $set: patch, $unset: { finishedAt: '' } },
     { returnDocument: 'after', projection: { log: 0, processing: 0, owner: 0 } }
   )
+  if (!lastRun) throw new Error('Run not found')
   await wsEmitter.emit(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch })
   await db.collection<Processing>('processings')
     .updateOne({ _id: run.processing._id }, { $set: { lastRun }, $unset: { nextRun: '' } })

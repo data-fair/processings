@@ -18,7 +18,7 @@
     "stop-dev-deps": "docker compose --profile dev stop",
     "test": "NODE_ENV=test node --experimental-strip-types --test-force-exit --test-concurrency=1 --test --test-reporter=spec test-it/*.ts",
     "test-only": "NODE_ENV=test node --experimental-strip-types --test-force-exit --test-concurrency=1 --test",
-    "test-images": "docker compose --profile dev --profile testImages up -d --wait",
+    "test-images": "docker compose --profile dev --profile testImages up -d --build --wait",
     "quality": "npm run dev-deps && npm run lint && npm run build-types && npm run check-types && npm -w ui run build && npm run test && npm audit --omit=dev --audit-level=critical"
   },
   "repository": {

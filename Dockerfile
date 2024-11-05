@@ -51,6 +51,7 @@ FROM installer AS ui
 
 RUN npm i --no-save @rollup/rollup-linux-x64-musl
 COPY --from=types /app/api/config api/config
+COPY --from=types /app/api/types api/types
 ADD /api/src/config.ts api/src/config.ts
 ADD /ui ui
 RUN npm -w ui run build
@@ -79,6 +80,7 @@ FROM base AS main
 
 COPY --from=api-installer /app/node_modules node_modules
 COPY api api
+COPY shared shared
 COPY --from=types /app/api/types api/types
 COPY --from=types /app/api/doc api/doc
 COPY --from=types /app/api/config api/config
@@ -88,7 +90,7 @@ EXPOSE 8080
 EXPOSE 9090
 USER node
 WORKDIR /app/api
-CMD ["node", "--max-http-header-size", "64000", "--experimental-strip-types", "index.js"]
+CMD ["node", "--max-http-header-size", "64000", "--experimental-strip-types", "index.ts"]
 
 # =============================
 # Final Worker Image
@@ -97,8 +99,9 @@ FROM base AS worker
 
 COPY --from=worker-installer /app/node_modules node_modules
 COPY worker worker
+COPY shared shared
 COPY --from=types /app/worker/config config
 COPY package.json README.md LICENSE ./
 USER node
 WORKDIR /app/worker
-CMD ["node", "--experimental-strip-types", "index.js"]
+CMD ["node", "--experimental-strip-types", "index.ts"]

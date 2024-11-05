@@ -11,13 +11,15 @@
     "lint-fix": "eslint --fix ."
   },
   "dependencies": {
+    "@data-fair/lib-utils": "^1.1.0",
     "@data-fair/lib-vue": "^1.9.2",
     "@data-fair/lib-vuetify": "^1.4.1",
     "@intlify/unplugin-vue-i18n": "^5.2.0",
     "@koumoul/v-iframe": "^2.4.4",
     "@koumoul/vjsf": "^3.0.0-beta.46",
-    "@koumoul/vjsf-markdown": "^0.2.3",
+    "@koumoul/vjsf-markdown": "^0.2.4",
     "@mdi/js": "^7.4.47",
+    "@types/config": "^3.3.5",
     "@vitejs/plugin-vue": "^5.1.4",
     "@vueuse/core": "^11.2.0",
     "iframe-resizer": "^4.4.5",

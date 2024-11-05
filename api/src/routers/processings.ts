@@ -14,9 +14,9 @@ import { session, asyncHandler } from '@data-fair/lib-express/index.js'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import { createNext } from '../../../shared/runs.ts'
 import { applyProcessing, deleteProcessing } from '../utils/runs.ts'
-import processingSchema from '../../../contract/processing.js'
 import mongo from '#mongo'
 import config from '#config'
+import { schema as processingSchema } from '#types/processing/index.ts'
 import findUtils from '../utils/find.ts'
 import permissions from '../utils/permissions.ts'
 
@@ -35,13 +35,8 @@ const sensitiveParts = ['permissions', 'webhookKey', 'config']
  * Check if the config is valid (only if the processing is activated)
  */
 const validateFullProcessing = async (processing: Processing) => {
-  // config is required only after the processing was activated
-  const schema = processing.active
-    ? { ...processingSchema, required: [...processingSchema.required, 'config'] }
-    : processingSchema
-  const validate = ajv.compile(schema)
-  const valid = validate(processing)
-  if (!valid) throw httpError(400, JSON.stringify(validate.errors))
+  (await import('#types/processing/index.ts')).returnValid(processing)
+  if (processing.active && !processing.config) throw httpError(400, 'Config is required for an active processing')
   if (!await fs.pathExists(path.join(pluginsDir, processing.plugin))) throw httpError(400, 'Plugin not found')
   if (!processing.config) return // no config to validate
   const pluginInfo = await fs.readJson(path.join(pluginsDir, path.join(processing.plugin, 'plugin.json')))
@@ -195,8 +190,7 @@ router.patch('/:id', asyncHandler(async (req, res) => {
 
   // Restrict the parts of the processing that can be edited by API
   const acceptedParts = Object.keys(processingSchema.properties)
-    // @ts-ignore
-    .filter(k => sessionState.user.adminMode || !processingSchema.properties[k].readOnly)
+    .filter(k => sessionState.user.adminMode || !(processingSchema.properties)[k].readOnly)
   for (const key in req.body) {
     if (!acceptedParts.includes(key)) return res.status(400).send('Unsupported patch part ' + key)
   }

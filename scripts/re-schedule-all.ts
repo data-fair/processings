@@ -1,4 +1,4 @@
-const runs = require('../api/utils/runs')
+import runs from '../api/src/utils/runs.ts'
 
 async function main () {
   const { db } = await require('../api/utils/db').connect()

@@ -13,6 +13,8 @@
   "properties": {
     "profile": {
       "type": "string",
+      "title": "Profil",
+      "default": "read",
       "enum": [
         "read",
         "exec"
@@ -20,7 +22,7 @@
     },
     "target": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
@@ -30,10 +32,17 @@
           ]
         },
         "email": {
-          "type": "string"
+          "type": "string",
+          "title": "Email"
         },
         "organization": {
           "type": "object",
+          "title": "Organisation",
+          "additionalProperties": true,
+          "x-fromUrl": "{context.directoryUrl}/api/organizations/{context.owner.id}",
+          "x-itemsProp": "partners",
+          "x-itemKey": "id",
+          "x-itemTitle": "name",
           "properties": {
             "id": {
               "type": "string"
@@ -45,6 +54,8 @@
         },
         "roles": {
           "type": "array",
+          "title": "Rôles",
+          "default": ["admin"],
           "items": {
             "type": "string",
             "enum": [

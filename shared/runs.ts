@@ -1,5 +1,5 @@
 import type { Collection, Db } from 'mongodb'
-import type { Run, Processing } from '#api/types'
+import type { Run, Processing, Scheduling } from '#api/types'
 
 import * as locks from '@data-fair/lib-node/locks.js'
 import { CronJob } from 'cron'
@@ -7,8 +7,8 @@ import { nanoid } from 'nanoid'
 import dayjs from 'dayjs'
 import { assertValid } from '../api/types/run/index.ts'
 
-const toCRON = (scheduling: Processing['scheduling'][0]): string => {
-  if (!scheduling || scheduling.type === 'manual') return 'Invalid CRON expression'
+const toCRON = (scheduling: Scheduling): string => {
+  if (!scheduling) return 'Invalid CRON expression'
   const minute = scheduling.minute + (scheduling.minuteStep ? `/${scheduling.minuteStep}` : '')
   const hour = scheduling.hour + (scheduling.hourStep ? `/${scheduling.hourStep}` : '')
   const dayOfMonth = scheduling.dayOfMonth + (scheduling.dayOfMonthStep ? `/${scheduling.dayOfMonthStep}` : '')
@@ -63,7 +63,7 @@ export const createNext = async (db: Db, processing: Processing, triggered: bool
       let nextDate = null
       for (const scheduling of processing.scheduling) {
         const cron = toCRON(scheduling)
-        const timeZone = scheduling.timeZone || 'Europe/Paris'
+        const timeZone = scheduling.timeZone as string || 'Europe/Paris'
         const job = new CronJob(cron, () => { }, () => { }, false, timeZone)
         const nextDateCandidate = job.nextDate()?.toJSDate()
         if (!nextDateCandidate) {
