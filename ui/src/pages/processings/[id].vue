@@ -159,7 +159,6 @@ const processingSchema = computed(() => {
       .filter((s: any) => s !== 'datasetMode')
   }
 
-  console.log(schema)
   return schema
 })
 
