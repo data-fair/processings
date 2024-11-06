@@ -90,11 +90,10 @@
 
 <script setup lang="ts">
 import type { Processing } from '#api/types'
-import { httpError } from '@data-fair/lib-utils/http-errors'
 import setBreadcrumbs from '~/utils/breadcrumbs'
 
 const route = useRoute()
-const session = useSessionAuthenticated(() => httpError(401, 'Authentification nécessaire'))
+const session = useSessionAuthenticated(() => new Error('Authentification nécessaire'))
 const showAll = useBooleanSearchParam('showAll')
 const search = useStringSearchParam('q')
 const plugins = useStringsArraySearchParam('plugin')

@@ -212,16 +212,15 @@ import useUrlSearchParams from '@data-fair/lib-vue/reactive-search-params.js'
 import Vjsf from '@koumoul/vjsf'
 import VjsfMarkdown from '@koumoul/vjsf-markdown'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
-import { httpError } from '@data-fair/lib-utils/http-errors'
 
 const session = useSession()
 const urlSearchParams = useUrlSearchParams()
 
 if (!session.state.user) {
-  throw httpError(401, 'Authentification nécessaire')
+  throw new Error('Authentification nécessaire')
 }
 if (!session.state.user?.adminMode) {
-  throw httpError(403, 'Vous n\'avez pas la permission d\'accéder à cette page, il faut avoir activé le mode super-administration.')
+  throw new Error('Vous n\'avez pas la permission d\'accéder à cette page, il faut avoir activé le mode super-administration.')
 }
 
 onMounted(() => setBreadcrumbs([{ text: 'plugins' }]))
