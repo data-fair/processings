@@ -73,8 +73,6 @@ const canExec = computed(() => {
 })
 
 const runId = (route.params as { id: string }).id
-const wsLogChannel = `processings/${run.value?.processing._id}/run-log`
-const wsPatchChannel = `processings/${run.value?.processing._id}/run-patch`
 
 const steps = computed(() => {
   if (!run.value) return []
@@ -129,8 +127,13 @@ function getIcon (step: Record<string, any>) {
 }
 
 onMounted(async () => {
-  await refresh()
+  loading.value = true
+  run.value = await $fetch(`${$apiPath}/runs/${runId}`)
   if (!run.value) return
+
+  ws?.subscribe(`processings/${run.value.processing._id}/run-log`, onRunLog)
+  ws?.subscribe(`processings/${run.value.processing._id}/run-patch`, onRunPatch)
+
   setBreadcrumbs([{
     text: 'traitements',
     to: '/processings'
@@ -140,22 +143,13 @@ onMounted(async () => {
   }, {
     text: 'exécution'
   }])
+  loading.value = false
 })
 
 onUnmounted(() => {
-  ws?.unsubscribe(wsLogChannel, onRunLog)
-  ws?.unsubscribe(wsPatchChannel, onRunPatch)
+  ws?.unsubscribe(`processings/${run.value?.processing._id}/run-log`, onRunLog)
+  ws?.unsubscribe(`processings/${run.value?.processing._id}/run-patch`, onRunPatch)
 })
-
-async function refresh () {
-  loading.value = true
-  run.value = await $fetch(`${$apiPath}/runs/${runId}`)
-
-  ws?.subscribe(wsLogChannel, onRunLog)
-  ws?.subscribe(wsPatchChannel, onRunPatch)
-
-  loading.value = false
-}
 
 function onRunPatch (runPatch: Record<string, any>) {
   if (!run.value || run.value._id !== runPatch._id) return

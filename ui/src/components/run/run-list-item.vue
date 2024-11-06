@@ -4,38 +4,38 @@
     :to="link ? `/runs/${run._id}` : ''"
   >
     <template #prepend>
-      <v-avatar v-if="runStatus === 'running'">
+      <v-avatar v-if="props.run.status === 'running'">
         <v-progress-circular
           indeterminate
           color="primary"
           size="24"
         />
       </v-avatar>
-      <v-avatar v-if="runStatus === 'finished'">
+      <v-avatar v-if="props.run.status === 'finished'">
         <v-icon
           color="success"
           :icon="mdiCheckCircle"
         />
       </v-avatar>
-      <v-avatar v-if="runStatus === 'error'">
+      <v-avatar v-if="props.run.status === 'error'">
         <v-icon
           color="error"
           :icon="mdiAlert"
         />
       </v-avatar>
-      <v-avatar v-if="runStatus === 'scheduled'">
+      <v-avatar v-if="props.run.status === 'scheduled'">
         <v-icon
           color="primary"
           :icon="mdiClock"
         />
       </v-avatar>
-      <v-avatar v-if="runStatus === 'triggered'">
+      <v-avatar v-if="props.run.status === 'triggered'">
         <v-icon
           color="primary"
           :icon="mdiPlayCircle"
         />
       </v-avatar>
-      <v-avatar v-if="runStatus === 'kill' || runStatus === 'killed'">
+      <v-avatar v-if="props.run.status === 'kill' || props.run.status === 'killed'">
         <v-icon
           color="accent"
           :icon="mdiStop"
@@ -43,37 +43,37 @@
       </v-avatar>
     </template>
 
-    <v-list-item-title v-if="runStatus === 'running'">
+    <v-list-item-title v-if="props.run.status === 'running'">
       Démarrée {{ fromNow(run.startedAt) }}
     </v-list-item-title>
-    <v-list-item-title v-if="runStatus === 'finished'">
+    <v-list-item-title v-if="props.run.status === 'finished'">
       Terminée - {{ formatDate(run.finishedAt) }}
     </v-list-item-title>
-    <v-list-item-title v-if="runStatus === 'error'">
+    <v-list-item-title v-if="props.run.status === 'error'">
       En échec - {{ formatDate(run.finishedAt) }}
     </v-list-item-title>
-    <v-list-item-title v-if="runStatus === 'scheduled'">
+    <v-list-item-title v-if="props.run.status === 'scheduled'">
       Planifiée - {{ formatDate(run.scheduledAt) }}
     </v-list-item-title>
-    <v-list-item-title v-if="runStatus === 'triggered'">
+    <v-list-item-title v-if="props.run.status === 'triggered'">
       Déclenchée manuellement {{ fromNow(run.createdAt) }}
     </v-list-item-title>
-    <v-list-item-title v-if="runStatus === 'kill'">
+    <v-list-item-title v-if="props.run.status === 'kill'">
       Interruption demandée
     </v-list-item-title>
-    <v-list-item-title v-if="runStatus === 'killed'">
+    <v-list-item-title v-if="props.run.status === 'killed'">
       Interrompue manuellement - {{ formatDate(run.finishedAt) }}
     </v-list-item-title>
 
-    <v-list-item-subtitle v-if="runStatus === 'finished' || runStatus === 'error' || runStatus === 'killed'">
+    <v-list-item-subtitle v-if="props.run.status === 'finished' || props.run.status === 'error' || props.run.status === 'killed'">
       Durée : {{ duration(run.startedAt, run.finishedAt) }}
     </v-list-item-subtitle>
-    <v-list-item-subtitle v-if="runStatus === 'triggered' && run.scheduledAt && run.scheduledAt !== run.createdAt">
+    <v-list-item-subtitle v-if="props.run.status === 'triggered' && run.scheduledAt && run.scheduledAt !== run.createdAt">
       Planifiée {{ fromNow(run.scheduledAt) }}
     </v-list-item-subtitle>
 
     <template
-      v-if="!run.finishedAt && runStatus !== 'kill' && canExec"
+      v-if="!run.finishedAt && props.run.status !== 'kill' && canExec"
       #append
     >
       <v-btn
@@ -99,8 +99,6 @@ const props = defineProps({
   }
 })
 
-const runStatus = ref(props.run.status)
-
 const fromNow = (date: string) => dayjs(date).fromNow()
 const formatDate = (date: string) => dayjs(date).format('DD/MM/YYYY HH:mm')
 const duration = (start: string, end: string) => dayjs(end).from(dayjs(start), true)
@@ -109,7 +107,6 @@ const kill = async () => {
   await $fetch(`${$apiPath}/runs/${props.run._id}/_kill`, {
     method: 'POST'
   })
-  runStatus.value = 'kill'
 }
 </script>
 
