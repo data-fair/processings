@@ -11,7 +11,6 @@ module.exports = {
     limits: null
   },
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings',
-  origin: null,
   port: 8080,
   observer: {
     active: true,

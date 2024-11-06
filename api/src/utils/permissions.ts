@@ -3,7 +3,6 @@ import type { NextFunction, Request, Response } from 'express'
 import type { AccountKeys, Permission } from '#types'
 
 import { session } from '@data-fair/lib-express/index.js'
-import config from '#config'
 
 const getOwnerRole = (sessionState: SessionStateAuthenticated, owner: AccountKeys) => {
   if (!sessionState) return null
@@ -74,10 +73,7 @@ const matchPermissionTarget = (target: any, sessionState: SessionStateAuthentica
 const getUserResourceProfile = (owner: Account, permissions: Permission[] | undefined, sessionState: SessionStateAuthenticated, host: string | undefined): string | undefined => {
   // this line is first, a manual permission cannot demote an admin
   const ownerRole = sessionState?.user.adminMode ? 'admin' : getOwnerRole(sessionState, owner)
-  if (ownerRole === 'admin') {
-    if (new URL(config.origin).host !== host) return 'exec' // no admin functionality in portals
-    return 'admin'
-  }
+  if (ownerRole === 'admin') return 'admin'
   for (const profile of ['read', 'exec']) {
     if (permissions && permissions.find((p) => p.profile === profile && matchPermissionTarget(p.target, sessionState))) {
       return profile

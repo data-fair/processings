@@ -43,10 +43,7 @@ export const start = async () => {
   const npmHttpsProxy = config.npm?.httpsProxy || process.env.HTTPS_PROXY || process.env.https_proxy
   if (npmHttpsProxy) await exec('npm --workspaces=false --include-workspace-root config set https-proxy ' + npmHttpsProxy)
 
-  console.log(`
-  API server listening on port ${config.port}
-  API available at ${config.origin}/processings/api/
-  UI available at ${config.origin}/processings/`)
+  console.log(`API server listening on port ${config.port}`)
 }
 
 export const stop = async () => {
