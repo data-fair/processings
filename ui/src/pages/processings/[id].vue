@@ -61,7 +61,6 @@ import type { Plugin, Processing } from '#api/types'
 import { resolvedSchema as contractProcessing } from '../../../../api/types/processing/index.ts'
 import timeZones from 'timezones.json'
 import Vjsf from '@koumoul/vjsf'
-import VjsfMarkdown from '@koumoul/vjsf-markdown'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 
 const route = useRoute()
@@ -163,7 +162,6 @@ const processingSchema = computed(() => {
 
 const vjsfOptions = computed(() => {
   return {
-    plugins: [VjsfMarkdown],
     context: {
       owner: processing.value?.owner,
       // ownerFilter: runtimeConfig.public.dataFairAdminMode ? `owner=${ownerFilter.value}` : '',
