@@ -3,6 +3,7 @@ import resolvePath from 'resolve-path'
 import { app } from './app.ts'
 import { session } from '@data-fair/lib-express/index.js'
 import * as wsServer from '@data-fair/lib-express/ws-server.js'
+import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import { startObserver, stopObserver } from '@data-fair/lib-node/observer.js'
 import * as locks from '@data-fair/lib-node/locks.js'
 import { createHttpTerminator } from 'http-terminator'
@@ -37,6 +38,7 @@ export const start = async () => {
     if (sessionState.user.adminMode) return true
     return (['admin', 'contrib'].includes(ownerType) && ownerId === sessionState.user.id)
   })
+  await wsEmitter.init(mongo.db)
 
   server.listen(config.port)
   await new Promise(resolve => server.once('listening', resolve))

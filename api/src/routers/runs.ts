@@ -1,6 +1,7 @@
 import type { Run } from '#types/index.js'
 import type { SessionStateAuthenticated } from '@data-fair/lib-express/index.js'
 
+import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import { session, asyncHandler } from '@data-fair/lib-express/index.js'
 import { Router } from 'express'
 import mongo from '#mongo'
@@ -62,5 +63,6 @@ router.post('/:id/_kill', asyncHandler(async (req, res) => {
   if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(run.owner, run.permissions, sessionState, req.headers.host) ?? '')) return res.status(403).send()
   await mongo.runs.updateOne({ _id: run._id }, { $set: { status: 'kill' } })
   run.status = 'kill'
+  await wsEmitter.emit(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch: { status: 'kill' } })
   res.send(cleanRun(run, sessionState, req.headers.host))
 }))
