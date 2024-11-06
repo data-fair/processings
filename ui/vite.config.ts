@@ -14,7 +14,14 @@ import { commonjsDeps } from '@koumoul/vjsf/utils/build.js'
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '/processings',
-  optimizeDeps: { include: ['debug', 'easymde', ...commonjsDeps] },
+  build: {
+    rollupOptions: {
+      output: {
+        experimentalMinChunkSize: 2000
+      }
+    }
+  },
+  optimizeDeps: { include: ['debug', ...commonjsDeps] },
   resolve: {
     alias: {
       '~': path.resolve(__dirname, 'src/')
