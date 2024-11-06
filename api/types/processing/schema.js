@@ -16,7 +16,6 @@ export default {
     'owner',
     'plugin',
     'scheduling',
-    'permissions',
     'title'
   ],
   properties: {
