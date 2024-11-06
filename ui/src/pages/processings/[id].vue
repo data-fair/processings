@@ -58,7 +58,7 @@
 <script setup lang="ts">
 import type { Plugin, Processing } from '#api/types'
 
-import { schema as contractProcessing } from '../../../../api/types/processing/index.ts'
+import { resolvedSchema as contractProcessing } from '../../../../api/types/processing/index.ts'
 import timeZones from 'timezones.json'
 import Vjsf from '@koumoul/vjsf'
 import VjsfMarkdown from '@koumoul/vjsf-markdown'
@@ -125,26 +125,17 @@ const canExecProcessing = computed(() => {
   Preparation for the vjsf form
 */
 
-function recurseConfigSchema (object: Record<string, any>) {
-  Object.keys(object).forEach(key => {
-    const value = object[key]
-    if (key === 'props' && value?.type === 'password') {
-      value.autocomplete = 'new-password'
-    }
-    if (value && typeof value === 'object') {
-      recurseConfigSchema(value)
-    }
-  })
-}
-
 const processingSchema = computed(() => {
   if (!plugin.value || !processing.value) return
   const schema = JSON.parse(JSON.stringify(contractProcessing))
+  delete schema.title
   schema.properties.config = {
-    ...plugin.value.processingConfigSchema,
+    ...v2compat(plugin.value.processingConfigSchema),
     title: 'Plugin ' + plugin.value.customName,
-    'x-options': { deleteReadOnly: false }
+    'x-options': { deleteReadOnly: false } // readOnly fields are removed in vjsf, we want to keep them for the processingConfigSchema
   }
+
+  // merge processingConfigSchema $defs and definitions into the global Processing schema
   if (plugin.value.processingConfigSchema.$defs) {
     schema.$defs = { ...schema.$defs, ...plugin.value.processingConfigSchema.$defs }
     delete schema.properties.config.$defs
@@ -153,32 +144,24 @@ const processingSchema = computed(() => {
     schema.definitions = { ...schema.definitions, ...plugin.value.processingConfigSchema.definitions }
     delete schema.properties.config.definitions
   }
+
+  // remove readOnly properties for debug if in admin mode
   if (session.state.user?.adminMode) delete schema.properties.debug?.readOnly
+
+  // remove configs for non-admin users
   if (!canAdminProcessing.value) {
     delete schema.properties.permissions
     delete schema.properties.config
-    delete schema.properties.webhookKey
-    schema.properties.title.layout = 'none'
+    delete schema.required
   } else {
-    schema.required.push('config')
-  }
-  Object.keys(schema.properties).forEach(key => {
-    if (schema.properties[key].readOnly) {
-      schema.required = schema.required.filter((k: any) => k !== key)
-      delete schema.properties[key]
-    }
-  })
-  const cleanSchema = v2compat(schema)
-  recurseConfigSchema(cleanSchema)
-  if (cleanSchema.properties.config?.required) {
-    cleanSchema.properties.config.required = cleanSchema.properties.config.required
+    schema.required = ['title', 'scheduling', 'config', 'permissions']
+    schema.properties.config.required = schema.properties.config.required
       .filter((s: any) => s !== 'datasetMode')
   }
-  return cleanSchema
-})
 
-const owner = computed(() => processing.value?.owner)
-const ownerFilter = computed(() => `${owner.value?.type}:${owner.value?.id}${owner.value?.department ? ':' + owner.value?.department : ''}`)
+  console.log(schema)
+  return schema
+})
 
 const vjsfOptions = computed(() => {
   return {
@@ -186,7 +169,7 @@ const vjsfOptions = computed(() => {
     context: {
       owner: processing.value?.owner,
       // ownerFilter: runtimeConfig.public.dataFairAdminMode ? `owner=${ownerFilter.value}` : '',
-      ownerFilter: `owner=${ownerFilter.value}`,
+      ownerFilter: `owner=${processing.value?.owner.type}:${processing.value?.owner.id}${processing.value?.owner.department ? ':' + processing.value?.owner.department : ''}`,
       dataFairUrl: window.location.origin + '/data-fair',
       directoryUrl: window.location.origin + '/simple-directory',
       utcs
@@ -232,7 +215,6 @@ const patch = withUiNotif(
 /*
   A patch can be triggered server side
 */
-
 const patchConfigWSChannel = `processings/${processingId}/patch-config`
 const ws = useWS('/processings/api/')
 const onPatchConfig = () => {

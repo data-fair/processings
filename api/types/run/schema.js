@@ -7,6 +7,7 @@ export default {
   title: 'run',
   type: 'object',
   additionalProperties: true,
+  readOnly: true,
   required: [
     '_id',
     'owner',

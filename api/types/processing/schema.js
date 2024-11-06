@@ -6,7 +6,7 @@ export default {
   'x-exports': [
     'types',
     'validate',
-    'schema'
+    'resolvedSchema'
   ],
   title: 'processing',
   type: 'object',
@@ -16,6 +16,7 @@ export default {
     'owner',
     'plugin',
     'scheduling',
+    'permissions',
     'title'
   ],
   properties: {
@@ -24,11 +25,15 @@ export default {
       title: 'Identifiant du traitement',
       readOnly: true
     },
+    title: {
+      type: 'string',
+      title: 'Titre'
+    },
     active: {
       title: 'Actif',
       type: 'boolean',
       default: false,
-      'x-display': 'switch'
+      layout: 'switch'
     },
     created: {
       type: 'object',
@@ -61,14 +66,17 @@ export default {
     },
     debug: {
       type: 'boolean',
-      title: 'activer le mode debug',
+      title: 'Mode debug',
+      description: 'Active le mode debug pour ce traitement',
       readOnly: true
     },
     owner: {
-      $ref: 'https://github.com/data-fair/lib/account'
+      $ref: 'https://github.com/data-fair/lib/account',
+      readOnly: true
     },
     permissions: {
       type: 'array',
+      title: 'Permissions',
       items: {
         $ref: 'https://github.com/data-fair/processings/permission'
       }
@@ -89,19 +97,15 @@ export default {
         $ref: 'https://github.com/data-fair/processings/scheduling'
       }
     },
-    title: {
-      type: 'string',
-      title: 'Titre'
-    },
     updated: {
       type: 'object',
       additionalProperties: false,
+      readOnly: true,
       required: [
         'id',
         'name',
         'date'
       ],
-      readOnly: true,
       properties: {
         id: {
           type: 'string',
@@ -119,7 +123,8 @@ export default {
       }
     },
     userProfile: {
-      type: 'string'
+      type: 'string',
+      readOnly: true
     },
     lastRun: jsonSchema(RunSchema)
       .removeId()

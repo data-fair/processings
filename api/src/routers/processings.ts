@@ -16,7 +16,7 @@ import { createNext } from '../../../shared/runs.ts'
 import { applyProcessing, deleteProcessing } from '../utils/runs.ts'
 import mongo from '#mongo'
 import config from '#config'
-import { schema as processingSchema } from '#types/processing/index.ts'
+import { resolvedSchema as processingSchema } from '#types/processing/index.ts'
 import findUtils from '../utils/find.ts'
 import permissions from '../utils/permissions.ts'
 
