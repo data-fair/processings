@@ -1,6 +1,6 @@
 import type { Limit } from '#api/types'
 import type { Account } from '@data-fair/lib-express'
-import { Collection, Db } from 'mongodb'
+import type { Collection, Db } from 'mongodb'
 
 export const getLimits = async (db: Db, consumer: Account, processingsSeconds:number = -1) => {
   const now = new Date()

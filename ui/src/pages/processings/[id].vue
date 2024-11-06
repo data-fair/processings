@@ -131,8 +131,7 @@ const processingSchema = computed(() => {
   delete schema.title
   schema.properties.config = {
     ...v2compat(plugin.value.processingConfigSchema),
-    title: 'Plugin ' + plugin.value.customName,
-    'x-options': { deleteReadOnly: false } // readOnly fields are removed in vjsf, we want to keep them for the processingConfigSchema
+    title: 'Plugin ' + plugin.value.customName
   }
 
   // merge processingConfigSchema $defs and definitions into the global Processing schema
