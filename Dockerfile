@@ -57,20 +57,37 @@ ADD /ui ui
 RUN npm -w ui run build
 
 # =============================
+# Install production dependencies for Worker
+# =============================
+FROM installer AS worker-installer
+
+RUN npm ci -w worker --prefer-offline --omit=dev --omit=optional --omit=peer --no-audit --no-fund && \
+    npx clean-modules --yes
+
+# =============================
+# Final Worker Image
+# =============================
+FROM base AS worker
+
+COPY --from=worker-installer /app/node_modules node_modules
+COPY worker worker
+COPY shared shared
+COPY upgrade upgrade
+COPY --from=types /app/worker/config config
+COPY --from=types /app/api/types api/types
+COPY package.json README.md LICENSE BUILD.json* ./
+EXPOSE 9090
+USER node
+WORKDIR /app/worker
+CMD ["node", "--experimental-strip-types", "index.ts"]
+
+# =============================
 # Install production dependencies for API
 # =============================
 FROM installer AS api-installer
 
 # remove other workspaces and reinstall, otherwise we can get rig have some peer dependencies from other workspaces
 RUN npm ci -w api --prefer-offline --omit=dev --omit=optional --omit=peer --no-audit --no-fund && \
-    npx clean-modules --yes
-
-# =============================
-# Install production dependencies for Worker
-# =============================
-FROM installer AS worker-installer
-
-RUN npm ci -w worker --prefer-offline --omit=dev --omit=optional --omit=peer --no-audit --no-fund && \
     npx clean-modules --yes
 
 # =============================
@@ -86,25 +103,12 @@ COPY --from=types /app/api/types api/types
 COPY --from=types /app/api/doc api/doc
 COPY --from=types /app/api/config api/config
 COPY --from=ui /app/ui/dist ui/dist
-COPY package.json README.md LICENSE ./
+COPY package.json README.md LICENSE BUILD.json* ./
+# artificially create a dependency to "daemon" target for better caching in github ci
+COPY --from=worker /app/package.json package.json
 EXPOSE 8080
 EXPOSE 9090
 USER node
 WORKDIR /app/api
 CMD ["node", "--max-http-header-size", "64000", "--experimental-strip-types", "index.ts"]
 
-# =============================
-# Final Worker Image
-# =============================
-FROM base AS worker
-
-COPY --from=worker-installer /app/node_modules node_modules
-COPY worker worker
-COPY shared shared
-COPY upgrade upgrade
-COPY --from=types /app/worker/config config
-COPY --from=types /app/api/types api/types
-COPY package.json README.md LICENSE ./
-USER node
-WORKDIR /app/worker
-CMD ["node", "--experimental-strip-types", "index.ts"]

@@ -6,6 +6,7 @@ import pluginsRegistryRouter from './routers/plugins-registry.ts'
 import pluginsRouter from './routers/plugins.ts'
 import processingsRouter from './routers/processings.ts'
 import runsRouter from './routers/runs.ts'
+import adminRouter from './admin.ts'
 import config, { uiConfig } from '#config'
 
 export const app = express()
@@ -26,6 +27,7 @@ app.use('/api/plugins', pluginsRouter)
 app.use('/api/processings', processingsRouter)
 app.use('/api/runs', runsRouter)
 app.use('/api/limits', limitsRouter)
+app.use('/api/admin', adminRouter)
 
 if (config.serveUi) {
   app.use(await createSpaMiddleware(resolve(import.meta.dirname, '../../ui/dist'), uiConfig))
