@@ -123,7 +123,7 @@
           </p>
           <private-access
             :patch="result.access"
-            @change="(newAccess) => { result.access = newAccess; saveAccess(result) }"
+            @change="(newAccess: any) => { result.access = newAccess; saveAccess(result) }"
           />
           <v-spacer />
           <v-form
