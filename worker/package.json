@@ -17,13 +17,14 @@
     "@types/resolve-path": "^1.4.3"
   },
   "dependencies": {
-    "@data-fair/processing-shared": "*",
     "@data-fair/lib-express": "^1.8.0",
     "@data-fair/lib-node": "^2.0.1",
+    "@data-fair/processing-shared": "*",
     "axios-retry": "^4.5.0",
     "child-process-promise": "^2.2.1",
     "config": "^3.3.12",
     "debug": "^4.3.7",
+    "fs-extra": "^11.2.0",
     "nodemailer": "^6.9.16",
     "resolve-path": "^1.4.0",
     "tree-kill": "^1.2.2"

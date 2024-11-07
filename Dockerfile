@@ -101,7 +101,6 @@ RUN mkdir -p /app/shared/node_modules
 # =============================
 FROM base AS main
 
-RUN mkdir -p /app/data && chown -R node:node /app/data
 COPY --from=api-installer /app/node_modules node_modules
 COPY api api
 COPY shared shared
