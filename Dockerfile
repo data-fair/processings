@@ -64,6 +64,7 @@ FROM installer AS worker-installer
 RUN npm ci -w worker --prefer-offline --omit=dev --omit=optional --omit=peer --no-audit --no-fund && \
     npx clean-modules --yes
 RUN mkdir -p /app/worker/node_modules
+RUN mkdir -p /app/shared/node_modules
 
 # =============================
 # Final Worker Image
@@ -77,6 +78,7 @@ COPY upgrade upgrade
 COPY --from=types /app/worker/config worker/config
 COPY --from=types /app/api/types api/types
 COPY --from=worker-installer /app/worker/node_modules worker/node_modules
+COPY --from=worker-installer /app/shared/node_modules shared/node_modules
 COPY package.json README.md LICENSE BUILD.json* ./
 EXPOSE 9090
 # USER node # This would be great to use, but not possible as the volumes are mounted as root
@@ -92,6 +94,7 @@ FROM installer AS api-installer
 RUN npm ci -w api --prefer-offline --omit=dev --omit=optional --omit=peer --no-audit --no-fund && \
     npx clean-modules --yes
 RUN mkdir -p /app/api/node_modules
+RUN mkdir -p /app/shared/node_modules
 
 # =============================
 # Final API Image
@@ -106,6 +109,7 @@ COPY --from=types /app/api/types api/types
 COPY --from=types /app/api/doc api/doc
 COPY --from=types /app/api/config api/config
 COPY --from=api-installer /app/api/node_modules api/node_modules
+COPY --from=api-installer /app/shared/node_modules shared/node_modules
 COPY --from=ui /app/ui/dist ui/dist
 COPY package.json README.md LICENSE BUILD.json* ./
 # artificially create a dependency to "worker" target for better caching in github ci
