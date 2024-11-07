@@ -19,7 +19,7 @@ const createTestPlugin = async () => {
   await superadmin.put(`/api/plugins/${plugin.id}/access`, { public: true })
 }
 
-describe('processing', () => {
+describe.only('processing', () => {
   before(startApiServer)
   before(startWorkerServer)
   beforeEach(clean)
@@ -27,7 +27,7 @@ describe('processing', () => {
   after(stopApiServer)
   after(stopWorkerServer)
 
-  it('should create a new processing, activate it and run it', async () => {
+  it.only('should create a new processing, activate it and run it', async () => {
     let processing = (await superadmin.post('/api/processings', {
       title: 'Hello processing',
       plugin: plugin.id
@@ -56,7 +56,6 @@ describe('processing', () => {
       }
     })
     runs = (await superadmin.get('/api/runs', { params: { processing: processing._id } })).data
-    console.log(runs)
     assert.equal(runs.count, 0)
 
     // active and with scheduling = a scheduled run

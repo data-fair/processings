@@ -5,12 +5,12 @@ import { session } from '@data-fair/lib-express/index.js'
 import * as wsServer from '@data-fair/lib-express/ws-server.js'
 import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import { startObserver, stopObserver } from '@data-fair/lib-node/observer.js'
-import * as locks from '@data-fair/lib-node/locks.js'
 import { createHttpTerminator } from 'http-terminator'
 import { exec as execCallback } from 'child_process'
 import { promisify } from 'util'
 import config from '#config'
 import mongo from '#mongo'
+import locks from '#locks'
 import http from 'http'
 
 const exec = promisify(execCallback)
@@ -30,7 +30,7 @@ export const start = async () => {
   if (config.observer.active) await startObserver(config.observer.port)
   session.init(config.privateDirectoryUrl)
   await mongo.init()
-  await locks.init(mongo.db)
+  await locks.start(mongo.db)
 
   await wsServer.start(server, mongo.db, async (channel, sessionState) => {
     const [ownerType, ownerId] = channel.split('/')
@@ -51,7 +51,6 @@ export const start = async () => {
 export const stop = async () => {
   await httpTerminator.terminate()
   if (config.observer.active) await stopObserver()
-  await locks.stop()
-  await mongo.client.close()
+  await mongo.close()
   await wsServer.stop()
 }

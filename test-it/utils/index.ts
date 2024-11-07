@@ -1,7 +1,6 @@
 import type { AxiosAuthOptions } from '@data-fair/lib-node/axios-auth.js'
 import { axiosBuilder } from '@data-fair/lib-node/axios.js'
 import { axiosAuth as _axiosAuth } from '@data-fair/lib-node/axios-auth.js'
-import mongo from '@data-fair/lib-node/mongo.js'
 import fs from 'fs-extra'
 
 const directoryUrl = 'http://localhost:5600/simple-directory'
@@ -18,6 +17,7 @@ export const axiosAuth = (opts: string | Omit<AxiosAuthOptions, 'directoryUrl' |
 }
 
 export const clean = async () => {
+  const mongo = (await import('../../api/src/mongo.ts')).default
   for (const name of ['processings', 'runs', 'limits']) {
     await mongo.db.collection(name).deleteMany({})
   }

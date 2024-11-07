@@ -1,13 +1,7 @@
 import type { Account } from '@data-fair/lib-express'
-import mongo from '@data-fair/lib-node/mongo.js'
 import type { Db } from 'mongodb'
 import { getLimits } from '../../../shared/limits.ts'
 import config from '#config'
-
-export const initLimits = async () => {
-  await mongo.ensureIndex('limits', { id: 'text', name: 'text' }, { name: 'fulltext' })
-  await mongo.ensureIndex('limits', { type: 1, id: 1 }, { name: 'limits-find-current', unique: true })
-}
 
 const calculateRemainingLimit = (limits: any, key: string) => {
   const limit = limits && limits[key] && limits[key].limit
@@ -29,7 +23,6 @@ export const incrementConsumption = async (db: Db, consumer: Account, type: stri
 }
 
 export default {
-  initLimits,
   remaining,
   incrementConsumption
 }

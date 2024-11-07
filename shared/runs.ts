@@ -1,7 +1,7 @@
 import type { Collection, Db } from 'mongodb'
 import type { Run, Processing, Scheduling } from '#api/types'
 
-import * as locks from '@data-fair/lib-node/locks.js'
+import type { Locks } from '@data-fair/lib-node/locks.js'
 import { CronJob } from 'cron'
 import { nanoid } from 'nanoid'
 import dayjs from 'dayjs'
@@ -17,7 +17,7 @@ const toCRON = (scheduling: Scheduling): string => {
   return `${minute} ${hour} ${dayOfMonth} ${month} ${dayOfWeek}`
 }
 
-export const createNext = async (db: Db, processing: Processing, triggered: boolean = false, delaySeconds:number = 0): Promise<Run | null> => {
+export const createNext = async (db: Db, locks: Locks, processing: Processing, triggered: boolean = false, delaySeconds:number = 0): Promise<Run | null> => {
   const ack = await locks.acquire(processing._id + '/next-run')
   try {
     if (!ack) {

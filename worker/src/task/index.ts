@@ -1,4 +1,4 @@
-import mongo from '@data-fair/lib-node/mongo.js'
+import { Mongo } from '@data-fair/lib-node/mongo.js'
 import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import nodemailer from 'nodemailer'
 import config from '#config'
@@ -19,6 +19,7 @@ process.on('SIGTERM', function onSigterm () {
   })
 })
 
+const mongo = new Mongo()
 await mongo.connect(config.mongoUrl, { readPreference: 'primary', maxPoolSize: 1 })
 const mailTransport = nodemailer.createTransport(config.mails.transport)
 await wsEmitter.init(mongo.db)

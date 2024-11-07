@@ -9,11 +9,11 @@ import resolvePath from 'resolve-path'
 import kill from 'tree-kill'
 
 import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
-import * as locks from '@data-fair/lib-node/locks.js'
 import { startObserver, stopObserver, internalError } from '@data-fair/lib-node/observer.js'
 import upgradeScripts from '@data-fair/lib-node/upgrade-scripts.js'
 import config from '#config'
 import mongo from '#mongo'
+import locks from '#locks'
 import { createNext } from '../../shared/runs.ts'
 import limits from './utils/limits.ts'
 import { initMetrics } from './utils/metrics.ts'
@@ -37,14 +37,13 @@ export const start = async () => {
   }
   await mongo.init()
   const db = mongo.db
-  await locks.init(db)
-  await upgradeScripts(db, config.upgradeRoot)
+  await locks.start(db)
+  await upgradeScripts(db, locks, config.upgradeRoot)
   await wsEmitter.init(db)
   if (config.observer.active) {
     await initMetrics(db)
     await startObserver(config.observer.port)
   }
-  await limits.initLimits()
 
   // initialize empty promise pool
   for (let i = 0; i < config.worker.concurrency; i++) {
@@ -61,10 +60,10 @@ export const start = async () => {
 // Stop and wait for all workers to finish their current task
 export const stop = async () => {
   stopped = true
-  await locks.stop()
   await Promise.all(promisePool.filter(p => !!p))
   await Promise.all([mainLoopPromise, killLoopPromise])
-  await mongo.client.close()
+  await locks.stop()
+  await mongo.close()
   if (config.observer.active) await stopObserver()
 }
 
@@ -131,9 +130,11 @@ async function killLoop (db: Db) {
       try {
         const runsCollection = mongo.db.collection('runs') as Collection<Run>
         for await (const run of runsCollection.find({ status: 'kill' })) {
-          killRun(db, run).catch(err => {
+          try {
+            await killRun(db, run)
+          } catch (err) {
             internalError('worker-task-kill', err)
-          })
+          }
         }
       } catch (err) {
         internalError('worker-loop-kill', err)
@@ -260,11 +261,11 @@ async function iter (db: Db, run: Run) {
     }
     if (processing && processing.scheduling.length) { // we create the next scheduled run
       try {
-        await createNext(db, processing)
+        await createNext(db, locks, processing)
       } catch (err) {
         // retry once in case of failure, a concurrent call to createNext might have been made, but failed
         await new Promise(resolve => setTimeout(resolve, 2000))
-        await createNext(db, processing)
+        await createNext(db, locks, processing)
       }
     }
   }
@@ -309,7 +310,7 @@ async function acquireNext (db: Db): Promise<Run | undefined> {
           const processing = await db.collection<Processing>('processings').findOne({ _id: run.processing._id })
           await locks.release(run.processing._id)
           if (processing && processing.scheduling.length) {
-            await createNext(db, processing) // we create the next scheduled run
+            await createNext(db, locks, processing) // we create the next scheduled run
           }
         } catch (err) {
           const message = `failure while closing a run that was left in running status by error (${run.processing._id} / ${run._id})`

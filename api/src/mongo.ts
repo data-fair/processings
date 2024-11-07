@@ -1,40 +1,53 @@
 import type { Processing, Run, Limit } from '#types'
 
-import mongo from '@data-fair/lib-node/mongo.js'
+import { Mongo } from '@data-fair/lib-node/mongo.js'
 import config from '#config'
 
 export class ProcessingsMongo {
+  private mongo: Mongo
   get client () {
-    return mongo.client
+    return this.mongo.client
   }
 
   get db () {
-    return mongo.db
+    return this.mongo.db
   }
 
   get processings () {
-    return mongo.db.collection<Processing>('processings')
+    return this.mongo.db.collection<Processing>('processings')
   }
 
   get runs () {
-    return mongo.db.collection<Run>('runs')
+    return this.mongo.db.collection<Run>('runs')
   }
 
   get limits () {
-    return mongo.db.collection<Limit>('limits')
+    return this.mongo.db.collection<Limit>('limits')
+  }
+
+  constructor () {
+    this.mongo = new Mongo()
   }
 
   init = async () => {
-    await mongo.connect(config.mongoUrl)
-    await mongo.configure({
+    await this.mongo.connect(config.mongoUrl)
+    await this.mongo.configure({
       processings: {
         fulltext: { title: 'text' },
         main: { 'owner.type': 1, 'owner.id': 1 }
       },
       runs: {
         main: { 'owner.type': 1, 'owner.id': 1, 'processing._id': 1, createdAt: -1 }
+      },
+      limits: {
+        fulltext: { id: 'text', name: 'text' },
+        'limits-find-current': [{ type: 1, id: 1 }, { unique: true }]
       }
     })
+  }
+
+  async close () {
+    await this.mongo.client.close()
   }
 }
 

@@ -1,27 +1,37 @@
 import type { Processing, Run } from '#api/types'
 
-import mongo from '@data-fair/lib-node/mongo.js'
+import { Mongo } from '@data-fair/lib-node/mongo.js'
 import config from '#config'
 
 export class ProcessingsMongo {
+  private mongo: Mongo
+
   get client () {
-    return mongo.client
+    return this.mongo.client
   }
 
   get db () {
-    return mongo.db
+    return this.mongo.db
   }
 
   get processings () {
-    return mongo.db.collection<Processing>('processings')
+    return this.mongo.db.collection<Processing>('processings')
   }
 
   get runs () {
-    return mongo.db.collection<Run>('runs')
+    return this.mongo.db.collection<Run>('runs')
+  }
+
+  constructor () {
+    this.mongo = new Mongo()
   }
 
   init = async () => {
-    await mongo.connect(config.mongoUrl)
+    await this.mongo.connect(config.mongoUrl)
+  }
+
+  async close () {
+    await this.mongo.client.close()
   }
 }
 

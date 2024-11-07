@@ -16,6 +16,7 @@ import { createNext } from '../../../shared/runs.ts'
 import { applyProcessing, deleteProcessing } from '../utils/runs.ts'
 import mongo from '#mongo'
 import config from '#config'
+import locks from '#locks'
 import { resolvedSchema as processingSchema } from '#types/processing/index.ts'
 import findUtils from '../utils/find.ts'
 import permissions from '../utils/permissions.ts'
@@ -270,5 +271,5 @@ router.post('/:id/_trigger', asyncHandler(async (req, res) => {
     if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState, req.headers.host) ?? '')) return res.status(403).send()
   }
   if (!processing.active) return res.status(409).send('Le traitement n\'est pas actif')
-  res.send(await createNext(mongo.db, processing, true, req.query.delay ? Number(req.query.delay) : 0))
+  res.send(await createNext(mongo.db, locks, processing, true, req.query.delay ? Number(req.query.delay) : 0))
 }))

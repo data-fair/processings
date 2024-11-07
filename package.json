@@ -17,7 +17,7 @@
     "prepare": "husky || true",
     "stop-dev-deps": "docker compose --profile dev stop",
     "test": "NODE_ENV=test node --experimental-strip-types --test-force-exit --test-concurrency=1 --test --test-reporter=spec test-it/*.ts",
-    "test-only": "NODE_ENV=test node --experimental-strip-types --test-force-exit --test-concurrency=1 --test",
+    "test-only": "NODE_ENV=test node --experimental-strip-types --test-force-exit --test-only --test-concurrency=1 --test",
     "test-images": "docker compose --profile dev --profile testImages up -d --build --wait",
     "quality": "npm run dev-deps && npm run lint && npm run build-types && npm run check-types && npm -w ui run build && npm run test && npm audit --omit=dev --audit-level=critical"
   },
@@ -42,6 +42,7 @@
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",
     "@commitlint/config-conventional": "^19.5.0",
+    "@data-fair/lib-node": "^2.0.1",
     "@data-fair/lib-utils": "^1.1.0",
     "@types/config": "^3.3.5",
     "@types/debug": "^4.1.12",

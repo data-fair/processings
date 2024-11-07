@@ -8,6 +8,7 @@
   "imports": {
     "#config": "./src/config.ts",
     "#mongo": "./src/mongo.ts",
+    "#locks": "./src/locks.ts",
     "#types": "./src/types.ts"
   },
   "devDependencies": {
@@ -15,7 +16,7 @@
     "@types/nodemailer": "^6.4.16"
   },
   "dependencies": {
-    "@data-fair/lib-node": "^1.4.0",
+    "@data-fair/lib-node": "^2.0.1",
     "axios-retry": "^4.5.0",
     "child-process-promise": "^2.2.1",
     "config": "^3.3.12",
