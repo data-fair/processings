@@ -205,7 +205,7 @@ async function iter (db: Db, run: Run) {
 
     // Run a task in a dedicated child process for extra resiliency to fatal memory exceptions
     const path = process.env.NODE_ENV === 'test' ? './worker/src/task/index.ts' : './src/task/index.ts'
-    const spawnPromise = spawn('node', ['--experimental-strip-types', path, run._id, processing._id], {
+    const spawnPromise = spawn('node', ['--no-warnings', '--experimental-strip-types', path, run._id, processing._id], {
       env: process.env,
       stdio: ['ignore', 'pipe', 'pipe']
     })

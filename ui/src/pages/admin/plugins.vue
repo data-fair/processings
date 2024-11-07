@@ -121,9 +121,9 @@
           <p class="mb-0">
             {{ result.description }}
           </p>
-          <PrivateAccess
+          <private-access
             :patch="result.access"
-            @change="saveAccess(result)"
+            @change="(newAccess) => { result.access = newAccess; saveAccess(result) }"
           />
           <v-spacer />
           <v-form

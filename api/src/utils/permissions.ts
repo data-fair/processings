@@ -70,9 +70,9 @@ const matchPermissionTarget = (target: any, sessionState: SessionStateAuthentica
   return false
 }
 
-const getUserResourceProfile = (owner: Account, permissions: Permission[] | undefined, sessionState: SessionStateAuthenticated, host: string | undefined): string | undefined => {
+const getUserResourceProfile = (owner: Account, permissions: Permission[] | undefined, sessionState: SessionStateAuthenticated): string | undefined => {
   // this line is first, a manual permission cannot demote an admin
-  const ownerRole = sessionState?.user.adminMode ? 'admin' : getOwnerRole(sessionState, owner)
+  const ownerRole = sessionState.user.adminMode ? 'admin' : getOwnerRole(sessionState, owner)
   if (ownerRole === 'admin') return 'admin'
   for (const profile of ['read', 'exec']) {
     if (permissions && permissions.find((p) => p.profile === profile && matchPermissionTarget(p.target, sessionState))) {

@@ -97,6 +97,7 @@ async function listSuggestions () {
 
 function onChange () {
   search.value = ''
+  loading.value = false
 }
 </script>
 

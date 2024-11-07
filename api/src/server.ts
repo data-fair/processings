@@ -1,7 +1,7 @@
 import { existsSync } from 'fs'
 import resolvePath from 'resolve-path'
 import { app } from './app.ts'
-import { session } from '@data-fair/lib-express/index.js'
+import { session, assertAuthenticated } from '@data-fair/lib-express/index.js'
 import * as wsServer from '@data-fair/lib-express/ws-server.js'
 import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import { startObserver, stopObserver } from '@data-fair/lib-node/observer.js'
@@ -12,6 +12,7 @@ import config from '#config'
 import mongo from '#mongo'
 import locks from '#locks'
 import http from 'http'
+import permissions from './utils/permissions.ts'
 
 const exec = promisify(execCallback)
 const server = http.createServer(app)
@@ -33,10 +34,11 @@ export const start = async () => {
   await locks.start(mongo.db)
 
   await wsServer.start(server, mongo.db, async (channel, sessionState) => {
-    const [ownerType, ownerId] = channel.split('/')
-    if (!sessionState.user) return false
-    if (sessionState.user.adminMode) return true
-    return (['admin', 'contrib'].includes(ownerType) && ownerId === sessionState.user.id)
+    assertAuthenticated(sessionState)
+    const processingId = channel.split('/')[1]
+    const processing = await mongo.processings.findOne({ _id: processingId })
+    if (!processing) return false
+    return ['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState) ?? '')
   })
   await wsEmitter.init(mongo.db)
 
