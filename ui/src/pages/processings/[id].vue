@@ -142,6 +142,7 @@ const processingSchema = computed(() => {
     schema.definitions = { ...schema.definitions, ...plugin.value.processingConfigSchema.definitions }
     delete schema.properties.config.definitions
   }
+  delete schema.properties.config.$id
 
   // remove readOnly properties for debug if in admin mode
   if (session.state.user?.adminMode) delete schema.properties.debug?.readOnly
