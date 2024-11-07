@@ -73,7 +73,7 @@ COPY --from=worker-installer /app/node_modules node_modules
 COPY worker worker
 COPY shared shared
 COPY upgrade upgrade
-COPY --from=types /app/worker/config config
+COPY --from=types /app/worker/config worker/config
 COPY --from=types /app/api/types api/types
 COPY package.json README.md LICENSE BUILD.json* ./
 EXPOSE 9090
