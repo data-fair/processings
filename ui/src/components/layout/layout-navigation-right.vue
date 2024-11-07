@@ -8,7 +8,9 @@
     style="padding-top: 60px; background-color: transparent;"
     color="transparent"
   >
-    <slot />
+    <template #default>
+      <slot />
+    </template>
   </v-navigation-drawer>
 </template>
 
