@@ -10,7 +10,7 @@ import path from 'path'
 import resolvePath from 'resolve-path'
 import { nanoid } from 'nanoid'
 
-import { session, asyncHandler } from '@data-fair/lib-express/index.js'
+import { session } from '@data-fair/lib-express/index.js'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import { createNext } from '@data-fair/processing-shared/runs.ts'
 import { applyProcessing, deleteProcessing } from '../utils/runs.ts'
@@ -63,7 +63,7 @@ const cleanProcessing = (processing: Processing, sessionState: SessionStateAuthe
 }
 
 // Get the list of processings
-router.get('', asyncHandler(async (req, res) => {
+router.get('', async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const params = (await import('#doc/processings/get-req/index.ts')).returnValid(req.query)
   const sort = findUtils.sort(params.sort)
@@ -150,9 +150,9 @@ router.get('', asyncHandler(async (req, res) => {
   const facets = aggregationResult[0] || { statuses: {}, plugins: {} }
 
   res.json({ results: results.map((p) => cleanProcessing(p as Processing, sessionState)), facets, count })
-}))
+})
 
-router.post('', asyncHandler(async (req, res) => {
+router.post('', async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const processing = { ...req.body }
   processing._id = nanoid()
@@ -180,10 +180,10 @@ router.post('', asyncHandler(async (req, res) => {
   await validateFullProcessing(processing)
   await mongo.processings.insertOne(processing)
   res.status(200).json(cleanProcessing(processing, sessionState))
-}))
+})
 
 // Patch some of the attributes of a processing
-router.patch('/:id', asyncHandler(async (req, res) => {
+router.patch('/:id', async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
@@ -218,19 +218,19 @@ router.patch('/:id', asyncHandler(async (req, res) => {
   await mongo.runs.updateMany({ 'processing._id': processing._id }, { $set: { permissions: patchedProcessing.permissions || [] } })
   await applyProcessing(mongo, patchedProcessing)
   res.status(200).json(cleanProcessing(patchedProcessing, sessionState))
-}))
+})
 
 // Get a processing
-router.get('/:id', asyncHandler(async (req, res) => {
+router.get('/:id', async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState) ?? '')) return res.status(403).send()
   res.status(200).json(cleanProcessing(processing, sessionState))
-}))
+})
 
 // Delete a processing
-router.delete('/:id', asyncHandler(async (req, res) => {
+router.delete('/:id', async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
@@ -238,17 +238,17 @@ router.delete('/:id', asyncHandler(async (req, res) => {
   await mongo.processings.deleteOne({ _id: req.params.id })
   if (processing) await deleteProcessing(mongo, processing)
   res.sendStatus(204)
-}))
+})
 
-router.get('/:id/webhook-key', asyncHandler(async (req, res) => {
+router.get('/:id/webhook-key', async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState) !== 'admin') return res.status(403).send()
   res.send(processing.webhookKey)
-}))
+})
 
-router.delete('/:id/webhook-key', asyncHandler(async (req, res) => {
+router.delete('/:id/webhook-key', async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
@@ -259,9 +259,9 @@ router.delete('/:id/webhook-key', asyncHandler(async (req, res) => {
     { $set: { webhookKey } }
   )
   res.send(webhookKey)
-}))
+})
 
-router.post('/:id/_trigger', asyncHandler(async (req, res) => {
+router.post('/:id/_trigger', async (req, res) => {
   const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (req.query.key && req.query.key !== processing.webhookKey) {
@@ -272,4 +272,4 @@ router.post('/:id/_trigger', asyncHandler(async (req, res) => {
   }
   if (!processing.active) return res.status(409).send('Le traitement n\'est pas actif')
   res.send(await createNext(mongo.db, locks, processing, true, req.query.delay ? Number(req.query.delay) : 0))
-}))
+})

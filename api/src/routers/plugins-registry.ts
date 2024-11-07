@@ -2,7 +2,6 @@ import type { AxiosRequestConfig } from 'axios'
 import { Router } from 'express'
 import memoize from 'memoizee'
 
-import { asyncHandler } from '@data-fair/lib-express/index.js'
 import axios from '@data-fair/lib-node/axios.js'
 import config from '#config'
 
@@ -59,10 +58,10 @@ const memoizedSearch = memoize(search, {
   maxAge: 5 * 60 * 1000 // cached for 5 minutes to be polite with npmjs
 })
 
-router.get('/', asyncHandler(async (req, res) => {
+router.get('/', async (req, res) => {
   if (req.query.q && typeof req.query.q !== 'string') {
     res.status(400).send('Invalid query')
     return
   }
   res.send(await memoizedSearch(req.query.q, req.query.showAll === 'true' || false))
-}))
+})

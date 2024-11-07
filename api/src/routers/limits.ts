@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from 'express'
 import type { Limit } from '#types'
 
 import { Router } from 'express'
-import { asyncHandler, session } from '@data-fair/lib-express/index.js'
+import { session } from '@data-fair/lib-express/index.js'
 import { getLimits } from '@data-fair/processing-shared/limits.ts'
 import mongo from '#mongo'
 import config from '#config'
@@ -32,7 +32,7 @@ const isAccountMember = async (req: Request, res: Response, next: NextFunction) 
 }
 
 // Endpoint for customers service to create/update limits
-router.post('/:type/:id', asyncHandler(async (req, res) => {
+router.post('/:type/:id', async (req, res) => {
   if (req.query.key !== config.secretKeys.limits) {
     await session.reqAdminMode(req)
   }
@@ -45,18 +45,18 @@ router.post('/:type/:id', asyncHandler(async (req, res) => {
   await mongo.limits
     .replaceOne({ type: req.params.type, id: req.params.id }, newLimit, { upsert: true })
   res.send(body)
-}))
+})
 
 // A user can get limits information for himself only
-router.get('/:type/:id', isAccountMember, asyncHandler(async (req, res) => {
+router.get('/:type/:id', isAccountMember, async (req, res) => {
   const consumer = { type: req.params.type as 'organization' | 'user', id: req.params.id, name: req.params.id, department: '' }
   const limits = await getLimits(mongo.db, consumer)
   if (!limits) return res.status(404).send()
   if ('_id' in limits) delete limits._id
   res.send(limits)
-}))
+})
 
-router.get('/', asyncHandler(async (req, res) => {
+router.get('/', async (req, res) => {
   if (req.query.key !== config.secretKeys.limits) {
     await session.reqAdminMode(req)
   }
@@ -70,4 +70,4 @@ router.get('/', asyncHandler(async (req, res) => {
     .limit(10000)
     .toArray()
   res.send({ results, count: results.length })
-}))
+})

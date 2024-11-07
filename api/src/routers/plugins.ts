@@ -11,7 +11,7 @@ import semver from 'semver'
 import resolvePath from 'resolve-path'
 import tmp from 'tmp-promise'
 
-import { session, asyncHandler } from '@data-fair/lib-express/index.js'
+import { session } from '@data-fair/lib-express/index.js'
 import mongo from '#mongo'
 import config from '#config'
 import permissions from '../utils/permissions.ts'
@@ -57,7 +57,7 @@ const preparePluginInfo = async (pluginInfo: Plugin): Promise<Plugin> => {
   return { ...pluginInfo, customName }
 }
 
-router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
+router.post('/', permissions.isSuperAdmin, async (req, res) => {
   const { body } = (await import('#doc/plugin/post-req/index.ts')).returnValid(req)
   const plugin = body as Record<string, any>
   plugin.id = plugin.name.replace('/', '-') + '-' + semver.major(plugin.version)
@@ -96,10 +96,10 @@ router.post('/', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
   if (await fs.pathExists(pluginConfigPath)) installedPlugin.config = await fs.readJson(pluginConfigPath)
 
   res.send(installedPlugin)
-}))
+})
 
 // List installed plugins (optional: privateAccess=[type]:[id])
-router.get('/', asyncHandler(async (req, res) => {
+router.get('/', async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
 
   const dirs = (await fs.readdir(pluginsDir)).filter(p => !p.endsWith('.json'))
@@ -145,10 +145,10 @@ router.get('/', asyncHandler(async (req, res) => {
     results,
     facets: { usages: aggregationResult || {} }
   })
-}))
+})
 
 // Return PluginData (if connected)
-router.get('/:id', asyncHandler(async (req, res) => {
+router.get('/:id', async (req, res) => {
   await session.reqAuthenticated(req)
   try {
     const pluginInfo: Plugin = await fs.readJson(resolvePath(pluginsDir, path.join(req.params.id, 'plugin.json')))
@@ -157,25 +157,25 @@ router.get('/:id', asyncHandler(async (req, res) => {
     if (e.code === 'ENOENT') res.status(404).send('Plugin not found')
     else throw e
   }
-}))
+})
 
-router.delete('/:id', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
+router.delete('/:id', permissions.isSuperAdmin, async (req, res) => {
   await fs.remove(path.join(pluginsDir, req.params.id))
   await fs.remove(path.join(pluginsDir, req.params.id + '-config.json'))
   await fs.remove(path.join(pluginsDir, req.params.id + '-access.json'))
   res.status(204).send()
-}))
+})
 
-router.put('/:id/config', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
+router.put('/:id/config', permissions.isSuperAdmin, async (req, res) => {
   const { pluginConfigSchema } = await fs.readJson(path.join(pluginsDir, req.params.id, 'plugin.json'))
   const validate = ajv.compile(pluginConfigSchema)
   const valid = validate(req.body)
   if (!valid) return res.status(400).send(validate.errors)
   await fs.writeJson(path.join(pluginsDir, req.params.id + '-config.json'), req.body)
   res.send(req.body)
-}))
+})
 
-router.put('/:id/access', permissions.isSuperAdmin, asyncHandler(async (req, res) => {
+router.put('/:id/access', permissions.isSuperAdmin, async (req, res) => {
   await fs.writeJson(path.join(pluginsDir, req.params.id + '-access.json'), req.body)
   res.send(req.body)
-}))
+})
