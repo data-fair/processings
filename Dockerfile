@@ -77,7 +77,7 @@ COPY --from=types /app/worker/config config
 COPY --from=types /app/api/types api/types
 COPY package.json README.md LICENSE BUILD.json* ./
 EXPOSE 9090
-USER node
+# USER node # This would be great to use, but not possible as the volumes are mounted as root
 WORKDIR /app/worker
 CMD ["node", "--experimental-strip-types", "index.ts"]
 
@@ -108,7 +108,7 @@ COPY package.json README.md LICENSE BUILD.json* ./
 COPY --from=worker /app/package.json package.json
 EXPOSE 8080
 EXPOSE 9090
-USER node
+# USER node # This would be great to use, but not possible as the volumes are mounted as root
 WORKDIR /app/api
 CMD ["node", "--max-http-header-size", "64000", "--experimental-strip-types", "index.ts"]
 
