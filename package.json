@@ -30,7 +30,8 @@
   "workspaces": [
     "ui",
     "api",
-    "worker"
+    "worker",
+    "shared"
   ],
   "bugs": {
     "url": "https://github.com/data-fair/processings/issues"

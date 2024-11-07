@@ -1,7 +1,7 @@
 import type { ProcessingsMongo } from '#mongo'
 import type { Processing } from '#types/processing/index.ts'
 
-import { createNext } from '../../../shared/runs.ts'
+import { createNext } from '@data-fair/processing-shared/runs.ts'
 import config from '#config'
 import fs from 'fs-extra'
 import path from 'path'
