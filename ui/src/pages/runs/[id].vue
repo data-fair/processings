@@ -128,7 +128,7 @@ function getIcon (step: Record<string, any>) {
 
 onMounted(async () => {
   loading.value = true
-  run.value = await $fetch(`${$apiPath}/runs/${runId}`)
+  run.value = await $fetch(`/runs/${runId}`)
   if (!run.value) return
 
   ws?.subscribe(`processings/${run.value.processing._id}/run-log`, onRunLog)

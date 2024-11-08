@@ -286,7 +286,7 @@ const pluginLocked = ref(null) as Ref<string | null>
 const install = withUiNotif(
   async (plugin: AvailablePlugin) => {
     pluginLocked.value = `${plugin.name}-${plugin.distTag}`
-    await $fetch(`${$apiPath}/plugins`, {
+    await $fetch('/plugins', {
       method: 'POST',
       body: JSON.stringify(plugin)
     })
@@ -300,7 +300,7 @@ const install = withUiNotif(
 const uninstall = withUiNotif(
   async (plugin: InstalledPlugin) => {
     pluginLocked.value = `${plugin.name}-${plugin.distTag}`
-    await $fetch(`${$apiPath}/plugins/${plugin.id}`, {
+    await $fetch(`/plugins/${plugin.id}`, {
       method: 'DELETE'
     })
     installedPluginsFetch.refresh()
@@ -336,7 +336,7 @@ async function update (plugin: InstalledPlugin) {
 
 async function saveConfig (plugin: InstalledPlugin) {
   pluginLocked.value = `${plugin.name}-${plugin.distTag}`
-  await $fetch(`${$apiPath}/plugins/${plugin.id}/config`, {
+  await $fetch(`/plugins/${plugin.id}/config`, {
     method: 'PUT',
     body: JSON.stringify({ ...plugin.config })
   })
@@ -345,7 +345,7 @@ async function saveConfig (plugin: InstalledPlugin) {
 
 async function saveAccess (plugin: InstalledPlugin) {
   pluginLocked.value = `${plugin.name}-${plugin.distTag}`
-  await $fetch(`${$apiPath}/plugins/${plugin.id}/access`, {
+  await $fetch(`/plugins/${plugin.id}/access`, {
     method: 'PUT',
     body: JSON.stringify({ ...plugin.access })
   })

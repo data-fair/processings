@@ -241,7 +241,7 @@ const confirmRemove = withUiNotif(
   async () => {
     inDelete.value = true
 
-    await $fetch(`${$apiPath}/processings/${properties.processing?._id}`, {
+    await $fetch(`/processings/${properties.processing?._id}`, {
       method: 'DELETE'
     })
 
@@ -256,13 +256,13 @@ const confirmRemove = withUiNotif(
 )
 
 const getWebhookKey = async () => {
-  webhookKey.value = await $fetch(`${$apiPath}/processings/${properties.processing?._id}/webhook-key`)
+  webhookKey.value = await $fetch(`/processings/${properties.processing?._id}/webhook-key`)
 }
 
 const triggerExecution = withUiNotif(
   async () => {
     hasTriggered.value = true
-    let link = `${$apiPath}/processings/${properties.processing?._id}/_trigger`
+    let link = `/processings/${properties.processing?._id}/_trigger`
     if (triggerDelay.value > 0) link += `?delay=${triggerDelay.value}`
 
     await $fetch(link, { method: 'POST' })

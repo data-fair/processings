@@ -104,7 +104,7 @@ const formatDate = (date: string) => dayjs(date).format('DD/MM/YYYY HH:mm')
 const duration = (start: string, end: string) => dayjs(end).from(dayjs(start), true)
 
 const kill = async () => {
-  await $fetch(`${$apiPath}/runs/${props.run._id}/_kill`, {
+  await $fetch(`/runs/${props.run._id}/_kill`, {
     method: 'POST'
   })
 }
