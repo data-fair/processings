@@ -1,7 +1,7 @@
 <template>
   <v-container data-iframe-height>
     <v-text-field
-      v-model="urlSearchParams.q"
+      v-model="search"
       :append-inner-icon="mdiMagnify"
       class="my-2"
       clearable
@@ -143,13 +143,12 @@
     </template>
     <v-col>
       <v-row>
-        <v-list-subheader>{{ (availablePlugins && availablePlugins.length) || 0 }} plugins disponibles</v-list-subheader>
+        <v-list-subheader>{{ (filteredAvailablePlugins && filteredAvailablePlugins.length) || 0 }} plugins disponibles</v-list-subheader>
         <v-checkbox
-          :model-value="urlSearchParams.showAll === 'true'"
+          v-model="query.showAll"
           label="Afficher les versions de test des plugins"
           color="primary"
           density="compact"
-          @update:model-value="value => urlSearchParams.showAll = '' + value"
         />
       </v-row>
     </v-col>
@@ -168,7 +167,6 @@
       :key="'available-' + result.name + '-' + result.version"
     >
       <v-card
-        v-if="!installedPlugins.find(r => r.name === result.name && r.distTag === result.distTag)"
         class="mb-4"
       >
         <v-progress-linear
@@ -208,12 +206,12 @@
 
 <script setup lang="ts">
 import setBreadcrumbs from '~/utils/breadcrumbs'
-import useUrlSearchParams from '@data-fair/lib-vue/reactive-search-params.js'
 import Vjsf from '@koumoul/vjsf'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 
 const session = useSession()
-const urlSearchParams = useUrlSearchParams()
+const search = useStringSearchParam('q')
+const query = ref({ showAll: false })
 
 if (!session.state.user) {
   throw new Error('Authentification nécessaire')
@@ -262,7 +260,7 @@ const installedPlugins = computed(() => {
 const availablePluginsFetch = useFetch<{
   results: AvailablePlugin[],
   count: number
-}>(`${$apiPath}/plugins-registry`, { query: { showAll: urlSearchParams.showAll } })
+}>(`${$apiPath}/plugins-registry`, { query: query.value })
 const availablePlugins = computed(() => {
   const results = availablePluginsFetch.data.value?.results || []
   results.sort((a, b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
@@ -270,14 +268,21 @@ const availablePlugins = computed(() => {
 })
 
 const filteredInstalledPlugins = computed(() => {
-  if (!urlSearchParams.q) return installedPlugins.value
+  if (!search.value) return installedPlugins.value
   return installedPlugins.value
-    .filter(r => r.name.includes(urlSearchParams.q) || (r.description && r.description.includes(urlSearchParams.q)))
+    .filter(r => r.name.includes(search.value) || (r.description && r.description.includes(search.value)))
 })
 
 const filteredAvailablePlugins = computed(() => {
-  if (!urlSearchParams.q) return availablePlugins.value
-  return availablePlugins.value.filter(r => r.name.includes(urlSearchParams.q) || (r.description && r.description.includes(urlSearchParams.q)))
+  const filteredPlugins = availablePlugins.value.filter(result =>
+    !installedPlugins.value.find(r => r.name === result.name && r.distTag === result.distTag)
+  )
+
+  if (!search.value) return filteredPlugins
+  return filteredPlugins.filter(result =>
+    result.name.includes(search.value) ||
+    (result.description && result.description.includes(search.value))
+  )
 })
 
 const deleteMenuShowed = ref(null) as Ref<string | null>
