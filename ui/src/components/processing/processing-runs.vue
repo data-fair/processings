@@ -24,7 +24,7 @@
         v-if="runs.data.value?.count > size"
         v-model="page"
         :length="Math.ceil((runs.data.value?.count ?? 0) / size)"
-        :total-visible="5"
+        @update:model-value="runs.refresh()"
       />
     </template>
   </v-card>
