@@ -139,6 +139,7 @@
 </template>
 
 <script setup lang="ts">
+const ownerAvatar = import('@data-fair/lib-vuetify/owner-avatar.vue')
 const { dayjs } = useLocaleDayjs()
 
 const props = defineProps({
