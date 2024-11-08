@@ -35,7 +35,6 @@
     "memoizee": "^0.4.17",
     "mongodb": "^6.10.0",
     "nanoid": "^5.0.8",
-    "prom-client": "^15.1.3",
     "resolve-path": "^1.4.0",
     "semver": "^7.6.3",
     "tmp-promise": "^3.0.3",
