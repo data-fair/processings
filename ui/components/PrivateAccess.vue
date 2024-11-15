@@ -79,11 +79,13 @@ async function listSuggestions() {
 
   loading.value = true
   const /** @type {Record<string, any>} */ orgsResponse = await $fetch('/simple-directory/api/organizations', {
-    params: { q: search.value }
+    params: { q: search.value },
+    baseURL: ''
   })
   const orgs = orgsResponse.results.map(/** @param {any} r */ r => ({ ...r, type: 'organization' }))
   const /** @type {Record<string, any>} */ usersResponse = await $fetch('/simple-directory/api/users', {
-    params: { q: search.value }
+    params: { q: search.value },
+    baseURL: ''
   })
   const users = usersResponse.results.map(/** @param {any} r */ r => ({ ...r, type: 'user' }))
   suggestions.value = props.patch.privateAccess.concat(orgs, users)
