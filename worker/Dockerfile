@@ -32,7 +32,7 @@ COPY --from=nativedepsbuilder /usr/local/lib/libCGAL.so.13 /usr/local/lib/libCGA
 COPY --from=nativedepsbuilder /usr/local/bin/tippecanoe /usr/local/bin/tippecanoe
 ENV TIPPECANOE_MAX_THREADS 1
 
-RUN apk add --no-cache unzip p7zip dumb-init gmp gdal-tools proj
+RUN apk add --no-cache zip unzip p7zip dumb-init gmp gdal-tools proj
 RUN test -f /usr/bin/ogr2ogr
 RUN ln -s /usr/lib/libproj.so.25 /usr/lib/libproj.so
 RUN test -f /usr/lib/libproj.so
