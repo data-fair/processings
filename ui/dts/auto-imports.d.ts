@@ -10,6 +10,9 @@ declare global {
   const $fetch: typeof import('~/context')['$fetch']
   const $sitePath: typeof import('~/context')['$sitePath']
   const $uiConfig: typeof import('~/context')['$uiConfig']
+  const DfPersonalMenu: typeof import('@data-fair/lib-vuetify/personal-menu.vue')['default']
+  const DfTutorialAlert: typeof import('@data-fair/lib-vuetify/tutorial-alert.vue')['default']
+  const DfUserAvatar: typeof import('@data-fair/lib-vuetify/user-avatar.vue')['default']
   const EffectScope: typeof import('vue')['EffectScope']
   const breadcrumbs: typeof import('../src/utils/breadcrumbs')['default']
   const computed: typeof import('vue')['computed']
@@ -115,6 +118,7 @@ declare global {
   export type { Component, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
 }
+
 // for vue template auto import
 import { UnwrapRef } from 'vue'
 declare module 'vue' {

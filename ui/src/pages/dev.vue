@@ -43,10 +43,13 @@
         Notify
       </v-btn>
     </v-toolbar-items>
+    <v-spacer />
+    <personal-menu />
   </v-app-bar>
 </template>
 
 <script setup>
+import personalMenu from '@data-fair/lib-vuetify/personal-menu.vue'
 </script>
 
 <style>

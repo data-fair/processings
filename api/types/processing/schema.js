@@ -73,13 +73,6 @@ export default {
       $ref: 'https://github.com/data-fair/lib/account',
       readOnly: true
     },
-    permissions: {
-      type: 'array',
-      title: 'Permissions',
-      items: {
-        $ref: 'https://github.com/data-fair/processings/permission'
-      }
-    },
     plugin: {
       type: 'string',
       readOnly: true
@@ -90,10 +83,24 @@ export default {
       layout: {
         messages: {
           addItem: 'Ajouter une règle de planification'
-        }
+        },
+        cols: 6
       },
       items: {
         $ref: 'https://github.com/data-fair/processings/scheduling'
+      }
+    },
+    permissions: {
+      type: 'array',
+      title: 'Permissions',
+      layout: {
+        messages: {
+          addItem: 'Ajouter une permission'
+        },
+        cols: 6
+      },
+      items: {
+        $ref: 'https://github.com/data-fair/processings/permission'
       }
     },
     updated: {

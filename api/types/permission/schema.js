@@ -14,7 +14,7 @@ export default {
   properties: {
     profile: {
       type: 'string',
-      title: 'Profil',
+      title: 'profil',
       default: 'read',
       oneOf: [
         { const: 'read', title: "lecture - permet d'accéder aux informations essentielles du traitement dont les logs, mais pas aux informations sensibles" },
@@ -23,19 +23,20 @@ export default {
     },
     target: {
       type: 'object',
+      oneOfLayout: {
+        label: 'type de cible'
+      },
       oneOf: [
         {
           title: 'utilisateur désigné par son email',
           required: ['email'],
           properties: {
             type: {
-              const: 'userEmail',
-              title: 'Type de cible',
-              'x-options': { hideInArrayItem: true }
+              const: 'userEmail'
             },
             email: {
               type: 'string',
-              title: 'Email'
+              title: 'email'
             }
           }
         },
@@ -48,12 +49,18 @@ export default {
             },
             organization: {
               type: 'object',
-              title: 'Organisation',
+              title: 'organisation',
               additionalProperties: true,
-              'x-fromUrl': '{context.directoryUrl}/api/organizations/{context.owner.id}',
-              'x-itemsProp': 'partners',
-              'x-itemKey': 'id',
-              'x-itemTitle': 'name',
+              layout: {
+                cols: 8,
+                getItems: {
+                  // eslint-disable-next-line no-template-curly-in-string
+                  url: '${context.directoryUrl}/api/organizations/${context.owner.id}',
+                  itemsResults: 'data.partners',
+                  itemKey: 'data.id',
+                  itemTitle: 'data.name'
+                }
+              },
               properties: {
                 id: {
                   type: 'string'
@@ -65,8 +72,9 @@ export default {
             },
             roles: {
               type: 'array',
-              title: 'Rôles',
+              title: 'rôles',
               default: ['admin'],
+              layout: { cols: 4 },
               items: {
                 type: 'string',
                 enum: ['admin', 'contrib', 'user']

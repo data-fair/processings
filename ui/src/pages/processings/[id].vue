@@ -8,18 +8,20 @@
         <h2 class="text-h6">
           Traitement {{ processing.title }}
         </h2>
-        <v-form
-          v-model="valid"
-          autocomplete="off"
-        >
-          <vjsf
-            v-if="processingSchema"
-            v-model="editProcessing"
-            :schema="processingSchema"
-            :options="vjsfOptions"
-            @update:model-value="patch()"
-          />
-        </v-form>
+        <v-defaults-provider :defaults="{global: { hideDetails: 'auto' }}">
+          <v-form
+            v-model="valid"
+            autocomplete="off"
+          >
+            <vjsf
+              v-if="processingSchema"
+              v-model="editProcessing"
+              :schema="processingSchema"
+              :options="vjsfOptions"
+              @update:model-value="patch()"
+            />
+          </v-form>
+        </v-defaults-provider>
         <processing-runs
           ref="runs"
           :can-exec="canExecProcessing"
@@ -167,8 +169,8 @@ const vjsfOptions = computed(() => {
       owner: processing.value?.owner,
       // ownerFilter: runtimeConfig.public.dataFairAdminMode ? `owner=${ownerFilter.value}` : '',
       ownerFilter: `owner=${processing.value?.owner.type}:${processing.value?.owner.id}${processing.value?.owner.department ? ':' + processing.value?.owner.department : ''}`,
-      dataFairUrl: window.location.origin + '/data-fair',
-      directoryUrl: window.location.origin + '/simple-directory',
+      dataFairUrl: window.location.origin + $sitePath + '/data-fair',
+      directoryUrl: window.location.origin + $sitePath + '/simple-directory',
       utcs
     },
     density: 'comfortable',
