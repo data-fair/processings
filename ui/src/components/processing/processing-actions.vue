@@ -232,7 +232,7 @@ const notifUrl = computed(() => {
 })
 
 const webhookLink = computed(() => {
-  let link = `${window.location.origin}/api/processings/${properties.processing?._id}/_trigger?key=${webhookKey.value}`
+  let link = `${window.location.origin}/processings/api/v1/processings/${properties.processing?._id}/_trigger?key=${webhookKey.value}`
   if (triggerDelay.value > 0) link += `&delay=${triggerDelay.value}`
   return link
 })

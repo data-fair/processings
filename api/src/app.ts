@@ -22,12 +22,12 @@ app.set('json spaces', 2)
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-app.use('/api/plugins-registry', pluginsRegistryRouter)
-app.use('/api/plugins', pluginsRouter)
-app.use('/api/processings', processingsRouter)
-app.use('/api/runs', runsRouter)
-app.use('/api/limits', limitsRouter)
-app.use('/api/admin', adminRouter)
+app.use('/api/v1/plugins-registry', pluginsRegistryRouter)
+app.use('/api/v1/plugins', pluginsRouter)
+app.use('/api/v1/processings', processingsRouter)
+app.use('/api/v1/runs', runsRouter)
+app.use('/api/v1/limits', limitsRouter)
+app.use('/api/v1/admin', adminRouter)
 
 if (config.serveUi) {
   app.use(await createSpaMiddleware(resolve(import.meta.dirname, '../../ui/dist'), uiConfig))
