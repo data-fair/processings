@@ -6,6 +6,7 @@
   },
   "dependencies": {
     "@data-fair/lib-node": "^2.0.1",
+    "@data-fair/lib-utils": "^1.1.0",
     "cron": "^3.1.9",
     "dayjs": "^1.11.13",
     "nanoid": "^5.0.8"

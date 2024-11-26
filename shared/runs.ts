@@ -1,6 +1,7 @@
 import type { Collection, Db } from 'mongodb'
 import type { Run, Processing, Scheduling } from '#api/types'
 import type { Locks } from '@data-fair/lib-node/locks.js'
+import { httpError } from '@data-fair/lib-utils/http-errors.js'
 
 import { CronJob } from 'cron'
 import { nanoid } from 'nanoid'
@@ -21,10 +22,10 @@ export const createNext = async (db: Db, locks: Locks, processing: Processing, t
   const ack = await locks.acquire(processing._id + '/next-run')
   try {
     if (!ack) {
-      throw new Error('une planification est déjà en cours')
+      throw httpError(400, 'une planification est déjà en cours')
     }
     if (await db.collection('runs').countDocuments({ 'processing._id': processing._id, status: 'running' }) > 0) {
-      throw new Error('une exécution est déjà en cours')
+      throw httpError(400, 'une exécution est déjà en cours')
     }
 
     const run = {
@@ -56,7 +57,7 @@ export const createNext = async (db: Db, locks: Locks, processing: Processing, t
       }
     } else {
       if (await db.collection('runs').countDocuments({ 'processing._id': processing._id, status: 'triggered' }) > 0) {
-        throw new Error('une exécution manuelle est déjà demandée')
+        throw httpError(400, 'une exécution manuelle est déjà demandée')
       }
       await runsCollection.deleteMany({ 'processing._id': processing._id, status: 'scheduled' })
       await processingsCollection.updateOne({ _id: run.processing._id }, { $unset: { nextRun: 1 } })
