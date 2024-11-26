@@ -127,10 +127,9 @@
         </template>
       </v-list>
     </v-card-text>
-    <v-spacer />
     <v-card-actions
       v-if="showOwner"
-      class="pl-3 pt-0"
+      class="pl-3 pt-0 mt-auto"
     >
       <owner-avatar :owner="processing.owner" />
       <v-spacer />
@@ -139,7 +138,7 @@
 </template>
 
 <script setup lang="ts">
-const ownerAvatar = import('@data-fair/lib-vuetify/owner-avatar.vue')
+import ownerAvatar from '@data-fair/lib-vuetify/owner-avatar.vue'
 const { dayjs } = useLocaleDayjs()
 
 const props = defineProps({

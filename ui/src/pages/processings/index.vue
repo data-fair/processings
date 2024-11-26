@@ -39,12 +39,10 @@
                 md="4"
                 sm="6"
                 cols="12"
-                class="d-flex"
               >
                 <processing-card
                   :processing="processing"
                   :show-owner="showAll || (processing.owner.department && !session.state.account.department)"
-                  class="w-100"
                 />
               </v-col>
             </v-row>
