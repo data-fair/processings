@@ -38,7 +38,7 @@
   },
   "homepage": "https://github.com/data-fair/processings#readme",
   "dependencies": {
-    "@data-fair/lib-types-builder": "^1.4.0"
+    "@data-fair/lib-types-builder": "^1.6.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",
@@ -54,8 +54,5 @@
     "neostandard": "^0.11.7",
     "tough-cookie": "^5.0.0",
     "typescript": "^5.6.3"
-  },
-  "relativeDependencies": {
-    "@data-fair/lib": "../lib"
   }
 }
