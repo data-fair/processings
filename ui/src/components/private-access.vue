@@ -83,12 +83,12 @@ async function listSuggestions () {
   }
 
   loading.value = true
-  const orgsResponse = await $fetch(`${$sitePath}/simple-directory/api/organizations`, {
+  const orgsResponse = await $fetch('/simple-directory/api/organizations', {
     params: { q: search.value },
     baseURL: $sitePath
   })
   const orgs = orgsResponse.results.map((r: any) => ({ ...r, type: 'organization' }))
-  const usersResponse = await $fetch(`${$sitePath}/simple-directory/api/users`, {
+  const usersResponse = await $fetch('/simple-directory/api/users', {
     params: { q: search.value },
     baseURL: $sitePath
   })
