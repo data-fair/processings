@@ -12,6 +12,7 @@ services:
   #####
   # related services from the data-fair stack
   #####
+
   simple-directory:
     profiles:
       - dev
@@ -58,8 +59,6 @@ services:
       - EXTRA_NAV_ITEMS=[{"id":"processings","can":"contrib","iframe":"http://localhost:5600/processings/processings","basePath":"/processings","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
       - EXTRA_ADMIN_NAV_ITEMS=[{"id":"processings","iframe":"http://localhost:5600/processings/admin","basePath":"/processings","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
       - OBSERVER_ACTIVE=false
-    volumes:
-      - data-fair-data:/data
 
   #####
   # db and search engine
@@ -109,37 +108,32 @@ services:
       - OBSERVER_ACTIVE=false
 
   #####
-  # Api, ui and worker in docker mode
+  # Api and worker in docker mode
   #####
-  api:
+
+  main:
     build:
-      dockerfile: ./api/Dockerfile
+      context: .
+      dockerfile: Dockerfile
+      target: main
       args:
         NODE_ENV: development
     depends_on:
       - data-fair
     profiles:
       - testImages
-    image: datafair/processings/api:dev
+    image: datafair/processings/main:dev
     network_mode: host
     environment:
       - NODE_ENV=development
     volumes:
       - processings-data:/app/data
 
-  ui:
-    build:
-      dockerfile: ./ui/Dockerfile
-    depends_on:
-      - data-fair
-    profiles:
-      - testImages
-    image: datafair/processings/ui:dev
-    network_mode: host
-
   worker:
     build:
-      dockerfile: ./worker/Dockerfile
+      context: .
+      dockerfile: Dockerfile
+      target: worker
       args:
         NODE_ENV: development
     depends_on:
@@ -154,7 +148,6 @@ services:
       - processings-data:/app/data
 
 volumes:
-  data-fair-data:
   elasticsearch-data:
   mongo-data:
   processings-data:

@@ -41,11 +41,9 @@ Run a development server (access it at http://localhost:8082/api/) :
 npm run dev-api
 ```
 
-You can find the API documentation here : [API](./docs/api.md)
-
 ## Working on @data-fair/processings/ui
 
-The UI is a [Nuxt 3](https://nuxt.com/) project that uses [Vuetify 3](https://vuetifyjs.com/).  
+The UI is a [Vue 3](https://vuejs.org/) project that uses [Vuetify 3](https://vuetifyjs.com/).  
 Run a development server (access it at http://localhost:3039/) :
 
 ```sh
@@ -74,17 +72,8 @@ npm run build-types
 Build the images :
 
 ```sh
-docker build -f api/Dockerfile -t data-fair/processings/api:dev .
-docker build -f ui/Dockerfile -t data-fair/processings/ui:dev .
-docker build -f worker/Dockerfile -t data-fair/processings/worker:dev .
-```
-
-Run the images :
-
-```sh
-docker run --network host -e NODE_ENV=development docker.io/data-fair/processings/api:dev
-docker run --network host docker.io/data-fair/processings/ui:dev
-docker run --network host -e NODE_ENV=development docker.io/data-fair/processings/worker:dev
+docker build --progress=plain --target=main -t data-fair/processings:dev .
+docker build --progress=plain --target=worker -t data-fair/processings/worker:dev .
 ```
 
 ## Running the tests

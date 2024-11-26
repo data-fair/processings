@@ -5,24 +5,21 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "build-types": "df-build-types ./shared/ && df-build-types api && df-build-types worker",
-    "build-types-api": "df-build-types ./shared/ && df-build-types api",
-    "build-types-worker": "df-build-types ./shared/ && df-build-types worker",
+    "build-types": "df-build-types ./",
+    "check-types": "tsc",
     "dev-api": "npm -w api run dev",
     "dev-deps": "docker compose --profile dev up -d --wait",
     "dev-ui": "npm -w ui run dev",
     "dev-worker": "npm -w worker run dev",
     "dev-zellij": "export DEV_SHELL=$(basename \"$SHELL\") && zellij --layout .zellij.kdl && rm data/zellij-deps-ready",
-    "lint": "eslint --ext js,vue --ignore-path .gitignore .",
-    "lint-fix": "eslint --ext js,vue --ignore-path .gitignore --fix .",
-    "test": "NODE_ENV=test node test-it/index.js",
-    "test-only": "NODE_ENV=test node test-it/index.js --test-only",
-    "test-deps": "docker compose --profile test up -d --wait",
-    "test-images": "docker compose --profile dev --profile testImages up -d --wait",
+    "lint": "eslint . && npm -w ui run lint",
+    "lint-fix": "eslint --fix . && npm -w ui run lint-fix",
+    "prepare": "husky || true",
     "stop-dev-deps": "docker compose --profile dev stop",
-    "check-types": "tsc",
-    "prepare": "husky",
-    "quality": "npm run test-deps && npm run lint && npm run test && npm audit --omit=dev --audit-level=critical"
+    "test": "NODE_ENV=test node --experimental-strip-types --test-force-exit --test-concurrency=1 --test --test-reporter=spec test-it/*.ts",
+    "test-only": "NODE_ENV=test node --experimental-strip-types --test-force-exit --test-only --test-concurrency=1 --test",
+    "test-images": "docker compose --profile dev --profile testImages up -d --build --wait",
+    "quality": "npm run dev-deps && npm run lint && npm run build-types && npm run check-types && npm -w ui run build && npm run test && npm audit --omit=dev --audit-level=critical"
   },
   "repository": {
     "type": "git",
@@ -33,37 +30,29 @@
   "workspaces": [
     "ui",
     "api",
-    "worker"
+    "worker",
+    "shared"
   ],
   "bugs": {
     "url": "https://github.com/data-fair/processings/issues"
   },
   "homepage": "https://github.com/data-fair/processings#readme",
-  "devDependencies": {
-    "@commitlint/config-conventional": "^19.2.2",
-    "@types/config": "^3.3.3",
-    "@types/debug": "^4.1.12",
-    "@types/fs-extra": "^11.0.4",
-    "@types/resolve-path": "^1.4.2",
-    "commitlint": "^19.2.2",
-    "eslint": "^8.57.0",
-    "eslint-config-standard": "^17.1.0",
-    "eslint-plugin-jsdoc": "^48.2.3",
-    "eslint-plugin-no-only-tests": "^3.1.0",
-    "husky": "^9.0.11",
-    "json-schema-to-typescript": "^11.0.5",
-    "nock": "^13.0.6",
-    "relative-deps": "^1.0.7",
-    "typescript": "^5.4.5"
-  },
   "dependencies": {
-    "@data-fair/lib": "^0.38.1",
-    "ajv": "^8.13.0",
-    "ajv-errors": "^3.0.0",
-    "ajv-formats": "^2.1.1",
-    "ajv-i18n": "^4.2.0"
+    "@data-fair/lib-types-builder": "^1.6.0"
   },
-  "relativeDependencies": {
-    "@data-fair/lib": "../lib"
+  "devDependencies": {
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "@data-fair/lib-node": "^2.0.1",
+    "@data-fair/lib-utils": "^1.1.0",
+    "@types/config": "^3.3.5",
+    "@types/debug": "^4.1.12",
+    "eslint": "^9.13.0",
+    "eslint-plugin-vue": "^9.30.0",
+    "eslint-plugin-vuetify": "github:albanm/eslint-plugin-vuetify",
+    "husky": "^9.1.6",
+    "neostandard": "^0.11.7",
+    "tough-cookie": "^5.0.0",
+    "typescript": "^5.6.3"
   }
 }

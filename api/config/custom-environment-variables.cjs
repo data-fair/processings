@@ -5,7 +5,6 @@ module.exports = {
     processingsSeconds: 'DEFAULT_LIMITS_PROCESSINGS_SECONDS'
   },
   mongoUrl: 'MONGO_URL',
-  origin: 'ORIGIN',
   port: 'PORT',
   privateDirectoryUrl: 'PRIVATE_DIRECTORY_URL',
   secretKeys: {
@@ -17,5 +16,6 @@ module.exports = {
   },
   npm: {
     httpsProxy: 'NPM_HTTPS_PROXY'
-  }
+  },
+  serveUi: 'SERVE_UI',
 }

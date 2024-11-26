@@ -1,0 +1,32 @@
+{
+  "$id": "https://github.com/data-fair/processings/runs/get-req",
+  "title": "Get runs parameters",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "processing": {
+      "type": "string"
+    },
+    "size": {
+      "type": "string"
+    },
+    "page": {
+      "type": "string"
+    },
+    "skip": {
+      "type": "string"
+    },
+    "showAll": {
+      "type": "string"
+    },
+    "owner": {
+      "type": "string"
+    },
+    "sort": {
+      "type": "string"
+    },
+    "select": {
+      "type": "string"
+    }
+  }
+}

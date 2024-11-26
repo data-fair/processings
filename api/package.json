@@ -1,35 +1,43 @@
 {
   "name": "api",
-  "main": "index.js",
+  "main": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "NODE_ENV=development DEBUG=upgrade node --watch index.js"
+    "dev": "NODE_ENV=development DEBUG=upgrade node --watch --experimental-strip-types index.ts"
+  },
+  "imports": {
+    "#config": "./src/config.ts",
+    "#mongo": "./src/mongo.ts",
+    "#locks": "./src/locks.ts",
+    "#doc/*": "./doc/*",
+    "#types": "./types/index.ts",
+    "#types/*": "./types/*"
   },
   "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
     "@types/memoizee": "^0.4.11",
-    "@types/ws": "^8.5.10"
+    "@types/resolve-path": "^1.4.3",
+    "@types/semver": "^7.5.8",
+    "@types/ws": "^8.5.12"
   },
   "dependencies": {
-    "@types/crypto-random-string": "^2.0.0",
-    "agentkeepalive": "^4.5.0",
-    "axios": "^1.6.8",
-    "cacheable-lookup": "^6.1.0",
-    "config": "^3.3.11",
-    "cron": "^3.1.7",
+    "@data-fair/processing-shared": "*",
+    "@data-fair/lib-express": "^1.10.0",
+    "@data-fair/lib-node": "^2.1.0",
+    "@data-fair/lib-utils": "^1.1.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "config": "^3.3.12",
     "crypto-random-string": "^5.0.0",
-    "dayjs": "^1.11.11",
-    "express": "^4.19.2",
+    "express": "^5.0.1",
     "fs-extra": "^11.2.0",
-    "http-errors": "^2.0.0",
     "http-terminator": "^3.2.0",
-    "jsonwebtoken": "9",
-    "jwks-rsa": "3",
-    "memoizee": "^0.4.15",
-    "mongodb": "^6.6.0",
-    "nanoid": "^5.0.7",
-    "prom-client": "^15.1.2",
+    "memoizee": "^0.4.17",
+    "mongodb": "^6.10.0",
+    "nanoid": "^5.0.8",
     "resolve-path": "^1.4.0",
+    "semver": "^7.6.3",
     "tmp-promise": "^3.0.3",
-    "ws": "^8.9.0"
+    "ws": "^8.18.0"
   }
 }
