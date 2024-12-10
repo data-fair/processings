@@ -299,7 +299,10 @@ async function acquireNext (db: Db): Promise<Run | undefined> {
     if (ack) {
       // re-fetch run to prevent some race condition
       const foundRun = await db.collection<Run>('runs').findOne({ _id: run._id })
-      if (!foundRun) continue
+      if (!foundRun) {
+        await locks.release(run.processing._id)
+        continue
+      }
       run = foundRun
 
       // if we could acquire the lock it means the task was brutally interrupted
@@ -315,10 +318,12 @@ async function acquireNext (db: Db): Promise<Run | undefined> {
         } catch (err) {
           const message = `failure while closing a run that was left in running status by error (${run.processing._id} / ${run._id})`
           internalError('worker-manage-running', err, message)
+          await locks.release(run.processing._id)
         }
         continue
       }
       if (run.status !== 'triggered' && run.status !== 'scheduled') {
+        await locks.release(run.processing._id)
         continue
       }
       return run

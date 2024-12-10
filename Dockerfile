@@ -117,4 +117,4 @@ EXPOSE 8080
 EXPOSE 9090
 # USER node # This would be great to use, but not possible as the volumes are mounted as root
 WORKDIR /app/api
-CMD ["node", "--max-http-header-size", "64000", "--experimental-strip-types", "index.ts"]
+CMD ["node", "--max-http-header-size", "65536", "--experimental-strip-types", "index.ts"]
