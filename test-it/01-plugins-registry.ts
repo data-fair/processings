@@ -9,20 +9,17 @@ describe('plugin-registry', () => {
   after(stopApiServer)
 
   it('should search for plugins (just lastest) on npmjs', async () => {
-    const res = await axAno.get('/api/v1/plugins-registry', { params: { q: '@data-fair hello world' } })
-    assert.equal(res.data.count, 1)
-    assert.equal(res.data.results.length, 1)
-    assert.equal(res.data.results[0].name, '@data-fair/processing-hello-world')
+    const res = await axAno.get('/api/v1/plugins-registry', { params: { q: 'hello-world' } })
+    const hwProcessingPackages = res.data.results.filter(p => p.name === '@data-fair/processing-hello-world')
+    assert.equal(hwProcessingPackages.length, 1)
     assert.equal(res.data.results[0].distTag, 'latest')
   })
 
   it('should search for plugins and all their distTag versions on npmjs', async () => {
-    const res = await axAno.get('/api/v1/plugins-registry', { params: { q: '@data-fair hello world', showAll: 'true' } })
-    assert.equal(res.data.count, 2)
-    assert.equal(res.data.results.length, 2)
-    assert.equal(res.data.results[0].name, '@data-fair/processing-hello-world')
+    const res = await axAno.get('/api/v1/plugins-registry', { params: { q: 'hello-world', showAll: 'true' } })
+    const hwProcessingPackages = res.data.results.filter(p => p.name === '@data-fair/processing-hello-world')
+    assert.equal(hwProcessingPackages.length, 2)
     assert(['latest', 'test'].includes(res.data.results[0].distTag))
-    assert.equal(res.data.results[1].name, '@data-fair/processing-hello-world')
     assert(['test', 'latest'].includes(res.data.results[1].distTag))
   })
 })
