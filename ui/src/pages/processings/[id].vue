@@ -156,8 +156,7 @@ const processingSchema = computed(() => {
     delete schema.required
   } else {
     schema.required = ['title', 'scheduling', 'config', 'permissions']
-    schema.properties.config.required = schema.properties.config.required
-      .filter((s: any) => s !== 'datasetMode')
+    schema.properties.config.required = schema.properties.config.required?.filter((s: any) => s !== 'datasetMode')
   }
 
   return schema
