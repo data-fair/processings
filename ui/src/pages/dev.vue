@@ -34,14 +34,6 @@
       >
         Data Fair
       </v-btn>
-      <v-btn
-        variant="text"
-        target="_blank"
-        href="/notify"
-        color="primary"
-      >
-        Notify
-      </v-btn>
     </v-toolbar-items>
     <v-spacer />
     <personal-menu />

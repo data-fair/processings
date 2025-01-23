@@ -16,9 +16,9 @@ module.exports = {
   },
   mongoUrl: 'MONGO_URL',
   secretKeys: {
-    notifications: 'SECRET_NOTIFICATIONS'
+    events: 'SECRET_EVENTS'
   },
-  privateNotifyUrl: 'PRIVATE_NOTIFY_URL',
+  privateEventsUrl: 'PRIVATE_EVENTS_URL',
   locks: {
     ttl: 'LOCKS_TTL'
   },

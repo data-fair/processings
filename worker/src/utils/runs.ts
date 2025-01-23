@@ -1,10 +1,11 @@
+import config from '#config'
 import type { Db } from 'mongodb'
 import type { Run, Processing } from '#api/types'
 
 import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import { incrementConsumption } from './limits.ts'
 import { runsMetrics } from './metrics.ts'
-import notifications from './notifications.ts'
+import eventsQueue from '@data-fair/lib-node/events-queue.js'
 
 export const running = async (db: Db, run: Run) => {
   const patch = { status: 'running' as Run['status'], startedAt: new Date().toISOString() }
@@ -59,16 +60,18 @@ export const finish = async (db: Db, run: Run, errorMessage: string | undefined 
   const notif = {
     sender,
     urlParams: { id: run.processing._id },
-    visibility: 'private',
-    recipient: run.owner,
+    visibility: 'private' as const,
     date: new Date().toISOString()
   }
   if (lastRun.status === 'finished') {
-    notifications.send({
+    const event = {
       ...notif,
       topic: { key: `processings:processing-finish-ok:${run.processing._id}` },
       title: `Le traitement ${run.processing.title} a terminé avec succès`
-    })
+    }
+    // @test:spy("pushEvent", event)
+    if (config.privateEventsUrl && config.secretKeys.events) eventsQueue.pushEvent(event)
+
     const errorLogs = lastRun.log.filter((l) => l.type === 'error')
     if (errorLogs.length) {
       let htmlBody = '<ul>'
@@ -76,22 +79,26 @@ export const finish = async (db: Db, run: Run, errorMessage: string | undefined 
         htmlBody += `<li>${errorLog.msg}</li>`
       }
       htmlBody += '</ul>'
-      notifications.send({
+      const event = {
         ...notif,
         topic: { key: `processings:processing-log-error:${run.processing._id}` },
         title: `Le traitement ${run.processing.title} a terminé correctement mais son journal contient des erreurs`,
         body: errorLogs.map((l) => l.msg).join(' - '),
         htmlBody
-      })
+      }
+      // @test:spy("pushEvent", event)
+      if (config.privateEventsUrl && config.secretKeys.events) eventsQueue.pushEvent(event)
     }
   }
   if (lastRun.status === 'error') {
-    notifications.send({
+    const event = {
       ...notif,
       topic: { key: `processings:processing-finish-error:${run.processing._id}` },
       title: `Le traitement ${run.processing.title} a terminé en échec`,
       body: errorMessage
-    })
+    }
+    // @test:spy("pushEvent", event)
+    if (config.privateEventsUrl && config.secretKeys.events) eventsQueue.pushEvent(event)
   }
 
   // store the newly closed run as processing.lastRun for convenient access

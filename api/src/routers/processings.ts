@@ -12,7 +12,7 @@ import { nanoid } from 'nanoid'
 
 import { session } from '@data-fair/lib-express/index.js'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
-import { createNext } from '@data-fair/processing-shared/runs.ts'
+import { createNext } from '@data-fair/processings-shared/runs.ts'
 import { applyProcessing, deleteProcessing } from '../utils/runs.ts'
 import mongo from '#mongo'
 import config from '#config'

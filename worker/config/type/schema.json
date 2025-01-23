@@ -66,12 +66,12 @@
     "secretKeys": {
       "type": "object",
       "properties": {
-        "notifications": {
+        "events": {
           "type": ["string", "null"]
         }
       }
     },
-    "privateNotifyUrl": {
+    "privateEventsUrl": {
       "type": "string"
     },
     "locks": {

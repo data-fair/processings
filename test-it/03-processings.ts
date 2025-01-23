@@ -19,7 +19,7 @@ const createTestPlugin = async () => {
   await superadmin.put(`/api/v1/plugins/${plugin.id}/access`, { public: true })
 }
 
-describe.only('processing', () => {
+describe('processing', () => {
   before(startApiServer)
   before(startWorkerServer)
   beforeEach(clean)
@@ -27,7 +27,7 @@ describe.only('processing', () => {
   after(stopApiServer)
   after(stopWorkerServer)
 
-  it.only('should create a new processing, activate it and run it', async () => {
+  it('should create a new processing, activate it and run it', async () => {
     let processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
       plugin: plugin.id
@@ -76,9 +76,11 @@ describe.only('processing', () => {
     assert.equal(runs.results[0].status, 'running')
 
     // nothing, failure is normal we have no api key
-    const notif = await testSpies.waitFor('notificationSend', 10000) as { topic: { key: string } }
-    assert.equal(notif.topic.key, `processings:processing-finish-error:${processing._id}`)
-    await testSpies.waitFor('isFailure', 10000)
+    const [event] = await Promise.all([
+      testSpies.waitFor('pushEvent', 10000) as Promise<{ topic: { key: string } }>,
+      testSpies.waitFor('isFailure', 11000)
+    ])
+    assert.equal(event.topic.key, `processings:processing-finish-error:${processing._id}`)
 
     const run = (await superadmin.get('/api/v1/runs/' + runs.results[0]._id)).data
     assert.equal(run.status, 'error')

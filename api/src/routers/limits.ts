@@ -3,7 +3,7 @@ import type { Limit } from '#types'
 
 import { Router } from 'express'
 import { session } from '@data-fair/lib-express/index.js'
-import { getLimits } from '@data-fair/processing-shared/limits.ts'
+import { getLimits } from '@data-fair/processings-shared/limits.ts'
 import mongo from '#mongo'
 import config from '#config'
 

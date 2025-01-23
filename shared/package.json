@@ -1,5 +1,5 @@
 {
-  "name": "@data-fair/processing-shared",
+  "name": "@data-fair/processings-shared",
   "type": "module",
   "devDependencies": {
     "@data-fair/lib-express": "^1.8.0"

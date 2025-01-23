@@ -11,7 +11,8 @@ import kill from 'tree-kill'
 import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import { startObserver, stopObserver, internalError } from '@data-fair/lib-node/observer.js'
 import upgradeScripts from '@data-fair/lib-node/upgrade-scripts.js'
-import { createNext } from '@data-fair/processing-shared/runs.ts'
+import { createNext } from '@data-fair/processings-shared/runs.ts'
+import eventsQueue from '@data-fair/lib-node/events-queue.js'
 import config from '#config'
 import mongo from '#mongo'
 import locks from '#locks'
@@ -43,6 +44,13 @@ export const start = async () => {
   if (config.observer.active) {
     await initMetrics(db)
     await startObserver(config.observer.port)
+  }
+  if (config.privateEventsUrl) {
+    if (!config.secretKeys.events) {
+      console.error('Missing secretKeys.events in config')
+    } else {
+      await eventsQueue.start({ eventsUrl: config.privateEventsUrl, eventsSecret: config.secretKeys.events })
+    }
   }
 
   // initialize empty promise pool
