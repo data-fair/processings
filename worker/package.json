@@ -12,15 +12,15 @@
     "#types": "./src/types.ts"
   },
   "devDependencies": {
-    "@data-fair/lib-common-types": "^1.5.1",
-    "@data-fair/lib-express": "^1.10.0",
+    "@data-fair/lib-common-types": "^1.5.4",
+    "@data-fair/lib-express": "^1.12.6",
     "@types/child-process-promise": "^2.2.6",
     "@types/nodemailer": "^6.4.16",
     "@types/resolve-path": "^1.4.3"
   },
   "dependencies": {
-    "@data-fair/lib-node": "^2.1.0",
-    "@data-fair/processing-shared": "*",
+    "@data-fair/lib-node": "^2.2.3",
+    "@data-fair/processings-shared": "*",
     "axios": "^1.7.7",
     "axios-retry": "^4.5.0",
     "child-process-promise": "^2.2.1",

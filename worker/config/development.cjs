@@ -4,9 +4,9 @@ module.exports = {
   dataFairAPIKey: '', // override in local-development.cjs
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings-development',
   secretKeys: {
-    notifications: 'secret-notifications'
+    events: 'secret-events'
   },
-  privateNotifyUrl: 'http://localhost:5600/notify',
+  privateEventsUrl: 'http://localhost:8088',
   observer: {
     port: 9091
   },

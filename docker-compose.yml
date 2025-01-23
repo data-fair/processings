@@ -23,14 +23,17 @@ services:
       - mongo
     environment:
       - DEBUG=session
+      - CONTACT=contact@test.com
       - ADMINS=["superadmin@test.com"]
       - PUBLIC_URL=http://localhost:5600/simple-directory
       - MAILDEV_ACTIVE=true
+      - MONGO_URL=mongodb://localhost:27017/simple-directory
       - STORAGE_TYPE=file
       - AUTHRATELIMIT_ATTEMPTS=200
       - OBSERVER_ACTIVE=false
       - MANAGE_PARTNERS=true
       - MANAGE_DEPARTMENTS=true
+      - CIPHER_PASSWORD=cipherpassword
     volumes:
       - ./dev/resources/users.json:/webapp/data/users.json
       - ./dev/resources/organizations.json:/webapp/data/organizations.json
@@ -53,7 +56,7 @@ services:
       - MONGO_URL=mongodb://localhost:27017/data-fair
       - OPENAPI_VIEWER_URL=http://localhost:5600/openapi-viewer/
       - DIRECTORY_URL=http://localhost:5600/simple-directory
-      - NOTIFY_URL=http://localhost:5600/notify
+      - NOTIFY_URL=http://localhost:5600/events
       - PUBLIC_URL=http://localhost:5600/data-fair
       - WS_PUBLIC_URL=ws://localhost:5600/data-fair
       - EXTRA_NAV_ITEMS=[{"id":"processings","can":"contrib","iframe":"http://localhost:5600/processings/processings","basePath":"/processings","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
@@ -93,17 +96,16 @@ services:
     volumes:
       - mongo-data:/data/db
 
-  notify:
+  events:
     profiles:
       - dev
-    image: ghcr.io/data-fair/notify:master
+    image: ghcr.io/data-fair/events:main
     network_mode: host
     environment:
       - PORT=8088
-      - PUBLIC_URL=http://localhost:5600/notify
-      - WS_PUBLIC_URL=ws://localhost:5600/notify
-      - DIRECTORY_URL=http://localhost:5600/simple-directory
-      - SECRET_NOTIFICATIONS=secret-notifications
+      - PRIVATE_DIRECTORY_URL=http://localhost:5600/simple-directory
+      - SECRET_IDENTITIES=secret-identities
+      - SECRET_EVENTS=secret-events
       - SECRET_SENDMAILS=secret-sendmails
       - OBSERVER_ACTIVE=false
 

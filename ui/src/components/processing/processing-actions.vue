@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-deprecated-slot-attribute -->
 <template>
   <v-list
     density="compact"
@@ -169,10 +170,14 @@
           Notifications
         </v-card-title>
         <v-card-text class="py-0 px-3">
-          <v-iframe
+          <d-frame
             :src="notifUrl"
-            style="color-scheme: normal;"
-          />
+            resize
+          >
+            <div slot="loader">
+              <v-skeleton-loader type="paragraph" />
+            </div>
+          </d-frame>
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -189,9 +194,8 @@
 </template>
 
 <script setup lang="ts">
-import 'iframe-resizer/js/iframeResizer'
-// @ts-ignore
-import VIframe from '@koumoul/v-iframe'
+import '@data-fair/frame/lib/d-frame.js'
+
 const emit = defineEmits(['triggered'])
 
 const properties = defineProps({
@@ -228,7 +232,7 @@ const notifUrl = computed(() => {
     { key: `processings:processing-log-error:${properties.processing?._id}`, title: `Le traitement ${properties.processing?.title} a terminé correctement mais son journal contient des erreurs` }
   ]
   const urlTemplate = window.parent.location.href
-  return `/notify/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false`
+  return `/events/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false`
 })
 
 const webhookLink = computed(() => {
