@@ -165,13 +165,13 @@
 <script setup lang="ts">
 import OwnerPick from '@data-fair/lib-vuetify/owner-pick.vue'
 
-const processingsProps = defineProps({
-  adminMode: Boolean,
-  ownerFilter: { type: String, required: true },
-  facets: { type: Object, required: true },
-  isSmall: Boolean,
-  processings: { type: Array as PropType<Array<{ owner: { id: string, name: string } }>>, required: true }
-})
+const processingsProps = defineProps<{
+  adminMode: boolean,
+  ownerFilter: string,
+  facets: { statuses: Record<string, number>, plugins: Record<string, number>, owners: Record<string, { name: string, count: number }> },
+  isSmall: boolean,
+  processings: any[]
+}>()
 
 const search = defineModel('search', { type: String, default: '' })
 const showAll = defineModel('showAll', { type: Boolean, default: false })
@@ -243,10 +243,9 @@ const ownersItems = computed(() => {
   if (!processingsProps.facets.owners) return []
 
   return Object.entries(processingsProps.facets.owners)
-    .map(([ownerKey, count]) => {
-      const ownerName = processingsProps.processings.find(processing => processing.owner.id === ownerKey)?.owner.name || ownerKey
+    .map(([ownerKey, owner]) => {
       return {
-        display: `${ownerName} (${count})`,
+        display: `${owner.name} (${owner.count})`,
         ownerKey
       }
     })

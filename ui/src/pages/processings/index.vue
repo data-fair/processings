@@ -147,7 +147,7 @@ const processingsParams = computed(() => {
 
 const processingsFetch = useFetch<{
   results: Processing[],
-  facets: { usages: Record <string, number > },
+  facets: { statuses: Record<string, number>, plugins: Record<string, number>, owners: Record<string, { name: string, count: number }> },
   count: number
 }>(`${$apiPath}/processings`, { query: processingsParams })
 

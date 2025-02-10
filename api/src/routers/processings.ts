@@ -89,11 +89,12 @@ router.get('', async (req, res) => {
 
   // Filter by owners
   const owners = params.ownersFilter ? params.ownersFilter.split(',') : []
-  console.log('owners', owners)
   if (owners.length > 0) {
-    queryWithFilters['owner.id'] = { $in: owners }
+    queryWithFilters.$or = [
+      { 'owner.id': { $in: owners } },
+      { 'owner.department': { $in: owners } }
+    ]
   }
-  console.log('queryWithFilters', queryWithFilters)
 
   // Get the processings
   const [results, count] = await Promise.all([
@@ -102,7 +103,7 @@ router.get('', async (req, res) => {
   ])
   console.log('results', results)
 
-  const aggregationResult = await mongo.processings.aggregate([
+  const aggregationPipeline = [
     { $match: query },
     {
       $facet: {
@@ -138,14 +139,6 @@ router.get('', async (req, res) => {
               count: { $sum: 1 }
             }
           }
-        ],
-        owners: [
-          {
-            $group: {
-              _id: '$owner.id',
-              count: { $sum: 1 }
-            }
-          }
         ]
       }
     },
@@ -159,12 +152,44 @@ router.get('', async (req, res) => {
             ]
           },
           plugins: { $arrayToObject: { $map: { input: '$plugins', as: 'el', in: { k: '$$el._id', v: '$$el.count' } } } },
-          owners: { $arrayToObject: { $map: { input: '$owners', as: 'el', in: { k: '$$el._id', v: '$$el.count' } } } }
         }
       }
     }
-  ]).toArray()
+  ] as any[]
 
+  // Get for each owner (user/organization OR department) the number of processings
+  if (params.showAll) {
+    aggregationPipeline[1].$facet.owners = [
+      {
+        $group: {
+          _id: {
+            $cond: {
+              if: { $gt: [{ $ifNull: ['$owner.department', null] }, null] }, // Si owner.department existe
+              then: '$owner.department', // On prend department
+              else: '$owner.id' // Sinon, on prend id
+            }
+          },
+          name: { $first: { $cond: { if: { $gt: [{ $ifNull: ['$owner.department', null] }, null] }, then: '$owner.departmentName', else: '$owner.name' } } },
+          count: { $sum: 1 }
+        }
+      }
+    ]
+
+    aggregationPipeline[2].$replaceRoot.newRoot.owners = {
+      $arrayToObject: {
+        $map: {
+          input: '$owners',
+          as: 'el',
+          in: {
+            k: '$$el._id',
+            v: { name: '$$el.name', count: '$$el.count' }
+          }
+        }
+      }
+    }
+  }
+
+  const aggregationResult = await mongo.processings.aggregate(aggregationPipeline).toArray()
   const facets = aggregationResult[0] || { statuses: {}, plugins: {}, owners: {} }
 
   res.json({ results: results.map((p) => cleanProcessing(p as Processing, sessionState)), facets, count })
