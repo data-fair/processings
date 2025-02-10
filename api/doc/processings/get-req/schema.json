@@ -25,13 +25,16 @@
     "q": {
       "type": "string"
     },
-    "statuses": {
+    "statusesFilter": {
       "type": "string"
     },
-    "plugins": {
+    "pluginsFilter": {
       "type": "string"
     },
     "owner": {
+      "type": "string"
+    },
+    "ownersFilter": {
       "type": "string"
     }
   }

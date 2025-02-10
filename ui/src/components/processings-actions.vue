@@ -116,7 +116,7 @@
       variant="outlined"
       style="max-width:400px;"
     />
-    <v-select
+    <v-autocomplete
       v-model="pluginsSelected"
       :items="pluginsItems"
       item-title="display"
@@ -139,7 +139,25 @@
       color="admin"
       label="Voir tous les traitements"
       hide-details
-      class="mt-4 mx-4 adminSwitch"
+      class="mt-2 mx-4 text-admin"
+    />
+    <v-autocomplete
+      v-if="showAll"
+      v-model="ownersSelected"
+      :items="ownersItems"
+      item-title="display"
+      item-value="ownerKey"
+      label="Propriétaire"
+      chips
+      class="mt-2 mx-4 text-admin"
+      clearable
+      closable-chips
+      density="compact"
+      hide-details
+      multiple
+      rounded="xl"
+      variant="outlined"
+      style="max-width:400px;"
     />
   </v-list>
 </template>
@@ -147,18 +165,19 @@
 <script setup lang="ts">
 import OwnerPick from '@data-fair/lib-vuetify/owner-pick.vue'
 
-const processingsProps = defineProps({
-  adminMode: Boolean,
-  ownerFilter: { type: String, required: true },
-  facets: { type: Object, required: true },
-  isSmall: Boolean,
-  processings: { type: Array, required: true }
-})
+const processingsProps = defineProps<{
+  adminMode: boolean,
+  ownerFilter: string,
+  facets: { statuses: Record<string, number>, plugins: Record<string, number>, owners: { id: string, name: string, totalCount: number, type: string, departments: { department: string, departmentName: string, count: number }[] }[] },
+  isSmall: boolean,
+  processings: any[]
+}>()
 
 const search = defineModel('search', { type: String, default: '' })
 const showAll = defineModel('showAll', { type: Boolean, default: false })
 const pluginsSelected = defineModel('pluginsSelected', { type: Array, required: true })
 const statusesSelected = defineModel('statusesSelected', { type: Array, required: true })
+const ownersSelected = defineModel('ownersSelected', { type: Array, required: true })
 
 const router = useRouter()
 
@@ -220,6 +239,33 @@ const pluginsItems = computed(() => {
     .sort((a, b) => a.display.localeCompare(b.display))
 })
 
+const ownersItems = computed(() => {
+  if (!processingsProps.facets.owners) return []
+
+  return Object.entries(processingsProps.facets.owners)
+    .flatMap(([, owner]) => {
+      const items = []
+
+      // Si l'organisation a des départements
+      if (owner.departments.length > 0) {
+        owner.departments.forEach(department => {
+          // Ajout d'un élément pour chaque département
+          items.push({
+            display: `${owner.name} - ${department.departmentName || department.department} (${department.count})`,
+            ownerKey: `organization:${owner.id}:${department.department}`
+          })
+        })
+      }
+
+      items.push({
+        display: `${owner.name} (${owner.totalCount})`,
+        ownerKey: `${owner.type}:${owner.id}`
+      })
+      return items
+    })
+    .sort((a, b) => a.display.localeCompare(b.display))
+})
+
 const createProcessing = withUiNotif(
   async () => {
     inCreate.value = true
@@ -240,32 +286,4 @@ const createProcessing = withUiNotif(
 </script>
 
 <style scoped>
-/*
- * This aims at making the button looking better.
- * Instead of having a white string on a red background, we have a red string on the actual page's background
- * Plus the button is also red, and the text is bold so it's easier to read
- */
-:deep(.adminSwitch) {
-  background-color: transparent !important;
-  color: rgb(var(--v-theme-admin)) !important;
-}
-
-:deep(.adminSwitch .v-switch__thumb) {
-  background-color: rgb(var(--v-theme-admin)) !important;
-}
-
-:deep(.adminSwitch .v-switch__track) {
-  background-color: rgb(var(--v-theme-admin)) !important;
-  filter: saturate(100%);
-}
-
-:deep(.adminSwitch .v-switch__track:not(.bg-admin)) {
-  filter: saturate(50%);
-}
-
-:deep(.adminSwitch label) {
-  color: rgb(var(--v-theme-admin)) !important;
-  font-weight: bold !important;
-  padding-inline-start: 30px !important;
-}
 </style>
