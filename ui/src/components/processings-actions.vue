@@ -141,7 +141,7 @@
       hide-details
       class="mt-2 mx-4 text-admin"
     />
-    <v-select
+    <v-autocomplete
       v-if="showAll"
       v-model="ownersSelected"
       :items="ownersItems"
@@ -168,7 +168,7 @@ import OwnerPick from '@data-fair/lib-vuetify/owner-pick.vue'
 const processingsProps = defineProps<{
   adminMode: boolean,
   ownerFilter: string,
-  facets: { statuses: Record<string, number>, plugins: Record<string, number>, owners: Record<string, { name: string, count: number }> },
+  facets: { statuses: Record<string, number>, plugins: Record<string, number>, owners: { id: string, name: string, totalCount: number, type: string, departments: { department: string, departmentName: string, count: number }[] }[] },
   isSmall: boolean,
   processings: any[]
 }>()
@@ -243,11 +243,25 @@ const ownersItems = computed(() => {
   if (!processingsProps.facets.owners) return []
 
   return Object.entries(processingsProps.facets.owners)
-    .map(([ownerKey, owner]) => {
-      return {
-        display: `${owner.name} (${owner.count})`,
-        ownerKey
+    .flatMap(([, owner]) => {
+      const items = []
+
+      // Si l'organisation a des départements
+      if (owner.departments.length > 0) {
+        owner.departments.forEach(department => {
+          // Ajout d'un élément pour chaque département
+          items.push({
+            display: `${owner.name} - ${department.departmentName} (${department.count})`,
+            ownerKey: `organization:${owner.id}:${department.department}`
+          })
+        })
       }
+
+      items.push({
+        display: `${owner.name} (${owner.totalCount})`,
+        ownerKey: `${owner.type}:${owner.id}`
+      })
+      return items
     })
     .sort((a, b) => a.display.localeCompare(b.display))
 })
