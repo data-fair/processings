@@ -73,7 +73,7 @@ router.get('', async (req, res) => {
 
   const queryWithFilters = { ...query }
   // Filter by statuses
-  const statuses = params.statuses ? params.statuses.split(',') : []
+  const statuses = params.statusesFilter ? params.statusesFilter.split(',') : []
   if (statuses.length > 0) {
     queryWithFilters.$or = [
       statuses.includes('none') ? { lastRun: { $exists: false } } : null,
@@ -82,16 +82,25 @@ router.get('', async (req, res) => {
     ].filter(Boolean)
   }
   // Filter by plugins
-  const plugins = params.plugins ? params.plugins.split(',') : []
+  const plugins = params.pluginsFilter ? params.pluginsFilter.split(',') : []
   if (plugins.length > 0) {
     queryWithFilters.plugin = { $in: plugins }
   }
+
+  // Filter by owners
+  const owners = params.ownersFilter ? params.ownersFilter.split(',') : []
+  console.log('owners', owners)
+  if (owners.length > 0) {
+    queryWithFilters['owner.id'] = { $in: owners }
+  }
+  console.log('queryWithFilters', queryWithFilters)
 
   // Get the processings
   const [results, count] = await Promise.all([
     size > 0 ? mongo.processings.find(queryWithFilters).limit(size).skip(skip).sort(sort).project(project).toArray() : Promise.resolve([]),
     mongo.processings.countDocuments(query)
   ])
+  console.log('results', results)
 
   const aggregationResult = await mongo.processings.aggregate([
     { $match: query },
@@ -129,6 +138,14 @@ router.get('', async (req, res) => {
               count: { $sum: 1 }
             }
           }
+        ],
+        owners: [
+          {
+            $group: {
+              _id: '$owner.id',
+              count: { $sum: 1 }
+            }
+          }
         ]
       }
     },
@@ -141,13 +158,14 @@ router.get('', async (req, res) => {
               { $arrayToObject: { $map: { input: '$otherStatuses', as: 'el', in: { k: '$$el._id', v: '$$el.count' } } } }
             ]
           },
-          plugins: { $arrayToObject: { $map: { input: '$plugins', as: 'el', in: { k: '$$el._id', v: '$$el.count' } } } }
+          plugins: { $arrayToObject: { $map: { input: '$plugins', as: 'el', in: { k: '$$el._id', v: '$$el.count' } } } },
+          owners: { $arrayToObject: { $map: { input: '$owners', as: 'el', in: { k: '$$el._id', v: '$$el.count' } } } }
         }
       }
     }
   ]).toArray()
 
-  const facets = aggregationResult[0] || { statuses: {}, plugins: {} }
+  const facets = aggregationResult[0] || { statuses: {}, plugins: {}, owners: {} }
 
   res.json({ results: results.map((p) => cleanProcessing(p as Processing, sessionState)), facets, count })
 })

@@ -55,7 +55,8 @@
             v-model:search="search"
             v-model:show-all="showAll"
             v-model:plugins-selected="plugins"
-            v-model:statuses-selected="status"
+            v-model:statuses-selected="statuses"
+            v-model:owners-selected="owners"
             :owner-filter="ownerFilter"
             :admin-mode="session.state.user?.adminMode"
             :facets="processingsFetch.data.value.facets"
@@ -72,7 +73,8 @@
               v-model:search="search"
               v-model:show-all="showAll"
               v-model:plugins-selected="plugins"
-              v-model:statuses-selected="status"
+              v-model:statuses-selected="statuses"
+              v-model:owners-selected="owners"
               :owner-filter="ownerFilter"
               :admin-mode="session.state.user?.adminMode"
               :facets="processingsFetch.data.value.facets"
@@ -90,12 +92,12 @@
 import type { Processing } from '#api/types'
 import setBreadcrumbs from '~/utils/breadcrumbs'
 
-const route = useRoute()
 const session = useSessionAuthenticated(() => new Error('Authentification nécessaire'))
 const showAll = useBooleanSearchParam('showAll')
 const search = useStringSearchParam('q')
 const plugins = useStringsArraySearchParam('plugin')
-const status = useStringsArraySearchParam('status')
+const statuses = useStringsArraySearchParam('status')
+const owners = useStringsArraySearchParam('owner')
 
 onMounted(async () => setBreadcrumbs([{ text: 'traitements' }]))
 
@@ -103,30 +105,21 @@ onMounted(async () => setBreadcrumbs([{ text: 'traitements' }]))
   Permissions
 */
 
-const owner = computed(() => {
-  const owner = route.query.owner as string | null
-  if (owner) {
-    const parts = owner.split(':')
-    return { type: parts[0], id: parts[1] } as { type: 'user' | 'organization', id: string, department?: string }
-  } else {
-    return session.state.account
-  }
-})
 const ownerRole = computed(() => {
   const user = session.state.user
-  if (owner.value.type === 'user') {
-    if (owner.value.id === user.id) return 'admin'
+  if (session.state.account.type === 'user') {
+    if (session.state.account.id === user.id) return 'admin'
     else return 'anonymous'
   }
   const userOrg = user.organizations.find(o => {
-    if (o.id !== owner.value.id) return false
+    if (o.id !== session.state.account.id) return false
     if (!o.department) return true
-    if (o.department === owner.value.department) return true
+    if (o.department === session.state.account.department) return true
     return false
   })
   return userOrg ? userOrg.role : 'anonymous'
 })
-const ownerFilter = computed(() => `${owner.value.type}:${owner.value.id}${owner.value.department ? ':' + owner.value.department : ''}`)
+const ownerFilter = computed(() => `${session.state.account.type}:${session.state.account.id}${session.state.account.department ? ':' + session.state.account.department : ''}`)
 const canAdmin = computed(() => {
   return ownerRole.value === 'admin' || !!session.state.user?.adminMode
 })
@@ -142,9 +135,13 @@ const processingsParams = computed(() => {
     sort: 'updated.date:-1',
     select: '_id,title,plugin,lastRun,nextRun,owner'
   }
-  if (plugins.value.length) params.plugins = plugins.value.join(',')
-  if (status.value.length) params.statuses = status.value.join(',')
-  if (!showAll.value) params.owner = ownerFilter.value
+  if (plugins.value.length) params.pluginsFilter = plugins.value.join(',')
+  if (statuses.value.length) params.statusesFilter = statuses.value.join(',')
+  if (showAll.value) {
+    params.ownersFilter = owners.value.join(',')
+  } else {
+    params.owner = ownerFilter.value
+  }
   return params
 })
 
