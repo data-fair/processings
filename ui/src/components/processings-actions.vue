@@ -251,7 +251,7 @@ const ownersItems = computed(() => {
         owner.departments.forEach(department => {
           // Ajout d'un élément pour chaque département
           items.push({
-            display: `${owner.name} - ${department.departmentName} (${department.count})`,
+            display: `${owner.name} - ${department.departmentName || department.department} (${department.count})`,
             ownerKey: `organization:${owner.id}:${department.department}`
           })
         })
