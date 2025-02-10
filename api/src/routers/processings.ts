@@ -166,8 +166,8 @@ router.get('', async (req, res) => {
             type: '$owner.type',
             id: '$owner.id',
             name: '$owner.name',
-            department: { $ifNull: ['$owner.department', 'null'] },
-            departmentName: { $ifNull: ['$owner.departmentName', 'null'] }
+            department: { $ifNull: ['$owner.department', null] },
+            departmentName: { $ifNull: ['$owner.departmentName', null] }
           },
           count: { $sum: 1 }
         }
@@ -179,29 +179,17 @@ router.get('', async (req, res) => {
             type: '$_id.type',
             id: '$_id.id',
             name: '$_id.name',
-            department: {
-              $cond: {
-                if: { $eq: ['$_id.department', 'null'] },
-                then: null,
-                else: '$_id.department'
-              }
-            },
-            departmentName: {
-              $cond: {
-                if: { $eq: ['$_id.department', 'null'] },
-                then: null,
-                else: '$_id.departmentName'
-              }
-            }
+            department: '$_id.department',
+            departmentName: '$_id.departmentName'
           }
         }
       },
       {
         $group: {
           _id: {
-            type: '$_id.type',
-            id: '$_id.id',
-            name: '$_id.name'
+            type: '$value.type',
+            id: '$value.id',
+            name: '$value.name'
           },
           totalCount: { $sum: '$count' },
           departments: {
