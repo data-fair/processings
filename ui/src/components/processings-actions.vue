@@ -116,7 +116,7 @@
       variant="outlined"
       style="max-width:400px;"
     />
-    <v-select
+    <v-autocomplete
       v-model="pluginsSelected"
       :items="pluginsItems"
       item-title="display"
