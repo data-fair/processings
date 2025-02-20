@@ -21,7 +21,7 @@
         </template>
       </v-list>
       <v-pagination
-        v-if="runs.data.value?.count > size"
+        v-if="(runs.data.value?.count ?? 0) > size"
         v-model="page"
         :length="Math.ceil((runs.data.value?.count ?? 0) / size)"
         @update:model-value="runs.refresh()"

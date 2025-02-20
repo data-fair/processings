@@ -3,13 +3,12 @@
     <v-card
       v-for="log in logs as LogEntry[]"
       :key="log.date"
-      class="mb-2"
+      class="border-none"
       variant="text"
     >
-      <v-card-text class="py-0">
+      <v-card-text class="pt-0 pb-2">
         <div
-          class="d-flex align-center"
-          style="min-height: 26px;"
+          class="d-flex align-top"
         >
           <div class="flex-grow-1">
             <span
@@ -25,15 +24,9 @@
               </template>
             </span>
             <span
-              v-if="log.type === 'warning'"
-              class="text-accent"
+              v-if="['warning', 'info', 'debug'].includes(log.type)"
+              :class="log.type === 'warning' ? 'text-accent' : ''"
             >
-              {{ log.msg }}
-            </span>
-            <span v-if="log.type === 'info'">
-              {{ log.msg }}
-            </span>
-            <span v-if="log.type === 'debug'">
               {{ log.msg }}
             </span>
             <span
@@ -52,12 +45,10 @@
             </span>
           </div>
           <v-spacer />
-          <div style="white-space: nowrap;">
-            <span class="pl-2">
-              {{ formatDate(log.date) }}
-              <span v-if="log.progressDate">- {{ formatDate(log.progressDate) }}</span>
-            </span>
-          </div>
+          <span class="pl-2 text-no-wrap">
+            {{ formatDate(log.date) }}
+            <span v-if="log.progressDate">- {{ formatDate(log.progressDate) }}</span>
+          </span>
         </div>
       </v-card-text>
     </v-card>
