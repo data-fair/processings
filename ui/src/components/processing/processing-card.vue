@@ -81,6 +81,8 @@
               <v-progress-circular
                 indeterminate
                 color="primary"
+                size="small"
+                class="mr-7"
               />
             </template>
             Exécution commencée {{ dayjs(processing.lastRun.startedAt).fromNow() }}
