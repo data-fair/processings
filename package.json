@@ -38,13 +38,13 @@
   },
   "homepage": "https://github.com/data-fair/processings#readme",
   "dependencies": {
-    "@data-fair/lib-types-builder": "^1.6.0"
+    "@data-fair/lib-types-builder": "^1.7.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.5.0",
-    "@commitlint/config-conventional": "^19.5.0",
-    "@data-fair/lib-node": "^2.0.1",
-    "@data-fair/lib-utils": "^1.1.0",
+    "@commitlint/cli": "^19.7.1",
+    "@commitlint/config-conventional": "^19.7.1",
+    "@data-fair/lib-node": "^2.4.0",
+    "@data-fair/lib-utils": "^1.5.0",
     "@reporters/bail": "^1.2.1",
     "@types/config": "^3.3.5",
     "@types/debug": "^4.1.12",
