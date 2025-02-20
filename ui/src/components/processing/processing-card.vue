@@ -6,7 +6,10 @@
     <v-card-item>
       <!-- Owner -->
       <template #append>
-        <owner-avatar :owner="processing.owner" />
+        <owner-avatar
+          v-if="showOwner"
+          :owner="processing.owner"
+        />
       </template>
 
       <!-- Processing title -->
