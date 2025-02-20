@@ -49,6 +49,7 @@ export default defineConfig({
             'mdiBell',
             'mdiCheckCircle',
             'mdiClock',
+            'mdiDatabase',
             'mdiDotsVertical',
             'mdiDownload',
             'mdiInformation',
@@ -59,6 +60,8 @@ export default defineConfig({
             'mdiPlusCircle',
             'mdiPowerPlug',
             'mdiStop',
+            'mdiToggleSwitch',
+            'mdiToggleSwitchOff',
             'mdiUpdate',
             'mdiDelete'
           ]

@@ -129,7 +129,7 @@
       </v-card>
     </v-menu>
     <v-list-item
-      v-if="processing && processing.config && processing.config.dataset && processing.config.dataset.id"
+      v-if="processing?.config?.dataset?.id"
       :href="`/data-fair/dataset/${processing.config.dataset.id}`"
       target="_blank"
     >

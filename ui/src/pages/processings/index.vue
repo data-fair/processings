@@ -133,7 +133,7 @@ const processingsParams = computed(() => {
     size: '10000',
     showAll: showAll.value,
     sort: 'updated.date:-1',
-    select: '_id,title,plugin,lastRun,nextRun,owner'
+    select: '_id,title,plugin,lastRun,nextRun,owner,active,config'
   }
   if (plugins.value.length) params.pluginsFilter = plugins.value.join(',')
   if (statuses.value.length) params.statusesFilter = statuses.value.join(',')

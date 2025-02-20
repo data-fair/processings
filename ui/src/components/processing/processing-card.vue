@@ -1,23 +1,43 @@
 <template>
   <v-card
-    rounded="lg"
-    hover
+    class="h-100"
     :to="`/processings/${processing._id}`"
   >
-    <v-card-title class="font-weight-bold text-primary">
-      {{ processing.title || processing._id }}
-    </v-card-title>
+    <v-card-item>
+      <!-- Owner -->
+      <template #append>
+        <owner-avatar
+          v-if="showOwner"
+          :owner="processing.owner"
+        />
+      </template>
+
+      <!-- Processing title -->
+      <template #title>
+        <span class="font-weight-bold text-primary">
+          {{ processing.title || processing._id }}
+        </span>
+        <v-tooltip
+          v-if="processing.title"
+          activator="parent"
+          location="top left"
+          open-delay="300"
+          :text="processing.title || processing._id"
+        />
+      </template>
+    </v-card-item>
     <v-divider />
     <v-card-text class="pa-0">
       <v-list
         density="compact"
         style="background-color: inherit;"
       >
+        <!-- Plugin name -->
         <v-list-item v-if="pluginFetch.loading.value">
           <v-progress-circular
             indeterminate
             color="primary"
-            size="x-small"
+            size="small"
             width="3"
           />
         </v-list-item>
@@ -41,18 +61,31 @@
           </span>
         </v-list-item>
 
+        <!-- Linked dataset -->
+        <v-list-item
+          v-if="processing.config?.dataset?.id"
+        >
+          <template #prepend>
+            <v-icon
+              color="primary"
+              :icon="mdiDatabase"
+            />
+          </template>
+          {{ processing.config.dataset.title || processing.config.dataset.id }}
+        </v-list-item>
+
+        <!-- Last run -->
         <template v-if="processing.lastRun">
           <v-list-item v-if="processing.lastRun.status === 'running'">
             <template #prepend>
               <v-progress-circular
                 indeterminate
                 color="primary"
-                size="24"
+                size="small"
+                class="mr-7"
               />
             </template>
-            <span style="padding-left: 1.8rem; display: inline-block;">
-              Exécution commencée {{ dayjs(processing.lastRun.startedAt).fromNow() }}
-            </span>
+            Exécution commencée {{ dayjs(processing.lastRun.startedAt).fromNow() }}
           </v-list-item>
 
           <v-list-item v-if="processing.lastRun.status === 'finished'">
@@ -62,7 +95,8 @@
                 :icon="mdiCheckCircle"
               />
             </template>
-            <span>Dernière exécution terminée {{ dayjs(processing.lastRun.finishedAt).fromNow() }}</span>
+            Dernière exécution terminée {{ dayjs(processing.lastRun.finishedAt).fromNow() }}
+            <br>Durée : {{ dayjs(processing.lastRun.finishedAt).from(processing.lastRun.startedAt, true) }}
           </v-list-item>
 
           <v-list-item v-if="processing.lastRun.status === 'error'">
@@ -72,7 +106,8 @@
                 :icon="mdiAlert"
               />
             </template>
-            <span>Dernière exécution en échec {{ dayjs(processing.lastRun.finishedAt).fromNow() }}</span>
+            Dernière exécution en échec {{ dayjs(processing.lastRun.finishedAt).fromNow() }}
+            <br>Durée : {{ dayjs(processing.lastRun.finishedAt).from(processing.lastRun.startedAt, true) }}
           </v-list-item>
 
           <v-list-item v-if="processing.lastRun.status === 'kill' || processing.lastRun.status === 'killed'">
@@ -85,7 +120,6 @@
             <span>Dernière exécution interrompue {{ dayjs(processing.lastRun.finishedAt).fromNow() }}</span>
           </v-list-item>
         </template>
-
         <v-list-item v-else>
           <template #prepend>
             <v-icon
@@ -96,6 +130,7 @@
           <span>Aucune exécution dans l'historique</span>
         </v-list-item>
 
+        <!-- Next run -->
         <template v-if="processing.nextRun">
           <v-list-item v-if="processing.nextRun.status === 'scheduled'">
             <template #prepend>
@@ -125,21 +160,29 @@
             </span>
           </v-list-item>
         </template>
+
+        <v-list-item>
+          <template #prepend>
+            <v-icon
+              :color="processing.active ? 'success' : 'error'"
+              :icon="processing.active ? mdiToggleSwitch : mdiToggleSwitchOff"
+            />
+          </template>
+          {{ processing.active ? 'Actif' : 'Inactif' }}
+        </v-list-item>
       </v-list>
     </v-card-text>
-    <v-card-actions
-      v-if="showOwner"
-      class="pl-3 pt-0 mt-auto"
-    >
-      <owner-avatar :owner="processing.owner" />
-      <v-spacer />
-    </v-card-actions>
   </v-card>
 </template>
 
 <script setup lang="ts">
 import ownerAvatar from '@data-fair/lib-vuetify/owner-avatar.vue'
 const { dayjs } = useLocaleDayjs()
+
+// const ownerLogo = (owner: any) => {
+//   if (owner.department) return `${$sitePath}/simple-directory/api/avatars/${owner.type}/${owner.id}/${owner.department}/avatar.png`
+//   else return `${$sitePath}/simple-directory/api/avatars/${owner.type}/${owner.id}/avatar.png`
+// }
 
 const props = defineProps({
   pluginCustomName: {
