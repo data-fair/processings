@@ -75,26 +75,19 @@ router.get('', async (req, res) => {
   // Filter by statuses
   const statuses = params.statuses ? params.statuses.split(',') : []
   if (statuses.length > 0) {
-    queryWithFilters.$or = [
-      statuses.includes('none') ? { lastRun: { $exists: false } } : null,
-      statuses.includes('scheduled') ? { nextRun: { $exists: true } } : null,
-      { 'lastRun.status': { $in: statuses } }
-    ].filter(Boolean)
+    queryWithFilters.$and = queryWithFilters.$and || []
+    queryWithFilters.$and.push({
+      $or: [
+        statuses.includes('none') ? { lastRun: { $exists: false } } : null,
+        statuses.includes('scheduled') ? { nextRun: { $exists: true } } : null,
+        { 'lastRun.status': { $in: statuses } }
+      ].filter(Boolean)
+    })
   }
   // Filter by plugins
   const plugins = params.plugins ? params.plugins.split(',') : []
   if (plugins.length > 0) {
     queryWithFilters.plugin = { $in: plugins }
-  }
-
-  // Filter by owners
-  const owners = params.owner ? params.owner.split(',') : []
-  if (owners.length > 0 && params.showAll) {
-    queryWithFilters.$or = owners.map(ownerStr => {
-      const [type, id, department] = ownerStr.split(':')
-      if (department) return { 'owner.type': type, 'owner.id': id, 'owner.department': department }
-      else return { 'owner.type': type, 'owner.id': id }
-    })
   }
 
   // Get the processings
@@ -104,7 +97,6 @@ router.get('', async (req, res) => {
   ])
 
   const aggregationPipeline = [
-    { $match: query },
     {
       $facet: {
         scheduled: [
@@ -159,7 +151,7 @@ router.get('', async (req, res) => {
 
   // Get for each owner (user/organization OR department) the number of processings
   if (params.showAll) {
-    aggregationPipeline[1].$facet.owners = [
+    aggregationPipeline[0].$facet.owners = [
       {
         $group: {
           _id: {
@@ -220,7 +212,9 @@ router.get('', async (req, res) => {
     ]
 
     // Ajout des `owners` dans le résultat final
-    aggregationPipeline[2].$replaceRoot.newRoot.owners = { $ifNull: ['$owners', []] }
+    aggregationPipeline[1].$replaceRoot.newRoot.owners = { $ifNull: ['$owners', []] }
+  } else {
+    aggregationPipeline.unshift({ $match: query })
   }
 
   const aggregationResult = await mongo.processings.aggregate(aggregationPipeline).toArray()
