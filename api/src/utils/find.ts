@@ -14,16 +14,22 @@ const query = (reqQuery: Record<string, string>, sessionState: SessionStateAuthe
   if (showAll && !sessionState.user.adminMode) {
     throw httpError(400, 'Only super admins can override permissions filter with showAll parameter')
   }
+  let owners: AccountKeys[] = []
   if (!showAll) {
-    let owner: AccountKeys = sessionState.account
-    if (reqQuery.owner) {
-      const ownerParts = reqQuery.owner.split(':')
+    owners = [sessionState.account]
+  }
+  if (reqQuery.owner) {
+    owners = []
+    for (const ownerStr of reqQuery.owner.split(',')) {
+      const ownerParts = ownerStr.split(':')
       if (!(ownerParts[0] === 'user' || ownerParts[0] === 'organization')) {
         throw httpError(400, 'Owner type must be user or organization')
       }
-      owner = { type: ownerParts[0], id: ownerParts[1], department: ownerParts[2] }
+      owners.push({ type: ownerParts[0], id: ownerParts[1], department: ownerParts[2] })
     }
-    Object.assign(query, permissions.getOwnerPermissionFilter(sessionState, owner))
+  }
+  if (owners.length > 0) {
+    query.$and = [{ $or: owners.map(owner => permissions.getOwnerPermissionFilter(sessionState, owner)) }]
   }
 
   Object.keys(fieldsMap).filter(name => reqQuery[name] !== undefined).forEach(name => {

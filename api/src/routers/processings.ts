@@ -75,11 +75,14 @@ router.get('', async (req, res) => {
   // Filter by statuses
   const statuses = params.statuses ? params.statuses.split(',') : []
   if (statuses.length > 0) {
-    queryWithFilters.$or = [
-      statuses.includes('none') ? { lastRun: { $exists: false } } : null,
-      statuses.includes('scheduled') ? { nextRun: { $exists: true } } : null,
-      { 'lastRun.status': { $in: statuses } }
-    ].filter(Boolean)
+    queryWithFilters.$and = queryWithFilters.$and || []
+    queryWithFilters.$and.push({
+      $or: [
+        statuses.includes('none') ? { lastRun: { $exists: false } } : null,
+        statuses.includes('scheduled') ? { nextRun: { $exists: true } } : null,
+        { 'lastRun.status': { $in: statuses } }
+      ].filter(Boolean)
+    })
   }
   // Filter by plugins
   const plugins = params.plugins ? params.plugins.split(',') : []
@@ -93,8 +96,7 @@ router.get('', async (req, res) => {
     mongo.processings.countDocuments(query)
   ])
 
-  const aggregationResult = await mongo.processings.aggregate([
-    { $match: query },
+  const aggregationPipeline = [
     {
       $facet: {
         scheduled: [
@@ -145,9 +147,78 @@ router.get('', async (req, res) => {
         }
       }
     }
-  ]).toArray()
+  ] as any[]
 
-  const facets = aggregationResult[0] || { statuses: {}, plugins: {} }
+  // Get for each owner (user/organization OR department) the number of processings
+  if (params.showAll) {
+    aggregationPipeline[0].$facet.owners = [
+      {
+        $group: {
+          _id: {
+            type: '$owner.type',
+            id: '$owner.id',
+            name: '$owner.name',
+            department: { $ifNull: ['$owner.department', null] },
+            departmentName: { $ifNull: ['$owner.departmentName', null] }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          count: 1,
+          value: {
+            type: '$_id.type',
+            id: '$_id.id',
+            name: '$_id.name',
+            department: '$_id.department',
+            departmentName: '$_id.departmentName'
+          }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            type: '$value.type',
+            id: '$value.id',
+            name: '$value.name'
+          },
+          totalCount: { $sum: '$count' },
+          departments: {
+            $push: {
+              department: '$value.department',
+              departmentName: '$value.departmentName',
+              count: '$count'
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          type: '$_id.type',
+          id: '$_id.id',
+          name: '$_id.name',
+          totalCount: 1,
+          departments: {
+            $filter: {
+              input: '$departments',
+              as: 'dept',
+              cond: { $ne: ['$$dept.department', null] } // Filtrer les départements null
+            }
+          }
+        }
+      }
+    ]
+
+    // Ajout des `owners` dans le résultat final
+    aggregationPipeline[1].$replaceRoot.newRoot.owners = { $ifNull: ['$owners', []] }
+  } else {
+    aggregationPipeline.unshift({ $match: query })
+  }
+
+  const aggregationResult = await mongo.processings.aggregate(aggregationPipeline).toArray()
+  const facets = aggregationResult[0] || { statuses: {}, plugins: {}, owners: [] }
 
   res.json({ results: results.map((p) => cleanProcessing(p as Processing, sessionState)), facets, count })
 })
