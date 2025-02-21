@@ -8,7 +8,8 @@ const dmeadus = await axiosAuth('dmeadus0@answers.com')
 const admin1Koumoul = await axiosAuth({ email: 'admin1@test.com', org: 'koumoul' })
 const contrib1Koumoul = await axiosAuth({ email: 'contrib1@test.com', org: 'koumoul' })
 const user1Koumoul = await axiosAuth({ email: 'user1@test.com', org: 'koumoul' })
-const dmeadusOrg = await axiosAuth({ email: 'dmeadus0@answers.com', org: 'KWqAGZ4mG' })
+const dmeadusFivechat = await axiosAuth({ email: 'dmeadus0@answers.com', org: 'KWqAGZ4mG' })
+const dmeadusKoumoul = await axiosAuth({ email: 'dmeadus0@answers.com', org: 'koumoul' })
 
 let plugin
 const createTestPlugin = async () => {
@@ -71,11 +72,11 @@ describe('processing', () => {
     await assert.rejects(user1Koumoul.patch(`/api/v1/processings/${processing._id}`, { title: 'test' }), { status: 403 })
 
     // no permission at all for outsiders
-    assert.equal((await dmeadusOrg.get('/api/v1/processings', { params: { owner: 'organization:koumoul' } })).data.count, 0)
+    assert.equal((await dmeadusFivechat.get('/api/v1/processings', { params: { owner: 'organization:koumoul' } })).data.count, 0)
     assert.equal((await cdurning2.get('/api/v1/processings', { params: { owner: 'organization:koumoul' } })).data.count, 0)
-    await assert.rejects(dmeadusOrg.get(`/api/v1/processings/${processing._id}`), { status: 403 })
+    await assert.rejects(dmeadusFivechat.get(`/api/v1/processings/${processing._id}`), { status: 403 })
     await assert.rejects(cdurning2.get(`/api/v1/processings/${processing._id}`), { status: 403 })
-    // await assert.rejects(dmeadusOrg.get('/api/v1/runs', { params: { processing: processing._id } }), { status: 403 })
+    // await assert.rejects(dmeadusFivechat.get('/api/v1/runs', { params: { processing: processing._id } }), { status: 403 })
     // await assert.rejects(cdurning2.get('/api/v1/runs', { params: { processing: processing._id } }), { status: 403 })
 
     // add permission based on user email and partner org
@@ -89,26 +90,47 @@ describe('processing', () => {
       }]
     })
     // list permission ok with profile "read"
-    assert.equal((await dmeadusOrg.get('/api/v1/processings', { params: { owner: 'organization:koumoul' } })).data.count, 1)
+    assert.equal((await dmeadusFivechat.get('/api/v1/processings', { params: { owner: 'organization:koumoul' } })).data.count, 1)
     assert.equal((await cdurning2.get('/api/v1/processings', { params: { owner: 'organization:koumoul' } })).data.count, 1)
     assert.equal((await dmeadus.get('/api/v1/processings', { params: { owner: 'organization:koumoul' } })).data.count, 0)
     // read permission ok too
-    const dmeadusOrgProcessing = (await dmeadusOrg.get(`/api/v1/processings/${processing._id}`)).data
-    assert.ok(dmeadusOrgProcessing)
-    assert.equal(dmeadusOrgProcessing.userProfile, 'read')
+    const dmeadusFivechatProcessing = (await dmeadusFivechat.get(`/api/v1/processings/${processing._id}`)).data
+    assert.ok(dmeadusFivechatProcessing)
+    assert.equal(dmeadusFivechatProcessing.userProfile, 'read')
     const cdurning2Processing = (await cdurning2.get(`/api/v1/processings/${processing._id}`)).data
     assert.ok(cdurning2Processing)
     assert.equal(cdurning2Processing.userProfile, 'read')
     // read runs ok too
-    assert.equal((await dmeadusOrg.get('/api/v1/runs', { params: { processing: processing._id, owner: 'organization:koumoul' } })).data.count, 1)
+    assert.equal((await dmeadusFivechat.get('/api/v1/runs', { params: { processing: processing._id, owner: 'organization:koumoul' } })).data.count, 1)
     assert.equal((await cdurning2.get('/api/v1/runs', { params: { processing: processing._id, owner: 'organization:koumoul' } })).data.count, 1)
     assert.equal((await dmeadus.get('/api/v1/runs', { params: { processing: processing._id, owner: 'organization:koumoul' } })).data.count, 0)
     // permission depends on active account (simple user from partner cannot read it)
     await assert.rejects(dmeadus.get(`/api/v1/processings/${processing._id}`), { status: 403 })
     // still no write permissions
-    await assert.rejects(dmeadusOrg.patch(`/api/v1/processings/${processing._id}`, { title: 'test' }), { status: 403 })
+    await assert.rejects(dmeadusFivechat.patch(`/api/v1/processings/${processing._id}`, { title: 'test' }), { status: 403 })
     await assert.rejects(cdurning2.patch(`/api/v1/processings/${processing._id}`, { title: 'test' }), { status: 403 })
 
     await superadmin.delete(`/api/v1/plugins/${plugin.id}`)
+  })
+
+  it.only('should list processings with good permissions', async function () {
+    // Add 2 processings for 2 users/orgs
+    await admin1Koumoul.post('/api/v1/processings', {
+      title: 'Hello processing 1',
+      plugin: plugin.id
+    })
+    await dmeadusFivechat.post('/api/v1/processings', {
+      title: 'Hello processing 2',
+      plugin: plugin.id
+    })
+
+    // list processings
+    assert.equal((await admin1Koumoul.get('/api/v1/processings?owner=organization:koumoul')).data.count, 1) // Because only one processing in koumoul and admin1 is admin of koumoul
+    assert.equal((await dmeadusFivechat.get('/api/v1/processings?owner=organization:KWqAGZ4mG')).data.count, 1) // Because only one processing in Fivechat and dmeadus is admin of Fivechat
+    assert.equal((await dmeadusKoumoul.get('/api/v1/processings?owner=organization:koumoul')).data.count, 1) // Because only one processing in koumoul and dmeadus is connected to the orga koumoul
+    assert.equal((await dmeadusKoumoul.get('/api/v1/processings?owner=organization:koumoul,organization:KWqAGZ4mG')).data.count, 1) // Lists the processings of koumoul, not fivechart, because dmeadus is connected to the orga koumoul
+
+    assert.equal((await superadmin.get('/api/v1/processings?showAll=true')).data.count, 2) // Lists all the processings without permission filter
+    assert.equal((await superadmin.get('/api/v1/processings?showAll=true&owner=organization:koumoul')).data.results.length, 1) // Lists all the processings without permission filter but with owner filter
   })
 })

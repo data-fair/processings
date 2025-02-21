@@ -73,7 +73,7 @@ router.get('', async (req, res) => {
 
   const queryWithFilters = { ...query }
   // Filter by statuses
-  const statuses = params.statusesFilter ? params.statusesFilter.split(',') : []
+  const statuses = params.statuses ? params.statuses.split(',') : []
   if (statuses.length > 0) {
     queryWithFilters.$or = [
       statuses.includes('none') ? { lastRun: { $exists: false } } : null,
@@ -82,14 +82,14 @@ router.get('', async (req, res) => {
     ].filter(Boolean)
   }
   // Filter by plugins
-  const plugins = params.pluginsFilter ? params.pluginsFilter.split(',') : []
+  const plugins = params.plugins ? params.plugins.split(',') : []
   if (plugins.length > 0) {
     queryWithFilters.plugin = { $in: plugins }
   }
 
   // Filter by owners
-  const owners = params.ownersFilter ? params.ownersFilter.split(',') : []
-  if (owners.length > 0) {
+  const owners = params.owner ? params.owner.split(',') : []
+  if (owners.length > 0 && params.showAll) {
     queryWithFilters.$or = owners.map(ownerStr => {
       const [type, id, department] = ownerStr.split(':')
       if (department) return { 'owner.type': type, 'owner.id': id, 'owner.department': department }
