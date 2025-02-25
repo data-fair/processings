@@ -33,7 +33,12 @@ const getAxiosInstance = (processing: Processing) => {
   const headers: Record<string, string> = {
     'x-apiKey': config.dataFairAPIKey
   }
-  if (config.dataFairAdminMode) headers['x-account'] = JSON.stringify(processing.owner)
+  if (config.dataFairAdminMode) {
+    const account = { ...processing.owner }
+    if (account.name) account.name = encodeURIComponent(account.name)
+    if (account.departmentName) account.departmentName = encodeURIComponent(account.departmentName)
+    headers['x-account'] = JSON.stringify(account)
+  }
   headers['x-processing'] = JSON.stringify({ _id: processing._id, title: encodeURIComponent(processing.title) })
 
   const axiosInstance = axios.create({
