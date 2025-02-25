@@ -70,14 +70,22 @@ router.post('/', permissions.isSuperAdmin, async (req, res) => {
     // create a pseudo npm package with a dependency to the plugin referenced from the registry
     await fs.writeFile(path.join(dir.path, 'package.json'), JSON.stringify({
       name: plugin.id.replace('@', ''),
+      type: 'module',
       dependencies: {
         [plugin.name]: '^' + plugin.version
       }
     }, null, 2))
     await exec('npm install --omit=dev', { cwd: dir.path })
-    await fs.writeFile(path.join(dir.path, 'index.js'), `module.exports = require('${plugin.name}')`)
-    plugin.pluginConfigSchema = await fs.readJson(path.join(dir.path, 'node_modules', plugin.name, 'plugin-config-schema.json'))
-    plugin.processingConfigSchema = await fs.readJson(path.join(dir.path, 'node_modules', plugin.name, 'processing-config-schema.json'))
+
+    // move the plugin to the src directory (Stripping types is currently unsupported for files under node_modules)
+    await fs.move(path.join(dir.path, 'node_modules', plugin.name), path.join(dir.path, 'src'), { overwrite: true })
+
+    // generate an index.js file to export the main file
+    const mainFile = (await fs.readJson(path.join(dir.path, 'src', 'package.json'))).main || 'index.js'
+    await fs.writeFile(path.join(dir.path, 'index.js'), `export * from './${path.join('src', mainFile)}'`)
+
+    plugin.pluginConfigSchema = await fs.readJson(path.join(dir.path, 'src', 'plugin-config-schema.json'))
+    plugin.processingConfigSchema = await fs.readJson(path.join(dir.path, 'src', 'processing-config-schema.json'))
     await fs.writeFile(path.join(dir.path, 'plugin.json'), JSON.stringify(plugin, null, 2))
     await fs.move(dir.path, pluginDir, { overwrite: true })
   } finally {

@@ -2,7 +2,7 @@
   "name": "@data-fair/processings-shared",
   "type": "module",
   "devDependencies": {
-    "@data-fair/lib-express": "^1.8.0"
+    "@data-fair/lib-express": "^1.13.1"
   },
   "dependencies": {
     "@data-fair/lib-node": "^2.1.0",

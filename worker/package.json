@@ -13,7 +13,7 @@
   },
   "devDependencies": {
     "@data-fair/lib-common-types": "^1.5.4",
-    "@data-fair/lib-express": "^1.12.6",
+    "@data-fair/lib-express": "^1.13.1",
     "@types/child-process-promise": "^2.2.6",
     "@types/nodemailer": "^6.4.16",
     "@types/resolve-path": "^1.4.3"
