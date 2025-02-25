@@ -82,7 +82,7 @@ router.post('/', permissions.isSuperAdmin, async (req, res) => {
 
     // generate an index.js file to export the main file
     const mainFile = (await fs.readJson(path.join(dir.path, 'src', 'package.json'))).main || 'index.js'
-    await fs.writeFile(path.join(dir.path, 'index.js'), `export * from './src/${mainFile}'`)
+    await fs.writeFile(path.join(dir.path, 'index.js'), `export * from './${path.join('src', mainFile)}'`)
 
     plugin.pluginConfigSchema = await fs.readJson(path.join(dir.path, 'src', 'plugin-config-schema.json'))
     plugin.processingConfigSchema = await fs.readJson(path.join(dir.path, 'src', 'processing-config-schema.json'))
