@@ -104,22 +104,29 @@ onMounted(async () => setBreadcrumbs([{ text: 'traitements' }]))
 /*
   Permissions
 */
-
+const owner = computed(() => {
+  if (owners.value && owners.value.length) {
+    const parts = owners.value[0].split(':')
+    return { type: parts[0], id: parts[1] } as { type: 'user' | 'organization', id: string, department?: string }
+  } else {
+    return session.state.account
+  }
+})
 const ownerRole = computed(() => {
   const user = session.state.user
-  if (session.state.account.type === 'user') {
-    if (session.state.account.id === user.id) return 'admin'
+  if (owner.value.type === 'user') {
+    if (owner.value.id === user.id) return 'admin'
     else return 'anonymous'
   }
   const userOrg = user.organizations.find(o => {
-    if (o.id !== session.state.account.id) return false
+    if (o.id !== owner.value.id) return false
     if (!o.department) return true
-    if (o.department === session.state.account.department) return true
+    if (o.department === owner.value.department) return true
     return false
   })
   return userOrg ? userOrg.role : 'anonymous'
 })
-const ownerFilter = computed(() => `${session.state.account.type}:${session.state.account.id}${session.state.account.department ? ':' + session.state.account.department : ''}`)
+const ownerFilter = computed(() => `${owner.value.type}:${owner.value.id}${owner.value.department ? ':' + owner.value.department : ''}`)
 const canAdmin = computed(() => {
   return ownerRole.value === 'admin' || !!session.state.user?.adminMode
 })
@@ -137,7 +144,7 @@ const processingsParams = computed(() => {
   }
   if (plugins.value.length) params.plugins = plugins.value.join(',')
   if (statuses.value.length) params.statuses = statuses.value.join(',')
-  if (showAll.value) {
+  if (owners.value) {
     params.owner = owners.value.join(',')
   } else {
     params.owner = ownerFilter.value
