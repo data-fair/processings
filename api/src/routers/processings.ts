@@ -150,7 +150,7 @@ router.get('', async (req, res) => {
   ] as any[]
 
   // Get for each owner (user/organization OR department) the number of processings
-  if (params.showAll) {
+  if (params.showAll === 'true') {
     aggregationPipeline[0].$facet.owners = [
       {
         $group: {
