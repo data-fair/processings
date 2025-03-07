@@ -90,7 +90,6 @@
 
 <script setup lang="ts">
 import type { Processing } from '#api/types'
-import setBreadcrumbs from '~/utils/breadcrumbs'
 
 const session = useSessionAuthenticated(() => new Error('Authentification nécessaire'))
 const showAll = useBooleanSearchParam('showAll')
@@ -99,7 +98,7 @@ const plugins = useStringsArraySearchParam('plugin')
 const statuses = useStringsArraySearchParam('status')
 const owners = useStringsArraySearchParam('owner')
 
-onMounted(async () => setBreadcrumbs([{ text: 'traitements' }]))
+onMounted(() => setBreadcrumbs([{ text: 'Traitements' }]))
 
 /*
   Permissions

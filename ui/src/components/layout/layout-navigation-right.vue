@@ -6,7 +6,6 @@
     floating
     position="fixed"
     style="padding-top: 60px; background-color: transparent;"
-    color="transparent"
   >
     <template #default>
       <slot />

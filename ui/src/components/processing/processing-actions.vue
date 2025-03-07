@@ -17,6 +17,7 @@
           v-if="processingSchema !== null"
           v-bind="props"
           :disabled="!processing?.active || edited"
+          rounded
         >
           <template #prepend>
             <v-icon
@@ -84,7 +85,10 @@
       max-width="500"
     >
       <template #activator="{ props }">
-        <v-list-item v-bind="props">
+        <v-list-item
+          v-bind="props"
+          rounded
+        >
           <template #prepend>
             <v-icon
               color="warning"
@@ -132,6 +136,7 @@
       v-if="processing?.config?.dataset?.id"
       :href="`/data-fair/dataset/${processing.config.dataset.id}`"
       target="_blank"
+      rounded
     >
       <template #prepend>
         <v-icon
@@ -152,6 +157,7 @@
         <v-list-item
           v-if="processingSchema !== null"
           v-bind="props"
+          rounded
         >
           <template #prepend>
             <v-icon

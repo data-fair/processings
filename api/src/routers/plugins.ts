@@ -32,9 +32,9 @@ fs.ensureDirSync(tmpDir)
 tmp.setGracefulCleanup()
 
 /**
- * For compatibility with old plugins
+ * Common configurations for all plugins
  */
-const injectPluginNameConfig = (plugin: Plugin): Plugin => {
+const injectCommonPluginConfig = (plugin: Plugin): Plugin => {
   if (!plugin.pluginConfigSchema.properties?.pluginName) {
     const version = plugin.distTag === 'latest' ? plugin.version : `${plugin.distTag} - ${plugin.version}`
     const defaultName = plugin.name.replace('@data-fair/processing-', '') + ' (' + version + ')'
@@ -46,15 +46,31 @@ const injectPluginNameConfig = (plugin: Plugin): Plugin => {
       default: defaultName
     }
   }
+
+  plugin.pluginConfigSchema.properties.pluginIcon = {
+    type: 'object',
+    title: 'Icone',
+    'x-fromUrl': 'https://koumoul.com/data-fair/api/v1/datasets/icons-mdi-latest/lines?q={q}&size=10000',
+    'x-itemKey': 'name',
+    'x-itemTitle': 'name',
+    'x-itemIcon': 'svg',
+    'x-itemsProp': 'results',
+    properties: {
+      name: { type: 'string' },
+      svg: { type: 'string' },
+      svgPath: { type: 'string' }
+    }
+  }
   return plugin
 }
 
 const preparePluginInfo = async (pluginInfo: Plugin): Promise<Plugin> => {
-  pluginInfo = injectPluginNameConfig(pluginInfo)
+  pluginInfo = injectCommonPluginConfig(pluginInfo)
   const pluginConfigPath = path.join(pluginsDir, pluginInfo.id + '-config.json')
   let customName = await fs.pathExists(pluginConfigPath) ? (await fs.readJson(pluginConfigPath)).pluginName : pluginInfo.pluginConfigSchema.properties.pluginName.default
   if (!customName) customName = pluginInfo.name.replace('@data-fair/processing-', '') + ' (' + pluginInfo.distTag + ' - ' + pluginInfo.version + ')'
-  return { ...pluginInfo, customName }
+  const customIcon = await fs.pathExists(pluginConfigPath) ? (await fs.readJson(pluginConfigPath)).pluginIcon.svgPath : undefined
+  return { ...pluginInfo, customName, customIcon }
 }
 
 router.post('/', permissions.isSuperAdmin, async (req, res) => {

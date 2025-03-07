@@ -91,7 +91,7 @@ const runs: Ref<Record<string, any>> = ref([])
 onMounted(async () => {
   await fetchProcessing()
   setBreadcrumbs([{
-    text: 'traitements',
+    text: 'Traitements',
     to: '/processings'
   }, {
     text: processing.value?.title || ''

@@ -24,6 +24,9 @@ export default {
     customName: {
       type: 'string'
     },
+    customIcon: {
+      type: 'string'
+    },
     description: {
       type: 'string'
     },
@@ -42,7 +45,7 @@ export default {
       properties: {
         properties: {
           type: 'object',
-          required: ['pluginName'],
+          required: ['pluginName', 'pluginIcon'],
           properties: {
             pluginName: {
               type: 'object',
@@ -52,6 +55,9 @@ export default {
                   type: 'string'
                 }
               }
+            },
+            pluginIcon: {
+              type: 'object'
             },
           }
         }

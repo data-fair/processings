@@ -125,11 +125,11 @@
             :patch="result.access"
             @change="(newAccess: any) => { result.access = newAccess; saveAccess(result) }"
           />
-          <v-spacer />
           <v-form
             v-if="result.pluginConfigSchema.properties && Object.keys(result.pluginConfigSchema.properties).length"
             :ref="'form-' + result.id"
             autocomplete="off"
+            class="mt-4"
           >
             <vjsf
               v-model="result.config"
@@ -205,7 +205,6 @@
 </template>
 
 <script setup lang="ts">
-import setBreadcrumbs from '~/utils/breadcrumbs'
 import Vjsf from '@koumoul/vjsf'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 
@@ -220,7 +219,7 @@ if (!session.state.user?.adminMode) {
   throw new Error('Vous n\'avez pas la permission d\'accéder à cette page, il faut avoir activé le mode super-administration.')
 }
 
-onMounted(() => setBreadcrumbs([{ text: 'plugins' }]))
+onMounted(() => setBreadcrumbs([{ text: 'Plugins' }]))
 
 type AvailablePlugin = {
   name: string
@@ -359,7 +358,7 @@ async function saveAccess (plugin: InstalledPlugin) {
 
 const vjsfOptions = computed(() => {
   return {
-    density: 'comfortable',
+    density: 'compact',
     locale: 'fr',
     titleDepth: 4
   }
