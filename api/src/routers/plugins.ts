@@ -69,7 +69,7 @@ const preparePluginInfo = async (pluginInfo: Plugin): Promise<Plugin> => {
   const pluginConfigPath = path.join(pluginsDir, pluginInfo.id + '-config.json')
   let customName = await fs.pathExists(pluginConfigPath) ? (await fs.readJson(pluginConfigPath)).pluginName : pluginInfo.pluginConfigSchema.properties.pluginName.default
   if (!customName) customName = pluginInfo.name.replace('@data-fair/processing-', '') + ' (' + pluginInfo.distTag + ' - ' + pluginInfo.version + ')'
-  const customIcon = await fs.pathExists(pluginConfigPath) ? (await fs.readJson(pluginConfigPath)).pluginIcon.svgPath : undefined
+  const customIcon = await fs.pathExists(pluginConfigPath) ? (await fs.readJson(pluginConfigPath)).pluginIcon?.svgPath : undefined
   return { ...pluginInfo, customName, customIcon }
 }
 
