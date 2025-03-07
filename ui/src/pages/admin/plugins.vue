@@ -135,7 +135,7 @@
               v-model="result.config"
               :options="vjsfOptions"
               :schema="result.pluginConfigSchema"
-              @change="saveConfig(result)"
+              @update:model-value="saveConfig(result)"
             />
           </v-form>
         </v-card-text>

@@ -48,17 +48,16 @@ const injectCommonPluginConfig = (plugin: Plugin): Plugin => {
   }
 
   plugin.pluginConfigSchema.properties.pluginIcon = {
-    type: 'object',
-    title: 'Icone',
-    'x-fromUrl': 'https://koumoul.com/data-fair/api/v1/datasets/icons-mdi-latest/lines?q={q}&size=10000',
-    'x-itemKey': 'name',
-    'x-itemTitle': 'name',
-    'x-itemIcon': 'svg',
-    'x-itemsProp': 'results',
-    properties: {
-      name: { type: 'string' },
-      svg: { type: 'string' },
-      svgPath: { type: 'string' }
+    type: 'string',
+    title: 'Icon',
+    layout: {
+      getItems: {
+        url: 'https://koumoul.com/data-fair/api/v1/datasets/icons-mdi-latest/lines?q={q}&size=10000',
+        itemsResults: 'data.results',
+        itemTitle: 'item.name',
+        itemValue: 'item.svgPath',
+        itemIcon: 'item.svg'
+      }
     }
   }
   return plugin
@@ -69,7 +68,7 @@ const preparePluginInfo = async (pluginInfo: Plugin): Promise<Plugin> => {
   const pluginConfigPath = path.join(pluginsDir, pluginInfo.id + '-config.json')
   let customName = await fs.pathExists(pluginConfigPath) ? (await fs.readJson(pluginConfigPath)).pluginName : pluginInfo.pluginConfigSchema.properties.pluginName.default
   if (!customName) customName = pluginInfo.name.replace('@data-fair/processing-', '') + ' (' + pluginInfo.distTag + ' - ' + pluginInfo.version + ')'
-  const customIcon = await fs.pathExists(pluginConfigPath) ? (await fs.readJson(pluginConfigPath)).pluginIcon?.svgPath : undefined
+  const customIcon = await fs.pathExists(pluginConfigPath) ? (await fs.readJson(pluginConfigPath)).pluginIcon : undefined
   return { ...pluginInfo, customName, customIcon }
 }
 
