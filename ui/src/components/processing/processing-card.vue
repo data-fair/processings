@@ -18,11 +18,11 @@
           {{ processing.title || processing._id }}
         </span>
         <v-tooltip
-          v-if="processing.title"
+          v-if="processing.title && processing.title.length > 15"
           activator="parent"
           location="top left"
           open-delay="300"
-          :text="processing.title || processing._id"
+          :text="processing.title"
         />
       </template>
     </v-card-item>

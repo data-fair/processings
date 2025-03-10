@@ -161,7 +161,6 @@ router.get('/', async (req, res) => {
 
     const pluginMetadataPath = path.join(pluginsDir, dir + '-metadata.json')
     const version = pluginInfo.distTag === 'latest' ? pluginInfo.version : `${pluginInfo.distTag} - ${pluginInfo.version}`
-
     pluginInfo.metadata = {
       name: pluginInfo.name.replace('@data-fair/processing-', '') + ' (' + version + ')',
       description: pluginInfo.description,
@@ -193,6 +192,13 @@ router.get('/:id', async (req, res) => {
   await session.reqAuthenticated(req)
   try {
     const pluginInfo: Plugin = await fs.readJson(resolvePath(pluginsDir, path.join(req.params.id, 'plugin.json')))
+    const pluginMetadataPath = path.join(pluginsDir, req.params.id + '-metadata.json')
+    const version = pluginInfo.distTag === 'latest' ? pluginInfo.version : `${pluginInfo.distTag} - ${pluginInfo.version}`
+    pluginInfo.metadata = {
+      name: pluginInfo.name.replace('@data-fair/processing-', '') + ' (' + version + ')',
+      description: pluginInfo.description,
+      ...(await fs.pathExists(pluginMetadataPath) ? await fs.readJson(pluginMetadataPath) : {})
+    }
     res.send(pluginInfo)
   } catch (e: any) {
     if (e.code === 'ENOENT') res.status(404).send('Plugin not found')
