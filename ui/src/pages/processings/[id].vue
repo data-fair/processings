@@ -132,7 +132,7 @@ const processingSchema = computed(() => {
   delete schema.title
   schema.properties.config = {
     ...v2compat(plugin.value.processingConfigSchema),
-    title: 'Plugin ' + plugin.value.customName
+    title: 'Plugin ' + plugin.value.metadata.name,
   }
 
   // merge processingConfigSchema $defs and definitions into the global Processing schema

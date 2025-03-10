@@ -122,14 +122,13 @@ const statusesText: Record<string, string> = {
 
 type InstalledPlugin = {
   name: string
-  customName: string
-  customIcon: string
   description: string
   version: string
   distTag: string
   id: string
   pluginConfigSchema: any
   processingConfigSchema: any
+  metadata: Record<string, string>
 }
 
 const installedPluginsFetch = useFetch<{ results: InstalledPlugin[], count: number }>(`${$apiPath}/plugins?privateAccess=${processingsProps.ownerFilter}`)
@@ -153,7 +152,7 @@ const pluginsItems = computed(() => {
   return Object.entries(processingsProps.facets.plugins)
     .map(
       ([pluginKey, count]) => {
-        const customName = installedPlugins.value?.find((plugin) => plugin.id === pluginKey)?.customName
+        const customName = installedPlugins.value?.find((plugin) => plugin.id === pluginKey)?.metadata.name
         return {
           display: `${customName || 'Supprimé - ' + pluginKey} (${count})`,
           pluginKey

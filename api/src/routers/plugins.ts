@@ -31,47 +31,46 @@ fs.ensureDirSync(tmpDir)
 
 tmp.setGracefulCleanup()
 
-/**
- * Common configurations for all plugins
- */
-const injectCommonPluginConfig = (plugin: Plugin): Plugin => {
-  if (!plugin.pluginConfigSchema.properties?.pluginName) {
-    const version = plugin.distTag === 'latest' ? plugin.version : `${plugin.distTag} - ${plugin.version}`
-    const defaultName = plugin.name.replace('@data-fair/processing-', '') + ' (' + version + ')'
-    plugin.pluginConfigSchema.properties = plugin.pluginConfigSchema.properties || {}
-    plugin.pluginConfigSchema.properties.pluginName = {
+const pluginMetadataSchema = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    name: {
       type: 'string',
       title: 'Nom du plugin',
-      description: 'Nom du plugin affiché dans les traitements',
-      default: defaultName
-    }
-  }
-
-  plugin.pluginConfigSchema.properties.pluginIcon = {
-    type: 'string',
-    title: 'Icon',
-    layout: {
-      getItems: {
-        url: 'https://koumoul.com/data-fair/api/v1/datasets/icons-mdi-latest/lines?q={q}&size=10000',
-        itemsResults: 'data.results',
-        itemTitle: 'item.name',
-        itemValue: 'item.svgPath',
-        itemIcon: 'item.svg'
+      layout: {
+        cols: 4
       }
+    },
+    category: {
+      type: 'string',
+      title: 'Catégorie',
+      layout: {
+        cols: 4
+      }
+    },
+    icon: {
+      type: 'string',
+      title: 'Icon',
+      layout: {
+        getItems: {
+          url: 'https://koumoul.com/data-fair/api/v1/datasets/icons-mdi-latest/lines?q={q}&size=10000',
+          itemsResults: 'data.results',
+          itemTitle: 'item.name',
+          itemValue: 'item.svgPath',
+          itemIcon: 'item.svg'
+        },
+        cols: 4
+      }
+    },
+    description: {
+      type: 'string',
+      title: 'Description du plugin'
     }
   }
-  return plugin
 }
 
-const preparePluginInfo = async (pluginInfo: Plugin): Promise<Plugin> => {
-  pluginInfo = injectCommonPluginConfig(pluginInfo)
-  const pluginConfigPath = path.join(pluginsDir, pluginInfo.id + '-config.json')
-  let customName = await fs.pathExists(pluginConfigPath) ? (await fs.readJson(pluginConfigPath)).pluginName : pluginInfo.pluginConfigSchema.properties.pluginName.default
-  if (!customName) customName = pluginInfo.name.replace('@data-fair/processing-', '') + ' (' + pluginInfo.distTag + ' - ' + pluginInfo.version + ')'
-  const customIcon = await fs.pathExists(pluginConfigPath) ? (await fs.readJson(pluginConfigPath)).pluginIcon : undefined
-  return { ...pluginInfo, customName, customIcon }
-}
-
+// Install a new plugin or update an existing one
 router.post('/', permissions.isSuperAdmin, async (req, res) => {
   const { body } = (await import('#doc/plugin/post-req/index.ts')).returnValid(req)
   const plugin = body as Record<string, any>
@@ -101,6 +100,8 @@ router.post('/', permissions.isSuperAdmin, async (req, res) => {
 
     plugin.pluginConfigSchema = await fs.readJson(path.join(dir.path, 'src', 'plugin-config-schema.json'))
     plugin.processingConfigSchema = await fs.readJson(path.join(dir.path, 'src', 'processing-config-schema.json'))
+
+    // static metadata for the plugin
     await fs.writeFile(path.join(dir.path, 'plugin.json'), JSON.stringify(plugin, null, 2))
     await fs.move(dir.path, pluginDir, { overwrite: true })
   } finally {
@@ -111,14 +112,20 @@ router.post('/', permissions.isSuperAdmin, async (req, res) => {
     }
   }
 
-  const installedPlugin: Plugin = await preparePluginInfo(plugin as Plugin)
-  installedPlugin.access = { public: false, privateAccess: [] }
-  const accessFilePath = path.join(pluginsDir, installedPlugin.id + '-access.json')
-  if (!await fs.pathExists(accessFilePath)) await fs.writeJson(accessFilePath, installedPlugin.access)
-  const pluginConfigPath = path.join(pluginsDir, installedPlugin.id + '-config.json')
-  if (await fs.pathExists(pluginConfigPath)) installedPlugin.config = await fs.readJson(pluginConfigPath)
+  // set defaults access (don't overwrite if already exists (after an update))
+  plugin.access = { public: false, privateAccess: [] }
+  const accessFilePath = path.join(pluginsDir, plugin.id + '-access.json')
+  if (!await fs.pathExists(accessFilePath)) await fs.writeJson(accessFilePath, plugin.access)
 
-  res.send(installedPlugin)
+  // return the existing config if it exists
+  const pluginConfigPath = path.join(pluginsDir, plugin.id + '-config.json')
+  if (await fs.pathExists(pluginConfigPath)) plugin.config = await fs.readJson(pluginConfigPath)
+
+  // return the existing metadata if it exists
+  const pluginMetadataPath = path.join(pluginsDir, plugin.id + '-metadata.json')
+  if (await fs.pathExists(pluginMetadataPath)) plugin.metadata = await fs.readJson(pluginMetadataPath)
+
+  res.send(plugin)
 })
 
 // List installed plugins (optional: privateAccess=[type]:[id])
@@ -151,7 +158,18 @@ router.get('/', async (req, res) => {
     } else {
       return res.status(400).send('privateAccess filter is required')
     }
-    results.push(await preparePluginInfo(pluginInfo))
+
+    const pluginMetadataPath = path.join(pluginsDir, dir + '-metadata.json')
+    const version = pluginInfo.distTag === 'latest' ? pluginInfo.version : `${pluginInfo.distTag} - ${pluginInfo.version}`
+
+    pluginInfo.metadata = {
+      name: pluginInfo.name.replace('@data-fair/processing-', '') + ' (' + version + ')',
+      description: pluginInfo.description,
+      ...(await fs.pathExists(pluginMetadataPath) ? await fs.readJson(pluginMetadataPath) : {})
+    }
+    pluginInfo.pluginMetadataSchema = pluginMetadataSchema
+
+    results.push(pluginInfo)
   }
 
   const aggregationResult = (
@@ -175,7 +193,7 @@ router.get('/:id', async (req, res) => {
   await session.reqAuthenticated(req)
   try {
     const pluginInfo: Plugin = await fs.readJson(resolvePath(pluginsDir, path.join(req.params.id, 'plugin.json')))
-    res.send(await preparePluginInfo(pluginInfo))
+    res.send(pluginInfo)
   } catch (e: any) {
     if (e.code === 'ENOENT') res.status(404).send('Plugin not found')
     else throw e
@@ -195,6 +213,14 @@ router.put('/:id/config', permissions.isSuperAdmin, async (req, res) => {
   const valid = validate(req.body)
   if (!valid) return res.status(400).send(validate.errors)
   await fs.writeJson(path.join(pluginsDir, req.params.id + '-config.json'), req.body)
+  res.send(req.body)
+})
+
+router.put('/:id/metadata', permissions.isSuperAdmin, async (req, res) => {
+  const validate = ajv.compile(pluginMetadataSchema)
+  const valid = validate(req.body)
+  if (!valid) return res.status(400).send(validate.errors)
+  await fs.writeJson(path.join(pluginsDir, req.params.id + '-metadata.json'), req.body)
   res.send(req.body)
 })
 

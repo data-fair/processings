@@ -118,24 +118,33 @@
         </v-toolbar>
 
         <v-card-text class="py-2">
-          <p class="mb-0">
+          <p
+            v-if="result.description"
+            class="mb-2"
+          >
             {{ result.description }}
           </p>
           <private-access
             :patch="result.access"
-            @change="(newAccess: any) => { result.access = newAccess; saveAccess(result) }"
+            @change="(newAccess: any) => { result.access = newAccess; save(result, 'access') }"
           />
           <v-form
-            v-if="result.pluginConfigSchema.properties && Object.keys(result.pluginConfigSchema.properties).length"
             :ref="'form-' + result.id"
             autocomplete="off"
             class="mt-4"
           >
             <vjsf
+              v-model="result.metadata"
+              :options="vjsfOptions"
+              :schema="result.pluginMetadataSchema"
+              @update:model-value="save(result, 'metadata')"
+            />
+            <vjsf
+              v-if="result.pluginConfigSchema.properties && Object.keys(result.pluginConfigSchema.properties).length"
               v-model="result.config"
               :options="vjsfOptions"
               :schema="result.pluginConfigSchema"
-              @update:model-value="saveConfig(result)"
+              @update:model-value="save(result, 'config')"
             />
           </v-form>
         </v-card-text>
@@ -237,7 +246,9 @@ type InstalledPlugin = {
   id: string
   config: Record<string, any>
   access: Record<string, any>
+  metadata: Record<string, any>
   pluginConfigSchema: Record<string, any>
+  pluginMetadataSchema: Record<string, any>
 }
 
 const installedPluginsFetch = useFetch<{
@@ -338,31 +349,20 @@ async function update (plugin: InstalledPlugin) {
   pluginLocked.value = null
 }
 
-async function saveConfig (plugin: InstalledPlugin) {
+async function save (plugin: InstalledPlugin, type: 'config' | 'access' | 'metadata') {
   pluginLocked.value = `${plugin.name}-${plugin.distTag}`
-  await $fetch(`/plugins/${plugin.id}/config`, {
+  await $fetch(`/plugins/${plugin.id}/${type}`, {
     method: 'PUT',
-    body: JSON.stringify({ ...plugin.config })
+    body: JSON.stringify({ ...plugin[type] })
   })
   pluginLocked.value = null
 }
 
-async function saveAccess (plugin: InstalledPlugin) {
-  pluginLocked.value = `${plugin.name}-${plugin.distTag}`
-  await $fetch(`/plugins/${plugin.id}/access`, {
-    method: 'PUT',
-    body: JSON.stringify({ ...plugin.access })
-  })
-  pluginLocked.value = null
+const vjsfOptions = {
+  density: 'compact',
+  locale: session.state.lang,
+  titleDepth: 4
 }
-
-const vjsfOptions = computed(() => {
-  return {
-    density: 'compact',
-    locale: 'fr',
-    titleDepth: 4
-  }
-})
 
 </script>
 

@@ -57,7 +57,7 @@
             <v-icon :icon="mdiPowerPlug" />
           </template>
           <span>
-            {{ pluginFetch.data.value?.customName }}
+            {{ pluginFetch.data.value?.metadata.name }}
           </span>
         </v-list-item>
 
@@ -185,7 +185,7 @@ const { dayjs } = useLocaleDayjs()
 // }
 
 const props = defineProps({
-  pluginCustomName: {
+  pluginName: {
     type: String,
     default: null
   },

@@ -14,12 +14,15 @@
           title="Sélection du type de traitement"
           value="1"
           :color="step === '1' ? 'primary' : ''"
+          :complete="!!newProcessing.plugin"
+          editable
         />
         <v-divider />
         <v-stepper-item
           title="Informations"
           value="2"
           :color="step === '2' ? 'primary' : ''"
+          :editable="!!newProcessing.plugin"
         />
       </v-stepper-header>
 
@@ -29,18 +32,27 @@
             <v-col
               v-for="plugin in installedPlugins"
               :key="plugin.id"
-              md="4"
-              sm="6"
+              md="3"
+              sm="4"
+              xs="6"
               cols="12"
             >
               <v-card
                 class="h-100"
                 :color="newProcessing.plugin === plugin.id ? 'primary' : ''"
-                :prepend-icon="plugin.customIcon"
-                :title="plugin.customName"
+                :title="plugin.metadata.name"
                 @click="newProcessing.plugin = plugin.id; step = '2'"
               >
-                <v-card-text>{{ plugin.description }}</v-card-text>
+                <template
+                  v-if="plugin.metadata.icon"
+                  #prepend
+                >
+                  <v-icon
+                    color="primary"
+                    :icon="plugin.metadata.icon"
+                  />
+                </template>
+                <v-card-text>{{ plugin.metadata.description }}</v-card-text>
               </v-card>
             </v-col>
           </v-row>
@@ -79,14 +91,13 @@ import OwnerPick from '@data-fair/lib-vuetify/owner-pick.vue'
 
 type InstalledPlugin = {
   name: string
-  customName: string
-  customIcon: string
   description: string
   version: string
   distTag: string
   id: string
   pluginConfigSchema: any
   processingConfigSchema: any
+  metadata: Record<string, string>
 }
 
 const session = useSessionAuthenticated(() => new Error('Authentification nécessaire'))
