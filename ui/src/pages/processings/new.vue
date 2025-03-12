@@ -40,15 +40,19 @@
               <v-card
                 class="h-100"
                 :color="newProcessing.plugin === plugin.id ? 'primary' : ''"
-                :title="plugin.metadata.name"
                 @click="newProcessing.plugin = plugin.id; step = '2'"
               >
+                <template #title>
+                  <span :class="newProcessing.plugin !== plugin.id ? 'text-primary' : ''">
+                    {{ plugin.metadata.name }}
+                  </span>
+                </template>
                 <template
                   v-if="plugin.metadata.icon"
                   #prepend
                 >
                   <v-icon
-                    color="primary"
+                    :color="newProcessing.plugin !== plugin.id ? 'primary' : ''"
                     :icon="plugin.metadata.icon"
                   />
                 </template>
