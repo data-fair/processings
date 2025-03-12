@@ -8,7 +8,17 @@
         <h2 class="text-h6">
           Traitement {{ processing.title }}
         </h2>
-        <v-defaults-provider :defaults="{global: { hideDetails: 'auto' }}">
+        <v-defaults-provider
+          :defaults="{
+            global: {
+              hideDetails: 'auto'
+            },
+            VAutocomplete: {
+              persistentPlaceholder: true,
+              placeholder: 'Rechercher...'
+            }
+          }"
+        >
           <v-form
             v-model="valid"
             autocomplete="off"
@@ -228,4 +238,7 @@ onUnmounted(() => {
 </script>
 
 <style>
+.v-autocomplete input::placeholder {
+  font-style: italic;
+}
 </style>
