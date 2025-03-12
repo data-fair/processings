@@ -129,7 +129,7 @@
             @change="(newAccess: any) => { result.access = newAccess; save(result, 'access') }"
           />
           <v-form
-            :ref="'form-' + result.id"
+            :ref="'form-metadata-' + result.id"
             autocomplete="off"
             class="mt-4"
           >
@@ -137,14 +137,20 @@
               v-model="result.metadata"
               :options="vjsfOptions"
               :schema="result.pluginMetadataSchema"
-              @change="save(result, 'metadata')"
+              @update:model-value="save(result, 'metadata')"
             />
+          </v-form>
+          <v-form
+            :ref="'form-config-' + result.id"
+            v-model="valid['form-config-' + result.id]"
+            autocomplete="off"
+          >
             <vjsf
               v-if="result.pluginConfigSchema.properties && Object.keys(result.pluginConfigSchema.properties).length"
               v-model="result.config"
               :options="vjsfOptions"
               :schema="result.pluginConfigSchema"
-              @change="save(result, 'config')"
+              @update:model-value="valid['form-config-' + result.id] ? save(result, 'config') : null"
             />
           </v-form>
         </v-card-text>
@@ -220,6 +226,7 @@ import { v2compat } from '@koumoul/vjsf/compat/v2'
 const session = useSession()
 const search = useStringSearchParam('q')
 const query = ref({ showAll: false })
+const valid = ref<Record<string, boolean>>({})
 
 if (!session.state.user) {
   throw new Error('Authentification nécessaire')
@@ -361,7 +368,9 @@ async function save (plugin: InstalledPlugin, type: 'config' | 'access' | 'metad
 const vjsfOptions = {
   density: 'compact',
   locale: session.state.lang,
-  titleDepth: 4
+  titleDepth: 4,
+  updateOn: 'blur',
+  initialValidation: 'always'
 }
 
 </script>
