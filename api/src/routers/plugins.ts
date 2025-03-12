@@ -51,15 +51,15 @@ const pluginMetadataSchema = {
       }
     },
     icon: {
-      type: 'string',
+      type: 'object',
       title: 'Icon',
       layout: {
         getItems: {
-          url: 'https://koumoul.com/data-fair/api/v1/datasets/icons-mdi-latest/lines?q={q}&size=10000',
+          url: 'https://koumoul.com/data-fair/api/v1/datasets/icons-mdi-latest/lines?q={q}&select=name,svg,svgPath&size=25',
           itemsResults: 'data.results',
           itemTitle: 'item.name',
-          itemValue: 'item.svgPath',
-          itemIcon: 'item.svg'
+          itemIcon: 'item.svg',
+          itemKey: 'item.name'
         },
         cols: 4
       }

@@ -128,7 +128,12 @@ type InstalledPlugin = {
   id: string
   pluginConfigSchema: any
   processingConfigSchema: any
-  metadata: Record<string, string>
+  metadata: {
+    name: string
+    description: string
+    category: string
+    icon: Record<string, string>
+  }
 }
 
 const installedPluginsFetch = useFetch<{ results: InstalledPlugin[], count: number }>(`${$apiPath}/plugins?privateAccess=${processingsProps.ownerFilter}`)

@@ -33,39 +33,41 @@
             :key="category"
             class="mb-4"
           >
-            <h3>{{ category }}</h3>
-            <v-row class="d-flex align-stretch">
-              <v-col
-                v-for="plugin in categorizedPlugins[category]"
-                :key="plugin.id"
-                md="3"
-                sm="4"
-                xs="6"
-                cols="12"
-              >
-                <v-card
-                  class="h-100"
-                  :color="newProcessing.plugin === plugin.id ? 'primary' : ''"
-                  @click="newProcessing.plugin = plugin.id; step = '2'"
+            <template v-if="categorizedPlugins[category]?.length">
+              <h3>{{ category }}</h3>
+              <v-row class="d-flex align-stretch">
+                <v-col
+                  v-for="plugin in categorizedPlugins[category]"
+                  :key="plugin.id"
+                  md="3"
+                  sm="4"
+                  xs="6"
+                  cols="12"
                 >
-                  <template #title>
-                    <span :class="newProcessing.plugin !== plugin.id ? 'text-primary' : ''">
-                      {{ plugin.metadata.name }}
-                    </span>
-                  </template>
-                  <template
-                    v-if="plugin.metadata.icon"
-                    #prepend
+                  <v-card
+                    class="h-100"
+                    :color="newProcessing.plugin === plugin.id ? 'primary' : ''"
+                    @click="newProcessing.plugin = plugin.id; step = '2'"
                   >
-                    <v-icon
-                      :color="newProcessing.plugin !== plugin.id ? 'primary' : ''"
-                      :icon="plugin.metadata.icon"
-                    />
-                  </template>
-                  <v-card-text>{{ plugin.metadata.description }}</v-card-text>
-                </v-card>
-              </v-col>
-            </v-row>
+                    <template #title>
+                      <span :class="newProcessing.plugin !== plugin.id ? 'text-primary' : ''">
+                        {{ plugin.metadata.name }}
+                      </span>
+                    </template>
+                    <template
+                      v-if="plugin.metadata.icon"
+                      #prepend
+                    >
+                      <v-icon
+                        :color="newProcessing.plugin !== plugin.id ? 'primary' : ''"
+                        :icon="plugin.metadata.icon.svgPath"
+                      />
+                    </template>
+                    <v-card-text>{{ plugin.metadata.description }}</v-card-text>
+                  </v-card>
+                </v-col>
+              </v-row>
+            </template>
           </div>
         </v-stepper-window-item>
         <v-stepper-window-item value="2">
@@ -108,7 +110,12 @@ type InstalledPlugin = {
   id: string
   pluginConfigSchema: any
   processingConfigSchema: any
-  metadata: Record<string, string>
+  metadata: {
+    name: string
+    description: string
+    category: string
+    icon: Record<string, string>
+  }
 }
 
 const session = useSessionAuthenticated(() => new Error('Authentification nécessaire'))
