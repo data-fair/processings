@@ -351,11 +351,14 @@ async function update (plugin: InstalledPlugin) {
 
 async function save (plugin: InstalledPlugin, type: 'config' | 'access' | 'metadata') {
   pluginLocked.value = `${plugin.name}-${plugin.distTag}`
-  await $fetch(`/plugins/${plugin.id}/${type}`, {
-    method: 'PUT',
-    body: JSON.stringify({ ...plugin[type] })
-  })
-  pluginLocked.value = null
+  try {
+    await $fetch(`/plugins/${plugin.id}/${type}`, {
+      method: 'PUT',
+      body: JSON.stringify({ ...plugin[type] })
+    })
+  } catch (e) {
+    pluginLocked.value = null
+  }
 }
 
 const vjsfOptions = {
