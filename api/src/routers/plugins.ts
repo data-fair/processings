@@ -45,6 +45,7 @@ const pluginMetadataSchema = {
     category: {
       type: 'string',
       title: 'Catégorie',
+      enum: config.pluginCategories,
       layout: {
         cols: 4
       }

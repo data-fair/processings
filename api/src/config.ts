@@ -11,6 +11,7 @@ config.util.makeImmutable(apiConfig)
 
 export default apiConfig as ApiConfig
 
-export type UiConfig = {}
-
-export const uiConfig: UiConfig = {}
+export const uiConfig = {
+  pluginCategories: apiConfig.pluginCategories,
+}
+export type UiConfig = typeof uiConfig
