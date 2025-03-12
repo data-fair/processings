@@ -137,14 +137,14 @@
               v-model="result.metadata"
               :options="vjsfOptions"
               :schema="result.pluginMetadataSchema"
-              @update:model-value="save(result, 'metadata')"
+              @change="save(result, 'metadata')"
             />
             <vjsf
               v-if="result.pluginConfigSchema.properties && Object.keys(result.pluginConfigSchema.properties).length"
               v-model="result.config"
               :options="vjsfOptions"
               :schema="result.pluginConfigSchema"
-              @update:model-value="save(result, 'config')"
+              @change="save(result, 'config')"
             />
           </v-form>
         </v-card-text>
@@ -351,14 +351,11 @@ async function update (plugin: InstalledPlugin) {
 
 async function save (plugin: InstalledPlugin, type: 'config' | 'access' | 'metadata') {
   pluginLocked.value = `${plugin.name}-${plugin.distTag}`
-  try {
-    await $fetch(`/plugins/${plugin.id}/${type}`, {
-      method: 'PUT',
-      body: JSON.stringify({ ...plugin[type] })
-    })
-  } catch (e) {
-    pluginLocked.value = null
-  }
+  await $fetch(`/plugins/${plugin.id}/${type}`, {
+    method: 'PUT',
+    body: JSON.stringify({ ...plugin[type] })
+  })
+  pluginLocked.value = null
 }
 
 const vjsfOptions = {
