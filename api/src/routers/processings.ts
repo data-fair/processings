@@ -262,7 +262,7 @@ router.patch('/:id', async (req, res) => {
 
   // Restrict the parts of the processing that can be edited by API
   const acceptedParts = Object.keys(processingSchema.properties)
-    .filter(k => sessionState.user.adminMode || !(processingSchema.properties)[k].readOnly)
+    .filter(k => sessionState.user.adminMode || !(processingSchema.properties)[k].readOnly || 'owner')
   for (const key in req.body) {
     if (!acceptedParts.includes(key)) return res.status(400).send('Unsupported patch part ' + key)
   }

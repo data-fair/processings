@@ -33,6 +33,7 @@ declare global {
   const isReadonly: typeof import('vue')['isReadonly']
   const isRef: typeof import('vue')['isRef']
   const markRaw: typeof import('vue')['markRaw']
+  const mdiAccount: typeof import('@mdi/js')['mdiAccount']
   const mdiAlert: typeof import('@mdi/js')['mdiAlert']
   const mdiAlertCircle: typeof import('@mdi/js')['mdiAlertCircle']
   const mdiBell: typeof import('@mdi/js')['mdiBell']
@@ -152,6 +153,7 @@ declare module 'vue' {
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
+    readonly mdiAccount: UnwrapRef<typeof import('@mdi/js')['mdiAccount']>
     readonly mdiAlert: UnwrapRef<typeof import('@mdi/js')['mdiAlert']>
     readonly mdiAlertCircle: UnwrapRef<typeof import('@mdi/js')['mdiAlertCircle']>
     readonly mdiBell: UnwrapRef<typeof import('@mdi/js')['mdiBell']>
