@@ -39,30 +39,32 @@
           class="mt-4"
         />
       </v-col>
-      <layout-navigation-right v-if="$vuetify.display.lgAndUp">
-        <processing-actions
-          :processing="processing"
-          :processing-schema="processingSchema"
-          :can-admin="canAdminProcessing"
-          :can-exec="canExecProcessing"
-          :edited="edited"
-          :is-small="false"
-          @triggered="runs && runs.refresh()"
-        />
-      </layout-navigation-right>
-      <layout-actions-button v-else>
-        <template #actions>
+      <template v-if="canAdminProcessing || canExecProcessing">
+        <layout-navigation-right v-if="$vuetify.display.lgAndUp">
           <processing-actions
             :processing="processing"
             :processing-schema="processingSchema"
             :can-admin="canAdminProcessing"
             :can-exec="canExecProcessing"
             :edited="edited"
-            :is-small="true"
+            :is-small="false"
             @triggered="runs && runs.refresh()"
           />
-        </template>
-      </layout-actions-button>
+        </layout-navigation-right>
+        <layout-actions-button v-else>
+          <template #actions>
+            <processing-actions
+              :processing="processing"
+              :processing-schema="processingSchema"
+              :can-admin="canAdminProcessing"
+              :can-exec="canExecProcessing"
+              :edited="edited"
+              :is-small="true"
+              @triggered="runs && runs.refresh()"
+            />
+          </template>
+        </layout-actions-button>
+      </template>
     </v-row>
   </v-container>
 </template>
