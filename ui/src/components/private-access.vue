@@ -4,8 +4,9 @@
       v-model="localPatch.public"
       :label="t('public')"
       hide-details
-      class="ml-2 mb-2 mr-4"
+      class="mr-4"
       color="primary"
+      density="compact"
       @update:model-value="onChange"
     />
     <v-autocomplete
@@ -14,17 +15,17 @@
       v-model:search="search"
       :items="suggestions"
       :loading="loading ? 'primary' : false"
-      :custom-filter="() => true"
-      :multiple="true"
-      :clearable="true"
       :item-title="(item: any) => item && `${item.name || item.id} (${item.type})`"
       :item-value="(item: any) => item && `${item.type}:${item.id}`"
       :label="t('privateAccess')"
       :placeholder="t('searchName')"
+      density="compact"
+      max-width="500"
       return-object
-      style="max-width:450px;"
       hide-details
       hide-no-data
+      multiple
+      clearable
       @update:model-value="onChange"
     />
   </v-row>

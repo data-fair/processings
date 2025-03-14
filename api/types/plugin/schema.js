@@ -9,19 +9,17 @@ export default {
   additionalProperties: false,
   required: [
     'name',
-    'customName',
     'description',
     'version',
     'distTag',
     'id',
+    'metadata',
     'pluginConfigSchema',
+    'pluginMetadataSchema',
     'processingConfigSchema'
   ],
   properties: {
     name: {
-      type: 'string'
-    },
-    customName: {
       type: 'string'
     },
     description: {
@@ -37,25 +35,10 @@ export default {
       type: 'string'
     },
     pluginConfigSchema: {
-      type: 'object',
-      required: ['properties'],
-      properties: {
-        properties: {
-          type: 'object',
-          required: ['pluginName'],
-          properties: {
-            pluginName: {
-              type: 'object',
-              required: ['default'],
-              properties: {
-                default: {
-                  type: 'string'
-                }
-              }
-            },
-          }
-        }
-      }
+      type: 'object'
+    },
+    pluginMetadataSchema: {
+      type: 'object'
     },
     processingConfigSchema: {
       type: 'object'
@@ -85,6 +68,25 @@ export default {
               }
             }
           }
+        }
+      }
+    },
+    metadata: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['name', 'description', 'category', 'icon'],
+      properties: {
+        name: {
+          type: 'string'
+        },
+        description: {
+          type: 'string'
+        },
+        category: {
+          type: 'string'
+        },
+        icon: {
+          type: 'string'
         }
       }
     }

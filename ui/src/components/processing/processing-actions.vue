@@ -17,6 +17,7 @@
           v-if="processingSchema !== null"
           v-bind="props"
           :disabled="!processing?.active || edited"
+          rounded
         >
           <template #prepend>
             <v-icon
@@ -84,7 +85,10 @@
       max-width="500"
     >
       <template #activator="{ props }">
-        <v-list-item v-bind="props">
+        <v-list-item
+          v-bind="props"
+          rounded
+        >
           <template #prepend>
             <v-icon
               color="warning"
@@ -128,10 +132,77 @@
         </v-card-actions>
       </v-card>
     </v-menu>
+
+    <v-menu
+      v-if="canAdmin"
+      v-model="showChangeOwnerMenu"
+      :close-on-content-click="false"
+      max-width="500"
+    >
+      <template #activator="{ props }">
+        <v-list-item
+          v-bind="props"
+          rounded
+        >
+          <template #prepend>
+            <v-icon
+              color="warning"
+              :icon="mdiAccount"
+            />
+          </template>
+          Changer le proriétaire
+        </v-list-item>
+      </template>
+      <v-card
+        rounded="lg"
+        variant="elevated"
+      >
+        <v-card-title primary-title>
+          Changer le proriétaire
+        </v-card-title>
+        <v-progress-linear
+          v-if="confirmChangeOwner.loading.value"
+          indeterminate
+          color="warning"
+        />
+        <v-card-text>
+          <owner-pick
+            v-model="newOwner"
+            v-model:ready="ownersReady"
+            other-accounts
+          />
+          <v-alert
+            type="warning"
+            title="Opération sensible"
+            text="Changer le propriétaire d'un traitement peut avoir des conséquences sur l'execution du traitement."
+            variant="outlined"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            variant="text"
+            :disabled="confirmChangeOwner.loading.value"
+            @click="showChangeOwnerMenu = false"
+          >
+            Annuler
+          </v-btn>
+          <v-btn
+            color="warning"
+            :disabled="!ownersReady || confirmChangeOwner.loading.value"
+            @click="confirmChangeOwner.execute()"
+          >
+            Confirmer
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-menu>
+
     <v-list-item
       v-if="processing?.config?.dataset?.id"
       :href="`/data-fair/dataset/${processing.config.dataset.id}`"
       target="_blank"
+      rounded
     >
       <template #prepend>
         <v-icon
@@ -152,6 +223,7 @@
         <v-list-item
           v-if="processingSchema !== null"
           v-bind="props"
+          rounded
         >
           <template #prepend>
             <v-icon
@@ -194,6 +266,7 @@
 </template>
 
 <script setup lang="ts">
+import OwnerPick from '@data-fair/lib-vuetify/owner-pick.vue'
 import '@data-fair/frame/lib/d-frame.js'
 
 const emit = defineEmits(['triggered'])
@@ -218,8 +291,11 @@ const hasTriggered = ref(false)
 const showDeleteMenu = ref(false)
 const showNotifMenu = ref(false)
 const showTriggerMenu = ref(false)
+const showChangeOwnerMenu = ref(false)
 const triggerDelay = ref(0)
 const webhookKey = ref('')
+const ownersReady = ref(false)
+const newOwner = ref<Record<string, string> | null>(null)
 
 const router = useRouter()
 const session = useSession()
@@ -240,6 +316,17 @@ const webhookLink = computed(() => {
   if (triggerDelay.value > 0) link += `&delay=${triggerDelay.value}`
   return link
 })
+
+const confirmChangeOwner = useAsyncAction(
+  async () => {
+    await $fetch(`/processings/${properties.processing?._id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ owner: newOwner.value })
+    })
+
+    showChangeOwnerMenu.value = false
+  }
+)
 
 const confirmRemove = withUiNotif(
   async () => {

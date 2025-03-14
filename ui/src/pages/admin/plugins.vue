@@ -118,24 +118,39 @@
         </v-toolbar>
 
         <v-card-text class="py-2">
-          <p class="mb-0">
+          <p
+            v-if="result.description"
+            class="mb-2"
+          >
             {{ result.description }}
           </p>
           <private-access
             :patch="result.access"
-            @change="(newAccess: any) => { result.access = newAccess; saveAccess(result) }"
+            @change="(newAccess: any) => { result.access = newAccess; save(result, 'access') }"
           />
-          <v-spacer />
           <v-form
-            v-if="result.pluginConfigSchema.properties && Object.keys(result.pluginConfigSchema.properties).length"
-            :ref="'form-' + result.id"
+            :ref="'form-metadata-' + result.id"
+            autocomplete="off"
+            class="mt-4"
+          >
+            <vjsf
+              v-model="result.metadata"
+              :options="vjsfOptions"
+              :schema="result.pluginMetadataSchema"
+              @update:model-value="save(result, 'metadata')"
+            />
+          </v-form>
+          <v-form
+            :ref="'form-config-' + result.id"
+            v-model="valid['form-config-' + result.id]"
             autocomplete="off"
           >
             <vjsf
+              v-if="result.pluginConfigSchema.properties && Object.keys(result.pluginConfigSchema.properties).length"
               v-model="result.config"
               :options="vjsfOptions"
               :schema="result.pluginConfigSchema"
-              @change="saveConfig(result)"
+              @update:model-value="valid['form-config-' + result.id] ? save(result, 'config') : null"
             />
           </v-form>
         </v-card-text>
@@ -205,13 +220,13 @@
 </template>
 
 <script setup lang="ts">
-import setBreadcrumbs from '~/utils/breadcrumbs'
 import Vjsf from '@koumoul/vjsf'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 
 const session = useSession()
 const search = useStringSearchParam('q')
 const query = ref({ showAll: false })
+const valid = ref<Record<string, boolean>>({})
 
 if (!session.state.user) {
   throw new Error('Authentification nécessaire')
@@ -220,7 +235,7 @@ if (!session.state.user?.adminMode) {
   throw new Error('Vous n\'avez pas la permission d\'accéder à cette page, il faut avoir activé le mode super-administration.')
 }
 
-onMounted(() => setBreadcrumbs([{ text: 'plugins' }]))
+onMounted(() => setBreadcrumbs([{ text: 'Plugins' }]))
 
 type AvailablePlugin = {
   name: string
@@ -238,7 +253,9 @@ type InstalledPlugin = {
   id: string
   config: Record<string, any>
   access: Record<string, any>
+  metadata: Record<string, any>
   pluginConfigSchema: Record<string, any>
+  pluginMetadataSchema: Record<string, any>
 }
 
 const installedPluginsFetch = useFetch<{
@@ -339,31 +356,22 @@ async function update (plugin: InstalledPlugin) {
   pluginLocked.value = null
 }
 
-async function saveConfig (plugin: InstalledPlugin) {
+async function save (plugin: InstalledPlugin, type: 'config' | 'access' | 'metadata') {
   pluginLocked.value = `${plugin.name}-${plugin.distTag}`
-  await $fetch(`/plugins/${plugin.id}/config`, {
+  await $fetch(`/plugins/${plugin.id}/${type}`, {
     method: 'PUT',
-    body: JSON.stringify({ ...plugin.config })
+    body: JSON.stringify({ ...plugin[type] })
   })
   pluginLocked.value = null
 }
 
-async function saveAccess (plugin: InstalledPlugin) {
-  pluginLocked.value = `${plugin.name}-${plugin.distTag}`
-  await $fetch(`/plugins/${plugin.id}/access`, {
-    method: 'PUT',
-    body: JSON.stringify({ ...plugin.access })
-  })
-  pluginLocked.value = null
+const vjsfOptions = {
+  density: 'compact',
+  locale: session.state.lang,
+  titleDepth: 4,
+  updateOn: 'blur',
+  initialValidation: 'always'
 }
-
-const vjsfOptions = computed(() => {
-  return {
-    density: 'comfortable',
-    locale: 'fr',
-    titleDepth: 4
-  }
-})
 
 </script>
 

@@ -6,6 +6,7 @@ module.exports = {
     // -1 for unlimited storage
     processingsSeconds: -1
   },
+  pluginCategories: ['Essentiels', 'Mes plugins', 'Données de références', 'Tests'],
   privateDirectoryUrl: 'http://simple-directory:8080',
   secretKeys: {
     limits: null

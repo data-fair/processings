@@ -8,7 +8,17 @@
         <h2 class="text-h6">
           Traitement {{ processing.title }}
         </h2>
-        <v-defaults-provider :defaults="{global: { hideDetails: 'auto' }}">
+        <v-defaults-provider
+          :defaults="{
+            global: {
+              hideDetails: 'auto'
+            },
+            VAutocomplete: {
+              persistentPlaceholder: true,
+              placeholder: 'Rechercher...'
+            }
+          }"
+        >
           <v-form
             v-model="valid"
             autocomplete="off"
@@ -29,30 +39,32 @@
           class="mt-4"
         />
       </v-col>
-      <layout-navigation-right v-if="$vuetify.display.lgAndUp">
-        <processing-actions
-          :processing="processing"
-          :processing-schema="processingSchema"
-          :can-admin="canAdminProcessing"
-          :can-exec="canExecProcessing"
-          :edited="edited"
-          :is-small="false"
-          @triggered="runs && runs.refresh()"
-        />
-      </layout-navigation-right>
-      <layout-actions-button v-else>
-        <template #actions>
+      <template v-if="canAdminProcessing || canExecProcessing">
+        <layout-navigation-right v-if="$vuetify.display.lgAndUp">
           <processing-actions
             :processing="processing"
             :processing-schema="processingSchema"
             :can-admin="canAdminProcessing"
             :can-exec="canExecProcessing"
             :edited="edited"
-            :is-small="true"
+            :is-small="false"
             @triggered="runs && runs.refresh()"
           />
-        </template>
-      </layout-actions-button>
+        </layout-navigation-right>
+        <layout-actions-button v-else>
+          <template #actions>
+            <processing-actions
+              :processing="processing"
+              :processing-schema="processingSchema"
+              :can-admin="canAdminProcessing"
+              :can-exec="canExecProcessing"
+              :edited="edited"
+              :is-small="true"
+              @triggered="runs && runs.refresh()"
+            />
+          </template>
+        </layout-actions-button>
+      </template>
     </v-row>
   </v-container>
 </template>
@@ -91,7 +103,7 @@ const runs: Ref<Record<string, any>> = ref([])
 onMounted(async () => {
   await fetchProcessing()
   setBreadcrumbs([{
-    text: 'traitements',
+    text: 'Traitements',
     to: '/processings'
   }, {
     text: processing.value?.title || ''
@@ -132,7 +144,7 @@ const processingSchema = computed(() => {
   delete schema.title
   schema.properties.config = {
     ...v2compat(plugin.value.processingConfigSchema),
-    title: 'Plugin ' + plugin.value.customName
+    title: 'Plugin ' + plugin.value.metadata.name,
   }
 
   // merge processingConfigSchema $defs and definitions into the global Processing schema
@@ -228,4 +240,7 @@ onUnmounted(() => {
 </script>
 
 <style>
+.v-autocomplete input::placeholder {
+  font-style: italic;
+}
 </style>

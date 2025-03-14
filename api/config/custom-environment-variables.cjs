@@ -5,6 +5,10 @@ module.exports = {
     processingsSeconds: 'DEFAULT_LIMITS_PROCESSINGS_SECONDS'
   },
   mongoUrl: 'MONGO_URL',
+  pluginCategories: {
+    __name: 'PLUGIN_CATEGORIES',
+    __format: 'json'
+  },
   port: 'PORT',
   privateDirectoryUrl: 'PRIVATE_DIRECTORY_URL',
   secretKeys: {

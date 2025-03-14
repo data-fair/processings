@@ -21,7 +21,7 @@
   "dependencies": {
     "@data-fair/lib-node": "^2.2.3",
     "@data-fair/processings-shared": "*",
-    "axios": "^1.7.7",
+    "axios": "^1.8.3",
     "axios-retry": "^4.5.0",
     "child-process-promise": "^2.2.1",
     "config": "^3.3.12",

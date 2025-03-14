@@ -5,87 +5,18 @@
     :style="isSmall ? '' : 'background-color: transparent;'"
     data-iframe-height
   >
-    <v-list-item v-if="installedPluginsFetch.loading.value">
-      <v-progress-circular
-        indeterminate
-        color="primary"
-        size="x-small"
-        width="3"
-      />
-    </v-list-item>
-    <v-menu
-      v-else
-      v-model="showCreateMenu"
-      :close-on-content-click="false"
-      min-width="500px"
-      max-width="500px"
+    <v-list-item
+      :to="{ path: '/processings/new', query: { owner: ownersSelected.length ? ownersSelected[0] as string : undefined } }"
+      rounded
     >
-      <template #activator="{ props }">
-        <v-list-item v-bind="props">
-          <template #prepend>
-            <v-icon
-              color="primary"
-              :icon="mdiPlusCircle"
-            />
-          </template>
-          Créer un nouveau traitement
-        </v-list-item>
-      </template>
-      <v-card
-        v-if="newProcessing"
-        rounded="lg"
-        data-iframe-height
-      >
-        <v-card-title primary-title>
-          <h3 class="text-h5 mb-0">
-            Créer un nouveau traitement
-          </h3>
-        </v-card-title>
-        <v-progress-linear
-          v-if="inCreate"
-          indeterminate
+      <template #prepend>
+        <v-icon
           color="primary"
+          :icon="mdiPlusCircle"
         />
-        <v-card-text>
-          <v-form>
-            <v-text-field
-              v-model="newProcessing.title"
-              label="Titre"
-            />
-            <v-autocomplete
-              v-model="newProcessing.plugin"
-              label="Plugin"
-              :loading="!installedPlugins ? 'primary' : false"
-              :items="installedPlugins"
-              item-title="customName"
-              item-value="id"
-              clearable
-            />
-            <owner-pick
-              v-model="newProcessing.owner"
-              v-model:ready="ownersReady"
-            />
-          </v-form>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn
-            :disabled="inCreate"
-            variant="text"
-            @click="showCreateMenu = false"
-          >
-            Annuler
-          </v-btn>
-          <v-btn
-            :disabled="!ownersReady || !newProcessing.title || !newProcessing.plugin || inCreate"
-            color="primary"
-            @click="createProcessing()"
-          >
-            Créer
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-menu>
+      </template>
+      Créer un nouveau traitement
+    </v-list-item>
     <v-text-field
       v-model="search"
       :append-inner-icon="mdiMagnify"
@@ -163,7 +94,6 @@
 </template>
 
 <script setup lang="ts">
-import OwnerPick from '@data-fair/lib-vuetify/owner-pick.vue'
 
 const processingsProps = defineProps<{
   adminMode: boolean,
@@ -179,13 +109,6 @@ const pluginsSelected = defineModel('pluginsSelected', { type: Array, required: 
 const statusesSelected = defineModel('statusesSelected', { type: Array, required: true })
 const ownersSelected = defineModel('ownersSelected', { type: Array, required: true })
 
-const router = useRouter()
-
-const inCreate = ref(false)
-const showCreateMenu = ref(false)
-const newProcessing: Ref<Record<string, string>> = ref({})
-const ownersReady = ref(false)
-
 const statusesText: Record<string, string> = {
   error: 'En échec',
   finished: 'Terminé',
@@ -199,13 +122,18 @@ const statusesText: Record<string, string> = {
 
 type InstalledPlugin = {
   name: string
-  customName: string
   description: string
   version: string
   distTag: string
   id: string
   pluginConfigSchema: any
   processingConfigSchema: any
+  metadata: {
+    name: string
+    description: string
+    category: string
+    icon: Record<string, string>
+  }
 }
 
 const installedPluginsFetch = useFetch<{ results: InstalledPlugin[], count: number }>(`${$apiPath}/plugins?privateAccess=${processingsProps.ownerFilter}`)
@@ -229,7 +157,7 @@ const pluginsItems = computed(() => {
   return Object.entries(processingsProps.facets.plugins)
     .map(
       ([pluginKey, count]) => {
-        const customName = installedPlugins.value?.find((plugin) => plugin.id === pluginKey)?.customName
+        const customName = installedPlugins.value?.find((plugin) => plugin.id === pluginKey)?.metadata.name
         return {
           display: `${customName || 'Supprimé - ' + pluginKey} (${count})`,
           pluginKey
@@ -265,23 +193,6 @@ const ownersItems = computed(() => {
     })
     .sort((a, b) => a.display.localeCompare(b.display))
 })
-
-const createProcessing = withUiNotif(
-  async () => {
-    inCreate.value = true
-
-    const processing = await $fetch('/processings', {
-      method: 'POST',
-      body: JSON.stringify(newProcessing.value)
-    })
-
-    await router.push({ path: `/processings/${processing._id}` })
-    showCreateMenu.value = false
-    inCreate.value = false
-  },
-  'Erreur pendant la création du traitement',
-  { msg: 'Traitement créé avec succès !' }
-)
 
 </script>
 
