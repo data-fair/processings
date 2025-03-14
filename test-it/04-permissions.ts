@@ -10,6 +10,7 @@ const contrib1Koumoul = await axiosAuth({ email: 'contrib1@test.com', org: 'koum
 const user1Koumoul = await axiosAuth({ email: 'user1@test.com', org: 'koumoul' })
 const dmeadusFivechat = await axiosAuth({ email: 'dmeadus0@answers.com', org: 'KWqAGZ4mG' })
 const dmeadusKoumoul = await axiosAuth({ email: 'dmeadus0@answers.com', org: 'koumoul' })
+const depAdmin = await axiosAuth({ email: 'hlalonde3@desdev.cn', org: 'KWqAGZ4mG', dep: 'dep1' })
 
 let plugin
 const createTestPlugin = async () => {
@@ -113,7 +114,7 @@ describe('processing', () => {
     await superadmin.delete(`/api/v1/plugins/${plugin.id}`)
   })
 
-  it.only('should list processings with good permissions', async function () {
+  it('should list processings with good permissions', async function () {
     // Add 2 processings for 2 users/orgs
     await admin1Koumoul.post('/api/v1/processings', {
       title: 'Hello processing 1',
@@ -132,5 +133,66 @@ describe('processing', () => {
 
     assert.equal((await superadmin.get('/api/v1/processings?showAll=true')).data.count, 2) // Lists all the processings without permission filter
     assert.equal((await superadmin.get('/api/v1/processings?showAll=true&owner=organization:koumoul')).data.results.length, 1) // Lists all the processings without permission filter but with owner filter
+  })
+
+  it('sould create processings as department admin', async function () {
+    // Create a processing as department admin in his department
+    const processing = (await depAdmin.post('/api/v1/processings', {
+      title: 'Hello processing',
+      plugin: plugin.id,
+      owner: {
+        id: 'KWqAGZ4mG',
+        name: 'Fivechat',
+        type: 'organization',
+        department: 'dep1',
+        departmentName: 'department 1'
+      }
+    })).data
+    assert.ok(processing._id)
+
+    // Create a processing as department admin in another department with permissions on the department (should fail)
+    await assert.rejects(depAdmin.post('/api/v1/processings', {
+      title: 'Hello processing',
+      plugin: plugin.id,
+      owner: {
+        id: 'KWqAGZ4mG',
+        name: 'Fivechat',
+        type: 'organization',
+        department: 'dep2',
+        departmentName: 'department 2'
+      }
+    }), { status: 403 }) // Cannot create a processing in another department than the one he is connected to
+
+    // Create a processing as department admin in the root organization
+    await assert.rejects(depAdmin.post('/api/v1/processings', {
+      title: 'Hello processing',
+      plugin: plugin.id,
+      owner: {
+        id: 'KWqAGZ4mG',
+        name: 'Fivechat',
+        type: 'organization'
+      }
+    }), { status: 403 }) // Cannot create a processing in the root organization when he is an admin of department
+
+    // Change the owner of a processing to another organization witout permissions
+    await assert.rejects(depAdmin.patch(`/api/v1/processings/${processing._id}`, {
+      owner: {
+        id: 'koumoul',
+        name: 'Koumoul',
+        type: 'organization'
+      }
+    }), { status: 403 }) // Cannot change the owner to another organization than the one he is connected to
+
+    // Change the owner of a processing to another department
+    const processing2 = (await depAdmin.patch(`/api/v1/processings/${processing._id}`, {
+      owner: {
+        id: 'KWqAGZ4mG',
+        name: 'Fivechat',
+        type: 'organization',
+        department: 'dep2',
+        departmentName: 'department 2'
+      }
+    })).data
+    assert.ok(processing2._id)
   })
 })

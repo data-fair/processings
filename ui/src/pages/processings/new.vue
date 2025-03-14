@@ -121,6 +121,9 @@ type InstalledPlugin = {
 const session = useSessionAuthenticated(() => new Error('Authentification nécessaire'))
 const router = useRouter()
 
+/*
+  Permissions
+*/
 const owners = useStringsArraySearchParam('owner')
 const owner = computed(() => {
   if (owners.value && owners.value.length) {
@@ -131,6 +134,24 @@ const owner = computed(() => {
   }
 })
 const ownerFilter = computed(() => `${owner.value.type}:${owner.value.id}${owner.value.department ? ':' + owner.value.department : ''}`)
+const ownerRole = computed(() => {
+  const user = session.state.user
+  if (owner.value.type === 'user') {
+    if (owner.value.id === user.id) return 'admin'
+    else return 'anonymous'
+  }
+  const userOrg = user.organizations.find(o => {
+    if (o.id !== owner.value.id) return false
+    if (!o.department) return true
+    if (o.department === owner.value.department) return true
+    return false
+  })
+  return userOrg ? userOrg.role : 'anonymous'
+})
+const canAdmin = computed(() => {
+  return ownerRole.value === 'admin' || !!session.state.user?.adminMode
+})
+if (!canAdmin.value) throw new Error('Vous n\'avez pas les droits pour créer un traitement')
 
 const installedPluginsFetch = useFetch<{ results: InstalledPlugin[], count: number }>(`${$apiPath}/plugins?privateAccess=${ownerFilter.value}`)
 const installedPlugins = computed(() => installedPluginsFetch.data.value?.results)

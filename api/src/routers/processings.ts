@@ -265,6 +265,18 @@ router.patch('/:id', async (req, res) => {
     .filter(k => sessionState.user.adminMode || !(processingSchema.properties)[k].readOnly || 'owner')
   for (const key in req.body) {
     if (!acceptedParts.includes(key)) return res.status(400).send('Unsupported patch part ' + key)
+    if (key === 'owner') {
+      // check if the user has the right to change to this owner
+      const isAdmin =
+        (req.body.owner.type === 'user' && sessionState.user.id === req.body.owner.id) ||
+        sessionState.user.organizations.some(o =>
+          o.id === req.body.owner.id && (!o.department || o.department === req.body.owner.department) && o.role === 'admin'
+        )
+
+      if (!isAdmin) {
+        return res.status(403).send('No permission to change the owner to ' + req.body.owner)
+      }
+    }
   }
   req.body.updated = {
     id: sessionState.user.id,
