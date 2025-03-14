@@ -171,6 +171,12 @@
             v-model:ready="ownersReady"
             other-accounts
           />
+          <v-alert
+            type="warning"
+            title="Opération sensible"
+            text="Changer le propriétaire d'un traitement peut avoir des conséquences sur l'execution du traitement."
+            variant="outlined"
+          />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
