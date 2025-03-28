@@ -5,7 +5,7 @@
     "@data-fair/lib-express": "^1.13.1"
   },
   "dependencies": {
-    "@data-fair/lib-node": "^2.1.0",
+    "@data-fair/lib-node": "^2.6.0",
     "@data-fair/lib-utils": "^1.1.0",
     "cron": "^3.1.9",
     "dayjs": "^1.11.13",
