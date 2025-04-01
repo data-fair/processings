@@ -10,6 +10,7 @@ import path from 'path'
 import resolvePath from 'resolve-path'
 import { nanoid } from 'nanoid'
 
+import eventsQueue from '@data-fair/lib-node/events-queue.js'
 import { session } from '@data-fair/lib-express/index.js'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import { createNext } from '@data-fair/processings-shared/runs.ts'
@@ -29,6 +30,33 @@ const ajv = ajvFormats(new Ajv({ strict: false }))
 const pluginsDir = path.join(config.dataDir, 'plugins')
 
 const sensitiveParts = ['permissions', 'webhookKey', 'config']
+
+/**
+ * Helper function to send events related to processings
+ * @param processing The processing object
+ * @param actionText The text describing the action (e.g. "a été créé")
+ * @param topicAction The action part of the topic key (e.g. "create", "delete")
+ * @param sessionState Optional session state for authentication
+ */
+const sendProcessingEvent = (
+  processing: Processing,
+  actionText: string,
+  topicAction: string,
+  sessionState?: SessionStateAuthenticated
+) => {
+  if (!config.privateEventsUrl && !config.secretKeys.events) return
+
+  eventsQueue.pushEvent({
+    title: `Le traitement ${processing.title} ${actionText}`,
+    topic: { key: `processings:processing-${topicAction}:${processing._id}` },
+    sender: processing.owner,
+    resource: {
+      type: 'processing',
+      id: processing._id,
+      title: processing.title,
+    }
+  }, sessionState)
+}
 
 /**
  * Check that a processing object is valid
@@ -250,6 +278,8 @@ router.post('', async (req, res) => {
 
   await validateFullProcessing(processing)
   await mongo.processings.insertOne(processing)
+
+  sendProcessingEvent(processing, 'a été créé', 'create', sessionState)
   res.status(200).json(cleanProcessing(processing, sessionState))
 })
 
@@ -300,6 +330,9 @@ router.patch('/:id', async (req, res) => {
   await mongo.processings.updateOne({ _id: req.params.id }, patch)
   await mongo.runs.updateMany({ 'processing._id': processing._id }, { $set: { permissions: patchedProcessing.permissions || [] } })
   await applyProcessing(mongo, patchedProcessing)
+  if (config.privateEventsUrl && config.secretKeys.events) {
+    sendProcessingEvent(patchedProcessing, 'a été modifié', 'patch', sessionState)
+  }
   res.status(200).json(cleanProcessing(patchedProcessing, sessionState))
 })
 
@@ -320,6 +353,7 @@ router.delete('/:id', async (req, res) => {
   if (permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState) !== 'admin') return res.status(403).send()
   await mongo.processings.deleteOne({ _id: req.params.id })
   if (processing) await deleteProcessing(mongo, processing)
+  sendProcessingEvent(processing, 'a été supprimé', 'delete', sessionState)
   res.sendStatus(204)
 })
 
@@ -347,11 +381,13 @@ router.delete('/:id/webhook-key', async (req, res) => {
 router.post('/:id/_trigger', async (req, res) => {
   const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
-  if (req.query.key && req.query.key !== processing.webhookKey) {
-    return res.status(403).send('Mauvaise clé de déclenchement')
+  if (req.query.key) {
+    if (req.query.key !== processing.webhookKey) return res.status(403).send('Mauvaise clé de déclenchement')
+    sendProcessingEvent(processing, 'a été déclenché par webhook', 'trigger')
   } else {
     const sessionState = await session.reqAuthenticated(req)
     if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState) ?? '')) return res.status(403).send()
+    sendProcessingEvent(processing, 'a été déclenché manuellement', 'trigger', sessionState)
   }
   if (!processing.active) return res.status(409).send('Le traitement n\'est pas actif')
   res.send(await createNext(mongo.db, locks, processing, true, req.query.delay ? Number(req.query.delay) : 0))

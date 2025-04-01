@@ -8,8 +8,10 @@ module.exports = {
   },
   pluginCategories: ['Essentiels', 'Mes plugins', 'Données de références', 'Tests'],
   privateDirectoryUrl: 'http://simple-directory:8080',
+  privateEventsUrl: null,
   secretKeys: {
-    limits: null
+    limits: null,
+    events: null
   },
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings',
   port: 8080,

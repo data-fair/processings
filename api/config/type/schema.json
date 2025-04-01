@@ -50,10 +50,16 @@
       "type": "string",
       "pattern": "^https?://"
     },
+    "privateEventsUrl": {
+      "type": "string"
+    },
     "secretKeys": {
       "type": "object",
       "properties": {
         "limits": {
+          "type": ["string", "null"]
+        },
+        "events": {
           "type": ["string", "null"]
         }
       }
