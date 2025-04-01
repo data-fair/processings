@@ -31,7 +31,8 @@ const processingsDir = path.join(config.dataDir, 'processings')
  */
 const getAxiosInstance = (processing: Processing) => {
   const headers: Record<string, string> = {
-    'x-apiKey': config.dataFairAPIKey
+    'x-apiKey': config.dataFairAPIKey,
+    'User-Agent': `@data-fair/processings (${processing.plugin})`
   }
   if (config.dataFairAdminMode) {
     const account = { ...processing.owner }
