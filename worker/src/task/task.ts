@@ -31,8 +31,7 @@ const processingsDir = path.join(config.dataDir, 'processings')
  */
 const getAxiosInstance = (processing: Processing) => {
   const headers: Record<string, string> = {
-    'x-apiKey': config.dataFairAPIKey,
-    'User-Agent': `@data-fair/processings (${processing.plugin})`
+    'x-apiKey': config.dataFairAPIKey
   }
   if (config.dataFairAdminMode) {
     const account = { ...processing.owner }
@@ -58,6 +57,7 @@ const getAxiosInstance = (processing: Processing) => {
     }
     const isDataFairUrl = cfg.url.startsWith(config.dataFairUrl)
     if (isDataFairUrl) Object.assign(cfg.headers, headers)
+    cfg.headers['User-Agent'] = cfg.headers['User-Agent'] ?? `@data-fair/processings (${processing.plugin})`
 
     // use private data fair url if specified to prevent leaving internal infrastructure
     // except from GET requests so that they still appear in metrics
