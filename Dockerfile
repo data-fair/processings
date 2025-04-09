@@ -66,6 +66,17 @@ RUN npm ci -w worker --prefer-offline --omit=dev --omit=optional --omit=peer --n
 RUN mkdir -p /app/worker/node_modules
 RUN mkdir -p /app/shared/node_modules
 
+# install tippecanoe for some processings
+WORKDIR /tmp/
+RUN apk add --no-cache curl cmake make g++
+RUN apk add git zlib-dev sqlite-dev bash
+RUN git clone https://github.com/mapbox/tippecanoe.git
+WORKDIR /tmp/tippecanoe
+RUN git checkout 1.36.0
+RUN make -j
+RUN make install
+RUN test -f /usr/local/bin/tippecanoe
+
 # =============================
 # Final Worker Image
 # =============================
@@ -86,6 +97,8 @@ RUN apk add --no-cache gmp gdal-tools
 RUN test -f /usr/bin/ogr2ogr
 RUN ln -s /usr/lib/libproj.so.25 /usr/lib/libproj.so
 RUN test -f /usr/lib/libproj.so
+# add tippecanoe
+COPY --from=worker-installer /usr/local/bin/tippecanoe /usr/local/bin/tippecanoe
 
 EXPOSE 9090
 # USER node # This would be great to use, but not possible as the volumes are mounted as root
