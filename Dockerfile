@@ -1,7 +1,7 @@
 # =============================
 # Base Node image
 # =============================
-FROM node:22.13.1-alpine3.21 AS base
+FROM node:22.14.0-alpine AS base
 
 WORKDIR /app
 ENV NODE_ENV=production
@@ -80,6 +80,13 @@ COPY --from=types /app/api/types api/types
 COPY --from=worker-installer /app/worker/node_modules worker/node_modules
 COPY --from=worker-installer /app/shared/node_modules shared/node_modules
 COPY package.json README.md LICENSE BUILD.json* ./
+
+# install gdal for ogr2ogr
+RUN apk add --no-cache gmp gdal-tools
+RUN test -f /usr/bin/ogr2ogr
+RUN ln -s /usr/lib/libproj.so.25 /usr/lib/libproj.so
+RUN test -f /usr/lib/libproj.so
+
 EXPOSE 9090
 # USER node # This would be great to use, but not possible as the volumes are mounted as root
 WORKDIR /app/worker
