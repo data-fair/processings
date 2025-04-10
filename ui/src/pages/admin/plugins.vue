@@ -108,7 +108,7 @@
                 <v-btn
                   color="warning"
                   :disabled="!!pluginLocked"
-                  @click="uninstall(result)"
+                  @click="uninstall.execute(result)"
                 >
                   Oui
                 </v-btn>
@@ -203,7 +203,7 @@
             :icon="mdiDownload"
             color="primary"
             :disabled="!!pluginLocked"
-            @click="install(result)"
+            @click="install.execute(result)"
           />
         </v-toolbar>
         <v-card-text
@@ -305,7 +305,7 @@ const filteredAvailablePlugins = computed(() => {
 const deleteMenuShowed = ref(null) as Ref<string | null>
 const pluginLocked = ref(null) as Ref<string | null>
 
-const install = withUiNotif(
+const install = useAsyncAction(
   async (plugin: AvailablePlugin) => {
     pluginLocked.value = `${plugin.name}-${plugin.distTag}`
     await $fetch('/plugins', {
@@ -315,11 +315,13 @@ const install = withUiNotif(
     installedPluginsFetch.refresh()
     pluginLocked.value = null
   },
-  "Erreur pendant l'installation du plugin",
-  { msg: 'Plugin installé avec succès !' }
+  {
+    error: 'Erreur pendant l\'installation du plugin',
+    success: 'Plugin installé !'
+  }
 )
 
-const uninstall = withUiNotif(
+const uninstall = useAsyncAction(
   async (plugin: InstalledPlugin) => {
     pluginLocked.value = `${plugin.name}-${plugin.distTag}`
     await $fetch(`/plugins/${plugin.id}`, {
@@ -329,8 +331,10 @@ const uninstall = withUiNotif(
     pluginLocked.value = null
     deleteMenuShowed.value = null
   },
-  'Erreur pendant la désinstallation du plugin',
-  { msg: 'Plugin désinstallé avec succès !' }
+  {
+    error: 'Erreur pendant la désinstallation du plugin',
+    success: 'Plugin désinstallé !'
+  }
 )
 
 /**
@@ -351,7 +355,7 @@ async function update (plugin: InstalledPlugin) {
   if (availablePlugins.value.length === 0) return false
   const availablePlugin = availablePlugins.value.find(r => r.name === plugin.name)
   if (availablePlugin && availablePlugin.version !== plugin.version) {
-    await install(availablePlugin)
+    await install.execute(availablePlugin)
   }
   pluginLocked.value = null
 }

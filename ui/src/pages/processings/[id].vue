@@ -28,7 +28,7 @@
               v-model="editProcessing"
               :schema="processingSchema"
               :options="vjsfOptions"
-              @update:model-value="patch()"
+              @update:model-value="patch.execute()"
             />
           </v-form>
         </v-defaults-provider>
@@ -197,7 +197,7 @@ const vjsfOptions = computed(() => {
 })
 
 let initialPatch = true
-const patch = withUiNotif(
+const patch = useAsyncAction(
   async () => {
     // the first patch is always triggered because of removed additional properties
     if (initialPatch) {
@@ -220,7 +220,10 @@ const patch = withUiNotif(
 
     edited.value = false
   },
-  "Erreur pendant l'enregistrement du traitement")
+  {
+    error: 'Erreur pendant la mise à jour du traitement',
+  }
+)
 
 /*
   A patch can be triggered server side

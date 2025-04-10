@@ -35,17 +35,10 @@
       </template>
       <v-card
         rounded="lg"
+        title="Exécution du traitement"
         variant="elevated"
+        :loading="triggerExecution.loading.value ? 'primary' : false"
       >
-        <v-card-title primary-title>
-          Exécution du traitement
-        </v-card-title>
-        <v-progress-linear
-          v-if="hasTriggered"
-          indeterminate
-          color="primary"
-          class="mb-4"
-        />
         <v-card-text class="py-0">
           <p v-if="canAdmin">
             Vous pouvez déclencher une exécution sans être connecté à la plateforme en envoyant une requête HTTP POST à cette URL sécurisée :
@@ -62,15 +55,15 @@
           <v-spacer />
           <v-btn
             variant="text"
-            :disabled="hasTriggered"
+            :disabled="triggerExecution.loading.value"
             @click="showTriggerMenu = false"
           >
             Annuler
           </v-btn>
           <v-btn
             color="primary"
-            :disabled="hasTriggered"
-            @click="triggerExecution()"
+            :loading="triggerExecution.loading.value"
+            @click="triggerExecution.execute()"
           >
             Déclencher manuellement
           </v-btn>
@@ -100,16 +93,10 @@
       </template>
       <v-card
         rounded="lg"
+        title="Suppression du traitement"
         variant="elevated"
+        :loading="confirmRemove.loading.value ? 'warning' : false"
       >
-        <v-card-title primary-title>
-          Suppression du traitement
-        </v-card-title>
-        <v-progress-linear
-          v-if="inDelete"
-          indeterminate
-          color="warning"
-        />
         <v-card-text>
           Voulez-vous vraiment supprimer le traitement "{{ processing?.title }}" et tout son historique ? La suppression est définitive et les données ne pourront pas être récupérées.
         </v-card-text>
@@ -117,15 +104,15 @@
           <v-spacer />
           <v-btn
             variant="text"
-            :disabled="inDelete"
+            :disabled="confirmRemove.loading.value"
             @click="showDeleteMenu = false"
           >
             Non
           </v-btn>
           <v-btn
             color="warning"
-            :disabled="inDelete"
-            @click="confirmRemove()"
+            :loading="confirmRemove.loading.value"
+            @click="confirmRemove.execute()"
           >
             Oui
           </v-btn>
@@ -155,11 +142,9 @@
       </template>
       <v-card
         rounded="lg"
+        title="Changer le proriétaire"
         variant="elevated"
       >
-        <v-card-title primary-title>
-          Changer le proriétaire
-        </v-card-title>
         <v-progress-linear
           v-if="confirmChangeOwner.loading.value"
           indeterminate
@@ -169,6 +154,7 @@
           <owner-pick
             v-model="newOwner"
             v-model:ready="ownersReady"
+            message=" "
             other-accounts
           />
           <v-alert
@@ -189,7 +175,8 @@
           </v-btn>
           <v-btn
             color="warning"
-            :disabled="!ownersReady || confirmChangeOwner.loading.value"
+            :disabled="!ownersReady"
+            :loading="confirmChangeOwner.loading.value"
             @click="confirmChangeOwner.execute()"
           >
             Confirmer
@@ -236,11 +223,9 @@
       </template>
       <v-card
         rounded="lg"
+        title="Notifications"
         variant="elevated"
       >
-        <v-card-title primary-title>
-          Notifications
-        </v-card-title>
         <v-card-text class="py-0 px-3">
           <d-frame
             :src="notifUrl"
@@ -267,6 +252,7 @@
 
 <script setup lang="ts">
 import OwnerPick from '@data-fair/lib-vuetify/owner-pick.vue'
+import { Account } from '@data-fair/lib-vue/session'
 import '@data-fair/frame/lib/d-frame.js'
 
 const emit = defineEmits(['triggered'])
@@ -286,8 +272,9 @@ const properties = defineProps({
   }
 })
 
-const inDelete = ref(false)
-const hasTriggered = ref(false)
+const router = useRouter()
+const session = useSessionAuthenticated()
+
 const showDeleteMenu = ref(false)
 const showNotifMenu = ref(false)
 const showTriggerMenu = ref(false)
@@ -295,10 +282,8 @@ const showChangeOwnerMenu = ref(false)
 const triggerDelay = ref(0)
 const webhookKey = ref('')
 const ownersReady = ref(false)
-const newOwner = ref<Record<string, string> | null>(null)
+const newOwner = ref<Account>(session.state.account)
 
-const router = useRouter()
-const session = useSession()
 const activeAccount = computed(() => session.state.account)
 
 const notifUrl = computed(() => {
@@ -323,47 +308,41 @@ const confirmChangeOwner = useAsyncAction(
       method: 'PATCH',
       body: JSON.stringify({ owner: newOwner.value })
     })
-
     showChangeOwnerMenu.value = false
   }
 )
 
-const confirmRemove = withUiNotif(
+const confirmRemove = useAsyncAction(
   async () => {
-    inDelete.value = true
-
     await $fetch(`/processings/${properties.processing?._id}`, {
       method: 'DELETE'
     })
-
-    // Redirection après la suppression
-    await router.push('/processings')
-
+    await router.replace('/processings') // Redirect after deleting
     showDeleteMenu.value = false
-    inDelete.value = false
   },
-  'Erreur pendant la suppression du traitement',
-  { msg: 'Traitement supprimé avec succès !' }
+  {
+    error: 'Erreur pendant la suppression du traitement',
+    success: 'Traitement supprimé !'
+  }
 )
 
 const getWebhookKey = async () => {
   webhookKey.value = await $fetch(`/processings/${properties.processing?._id}/webhook-key`)
 }
 
-const triggerExecution = withUiNotif(
+const triggerExecution = useAsyncAction(
   async () => {
-    hasTriggered.value = true
     let link = `/processings/${properties.processing?._id}/_trigger`
     if (triggerDelay.value > 0) link += `?delay=${triggerDelay.value}`
 
     await $fetch(link, { method: 'POST' })
     emit('triggered')
     showTriggerMenu.value = false
-
-    hasTriggered.value = false
   },
-  'Erreur pendant le déclenchement du traitement',
-  { msg: 'Traitement déclenché avec succès !' }
+  {
+    error: 'Erreur pendant le déclenchement du traitement',
+    success: 'Traitement déclenché !'
+  }
 )
 
 watch(showTriggerMenu, async (newValue) => {
