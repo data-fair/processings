@@ -77,11 +77,11 @@ import timeZones from 'timezones.json'
 import Vjsf from '@koumoul/vjsf'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 
-const route = useRoute()
+const route = useRoute<'/processings/[id]'>()
 const session = useSession()
 // const runtimeConfig = useRuntimeConfig()
 
-const processingId = (route.params as { id: string }).id
+const processingId = route.params.id
 const utcs: string[] = []
 for (const tz of timeZones) {
   for (const utc of tz.utc) {
@@ -221,7 +221,7 @@ const patch = useAsyncAction(
     edited.value = false
   },
   {
-    error: 'Erreur pendant la mise à jour du traitement',
+    error: 'Erreur lors de la mise à jour du traitement',
   }
 )
 

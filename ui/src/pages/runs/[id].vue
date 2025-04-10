@@ -58,7 +58,7 @@
 <script setup lang="ts">
 import type { Run } from '#api/types'
 
-const route = useRoute()
+const route = useRoute<'/runs/[id]'>()
 const session = useSession()
 const ws = useWS('/processings/api/')
 
@@ -71,8 +71,6 @@ const canExec = computed(() => {
   if (!run.value) return false
   return ['admin', 'exec'].includes(run.value.userProfile as string)
 })
-
-const runId = (route.params as { id: string }).id
 
 const steps = computed(() => {
   if (!run.value) return []
@@ -128,7 +126,7 @@ function getIcon (step: Record<string, any>) {
 
 onMounted(async () => {
   loading.value = true
-  run.value = await $fetch(`/runs/${runId}`)
+  run.value = await $fetch(`/runs/${route.params.id}`)
   if (!run.value) return
 
   ws?.subscribe(`processings/${run.value.processing._id}/run-log`, onRunLog)

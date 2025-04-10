@@ -39,7 +39,7 @@ const search = async (q: string | undefined, showAll: boolean) => {
       }
     })
   } catch (error: any) {
-    if (error.response && error.response.status === 429) throw httpError(429, 'Too many requests to NPM registry')
+    if (error.status === 429) throw httpError(429, 'Too many requests to NPM registry')
     throw error
   }
 

@@ -188,7 +188,7 @@ const createProcessing = useAsyncAction(
   },
   {
     success: 'Traitement créé !',
-    error: 'Erreur pendant la création du traitement'
+    error: 'Erreur lors de la création du traitement'
   }
 )
 

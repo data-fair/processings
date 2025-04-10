@@ -99,7 +99,6 @@
               <v-card-actions>
                 <v-spacer />
                 <v-btn
-                  variant="text"
                   :disabled="!!pluginLocked"
                   @click="deleteMenuShowed = null"
                 >
@@ -107,6 +106,7 @@
                 </v-btn>
                 <v-btn
                   color="warning"
+                  variant="flat"
                   :disabled="!!pluginLocked"
                   @click="uninstall.execute(result)"
                 >
@@ -316,7 +316,7 @@ const install = useAsyncAction(
     pluginLocked.value = null
   },
   {
-    error: 'Erreur pendant l\'installation du plugin',
+    error: 'Erreur lors de l\'installation du plugin',
     success: 'Plugin installé !'
   }
 )
@@ -332,7 +332,7 @@ const uninstall = useAsyncAction(
     deleteMenuShowed.value = null
   },
   {
-    error: 'Erreur pendant la désinstallation du plugin',
+    error: 'Erreur lors de la désinstallation du plugin',
     success: 'Plugin désinstallé !'
   }
 )

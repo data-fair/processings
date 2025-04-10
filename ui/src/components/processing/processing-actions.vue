@@ -54,7 +54,6 @@
         <v-card-actions>
           <v-spacer />
           <v-btn
-            variant="text"
             :disabled="triggerExecution.loading.value"
             @click="showTriggerMenu = false"
           >
@@ -62,6 +61,7 @@
           </v-btn>
           <v-btn
             color="primary"
+            variant="flat"
             :loading="triggerExecution.loading.value"
             @click="triggerExecution.execute()"
           >
@@ -103,7 +103,6 @@
         <v-card-actions>
           <v-spacer />
           <v-btn
-            variant="text"
             :disabled="confirmRemove.loading.value"
             @click="showDeleteMenu = false"
           >
@@ -111,6 +110,7 @@
           </v-btn>
           <v-btn
             color="warning"
+            variant="flat"
             :loading="confirmRemove.loading.value"
             @click="confirmRemove.execute()"
           >
@@ -167,7 +167,6 @@
         <v-card-actions>
           <v-spacer />
           <v-btn
-            variant="text"
             :disabled="confirmChangeOwner.loading.value"
             @click="showChangeOwnerMenu = false"
           >
@@ -175,6 +174,7 @@
           </v-btn>
           <v-btn
             color="warning"
+            variant="flat"
             :disabled="!ownersReady"
             :loading="confirmChangeOwner.loading.value"
             @click="confirmChangeOwner.execute()"
@@ -236,15 +236,6 @@
             </div>
           </d-frame>
         </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn
-            color="primary"
-            @click="showNotifMenu = false"
-          >
-            ok
-          </v-btn>
-        </v-card-actions>
       </v-card>
     </v-menu>
   </v-list>
@@ -321,7 +312,7 @@ const confirmRemove = useAsyncAction(
     showDeleteMenu.value = false
   },
   {
-    error: 'Erreur pendant la suppression du traitement',
+    error: 'Erreur lors de la suppression du traitement',
     success: 'Traitement supprimé !'
   }
 )
@@ -340,7 +331,7 @@ const triggerExecution = useAsyncAction(
     showTriggerMenu.value = false
   },
   {
-    error: 'Erreur pendant le déclenchement du traitement',
+    error: 'Erreur lors de le déclenchement du traitement',
     success: 'Traitement déclenché !'
   }
 )
