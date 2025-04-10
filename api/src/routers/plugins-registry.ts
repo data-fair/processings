@@ -2,6 +2,7 @@ import type { AxiosRequestConfig } from 'axios'
 import { Router } from 'express'
 import memoize from 'memoizee'
 
+import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import axios from '@data-fair/lib-node/axios.js'
 import config from '#config'
 
@@ -28,13 +29,20 @@ if (config.npm?.httpsProxy) {
  */
 const search = async (q: string | undefined, showAll: boolean) => {
   // see https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md#get-v1search
-  const res = await axios.get('https://registry.npmjs.org/-/v1/search', {
-    ...axiosOpts,
-    params: {
-      size: 250,
-      text: `keywords:data-fair-processings-plugin ${q || ''}`
-    }
-  })
+  let res
+  try {
+    res = await axios.get('https://registry.npmjs.org/-/v1/search', {
+      ...axiosOpts,
+      params: {
+        size: 250,
+        text: `keywords:data-fair-processings-plugin ${q || ''}`
+      }
+    })
+  } catch (error: any) {
+    if (error.response && error.response.status === 429) throw httpError(429, 'Too many requests to NPM registry')
+    throw error
+  }
+
   const results = []
   for (const o of res.data.objects) {
     if (!o.package.keywords || !o.package.keywords.includes('data-fair-processings-plugin')) continue

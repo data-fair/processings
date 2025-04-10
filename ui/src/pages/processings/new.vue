@@ -80,14 +80,15 @@
             v-model:ready="ownersReady"
           />
           <v-btn
-            :disabled="!ownersReady || !newProcessing.title || !newProcessing.plugin || inCreate"
+            :disabled="!ownersReady || !newProcessing.title || !newProcessing.plugin"
+            :loading="createProcessing.loading.value"
             color="primary"
-            @click="createProcessing()"
+            @click="createProcessing.execute()"
           >
             Créer
           </v-btn>
           <v-btn
-            :disabled="inCreate"
+            :disabled="createProcessing.loading.value"
             variant="text"
             @click="step = '1'"
           >
@@ -157,7 +158,6 @@ const installedPluginsFetch = useFetch<{ results: InstalledPlugin[], count: numb
 const installedPlugins = computed(() => installedPluginsFetch.data.value?.results)
 
 const step = ref('1')
-const inCreate = ref(false)
 const showCreateMenu = ref(false)
 const newProcessing: Ref<Record<string, string>> = ref({})
 const ownersReady = ref(false)
@@ -176,21 +176,20 @@ const categorizedPlugins = computed(() => {
   return categories
 })
 
-const createProcessing = withUiNotif(
+const createProcessing = useAsyncAction(
   async () => {
-    inCreate.value = true
-
     const processing = await $fetch('/processings', {
       method: 'POST',
       body: JSON.stringify(newProcessing.value)
     })
 
-    await router.push({ path: `/processings/${processing._id}` })
+    await router.replace({ path: `/processings/${processing._id}` })
     showCreateMenu.value = false
-    inCreate.value = false
   },
-  'Erreur pendant la création du traitement',
-  { msg: 'Traitement créé avec succès !' }
+  {
+    success: 'Traitement créé !',
+    error: 'Erreur pendant la création du traitement'
+  }
 )
 
 onMounted(() => {

@@ -158,7 +158,7 @@ export const run = async (db: Db, mailTransport: any) => {
   }
   await running(db, run)
   console.log('<running>')
-  const pluginDir = path.resolve(config.dataDir, 'plugins', processing?.plugin)
+  const pluginDir = path.resolve(config.dataDir, 'plugins', processing.plugin)
   let pluginConfig = {}
   if (await fs.pathExists(pluginDir + '-config.json')) {
     pluginConfig = await fs.readJson(pluginDir + '-config.json')
@@ -170,7 +170,7 @@ export const run = async (db: Db, mailTransport: any) => {
   const dir = resolvePath(processingsDir, processing._id)
   await fs.ensureDir(dir)
   const tmpDir = await tmp.dir({ unsafeCleanup: true, tmpdir: baseTmpDir, prefix: `processing-run-${processing._id}-${run._id}` })
-  const processingConfig = processing?.config || {}
+  const processingConfig = processing.config || {}
 
   const axiosInstance = getAxiosInstance(processing)
   axiosRetry(axiosInstance, {
@@ -187,12 +187,12 @@ export const run = async (db: Db, mailTransport: any) => {
   const context: ProcessingContext = {
     pluginConfig,
     processingConfig,
-    processingId: processing?._id,
+    processingId: processing._id,
     dir,
     tmpDir: tmpDir.path,
     log,
     axios: axiosInstance,
-    ws: wsInstance(log, processing?.owner),
+    ws: wsInstance(log, processing.owner),
     async patchConfig (patch) {
       await log.debug('patch config', patch)
       Object.assign(processingConfig, patch)
