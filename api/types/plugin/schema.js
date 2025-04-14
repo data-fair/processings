@@ -20,7 +20,7 @@ export default {
   ],
   properties: {
     name: {
-      type: 'string'
+      type: 'string',
     },
     description: {
       type: 'string'
@@ -35,16 +35,20 @@ export default {
       type: 'string'
     },
     pluginConfigSchema: {
-      type: 'object'
+      type: 'object',
+      description: 'Schema de configuration du plugin.',
     },
     pluginMetadataSchema: {
-      type: 'object'
+      type: 'object',
+      description: 'Schema de configuration des metadata.'
     },
     processingConfigSchema: {
-      type: 'object'
+      type: 'object',
+      description: 'Schema de configuration du traitement.'
     },
     config: {
-      type: 'object'
+      type: 'object',
+      description: 'La configuration du plugin respectant le schema de configuration du plugin.',
     },
     access: {
       type: 'object',
@@ -73,6 +77,7 @@ export default {
     },
     metadata: {
       type: 'object',
+      description: 'Les metadata du plugin respectant le schema de configuration des metadata.',
       additionalProperties: false,
       required: ['name', 'description', 'category', 'icon'],
       properties: {

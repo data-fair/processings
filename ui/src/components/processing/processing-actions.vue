@@ -200,6 +200,20 @@
       Voir le jeu de données
     </v-list-item>
 
+    <v-list-item
+      :href="`${origin}/openapi-viewer?urlType=processingsId&id=${processing?._id}`"
+      target="_blank"
+      rounded
+    >
+      <template #prepend>
+        <v-icon
+          color="primary"
+          :icon="mdiCloud"
+        />
+      </template>
+      Utiliser l'API
+    </v-list-item>
+
     <v-menu
       v-if="notifUrl && processing?.owner.type === activeAccount?.type && processing?.owner.id === activeAccount?.id && !activeAccount?.department"
       v-model="showNotifMenu"
@@ -266,6 +280,7 @@ const properties = defineProps({
 const router = useRouter()
 const session = useSessionAuthenticated()
 
+const origin = ref(window.location.origin)
 const showDeleteMenu = ref(false)
 const showNotifMenu = ref(false)
 const showTriggerMenu = ref(false)

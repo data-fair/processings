@@ -60,7 +60,32 @@ services:
       - PUBLIC_URL=http://localhost:5600/data-fair
       - WS_PUBLIC_URL=ws://localhost:5600/data-fair
       - EXTRA_NAV_ITEMS=[{"id":"processings","can":"contrib","iframe":"http://localhost:5600/processings/processings","basePath":"/processings","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
-      - EXTRA_ADMIN_NAV_ITEMS=[{"id":"processings","iframe":"http://localhost:5600/processings/admin","basePath":"/processings","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
+      - EXTRA_DOC_LINKS=[{"title":"API Traitements périodiques","href":"http://localhost:5600/openapi-viewer?urlType=processings","icon":"mdi-cog-transfer-outline"}]
+      - EXTRA_ADMIN_NAV_ITEMS=[{"id":"processings","iframe":"http://localhost:5600/processings/admin","basePath":"/processings","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"},{"id":"processingsAdminDoc","href":"http://localhost:5600/openapi-viewer?urlType=processingsAdmin","icon":"mdi-cog-transfer-outline","title":"API Traitements périodiques"}]
+      - OBSERVER_ACTIVE=false
+      - OPENAPI_VIEWER_V2=true
+
+  openapi-viewer:
+    profiles:
+      - dev
+    image: ghcr.io/data-fair/openapi-viewer:master
+    ports:
+      - 8083:8080
+    environment:
+      - USE_SIMPLE_DIRECTORY=true
+      - ALLOWED_URLS={"processings":"http://localhost:5600/processings/api/v1/api-docs.json","processingsId":"http://localhost:5600/processings/api/v1/processings/{id}/api-docs.json","processingsAdmin":"http://localhost:5600/processings/api/v1/admin/api-docs.json"}
+
+  events:
+    profiles:
+      - dev
+    image: ghcr.io/data-fair/events:main
+    network_mode: host
+    environment:
+      - PORT=8084
+      - PRIVATE_DIRECTORY_URL=http://localhost:5600/simple-directory
+      - SECRET_IDENTITIES=secret-identities
+      - SECRET_EVENTS=secret-events
+      - SECRET_SENDMAILS=secret-sendmails
       - OBSERVER_ACTIVE=false
 
   #####
@@ -95,19 +120,6 @@ services:
       - 27017:27017
     volumes:
       - mongo-data:/data/db
-
-  events:
-    profiles:
-      - dev
-    image: ghcr.io/data-fair/events:main
-    network_mode: host
-    environment:
-      - PORT=8088
-      - PRIVATE_DIRECTORY_URL=http://localhost:5600/simple-directory
-      - SECRET_IDENTITIES=secret-identities
-      - SECRET_EVENTS=secret-events
-      - SECRET_SENDMAILS=secret-sendmails
-      - OBSERVER_ACTIVE=false
 
   #####
   # Api and worker in docker mode

@@ -39,6 +39,7 @@ declare global {
   const mdiBell: typeof import('@mdi/js')['mdiBell']
   const mdiCheckCircle: typeof import('@mdi/js')['mdiCheckCircle']
   const mdiClock: typeof import('@mdi/js')['mdiClock']
+  const mdiCloud: typeof import('@mdi/js')['mdiCloud']
   const mdiDatabase: typeof import('@mdi/js')['mdiDatabase']
   const mdiDelete: typeof import('@mdi/js')['mdiDelete']
   const mdiDotsVertical: typeof import('@mdi/js')['mdiDotsVertical']
@@ -159,6 +160,7 @@ declare module 'vue' {
     readonly mdiBell: UnwrapRef<typeof import('@mdi/js')['mdiBell']>
     readonly mdiCheckCircle: UnwrapRef<typeof import('@mdi/js')['mdiCheckCircle']>
     readonly mdiClock: UnwrapRef<typeof import('@mdi/js')['mdiClock']>
+    readonly mdiCloud: UnwrapRef<typeof import('@mdi/js')['mdiCloud']>
     readonly mdiDatabase: UnwrapRef<typeof import('@mdi/js')['mdiDatabase']>
     readonly mdiDelete: UnwrapRef<typeof import('@mdi/js')['mdiDelete']>
     readonly mdiDotsVertical: UnwrapRef<typeof import('@mdi/js')['mdiDotsVertical']>
