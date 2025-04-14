@@ -51,6 +51,7 @@ export default defineConfig({
             'mdiCheckCircle',
             'mdiClock',
             'mdiCloud',
+            'mdiContentDuplicate',
             'mdiDatabase',
             'mdiDotsVertical',
             'mdiDownload',

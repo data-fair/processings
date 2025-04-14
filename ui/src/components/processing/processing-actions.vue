@@ -73,6 +73,62 @@
 
     <v-menu
       v-if="canAdmin"
+      v-model="showDuplicateMenu"
+      :close-on-content-click="false"
+      max-width="500"
+    >
+      <template #activator="{ props }">
+        <v-list-item
+          v-bind="props"
+          rounded
+        >
+          <template #prepend>
+            <v-icon
+              color="primary"
+              :icon="mdiContentDuplicate"
+            />
+          </template>
+          Dupliquer
+        </v-list-item>
+      </template>
+      <v-card
+        rounded="lg"
+        title="Duplication du traitement"
+        variant="elevated"
+        :loading="confirmDuplicate.loading.value ? 'primary' : false"
+      >
+        <v-card-text>
+          Vous êtes sur le point de créer une copie du traitement "{{ processing?.title }}".
+          <v-text-field
+            v-model="duplicateTitle"
+            label="Titre du nouveau traitement"
+            class="mt-4"
+            :placeholder="processing?.title + ' (copie)'"
+            hide-details="auto"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            :disabled="confirmDuplicate.loading.value"
+            @click="showDuplicateMenu = false"
+          >
+            Annuler
+          </v-btn>
+          <v-btn
+            color="primary"
+            variant="flat"
+            :loading="confirmDuplicate.loading.value"
+            @click="confirmDuplicate.execute()"
+          >
+            Dupliquer
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-menu>
+
+    <v-menu
+      v-if="canAdmin"
       v-model="showDeleteMenu"
       :close-on-content-click="false"
       max-width="500"
@@ -285,10 +341,12 @@ const showDeleteMenu = ref(false)
 const showNotifMenu = ref(false)
 const showTriggerMenu = ref(false)
 const showChangeOwnerMenu = ref(false)
+const showDuplicateMenu = ref(false)
 const triggerDelay = ref(0)
 const webhookKey = ref('')
 const ownersReady = ref(false)
 const newOwner = ref<Account>(session.state.account)
+const duplicateTitle = ref(`${properties.processing.title} (copie)`)
 
 const activeAccount = computed(() => session.state.account)
 
@@ -307,6 +365,34 @@ const webhookLink = computed(() => {
   if (triggerDelay.value > 0) link += `&delay=${triggerDelay.value}`
   return link
 })
+
+const confirmDuplicate = useAsyncAction(
+  async () => {
+    if (!properties.processing) return
+
+    const newProcessing = {
+      owner: properties.processing.owner,
+      plugin: properties.processing.plugin,
+      title: duplicateTitle.value || `${properties.processing.title} (copie)`,
+      config: properties.processing.config,
+      permissions: properties.processing.permissions,
+      scheduling: properties.processing.scheduling
+    }
+
+    const created = await $fetch('/processings', {
+      method: 'POST',
+      body: JSON.stringify(newProcessing)
+    })
+
+    await router.push(`/processings/${created._id}`)
+    router.go(0) // Refresh the page to get the new processing
+    showDuplicateMenu.value = false
+  },
+  {
+    error: 'Erreur lors de la duplication du traitement',
+    success: 'Traitement dupliqué !'
+  }
+)
 
 const confirmChangeOwner = useAsyncAction(
   async () => {
