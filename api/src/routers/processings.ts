@@ -360,5 +360,10 @@ router.post('/:id/_trigger', async (req, res) => {
 
 // Get the API documentation of a processing
 router.get('/:id/api-docs.json', async (req, res) => {
-  res.json(getApiDoc(reqOrigin(req), { processingId: req.params.id }))
+  const processing = await mongo.processings.findOne({ _id: req.params.id })
+  if (!processing) return res.status(404).send()
+  const pluginPath = path.join(pluginsDir, processing.plugin, 'plugin.json')
+  if (!await fs.pathExists(pluginPath)) return res.status(404).send('Plugin not found')
+  const plugin = await fs.readJson(pluginPath)
+  res.json(getApiDoc(reqOrigin(req), { processing, plugin }))
 })

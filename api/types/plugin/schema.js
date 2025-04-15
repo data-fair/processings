@@ -2,7 +2,8 @@ export default {
   $id: 'https://github.com/data-fair/processings/plugin',
   'x-exports': [
     'types',
-    'validate'
+    'validate',
+    'resolvedSchema'
   ],
   title: 'plugin',
   type: 'object',

@@ -1,6 +1,6 @@
 import jsonSchema from '@data-fair/lib-utils/json-schema.js'
-import PluginSchema from '#types/plugin/schema.js'
-import { resolvedSchema as ProcessingSchema } from '#types/processing/index.ts'
+import { type Processing, resolvedSchema as ProcessingSchema } from '#types/processing/index.ts'
+import { type Plugin, resolvedSchema as PluginSchema } from '#types/plugin/index.ts'
 import { readFileSync } from 'node:fs'
 import path from 'path'
 
@@ -8,26 +8,23 @@ const packageJson = JSON.parse(readFileSync(path.resolve(import.meta.dirname, '.
 
 // CTRL + K CTRL + 4 to fold operations levels
 
-export default (origin: string, options?: { isSuperAdmin?: boolean, processingId?: string }) => {
+export default (origin: string, options?: { isSuperAdmin?: boolean, processing?: Processing, plugin?: Plugin }) => {
+  if (options?.plugin?.processingConfigSchema) ProcessingSchema.properties.config = options?.plugin?.processingConfigSchema
+
   const doc: Record<string, any> = {
     openapi: '3.1.1',
     info: {
-      title: 'API Traitements de données',
-      description: 'Cette documentation interactive à destination des développeurs permet d\'utiliser l\'API du service de traitements periodiques.',
+      title: options?.processing?.title ? `API du traitement : ${options.processing.title}` : 'API Traitements de données',
+      description: `Cette documentation interactive à destination des développeurs permet d'utiliser l'API du ${options?.processing?.title ? `traitement ${options.processing.title}` : 'service de traitements periodiques'}.`,
       version: packageJson.version,
-      termsOfService: 'https://koumoul.com/pages/conditions-generales-dutilisation',
-      // contact: {
-      //   name: 'Koumoul',
-      //   url: 'https://koumoul.com',
-      //   email: 'support@koumoul.com'
-      // }
+      termsOfService: 'https://koumoul.com/pages/conditions-generales-dutilisation'
     },
     servers: [{
-      url: `${origin}/processings/api/v1${options?.processingId ? `/processings/${options.processingId}` : ''}`,
+      url: `${origin}/processings/api/v1${options?.processing?._id ? `/processings/${options.processing?._id}` : ''}`,
       description: `Instance DataFair - ${new URL(origin).hostname}`
     }],
     paths: {
-      [options?.processingId ? `/processings/${options.processingId}/api-docs.json` : options?.isSuperAdmin ? '/admin/api-docs.json' : '/processings/api-docs.json']: {
+      [options?.processing?._id ? `/processings/${options.processing?._id}/api-docs.json` : options?.isSuperAdmin ? '/admin/api-docs.json' : '/processings/api-docs.json']: {
         get: {
           summary: 'Obtenir la documentation OpenAPI',
           description: 'Accéder à cette documentation au format OpenAPI v3.',
@@ -250,7 +247,7 @@ export default (origin: string, options?: { isSuperAdmin?: boolean, processingId
           }
         ],
         get: {
-          summary: 'Obtenir un traitement',
+          summary: 'Lire les informations d\'un traitement',
           description: 'Accéder aux données d\'un traitement.',
           operationId: 'getProcessing',
           tags: ['Traitements'],
@@ -337,8 +334,8 @@ export default (origin: string, options?: { isSuperAdmin?: boolean, processingId
           }
         ],
         get: {
-          summary: 'Obtenir la clé de webhook d\'un traitement',
-          description: 'Obtenir la clé de webhook d\'un traitement.',
+          summary: 'Lire la clé de webhook d\'un traitement',
+          description: 'Lire la clé de webhook d\'un traitement.',
           operationId: 'getProcessingWebhookKey',
           tags: ['Traitements'],
           responses: {
@@ -361,8 +358,8 @@ export default (origin: string, options?: { isSuperAdmin?: boolean, processingId
           }
         },
         delete: {
-          summary: 'Régénérer la clé de webhook d\'un traitement',
-          description: 'Régénérer la clé de webhook d\'un traitement.',
+          summary: 'Recréer la clé de webhook d\'un traitement',
+          description: 'Recréer la clé de webhook d\'un traitement.',
           operationId: 'deleteProcessingWebhookKey',
           tags: ['Traitements'],
           responses: {
@@ -408,7 +405,6 @@ export default (origin: string, options?: { isSuperAdmin?: boolean, processingId
             {
               name: 'key',
               in: 'query',
-              required: true,
               description: 'La clé de déclenchement du traitement.',
               schema: {
                 type: 'string',
@@ -430,10 +426,10 @@ export default (origin: string, options?: { isSuperAdmin?: boolean, processingId
         }
       },
 
-      // Simplified routes when processingId is set
+      // Simplified routes when processing?._id is set
       '/': {
         get: {
-          summary: 'Obtenir ce traitement',
+          summary: 'Lire les informations de ce traitement',
           description: 'Accéder aux données de ce traitement.',
           operationId: 'getProcessing',
           responses: {
@@ -462,7 +458,22 @@ export default (origin: string, options?: { isSuperAdmin?: boolean, processingId
             required: true,
             content: {
               'application/json': {
-                schema: ProcessingSchema
+                schema: jsonSchema(ProcessingSchema)
+                  .pickProperties(['title', 'active', 'config', 'owner', 'scheduling', 'permissions'])
+                  .removeRequired()
+                  .removeId()
+                  .appendTitle(' patch')
+                  .schema,
+                example: options?.processing
+                  ? {
+                      title: options.processing.title,
+                      active: options.processing.active,
+                      config: options.processing.config,
+                      owner: options.processing.owner,
+                      scheduling: options.processing.scheduling,
+                      permissions: options.processing.permissions
+                    }
+                  : {}
               }
             }
           },
@@ -505,8 +516,8 @@ export default (origin: string, options?: { isSuperAdmin?: boolean, processingId
       },
       '/webhook-key': {
         get: {
-          summary: 'Obtenir la clé de webhook de ce traitement',
-          description: 'Obtenir la clé de webhook de ce traitement.',
+          summary: 'Lire la clé de webhook de ce traitement',
+          description: 'Lire la clé de webhook de ce traitement.',
           operationId: 'getProcessingWebhookKey',
           responses: {
             200: {
@@ -528,8 +539,8 @@ export default (origin: string, options?: { isSuperAdmin?: boolean, processingId
           }
         },
         delete: {
-          summary: 'Régénérer la clé de webhook de ce traitement',
-          description: 'Régénérer la clé de webhook de ce traitement.',
+          summary: 'Recréer la clé de webhook de ce traitement',
+          description: 'Recréer la clé de webhook de ce traitement.',
           operationId: 'deleteProcessingWebhookKey',
           responses: {
             200: {
@@ -561,7 +572,6 @@ export default (origin: string, options?: { isSuperAdmin?: boolean, processingId
             {
               name: 'key',
               in: 'query',
-              required: true,
               description: 'La clé de déclenchement du traitement.',
               schema: {
                 type: 'string',
@@ -721,7 +731,7 @@ export default (origin: string, options?: { isSuperAdmin?: boolean, processingId
         },
         post: {
           summary: 'Installer un plugin',
-          description: 'Installer/Mettre à jours un plugin, voir même baisser en version un plugin. Cette requête prends beaucoup de temps à s\'executer, c\'est le temps que le plugin s\'installe sur le serveur.',
+          description: 'Installer/Mettre à jour un plugin, voir même baisser en version un plugin. Cette requête prends beaucoup de temps à s\'executer, c\'est le temps que le plugin s\'installe sur le serveur.',
           operationId: 'postPlugin',
           tags: ['Plugins'],
           requestBody: {
@@ -770,7 +780,7 @@ export default (origin: string, options?: { isSuperAdmin?: boolean, processingId
           }
         ],
         get: {
-          summary: 'Obtenir un plugin',
+          summary: 'Lire les informations d\'un plugin',
           description: 'Accéder aux données d\'un plugin.',
           operationId: 'getPlugin',
           tags: ['Plugins'],
@@ -906,12 +916,12 @@ export default (origin: string, options?: { isSuperAdmin?: boolean, processingId
     delete doc.paths['/plugins/{id}/access']
   }
 
-  if (options?.processingId) {
+  if (options?.processing?._id) {
     delete doc.paths['/processings']
     delete doc.paths['/plugins']
     delete doc.paths['/plugins/{id}']
 
-    // Delete routes with id if processingId is set
+    // Delete routes with id if processing?._id is set
     delete doc.paths['/processings/{id}']
     delete doc.paths['/processings/{id}/webhook-key']
     delete doc.paths['/processings/{id}/_trigger']
