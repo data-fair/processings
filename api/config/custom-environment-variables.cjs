@@ -11,8 +11,10 @@ module.exports = {
   },
   port: 'PORT',
   privateDirectoryUrl: 'PRIVATE_DIRECTORY_URL',
+  privateEventsUrl: 'PRIVATE_EVENTS_URL',
   secretKeys: {
-    limits: 'SECRET_LIMITS'
+    limits: 'SECRET_LIMITS',
+    events: 'SECRET_EVENTS'
   },
   observer: {
     active: 'OBSERVER_ACTIVE',
