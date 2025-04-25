@@ -1,8 +1,8 @@
 import { resolve } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { Router } from 'express'
-import { reqOrigin, session } from '@data-fair/lib-express/index.js'
-import getApiDoc from '#doc/api-docs.ts'
+import { reqOrigin, session } from '@data-fair/lib-express'
+import getApiDoc from './utils/api-docs.ts'
 
 const router = Router()
 export default router
@@ -21,5 +21,5 @@ router.get('/info', (req, res) => {
 
 // Get the full API documentation of the service
 router.get('/api-docs.json', async (req, res) => {
-  res.json(getApiDoc(reqOrigin(req), { isSuperAdmin: true }))
+  res.json(getApiDoc(reqOrigin(req)))
 })

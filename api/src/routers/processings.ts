@@ -17,8 +17,8 @@ import { applyProcessing, deleteProcessing } from '../utils/runs.ts'
 import mongo from '#mongo'
 import config from '#config'
 import locks from '#locks'
-import getApiDoc from '#doc/api-docs.ts'
 import { resolvedSchema as processingSchema } from '#types/processing/index.ts'
+import getApiDoc from '../utils/api-docs.ts'
 import findUtils from '../utils/find.ts'
 import permissions from '../utils/permissions.ts'
 
@@ -359,7 +359,7 @@ router.post('/:id/_trigger', async (req, res) => {
 })
 
 // Get the API documentation of a processing
-router.get('/:id/api-docs.json', async (req, res) => {
+router.get('/:id/api-docs.json', permissions.isSuperAdmin, async (req, res) => {
   const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   const pluginPath = path.join(pluginsDir, processing.plugin, 'plugin.json')

@@ -8,7 +8,7 @@ const packageJson = JSON.parse(readFileSync(path.resolve(import.meta.dirname, '.
 
 // CTRL + K CTRL + 4 to fold operations levels
 
-export default (origin: string, options?: { isSuperAdmin?: boolean, processing?: Processing, plugin?: Plugin }) => {
+export default (origin: string, options?: { processing?: Processing, plugin?: Plugin }) => {
   if (options?.plugin?.processingConfigSchema) ProcessingSchema.properties.config = options?.plugin?.processingConfigSchema
 
   const doc: Record<string, any> = {
@@ -24,7 +24,7 @@ export default (origin: string, options?: { isSuperAdmin?: boolean, processing?:
       description: `Instance DataFair - ${new URL(origin).hostname}`
     }],
     paths: {
-      [options?.processing?._id ? `/processings/${options.processing?._id}/api-docs.json` : options?.isSuperAdmin ? '/admin/api-docs.json' : '/processings/api-docs.json']: {
+      [options?.processing?._id ? '/api-docs.json' : '/admin/api-docs.json']: {
         get: {
           summary: 'Obtenir la documentation OpenAPI',
           description: 'Accéder à cette documentation au format OpenAPI v3.',
@@ -906,22 +906,7 @@ export default (origin: string, options?: { isSuperAdmin?: boolean, processing?:
     }
   }
 
-  // Remove super admin routes if not super admin
-  if (!options?.isSuperAdmin) {
-    delete doc.paths['/plugins-registry']
-    delete doc.paths['/plugins'].post
-    delete doc.paths['/plugins/{id}'].delete
-    delete doc.paths['/plugins/{id}/config']
-    delete doc.paths['/plugins/{id}/metadata']
-    delete doc.paths['/plugins/{id}/access']
-  }
-
-  if (options?.processing?._id) {
-    delete doc.paths['/processings']
-    delete doc.paths['/plugins']
-    delete doc.paths['/plugins/{id}']
-
-    // Delete routes with id if processing?._id is set
+  if (options?.processing?._id) { // Delete routes with id if processing?._id is set
     delete doc.paths['/processings/{id}']
     delete doc.paths['/processings/{id}/webhook-key']
     delete doc.paths['/processings/{id}/_trigger']

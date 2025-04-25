@@ -257,6 +257,7 @@
     </v-list-item>
 
     <v-list-item
+      v-if="session.state.user.adminMode"
       :href="`${origin}/openapi-viewer?urlType=processingsId&id=${processing?._id}`"
       target="_blank"
       rounded
