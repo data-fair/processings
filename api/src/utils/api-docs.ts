@@ -906,10 +906,13 @@ export default (origin: string, options?: { processing?: Processing, plugin?: Pl
     }
   }
 
-  if (options?.processing?._id) { // Delete routes with id if processing?._id is set
-    delete doc.paths['/processings/{id}']
-    delete doc.paths['/processings/{id}/webhook-key']
-    delete doc.paths['/processings/{id}/_trigger']
+  if (options?.processing?._id) {
+    const pathsToKeep = ['/', '/webhook-key', '/_trigger', '/api-docs.json']
+    const filteredPaths: any = {}
+    pathsToKeep.forEach(path => {
+      if (doc.paths[path]) filteredPaths[path] = doc.paths[path]
+    })
+    doc.paths = filteredPaths
   } else {
     delete doc.paths['/']
     delete doc.paths['/webhook-key']
