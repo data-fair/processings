@@ -22,7 +22,7 @@ RUN jq '.version="build"' package-lock.json | sponge package-lock.json
 # =============================
 FROM base AS installer
 
-RUN apk add --no-cache python3 make g++ git jq moreutils
+RUN apk add --no-cache git jq moreutils
 RUN npm i -g clean-modules@3.0.4
 COPY --from=package-strip /app/package.json package.json
 COPY --from=package-strip /app/package-lock.json package-lock.json
@@ -121,6 +121,7 @@ RUN mkdir -p /app/shared/node_modules
 # =============================
 FROM base AS main
 
+RUN apk add --no-cache python3 make g++
 COPY --from=api-installer /app/node_modules node_modules
 COPY api api
 COPY shared shared
