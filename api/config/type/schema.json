@@ -11,6 +11,7 @@
   "title": "Api config",
   "additionalProperties": false,
   "required": [
+    "cipherPassword",
     "dataDir",
     "privateDirectoryUrl",
     "mongoUrl",
@@ -20,6 +21,9 @@
     "secretKeys"
   ],
   "properties": {
+    "cipherPassword": {
+      "type": "string"
+    },
     "dataDir": {
       "type": "string"
     },

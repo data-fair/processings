@@ -1,4 +1,5 @@
 module.exports = {
+  cipherPassword: 'test',
   dataDir: './data/test',
   dataFairAdminMode: true,
   dataFairAPIKey: 'dTpzdXBlcmFkbWluOjZEQ0NXY2ZrSHhVRVQxSzVudmNNg',

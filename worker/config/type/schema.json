@@ -11,6 +11,7 @@
   "title": "Worker config",
   "additionalProperties": false,
   "required": [
+    "cipherPassword",
     "dataDir",
     "dataFairAPIKey",
     "dataFairAdminMode",
@@ -25,6 +26,9 @@
     "upgradeRoot"
   ],
   "properties": {
+    "cipherPassword": {
+      "type": "string"
+    },
     "dataDir": {
       "type": "string"
     },
