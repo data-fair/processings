@@ -18,6 +18,21 @@ RUN jq '.version="build"' package.json | sponge package.json
 RUN jq '.version="build"' package-lock.json | sponge package-lock.json
 
 # =============================
+# Tippecanoe builder
+# =============================
+FROM base AS tippecanoe-builder
+
+WORKDIR /tmp/
+RUN apk add --no-cache curl cmake make g++
+RUN apk add git zlib-dev sqlite-dev bash
+RUN git clone https://github.com/mapbox/tippecanoe.git
+WORKDIR /tmp/tippecanoe
+RUN git checkout 1.36.0
+RUN make -j
+RUN make install
+RUN test -f /usr/local/bin/tippecanoe
+
+# =============================
 # Full dependencies installation (for types and building)
 # =============================
 FROM base AS installer
@@ -61,17 +76,6 @@ RUN npm -w ui run build
 # =============================
 FROM installer AS worker-installer
 
-# install tippecanoe for some processings
-WORKDIR /tmp/
-RUN apk add --no-cache curl cmake make g++
-RUN apk add git zlib-dev sqlite-dev bash
-RUN git clone https://github.com/mapbox/tippecanoe.git
-WORKDIR /tmp/tippecanoe
-RUN git checkout 1.36.0
-RUN make -j
-RUN make install
-RUN test -f /usr/local/bin/tippecanoe
-
 RUN npm ci -w worker --prefer-offline --omit=dev --omit=optional --omit=peer --no-audit --no-fund && \
     npx clean-modules --yes
 RUN mkdir -p /app/worker/node_modules
@@ -88,6 +92,7 @@ RUN test -f /usr/bin/ogr2ogr
 RUN ln -s /usr/lib/libproj.so.25 /usr/lib/libproj.so
 RUN test -f /usr/lib/libproj.so
 
+COPY --from=tippecanoe-builder /usr/local/bin/tippecanoe /usr/local/bin/tippecanoe
 COPY --from=worker-installer /app/node_modules node_modules
 COPY worker worker
 COPY shared shared
@@ -96,7 +101,6 @@ COPY --from=types /app/worker/config worker/config
 COPY --from=types /app/api/types api/types
 COPY --from=worker-installer /app/worker/node_modules worker/node_modules
 COPY --from=worker-installer /app/shared/node_modules shared/node_modules
-COPY --from=worker-installer /usr/local/bin/tippecanoe /usr/local/bin/tippecanoe
 COPY package.json README.md LICENSE BUILD.json* ./
 
 EXPOSE 9090
