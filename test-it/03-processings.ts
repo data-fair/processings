@@ -221,4 +221,57 @@ describe('processing', () => {
     // failure is normal we have no api key
     assert.equal(runs.results[0].status, 'error')
   })
+
+  it('should config a new processing, with a secret field', async () => {
+    const processing = (await superadmin.post('/api/v1/processings', {
+      title: 'Hello processing',
+      plugin: plugin.id
+    })).data
+    assert.ok(processing._id)
+
+    // configure the processing
+    const patchRes = await superadmin.patch(`/api/v1/processings/${processing._id}`, {
+      active: true,
+      config: {
+        datasetMode: 'create',
+        dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
+        overwrite: false,
+        message: 'Hello world test processing',
+        secretField: 'my secret value'
+      }
+    })
+    assert.equal(patchRes.data.config.secretField, '********')
+    assert.ok(patchRes.data.secrets.length === 1)
+
+    const getRes = await superadmin.get(`/api/v1/processings/${processing._id}`)
+    assert.equal(getRes.data.config.secretField, '********')
+    assert.ok(getRes.data.secrets.length === 1)
+
+    // Patch the processing to edit the secret field
+    const patchRes2 = await superadmin.patch(`/api/v1/processings/${processing._id}`, {
+      config: {
+        datasetMode: 'create',
+        dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
+        overwrite: false,
+        message: 'Hello world test processing',
+        secretField: 'my new secret value'
+      }
+    })
+
+    assert.equal(patchRes2.data.config.secretField, '********')
+    assert.ok(patchRes2.data.secrets.length === 1)
+
+    // trigger the processing
+    await Promise.all([
+      superadmin.post(`/api/v1/processings/${processing._id}/_trigger`),
+      testSpies.waitFor('isRunning', 10000)
+    ])
+
+    // nothing, failure is normal we have no api key
+    const [event] = await Promise.all([
+      testSpies.waitFor('pushEvent', 10000) as Promise<{ topic: { key: string } }>,
+      testSpies.waitFor('isFailure', 11000)
+    ])
+    assert.equal(event.topic.key, `processings:processing-finish-error:${processing._id}`)
+  })
 })
