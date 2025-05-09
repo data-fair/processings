@@ -14,6 +14,7 @@ import { DataFairWsClient } from '@data-fair/lib-node/ws-client.js'
 import { httpAgent, httpsAgent } from '@data-fair/lib-node/http-agents.js'
 import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import { running } from '../utils/runs.ts'
+import { decipher } from '../utils/cipher.ts'
 import config from '#config'
 
 fs.ensureDirSync(config.dataDir)
@@ -184,9 +185,17 @@ export const run = async (db: Db, mailTransport: any) => {
     }
   })
 
+  const secrets: Record<string, string> = {}
+  if (processing.secrets) {
+    Object.keys(processing.secrets).forEach(key => {
+      secrets[key] = decipher(processing.secrets![key])
+    })
+  }
+
   const context: ProcessingContext = {
     pluginConfig,
     processingConfig,
+    secrets,
     processingId: processing._id,
     dir,
     tmpDir: tmpDir.path,

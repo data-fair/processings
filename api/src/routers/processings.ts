@@ -1,4 +1,5 @@
 import type { Processing } from '#types'
+import type { PrepareFunction } from '@data-fair/lib-common-types/processings.js'
 import type { SessionStateAuthenticated } from '@data-fair/lib-express/index.js'
 
 import Ajv from 'ajv'
@@ -21,6 +22,7 @@ import { resolvedSchema as processingSchema } from '#types/processing/index.ts'
 import getApiDoc from '../utils/api-docs.ts'
 import findUtils from '../utils/find.ts'
 import permissions from '../utils/permissions.ts'
+import { cipher } from '../utils/cipher.ts'
 
 const router = Router()
 export default router
@@ -35,16 +37,30 @@ const sensitiveParts = ['permissions', 'webhookKey', 'config']
  * Check that a processing object is valid
  * Check if the plugin exists
  * Check if the config is valid (only if the processing is activated)
+ * Encrypt secrets if present
  */
 const validateFullProcessing = async (processing: Processing) => {
   (await import('#types/processing/index.ts')).returnValid(processing)
   if (processing.active && !processing.config) throw httpError(400, 'Config is required for an active processing')
   if (!await fs.pathExists(path.join(pluginsDir, processing.plugin))) throw httpError(400, 'Plugin not found')
   if (!processing.config) return // no config to validate
-  const pluginInfo = await fs.readJson(path.join(pluginsDir, path.join(processing.plugin, 'plugin.json')))
+  const pluginInfo = await fs.readJson(path.join(pluginsDir, processing.plugin, 'plugin.json'))
   const configValidate = ajv.compile(pluginInfo.processingConfigSchema)
   const configValid = configValidate(processing.config)
   if (!configValid) throw httpError(400, JSON.stringify(configValidate.errors))
+
+  // Get the plugin file and execute the prepare function if it exists
+  const plugin = await import(path.resolve(process.cwd(), pluginsDir, processing.plugin, 'index.js'))
+  if (plugin.prepare && typeof plugin.prepare === 'function') {
+    const res = await (plugin.prepare as PrepareFunction)({ processingConfig: processing.config })
+    if (res.processingConfig) processing.config = res.processingConfig
+    if (res.secrets) {
+      processing.secrets = {}
+      Object.keys(res.secrets).forEach(key => {
+        processing.secrets![key] = cipher(res.secrets![key])
+      })
+    }
+  }
 }
 
 /**
@@ -56,6 +72,7 @@ const validateFullProcessing = async (processing: Processing) => {
  */
 const cleanProcessing = (processing: Processing, sessionState: SessionStateAuthenticated) => {
   delete processing.webhookKey
+  delete processing.secrets
   processing.userProfile = permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState)
   if (processing.userProfile !== 'admin') {
     for (const part of sensitiveParts) delete (processing as any)[part]
@@ -285,7 +302,7 @@ router.patch('/:id', async (req, res) => {
     date: new Date().toISOString()
   }
 
-  const patch: { $unset?: { [key: string]: true }, $set?: { [key: string]: any } } = {}
+  const patch: Record<string, any> = { $set: {} }
   for (const key in req.body) {
     if (req.body[key] === null) {
       patch.$unset = patch.$unset || {}
@@ -298,6 +315,11 @@ router.patch('/:id', async (req, res) => {
   }
   const patchedProcessing = { ...processing, ...req.body }
   await validateFullProcessing(patchedProcessing)
+  if (patchedProcessing.secrets) {
+    patch.$set.config = patchedProcessing.config
+    patch.$set.secrets = patchedProcessing.secrets
+  }
+
   await mongo.processings.updateOne({ _id: req.params.id }, patch)
   await mongo.runs.updateMany({ 'processing._id': processing._id }, { $set: { permissions: patchedProcessing.permissions || [] } })
   await applyProcessing(mongo, patchedProcessing)

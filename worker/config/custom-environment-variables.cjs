@@ -1,4 +1,5 @@
 module.exports = {
+  cipherPassword: 'CIPHER_PASSWORD',
   dataDir: 'DATA_DIR',
   tmpDir: 'TMP_DIR',
   dataFairAPIKey: 'DATA_FAIR_API_KEY',

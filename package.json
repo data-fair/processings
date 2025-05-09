@@ -41,6 +41,7 @@
     "@data-fair/lib-types-builder": "^1.7.0"
   },
   "devDependencies": {
+    "@data-fair/lib-common-types": "^1.10.0",
     "@commitlint/cli": "^19.7.1",
     "@commitlint/config-conventional": "^19.7.1",
     "@data-fair/lib-node": "^2.4.0",

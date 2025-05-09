@@ -90,6 +90,13 @@ export default {
         $ref: 'https://github.com/data-fair/processings/scheduling'
       }
     },
+    secrets: {
+      type: 'object',
+      readOnly: true,
+      additionalProperties: {
+        $ref: '#/$defs/cipheredContent'
+      }
+    },
     permissions: {
       type: 'array',
       title: 'Permissions',
@@ -146,6 +153,29 @@ export default {
       type: 'string',
       title: 'Clé pour exécution à distance du traitement',
       readOnly: true
+    }
+  },
+  $defs: {
+    cipheredContent: {
+      type: 'object',
+      additionalProperties: false,
+      required: [
+        'iv',
+        'alg',
+        'data'
+      ],
+      properties: {
+        iv: {
+          type: 'string',
+        },
+        alg: {
+          type: 'string',
+          const: 'aes256'
+        },
+        data: {
+          type: 'string',
+        }
+      }
     }
   }
 }

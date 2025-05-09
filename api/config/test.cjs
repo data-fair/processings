@@ -1,4 +1,5 @@
 module.exports = {
+  cipherPassword: 'test',
   dataDir: './data/test',
   port: 8082,
   privateDirectoryUrl: 'http://localhost:8080',

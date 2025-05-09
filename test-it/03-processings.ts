@@ -12,7 +12,7 @@ let plugin
 const createTestPlugin = async () => {
   plugin = (await superadmin.post('/api/v1/plugins', {
     name: '@data-fair/processing-hello-world',
-    version: '0.12.2',
+    version: '1.1.0',
     distTag: 'latest',
     description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.'
   })).data
@@ -84,8 +84,8 @@ describe('processing', () => {
 
     const run = (await superadmin.get('/api/v1/runs/' + runs.results[0]._id)).data
     assert.equal(run.status, 'error')
-    assert.equal(run.log[0].type, 'step')
-    assert.equal(run.log[1].type, 'error')
+    assert.equal(run.log[2].type, 'step')
+    assert.equal(run.log[3].type, 'error')
 
     processing = (await superadmin.get(`/api/v1/processings/${processing._id}`)).data
     assert.ok(processing.lastRun)
@@ -120,7 +120,7 @@ describe('processing', () => {
     await testSpies.waitFor('isKilled', 10000)
     run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
     assert.equal(run.status, 'killed')
-    assert.equal(run.log.length, 4)
+    assert.equal(run.log.length, 6)
 
     // limits were updated
     const limits = (await superadmin.get('/api/v1/limits/user/superadmin')).data
@@ -157,7 +157,7 @@ describe('processing', () => {
     await testSpies.waitFor('isKilled', 10000)
     run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
     assert.equal(run.status, 'killed')
-    assert.equal(run.log.length, 2)
+    assert.equal(run.log.length, 4)
   })
 
   it('should fail a run if processings_seconds limit is exceeded', async () => {
@@ -220,5 +220,61 @@ describe('processing', () => {
     assert.equal(runs.count, 1)
     // failure is normal we have no api key
     assert.equal(runs.results[0].status, 'error')
+  })
+
+  it('should config a new processing, with a secret field', async () => {
+    const processing = (await superadmin.post('/api/v1/processings', {
+      title: 'Hello processing',
+      plugin: plugin.id
+    })).data
+    assert.ok(processing._id)
+
+    // configure the processing
+    const patchRes = await superadmin.patch(`/api/v1/processings/${processing._id}`, {
+      active: true,
+      config: {
+        datasetMode: 'create',
+        dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
+        overwrite: false,
+        message: 'Hello world test processing',
+        secretField: 'my secret value'
+      }
+    })
+    assert.equal(patchRes.data.config.secretField, '********')
+
+    const getRes = await superadmin.get(`/api/v1/processings/${processing._id}`)
+    assert.equal(getRes.data.config.secretField, '********')
+
+    // Patch the processing to edit the secret field
+    const patchRes2 = await superadmin.patch(`/api/v1/processings/${processing._id}`, {
+      config: {
+        datasetMode: 'create',
+        dataset: { id: 'hello-world-test-processings', title: 'Hello world test processing' },
+        overwrite: false,
+        message: 'Hello world test processing',
+        secretField: 'my new secret value'
+      }
+    })
+    assert.equal(patchRes2.data.config.secretField, '********')
+
+    // trigger the processing
+    await Promise.all([
+      superadmin.post(`/api/v1/processings/${processing._id}/_trigger`),
+      testSpies.waitFor('isRunning', 10000)
+    ])
+
+    // nothing, failure is normal we have no api key
+    const [event] = await Promise.all([
+      testSpies.waitFor('pushEvent', 10000) as Promise<{ topic: { key: string } }>,
+      testSpies.waitFor('isFailure', 11000)
+    ])
+    assert.equal(event.topic.key, `processings:processing-finish-error:${processing._id}`)
+
+    const runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+    assert.equal(runs.count, 1)
+    const run = (await superadmin.get('/api/v1/runs/' + runs.results[0]._id)).data
+    assert.equal(run.status, 'error')
+    assert.equal(run.log[1].type, 'info')
+    assert.equal(run.log[1].extra.secrets.secretField, 'my new secret value')
   })
 })

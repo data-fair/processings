@@ -1,4 +1,5 @@
 module.exports = {
+  cipherPassword: undefined,
   dataDir: '/app/data',
   tmpDir: null, // will be dataDir + '/tmp' if null
   defaultLimits: {

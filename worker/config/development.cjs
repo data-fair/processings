@@ -1,4 +1,5 @@
 module.exports = {
+  cipherPassword: 'dev',
   dataDir: '../data/development',
   dataFairAdminMode: true,
   dataFairAPIKey: '', // override in local-development.cjs
