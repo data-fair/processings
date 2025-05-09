@@ -6,7 +6,7 @@ module.exports = {
   secretKeys: {
     events: 'secret-events'
   },
-  privateEventsUrl: 'http://localhost:8088',
+  privateEventsUrl: 'http://localhost:8084',
   observer: {
     port: 9091
   },

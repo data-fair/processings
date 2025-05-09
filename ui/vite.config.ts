@@ -50,6 +50,8 @@ export default defineConfig({
             'mdiBell',
             'mdiCheckCircle',
             'mdiClock',
+            'mdiCloud',
+            'mdiContentDuplicate',
             'mdiDatabase',
             'mdiDotsVertical',
             'mdiDownload',

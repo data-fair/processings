@@ -10,7 +10,7 @@ import path from 'path'
 import resolvePath from 'resolve-path'
 import { nanoid } from 'nanoid'
 
-import { session } from '@data-fair/lib-express/index.js'
+import { reqOrigin, session } from '@data-fair/lib-express/index.js'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import { createNext } from '@data-fair/processings-shared/runs.ts'
 import { applyProcessing, deleteProcessing } from '../utils/runs.ts'
@@ -18,6 +18,7 @@ import mongo from '#mongo'
 import config from '#config'
 import locks from '#locks'
 import { resolvedSchema as processingSchema } from '#types/processing/index.ts'
+import getApiDoc from '../utils/api-docs.ts'
 import findUtils from '../utils/find.ts'
 import permissions from '../utils/permissions.ts'
 
@@ -355,4 +356,14 @@ router.post('/:id/_trigger', async (req, res) => {
   }
   if (!processing.active) return res.status(409).send('Le traitement n\'est pas actif')
   res.send(await createNext(mongo.db, locks, processing, true, req.query.delay ? Number(req.query.delay) : 0))
+})
+
+// Get the API documentation of a processing
+router.get('/:id/api-docs.json', permissions.isSuperAdmin, async (req, res) => {
+  const processing = await mongo.processings.findOne({ _id: req.params.id })
+  if (!processing) return res.status(404).send()
+  const pluginPath = path.join(pluginsDir, processing.plugin, 'plugin.json')
+  if (!await fs.pathExists(pluginPath)) return res.status(404).send('Plugin not found')
+  const plugin = await fs.readJson(pluginPath)
+  res.json(getApiDoc(reqOrigin(req), { processing, plugin }))
 })
