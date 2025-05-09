@@ -12,7 +12,7 @@ let plugin
 const createTestPlugin = async () => {
   plugin = (await superadmin.post('/api/v1/plugins', {
     name: '@data-fair/processing-hello-world',
-    version: '1.0.1',
+    version: '1.1.0',
     distTag: 'latest',
     description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.'
   })).data
@@ -84,8 +84,8 @@ describe('processing', () => {
 
     const run = (await superadmin.get('/api/v1/runs/' + runs.results[0]._id)).data
     assert.equal(run.status, 'error')
-    assert.equal(run.log[0].type, 'step')
-    assert.equal(run.log[1].type, 'error')
+    assert.equal(run.log[2].type, 'step')
+    assert.equal(run.log[3].type, 'error')
 
     processing = (await superadmin.get(`/api/v1/processings/${processing._id}`)).data
     assert.ok(processing.lastRun)
@@ -120,7 +120,7 @@ describe('processing', () => {
     await testSpies.waitFor('isKilled', 10000)
     run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
     assert.equal(run.status, 'killed')
-    assert.equal(run.log.length, 4)
+    assert.equal(run.log.length, 6)
 
     // limits were updated
     const limits = (await superadmin.get('/api/v1/limits/user/superadmin')).data
@@ -157,7 +157,7 @@ describe('processing', () => {
     await testSpies.waitFor('isKilled', 10000)
     run = (await superadmin.get(`/api/v1/runs/${run._id}`)).data
     assert.equal(run.status, 'killed')
-    assert.equal(run.log.length, 2)
+    assert.equal(run.log.length, 4)
   })
 
   it('should fail a run if processings_seconds limit is exceeded', async () => {
@@ -269,5 +269,12 @@ describe('processing', () => {
       testSpies.waitFor('isFailure', 11000)
     ])
     assert.equal(event.topic.key, `processings:processing-finish-error:${processing._id}`)
+
+    const runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+    assert.equal(runs.count, 1)
+    const run = (await superadmin.get('/api/v1/runs/' + runs.results[0]._id)).data
+    assert.equal(run.status, 'error')
+    assert.equal(run.log[1].type, 'info')
+    assert.equal(run.log[1].extra.secrets.secretField, 'my new secret value')
   })
 })
