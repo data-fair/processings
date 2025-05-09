@@ -71,6 +71,7 @@ const validateFullProcessing = async (processing: Processing) => {
  */
 const cleanProcessing = (processing: Processing, sessionState: SessionStateAuthenticated) => {
   delete processing.webhookKey
+  delete processing.secrets
   processing.userProfile = permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState)
   if (processing.userProfile !== 'admin') {
     for (const part of sensitiveParts) delete (processing as any)[part]

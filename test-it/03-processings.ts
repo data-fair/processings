@@ -12,7 +12,7 @@ let plugin
 const createTestPlugin = async () => {
   plugin = (await superadmin.post('/api/v1/plugins', {
     name: '@data-fair/processing-hello-world',
-    version: '0.12.2',
+    version: '1.0.1',
     distTag: 'latest',
     description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.'
   })).data
@@ -241,11 +241,9 @@ describe('processing', () => {
       }
     })
     assert.equal(patchRes.data.config.secretField, '********')
-    assert.ok(patchRes.data.secrets.length === 1)
 
     const getRes = await superadmin.get(`/api/v1/processings/${processing._id}`)
     assert.equal(getRes.data.config.secretField, '********')
-    assert.ok(getRes.data.secrets.length === 1)
 
     // Patch the processing to edit the secret field
     const patchRes2 = await superadmin.patch(`/api/v1/processings/${processing._id}`, {
@@ -257,9 +255,7 @@ describe('processing', () => {
         secretField: 'my new secret value'
       }
     })
-
     assert.equal(patchRes2.data.config.secretField, '********')
-    assert.ok(patchRes2.data.secrets.length === 1)
 
     // trigger the processing
     await Promise.all([
