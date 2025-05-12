@@ -15,6 +15,7 @@ import { reqOrigin, session } from '@data-fair/lib-express/index.js'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import { createNext } from '@data-fair/processings-shared/runs.ts'
 import { applyProcessing, deleteProcessing } from '../utils/runs.ts'
+import { cipher, decipher } from '@data-fair/processings-shared/cipher.ts'
 import mongo from '#mongo'
 import config from '#config'
 import locks from '#locks'
@@ -22,7 +23,6 @@ import { resolvedSchema as processingSchema } from '#types/processing/index.ts'
 import getApiDoc from '../utils/api-docs.ts'
 import findUtils from '../utils/find.ts'
 import permissions from '../utils/permissions.ts'
-import { cipher } from '../utils/cipher.ts'
 
 const router = Router()
 export default router
@@ -52,12 +52,21 @@ const validateFullProcessing = async (processing: Processing) => {
   // Get the plugin file and execute the prepare function if it exists
   const plugin = await import(path.resolve(process.cwd(), pluginsDir, processing.plugin, 'index.js'))
   if (plugin.prepare && typeof plugin.prepare === 'function') {
-    const res = await (plugin.prepare as PrepareFunction)({ processingConfig: processing.config })
+    // Decipher the actuals secrets if they are present
+    const secrets: Record<string, string> = {}
+    if (processing.secrets) {
+      Object.keys(processing.secrets).forEach(key => {
+        secrets[key] = decipher(processing.secrets![key], config.cipherPassword)
+      })
+    }
+
+    // Call the prepare function
+    const res = await (plugin.prepare as PrepareFunction)({ processingConfig: processing.config, secrets })
     if (res.processingConfig) processing.config = res.processingConfig
     if (res.secrets) {
       processing.secrets = {}
       Object.keys(res.secrets).forEach(key => {
-        processing.secrets![key] = cipher(res.secrets![key])
+        processing.secrets![key] = cipher(res.secrets![key], config.cipherPassword)
       })
     }
   }
