@@ -12,7 +12,7 @@ let plugin
 const createTestPlugin = async () => {
   plugin = (await superadmin.post('/api/v1/plugins', {
     name: '@data-fair/processing-hello-world',
-    version: '1.1.0',
+    version: '1.2.2',
     distTag: 'latest',
     description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.'
   })).data
@@ -276,5 +276,73 @@ describe('processing', () => {
     assert.equal(run.status, 'error')
     assert.equal(run.log[1].type, 'info')
     assert.equal(run.log[1].extra.secrets.secretField, 'my new secret value')
+  })
+
+  it('should patch config with secrets', async () => {
+    // create a new processing with a secret field
+    const processing = (await superadmin.post('/api/v1/processings', {
+      title: 'Hello processing',
+      plugin: plugin.id,
+      active: true,
+      config: {
+        datasetMode: 'create',
+        dataset: { title: 'Hello world test processing' },
+        overwrite: false,
+        message: 'Hello world test processing',
+        secretField: 'my secret value'
+      }
+    })).data
+    assert.equal(processing.config.secretField, '********')
+
+    const getRes = await superadmin.get(`/api/v1/processings/${processing._id}`)
+    assert.equal(getRes.data.config.secretField, '********')
+
+    // Patch the processing without editing the secret field
+    let patchRes = await superadmin.patch(`/api/v1/processings/${processing._id}`, {
+      config: {
+        datasetMode: 'create',
+        dataset: { title: 'Hello world test processing' },
+        overwrite: false,
+        message: 'Hello world test processing (edited)',
+        secretField: '********'
+      }
+    })
+    assert.equal(patchRes.data.config.secretField, '********')
+
+    // trigger the processing
+    await Promise.all([
+      superadmin.post(`/api/v1/processings/${processing._id}/_trigger`),
+      testSpies.waitFor('isFailure', 15000)
+    ])
+
+    // get the last run to check if the plugin has the uncrypted secret
+    let runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+    assert.equal(runs.count, 1, 'There should be one run')
+    let run = (await superadmin.get('/api/v1/runs/' + runs.results[0]._id)).data
+    assert.equal(run.status, 'error')
+    assert.equal(run.log[1].extra.secrets.secretField, 'my secret value', 'The secret field should be uncrypted when passed to the plugin')
+
+    // patch the config to unset the secret field
+    patchRes = await superadmin.patch(`/api/v1/processings/${processing._id}`, {
+      config: {
+        datasetMode: 'create',
+        dataset: { title: 'Hello world test processing' },
+        overwrite: false,
+        message: 'Hello world test processing (edited)',
+        secretField: ''
+      }
+    })
+    assert.equal(patchRes.data.config.secretField, '')
+
+    // trigger the processing
+    await Promise.all([
+      superadmin.post(`/api/v1/processings/${processing._id}/_trigger`),
+      testSpies.waitFor('isFailure', 15000)
+    ])
+
+    // get the last run to check if the plugin hasn't secrets
+    runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+    run = (await superadmin.get('/api/v1/runs/' + runs.results[1]._id)).data
+    assert.ok(Object.keys(run.log[1].extra.secrets).length === 0, 'The secret hasn\'t been deleted')
   })
 })
