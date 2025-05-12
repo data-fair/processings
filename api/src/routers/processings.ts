@@ -39,37 +39,41 @@ const sensitiveParts = ['permissions', 'webhookKey', 'config']
  * Check if the config is valid (only if the processing is activated)
  * Encrypt secrets if present
  */
-const validateFullProcessing = async (processing: Processing) => {
+async function validateFullProcessing (processing: any): Promise<Processing> {
   (await import('#types/processing/index.ts')).returnValid(processing)
   if (processing.active && !processing.config) throw httpError(400, 'Config is required for an active processing')
   if (!await fs.pathExists(path.join(pluginsDir, processing.plugin))) throw httpError(400, 'Plugin not found')
-  if (!processing.config) return // no config to validate
+  if (!processing.config) return processing // no config to validate
   const pluginInfo = await fs.readJson(path.join(pluginsDir, processing.plugin, 'plugin.json'))
   const configValidate = ajv.compile(pluginInfo.processingConfigSchema)
   const configValid = configValidate(processing.config)
   if (!configValid) throw httpError(400, JSON.stringify(configValidate.errors))
+  return processing
+}
 
+const prepareProcessing = async (processing: Processing) => {
   // Get the plugin file and execute the prepare function if it exists
   const plugin = await import(path.resolve(process.cwd(), pluginsDir, processing.plugin, 'index.js'))
-  if (plugin.prepare && typeof plugin.prepare === 'function') {
-    // Decipher the actuals secrets if they are present
-    const secrets: Record<string, string> = {}
-    if (processing.secrets) {
-      Object.keys(processing.secrets).forEach(key => {
-        secrets[key] = decipher(processing.secrets![key], config.cipherPassword)
-      })
-    }
+  if (!(plugin.prepare && typeof plugin.prepare === 'function')) return
 
-    // Call the prepare function
-    const res = await (plugin.prepare as PrepareFunction)({ processingConfig: processing.config, secrets })
-    if (res.processingConfig) processing.config = res.processingConfig
-    if (res.secrets) {
-      processing.secrets = {}
-      Object.keys(res.secrets).forEach(key => {
-        processing.secrets![key] = cipher(res.secrets![key], config.cipherPassword)
-      })
-    }
+  // Decipher the actuals secrets if they are present
+  const currentSecrets: Record<string, string> = {}
+  if (processing.secrets) {
+    Object.keys(processing.secrets).forEach(key => {
+      currentSecrets[key] = decipher(processing.secrets![key], config.cipherPassword)
+    })
   }
+
+  // Call the prepare function
+  const res = await (plugin.prepare as PrepareFunction)({ processingConfig: processing.config ?? {}, secrets: currentSecrets })
+  let newSecrets: Processing['secrets']
+  if (res.secrets) {
+    newSecrets = {}
+    Object.keys(res.secrets).forEach(key => {
+      newSecrets![key] = cipher(res.secrets![key], config.cipherPassword)
+    })
+  }
+  return { config: res.processingConfig, secrets: newSecrets }
 }
 
 /**
@@ -252,30 +256,31 @@ router.get('', async (req, res) => {
 
 router.post('', async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
-  const processing = { ...req.body }
-  processing._id = nanoid()
-  processing.owner = processing.owner ?? sessionState.account
-  if (!permissions.isAdmin(sessionState, processing.owner)) return res.status(403).send('No permission to create a processing')
-  processing.scheduling = processing.scheduling || []
-  processing.webhookKey = cryptoRandomString({ length: 16, type: 'url-safe' })
-  processing.created = processing.updated = {
+  const body = { ...req.body }
+  body._id = nanoid()
+  body.owner = body.owner ?? sessionState.account
+  if (!permissions.isAdmin(sessionState, body.owner)) return res.status(403).send('No permission to create a processing')
+  body.scheduling = body.scheduling || []
+  body.webhookKey = cryptoRandomString({ length: 16, type: 'url-safe' })
+  body.created = body.updated = {
     id: sessionState.user.id,
     name: sessionState.user.name,
     date: new Date().toISOString()
   }
 
-  const access = await fs.pathExists(resolvePath(pluginsDir, processing.plugin + '-access.json')) ? await fs.readJson(resolvePath(pluginsDir, processing.plugin + '-access.json')) : { public: false, privateAccess: [] }
+  const access = await fs.pathExists(resolvePath(pluginsDir, body.plugin + '-access.json')) ? await fs.readJson(resolvePath(pluginsDir, body.plugin + '-access.json')) : { public: false, privateAccess: [] }
   if (sessionState.user.adminMode) {
     // ok for super admins
   } else if (access && access.public) {
     // ok, this plugin is public
-  } else if (access && access.privateAccess && access.privateAccess.find((p: any) => p.type === processing.owner.type && p.id === processing.owner.id)) {
+  } else if (access && access.privateAccess && access.privateAccess.find((p: any) => p.type === body.owner.type && p.id === body.owner.id)) {
     // ok, private access is granted
   } else {
     return res.status(403).send('Access denied to this plugin')
   }
 
-  await validateFullProcessing(processing)
+  const processing = await validateFullProcessing(body)
+  Object.assign(processing, await prepareProcessing(processing))
   await mongo.processings.insertOne(processing)
   res.status(200).json(cleanProcessing(processing, sessionState))
 })
@@ -322,12 +327,10 @@ router.patch('/:id', async (req, res) => {
       patch.$set[key] = req.body[key]
     }
   }
-  const patchedProcessing = { ...processing, ...req.body }
-  await validateFullProcessing(patchedProcessing)
-  if (patchedProcessing.secrets) {
-    patch.$set.config = patchedProcessing.config
-    patch.$set.secrets = patchedProcessing.secrets
-  }
+  const patchedProcessing = await validateFullProcessing({ ...processing, ...req.body })
+  const preparedProcessing = await prepareProcessing(patchedProcessing)
+  Object.assign(patch.$set, preparedProcessing)
+  Object.assign(patchedProcessing, preparedProcessing)
 
   await mongo.processings.updateOne({ _id: req.params.id }, patch)
   await mongo.runs.updateMany({ 'processing._id': processing._id }, { $set: { permissions: patchedProcessing.permissions || [] } })
