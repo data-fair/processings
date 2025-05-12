@@ -65,15 +65,16 @@ const prepareProcessing = async (processing: Processing) => {
   }
 
   // Call the prepare function
-  const res = await (plugin.prepare as PrepareFunction)({ processingConfig: processing.config ?? {}, secrets: currentSecrets })
-  let newSecrets: Processing['secrets']
-  if (res.secrets) {
-    newSecrets = {}
-    Object.keys(res.secrets).forEach(key => {
-      newSecrets![key] = cipher(res.secrets![key], config.cipherPassword)
-    })
+  const res: { config?: Processing['config'], secrets?: Processing['secrets'] } = {}
+  const prepareRes = await (plugin.prepare as PrepareFunction)({ processingConfig: processing.config ?? {}, secrets: currentSecrets })
+  if (prepareRes.processingConfig) res.config = prepareRes.processingConfig
+  if (prepareRes.secrets) {
+    res.secrets = {}
+    for (const key of Object.keys(prepareRes.secrets)) {
+      res.secrets[key] = cipher(prepareRes.secrets[key], config.cipherPassword)
+    }
   }
-  return { config: res.processingConfig, secrets: newSecrets }
+  return res
 }
 
 /**
