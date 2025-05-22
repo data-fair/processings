@@ -53,7 +53,7 @@ async function validateFullProcessing (processing: any): Promise<Processing> {
 
 const prepareProcessing = async (processing: Processing) => {
   // Get the plugin file and execute the prepare function if it exists
-  const plugin = await import(path.resolve(process.cwd(), pluginsDir, processing.plugin, 'index.js'))
+  const plugin = await import(path.resolve(process.cwd(), pluginsDir, processing.plugin, 'index.js') + `?imported=${Date.now()}`)
   if (!(plugin.prepare && typeof plugin.prepare === 'function')) return
 
   // Decipher the actuals secrets if they are present
