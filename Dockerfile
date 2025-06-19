@@ -1,7 +1,7 @@
 # =============================
 # Base Node image
 # =============================
-FROM node:22.14.0-alpine AS base
+FROM node:24-alpine AS base
 
 WORKDIR /app
 ENV NODE_ENV=production
@@ -106,7 +106,7 @@ COPY package.json README.md LICENSE BUILD.json* ./
 EXPOSE 9090
 # USER node # This would be great to use, but not possible as the volumes are mounted as root
 WORKDIR /app/worker
-CMD ["node", "--experimental-strip-types", "index.ts"]
+CMD ["node", "--disable-warning=ExperimentalWarning", "index.ts"]
 
 # =============================
 # Install production dependencies for API
@@ -141,4 +141,4 @@ EXPOSE 8080
 EXPOSE 9090
 # USER node # This would be great to use, but not possible as the volumes are mounted as root
 WORKDIR /app/api
-CMD ["node", "--max-http-header-size", "65536", "--experimental-strip-types", "index.ts"]
+CMD ["node", "--max-http-header-size", "65536", "--disable-warning=ExperimentalWarning", "index.ts"]

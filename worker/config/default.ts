@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   cipherPassword: undefined,
   dataDir: '/app/data',
   tmpDir: null, // will be dataDir + '/tmp' if null

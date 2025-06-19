@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   cipherPassword: 'CIPHER_PASSWORD',
   dataDir: 'DATA_DIR',
   tmpDir: 'TMP_DIR',
@@ -12,8 +12,10 @@ module.exports = {
   },
   port: 'PORT',
   privateDirectoryUrl: 'PRIVATE_DIRECTORY_URL',
+  privateEventsUrl: 'PRIVATE_EVENTS_URL',
   secretKeys: {
-    limits: 'SECRET_LIMITS'
+    limits: 'SECRET_LIMITS',
+    events: 'SECRET_EVENTS'
   },
   observer: {
     active: 'OBSERVER_ACTIVE',

@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   cipherPassword: 'dev',
   dataDir: '../data/development',
   dataFairAdminMode: true,
