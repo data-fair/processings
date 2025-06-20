@@ -3,71 +3,60 @@
     v-if="processing"
     data-iframe-height
   >
-    <v-row>
-      <v-col>
-        <h2 class="text-h6">
-          Traitement {{ processing.title }}
-        </h2>
-        <v-defaults-provider
-          :defaults="{
-            global: {
-              hideDetails: 'auto'
-            },
-            VAutocomplete: {
-              persistentPlaceholder: true,
-              placeholder: 'Rechercher...'
-            }
-          }"
+    <h2 class="text-h6">
+      Traitement {{ processing.title }}
+    </h2>
+    <v-defaults-provider
+      :defaults="{
+        global: {
+          hideDetails: 'auto'
+        },
+        VAutocomplete: {
+          persistentPlaceholder: true,
+          placeholder: 'Rechercher...'
+        }
+      }"
+    >
+      <v-form
+        v-model="valid"
+        autocomplete="off"
+      >
+        <vjsf
+          v-if="processingSchema"
+          v-model="editProcessing"
+          :schema="processingSchema"
+          :options="vjsfOptions"
+          @update:model-value="patch.execute()"
         >
-          <v-form
-            v-model="valid"
-            autocomplete="off"
-          >
-            <vjsf
-              v-if="processingSchema"
-              v-model="editProcessing"
-              :schema="processingSchema"
-              :options="vjsfOptions"
-              @update:model-value="patch.execute()"
-            />
-          </v-form>
-        </v-defaults-provider>
-        <processing-runs
-          ref="runs"
-          :can-exec="canExecProcessing"
-          :processing="processing"
-          class="mt-4"
-        />
-      </v-col>
-      <template v-if="canAdminProcessing || canExecProcessing">
-        <layout-navigation-right v-if="$vuetify.display.lgAndUp">
-          <processing-actions
-            :processing="processing"
-            :processing-schema="processingSchema"
-            :can-admin="canAdminProcessing"
-            :can-exec="canExecProcessing"
-            :edited="edited"
-            :is-small="false"
-            @triggered="runs && runs.refresh()"
-          />
-        </layout-navigation-right>
-        <layout-actions-button v-else>
-          <template #actions>
-            <processing-actions
-              :processing="processing"
-              :processing-schema="processingSchema"
-              :can-admin="canAdminProcessing"
-              :can-exec="canExecProcessing"
-              :edited="edited"
-              :is-small="true"
-              :metadata="plugin?.metadata"
-              @triggered="runs && runs.refresh()"
+          <template #activity>
+            <processing-activity
+              :processing="Object.assign(processing, editProcessing)"
+              :plugin-title="plugin?.metadata.name"
             />
           </template>
-        </layout-actions-button>
-      </template>
-    </v-row>
+        </vjsf>
+      </v-form>
+    </v-defaults-provider>
+    <processing-runs
+      ref="runs"
+      :can-exec="canExecProcessing"
+      :processing="processing"
+      class="mt-4"
+    />
   </v-container>
+
+  <layout-actions v-if="(canAdminProcessing || canExecProcessing) && processing">
+    <processing-actions
+      :processing="processing"
+      :processing-schema="processingSchema"
+      :can-admin="canAdminProcessing"
+      :can-exec="canExecProcessing"
+      :edited="edited"
+      :is-small="false"
+      :metadata="plugin?.metadata"
+      @triggered="runs && runs.refresh()"
+    />
+  </layout-actions>
 </template>
 
 <script setup lang="ts">
@@ -142,7 +131,6 @@ const canExecProcessing = computed(() => {
 const processingSchema = computed(() => {
   if (!plugin.value || !processing.value) return
   const schema = JSON.parse(JSON.stringify(contractProcessing))
-  delete schema.title
   schema.properties.config = {
     ...v2compat(plugin.value.processingConfigSchema),
     title: 'Plugin ' + plugin.value.metadata.name,

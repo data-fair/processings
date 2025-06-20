@@ -155,6 +155,28 @@ export default {
       readOnly: true
     }
   },
+  layout: {
+    title: null,
+    children: [
+      [
+        {
+          children: [
+            'title',
+            'active',
+            'debug'
+          ],
+          cols: 8,
+        },
+        {
+          name: 'activity',
+          cols: 4,
+        }
+      ],
+      'config',
+      'scheduling',
+      'permissions'
+    ]
+  },
   $defs: {
     cipheredContent: {
       type: 'object',

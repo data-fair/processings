@@ -149,9 +149,7 @@ const ownerRole = computed(() => {
   })
   return userOrg ? userOrg.role : 'anonymous'
 })
-const canAdmin = computed(() => {
-  return ownerRole.value === 'admin' || !!session.state.user?.adminMode
-})
+const canAdmin = computed(() => ownerRole.value === 'admin' || !!session.state.user?.adminMode)
 if (!canAdmin.value) throw new Error('Vous n\'avez pas les droits pour créer un traitement')
 
 const installedPluginsFetch = useFetch<{ results: InstalledPlugin[], count: number }>(`${$apiPath}/plugins?privateAccess=${ownerFilter.value}`)

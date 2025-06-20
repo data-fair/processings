@@ -49,10 +49,13 @@ declare global {
   const mdiInformation: typeof import('@mdi/js')['mdiInformation']
   const mdiMagnify: typeof import('@mdi/js')['mdiMagnify']
   const mdiOpenInNew: typeof import('@mdi/js')['mdiOpenInNew']
+  const mdiPencil: typeof import('@mdi/js')['mdiPencil']
   const mdiPlay: typeof import('@mdi/js')['mdiPlay']
   const mdiPlayCircle: typeof import('@mdi/js')['mdiPlayCircle']
   const mdiPlusCircle: typeof import('@mdi/js')['mdiPlusCircle']
+  const mdiPlusCircleOutline: typeof import('@mdi/js')['mdiPlusCircleOutline']
   const mdiPowerPlug: typeof import('@mdi/js')['mdiPowerPlug']
+  const mdiPuzzle: typeof import('@mdi/js')['mdiPuzzle']
   const mdiStop: typeof import('@mdi/js')['mdiStop']
   const mdiToggleSwitch: typeof import('@mdi/js')['mdiToggleSwitch']
   const mdiToggleSwitchOff: typeof import('@mdi/js')['mdiToggleSwitchOff']
@@ -172,10 +175,12 @@ declare module 'vue' {
     readonly mdiInformation: UnwrapRef<typeof import('@mdi/js')['mdiInformation']>
     readonly mdiMagnify: UnwrapRef<typeof import('@mdi/js')['mdiMagnify']>
     readonly mdiOpenInNew: UnwrapRef<typeof import('@mdi/js')['mdiOpenInNew']>
+    readonly mdiPencil: UnwrapRef<typeof import('@mdi/js')['mdiPencil']>
     readonly mdiPlay: UnwrapRef<typeof import('@mdi/js')['mdiPlay']>
     readonly mdiPlayCircle: UnwrapRef<typeof import('@mdi/js')['mdiPlayCircle']>
     readonly mdiPlusCircle: UnwrapRef<typeof import('@mdi/js')['mdiPlusCircle']>
-    readonly mdiPowerPlug: UnwrapRef<typeof import('@mdi/js')['mdiPowerPlug']>
+    readonly mdiPlusCircleOutline: UnwrapRef<typeof import('@mdi/js')['mdiPlusCircleOutline']>
+    readonly mdiPuzzle: UnwrapRef<typeof import('@mdi/js')['mdiPuzzle']>
     readonly mdiStop: UnwrapRef<typeof import('@mdi/js')['mdiStop']>
     readonly mdiToggleSwitch: UnwrapRef<typeof import('@mdi/js')['mdiToggleSwitch']>
     readonly mdiToggleSwitchOff: UnwrapRef<typeof import('@mdi/js')['mdiToggleSwitchOff']>

@@ -44,7 +44,7 @@
         <v-list-item v-else-if="pluginFetch.error.value?.statusCode">
           <template #prepend>
             <v-icon
-              :icon="mdiPowerPlug"
+              :icon="mdiPuzzle"
               color="error"
             />
           </template>
@@ -54,7 +54,7 @@
         </v-list-item>
         <v-list-item v-else>
           <template #prepend>
-            <v-icon :icon="mdiPowerPlug" />
+            <v-icon :icon="mdiPuzzle" />
           </template>
           <span>
             {{ pluginFetch.data.value?.metadata.name }}

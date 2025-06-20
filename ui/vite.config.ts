@@ -59,10 +59,12 @@ export default defineConfig({
             'mdiInformation',
             'mdiMagnify',
             'mdiOpenInNew',
+            'mdiPencil',
             'mdiPlay',
             'mdiPlayCircle',
             'mdiPlusCircle',
-            'mdiPowerPlug',
+            'mdiPlusCircleOutline',
+            'mdiPuzzle',
             'mdiStop',
             'mdiToggleSwitch',
             'mdiToggleSwitchOff',
@@ -76,7 +78,7 @@ export default defineConfig({
         'src/composables'
       ]
     }),
-    Components(),
+    Components({ dts: './dts/components.d.ts' }),
     {
       name: 'inject-site-context',
       async transformIndexHtml (html) {
