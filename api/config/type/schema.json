@@ -67,10 +67,10 @@
           ]
         },
         "events": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": "string"
+        },
+        "identities": {
+          "type": "string"
         }
       }
     },

@@ -7,5 +7,9 @@ export default {
   observer: {
     port: 9092
   },
+  secretKeys: {
+    identities: 'secret-identities',
+    events: 'secret-events'
+  },
   serveUi: false
 }

@@ -5,6 +5,7 @@ export default {
   privateDirectoryUrl: 'http://localhost:8080',
   privateEventsUrl: 'http://localhost:8084',
   secretKeys: {
+    identities: 'secret-identities',
     events: 'secret-events'
   },
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings-development',

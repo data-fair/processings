@@ -15,7 +15,8 @@ export default {
   privateEventsUrl: 'PRIVATE_EVENTS_URL',
   secretKeys: {
     limits: 'SECRET_LIMITS',
-    events: 'SECRET_EVENTS'
+    events: 'SECRET_EVENTS',
+    identities: 'SECRET_IDENTITIES'
   },
   observer: {
     active: 'OBSERVER_ACTIVE',

@@ -9,10 +9,11 @@ export default {
   },
   pluginCategories: ['Essentiels', 'Mes plugins', 'Données de références', 'Tests'],
   privateDirectoryUrl: 'http://simple-directory:8080',
-  privateEventsUrl: null,
+  privateEventsUrl: undefined,
   secretKeys: {
     limits: null,
-    events: null
+    events: undefined,
+    identities: undefined
   },
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings',
   port: 8080,
