@@ -3,7 +3,7 @@ export default {
   dataDir: '../data/development',
   port: 8082,
   privateDirectoryUrl: 'http://localhost:8080',
-  privateEventsUrl: 'http://localhost:8088',
+  privateEventsUrl: 'http://localhost:8084',
   secretKeys: {
     events: 'secret-events'
   },
