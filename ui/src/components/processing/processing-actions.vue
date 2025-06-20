@@ -257,6 +257,21 @@
     </v-list-item>
 
     <v-list-item
+      v-if="metadata?.documentation"
+      :href="metadata.documentation"
+      target="_blank"
+      rounded
+    >
+      <template #prepend>
+        <v-icon
+          color="primary"
+          :icon="mdiBookOpenVariant"
+        />
+      </template>
+      Tutoriel
+    </v-list-item>
+
+    <v-list-item
       v-if="session.state.user.adminMode"
       :href="`${origin}/openapi-viewer?urlType=processingsId&id=${processing?._id}`"
       target="_blank"
@@ -319,20 +334,15 @@ import '@data-fair/frame/lib/d-frame.js'
 
 const emit = defineEmits(['triggered'])
 
-const properties = defineProps({
-  canAdmin: Boolean,
-  canExec: Boolean,
-  edited: Boolean,
-  isSmall: Boolean,
-  processing: {
-    type: Object,
-    default: null
-  },
-  processingSchema: {
-    type: Object,
-    default: null
-  }
-})
+const properties = defineProps<{
+  canAdmin: boolean,
+  canExec: boolean,
+  edited: boolean,
+  isSmall: boolean,
+  metadata: Record<string, any> | undefined,
+  processing: Record<string, any>,
+  processingSchema: Record<string, any>,
+}>()
 
 const router = useRouter()
 const session = useSessionAuthenticated()

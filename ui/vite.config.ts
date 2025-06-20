@@ -48,6 +48,7 @@ export default defineConfig({
             'mdiAlert',
             'mdiAlertCircle',
             'mdiBell',
+            'mdiBookOpenVariant',
             'mdiCheckCircle',
             'mdiClock',
             'mdiCloud',

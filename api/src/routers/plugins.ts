@@ -64,6 +64,13 @@ const pluginMetadataSchema = {
         cols: 4
       }
     },
+    documentation: {
+      type: 'string',
+      title: 'Documentation',
+      description: 'URL de la page du tutoriel du plugin',
+      format: 'uri',
+      errorMessage: 'Dois être une URL valide',
+    },
     description: {
       type: 'string',
       title: 'Description du plugin'

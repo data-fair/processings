@@ -60,6 +60,7 @@
               :can-exec="canExecProcessing"
               :edited="edited"
               :is-small="true"
+              :metadata="plugin?.metadata"
               @triggered="runs && runs.refresh()"
             />
           </template>
