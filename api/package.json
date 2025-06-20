@@ -16,15 +16,16 @@
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
     "@types/memoizee": "^0.4.11",
+    "@types/multer": "^1.4.13",
     "@types/resolve-path": "^1.4.3",
     "@types/semver": "^7.5.8",
     "@types/ws": "^8.5.12"
   },
   "dependencies": {
-    "@data-fair/processings-shared": "*",
     "@data-fair/lib-express": "^1.20.4",
     "@data-fair/lib-node": "^2.8.1",
     "@data-fair/lib-utils": "^1.6.1",
+    "@data-fair/processings-shared": "*",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "config": "^4.0.0",
@@ -34,6 +35,7 @@
     "http-terminator": "^3.2.0",
     "memoizee": "^0.4.17",
     "mongodb": "^6.10.0",
+    "multer": "^2.0.1",
     "nanoid": "^5.0.8",
     "resolve-path": "^1.4.0",
     "semver": "^7.6.3",

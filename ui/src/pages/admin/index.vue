@@ -3,9 +3,7 @@
 </template>
 
 <script setup lang="ts">
-// Foolproof routing
+// Always redirect to the plugins page
 const router = useRouter()
-onMounted(() => {
-  router.push('/admin/plugins')
-})
+router.push('/admin/plugins')
 </script>

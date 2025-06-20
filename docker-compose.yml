@@ -60,7 +60,7 @@ services:
       - PUBLIC_URL=http://localhost:5600/data-fair
       - WS_PUBLIC_URL=ws://localhost:5600/data-fair
       - EXTRA_NAV_ITEMS=[{"id":"processings","can":"contrib","iframe":"http://localhost:5600/processings/processings","basePath":"/processings","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
-      - EXTRA_ADMIN_NAV_ITEMS=[{"id":"processings","iframe":"http://localhost:5600/processings/admin","basePath":"/processings","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"},{"id":"processingsAdminDoc","href":"http://localhost:5600/openapi-viewer?urlType=processingsAdmin","icon":"mdi-cog-transfer-outline","title":"API Traitements périodiques"}]
+      - EXTRA_ADMIN_NAV_ITEMS=[{"id":"processings","iframe":"http://localhost:5600/processings/admin","basePath":"/processings","icon":"mdi-cog-transfer-outline","title":"Plugins - Traitements"},{"id":"processingsAdminDoc","href":"http://localhost:5600/openapi-viewer?urlType=processingsAdmin","icon":"mdi-cog-transfer-outline","title":"API Traitements périodiques"}]
       - OBSERVER_ACTIVE=false
       - OPENAPI_VIEWER_V2=true
 

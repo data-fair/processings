@@ -1,6 +1,6 @@
 import type { Plugin } from '#types/plugin/index.ts'
 
-import { exec as execCallback } from 'child_process'
+import { exec } from 'child_process'
 import { promisify } from 'util'
 import { Router } from 'express'
 import Ajv from 'ajv'
@@ -10,26 +10,46 @@ import path from 'path'
 import semver from 'semver'
 import resolvePath from 'resolve-path'
 import tmp from 'tmp-promise'
+import multer from 'multer'
 
-import { session } from '@data-fair/lib-express/index.js'
+import { session, httpError } from '@data-fair/lib-express'
 import mongo from '#mongo'
 import config from '#config'
 import permissions from '../utils/permissions.ts'
 
 // @ts-ignore
 const ajv = ajvFormats(new Ajv({ strict: false }))
-const exec = promisify(execCallback)
+const execAsync = promisify(exec)
 
 const router = Router()
 export default router
 
-fs.ensureDirSync(config.dataDir)
 const pluginsDir = path.resolve(config.dataDir, 'plugins')
 fs.ensureDirSync(pluginsDir)
 const tmpDir = config.tmpDir || path.resolve(config.dataDir, 'tmp')
 fs.ensureDirSync(tmpDir)
 
 tmp.setGracefulCleanup()
+
+/**
+ * Multer configuration for handling file uploads.
+ * It stores files directly in the temporary directory and only allows .tgz files.
+ */
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, tmpDir)
+    },
+    filename: (req, file, cb) => {
+      cb(null, `plugin-${Date.now()}-${file.originalname}`)
+    }
+  }),
+  fileFilter: (req, file, cb) => {
+    if (path.extname(file.originalname) === '.tgz') cb(null, true)
+    else cb(httpError(400, 'Only .tgz files are allowed'))
+  },
+  limits: { fileSize: 1 * 1024 * 1024 } // 1MB max
+})
 
 const pluginMetadataSchema = {
   type: 'object',
@@ -79,45 +99,68 @@ const pluginMetadataSchema = {
 }
 
 // Install a new plugin or update an existing one
-router.post('/', permissions.isSuperAdmin, async (req, res) => {
-  const { body } = (await import('#doc/plugin/post-req/index.ts')).returnValid(req)
-  const plugin = body as Record<string, any>
-  plugin.id = plugin.name.replace('/', '-') + '-' + semver.major(plugin.version)
-  if (plugin.distTag !== 'latest') plugin.id += '-' + plugin.distTag
-
-  const pluginDir = path.join(pluginsDir, plugin.id)
+router.post('/', upload.single('file'), permissions.isSuperAdmin, async (req, res) => {
   const dir = await tmp.dir({ unsafeCleanup: true, tmpdir: tmpDir, prefix: 'plugin-install-' })
+  let id: string
+  let tarballPath: string
+  let plugin: Partial<Plugin>
 
   try {
-    // create a pseudo npm package with a dependency to the plugin referenced from the registry
-    await fs.writeFile(path.join(dir.path, 'package.json'), JSON.stringify({
-      name: plugin.id.replace('@', ''),
-      type: 'module',
-      dependencies: {
-        [plugin.name]: '^' + plugin.version
-      }
-    }, null, 2))
-    await exec('npm install --omit=dev', { cwd: dir.path })
+    let distTag = 'latest'
+    if (req.file) { // File upload mode - use the uploaded .tgz file
+      tarballPath = req.file.path
+    } else { // NPM mode - validate body and download from npm
+      const { body } = (await import('#doc/plugin/post-req/index.ts')).returnValid(req)
 
-    // move the plugin to the src directory (Stripping types is currently unsupported for files under node_modules)
-    await fs.move(path.join(dir.path, 'node_modules', plugin.name), path.join(dir.path, 'src'), { overwrite: true })
+      // download the plugin package using npm pack
+      const { stdout } = await execAsync(`npm pack ${body.name}@${body.version}`, { cwd: dir.path })
+      tarballPath = path.join(dir.path, stdout.trim())
+      if (body.distTag !== 'latest') distTag = body.distTag
+    }
 
-    // generate an index.js file to export the main file
-    const mainFile = (await fs.readJson(path.join(dir.path, 'src', 'package.json'))).main || 'index.js'
-    await fs.writeFile(path.join(dir.path, 'index.js'), `export * from './${path.join('src', mainFile)}'`)
+    // extract the tarball
+    await execAsync(`tar -xzf "${tarballPath}" -C "${dir.path}"`)
+    const extractedPath = path.join(dir.path, 'package')
 
-    plugin.pluginConfigSchema = await fs.readJson(path.join(dir.path, 'src', 'plugin-config-schema.json'))
-    plugin.processingConfigSchema = await fs.readJson(path.join(dir.path, 'src', 'processing-config-schema.json'))
+    // install dependencies of the plugin
+    await execAsync('npm install --omit=dev', { cwd: extractedPath })
+
+    // generate plugin.json from package.json
+    const packageJson = await fs.readJson(path.join(extractedPath, 'package.json'))
+    id = packageJson.name.replace('/', '-') + '-' + semver.major(packageJson.version)
+    if (distTag !== 'latest') id += '-' + distTag
+
+    plugin = {
+      id,
+      name: packageJson.name,
+      description: packageJson.description,
+      version: packageJson.version,
+      distTag
+    }
+
+    // read plugin schemas
+    plugin.pluginConfigSchema = await fs.readJson(path.join(extractedPath, 'plugin-config-schema.json'))
+    plugin.processingConfigSchema = await fs.readJson(path.join(extractedPath, 'processing-config-schema.json'))
 
     // static metadata for the plugin
-    await fs.writeFile(path.join(dir.path, 'plugin.json'), JSON.stringify(plugin, null, 2))
-    await fs.move(dir.path, pluginDir, { overwrite: true })
-  } finally {
-    try {
-      await dir.cleanup()
-    } catch (err) {
-      // ignore, directory was moved
+    await fs.writeFile(
+      path.join(extractedPath, 'plugin.json'),
+      JSON.stringify(plugin, null, 2)
+    )
+
+    // Create index.js if it doesn't exist and redirects to the main file
+    if (!await fs.pathExists(path.join(extractedPath, 'index.js'))) {
+      await fs.writeFile(path.join(extractedPath, 'index.js'), `export * from './${packageJson.main}'`)
     }
+
+    // move the extracted plugin to the final destination
+    await fs.move(extractedPath, path.join(pluginsDir, id), { overwrite: true })
+    await dir.cleanup()
+    if (req.file) await fs.remove(req.file.path)
+  } catch (error: any) {
+    await dir.cleanup()
+    if (req.file) await fs.remove(req.file.path)
+    throw httpError(400, `Failed to install plugin: ${error.message || error}`)
   }
 
   // set defaults access (don't overwrite if already exists (after an update))
@@ -158,13 +201,13 @@ router.get('/', async (req, res) => {
     } else if (req.query.privateAccess && typeof req.query.privateAccess === 'string') {
       const [type, id] = req.query.privateAccess.split(':')
       if (type !== sessionState.account.type || id !== sessionState.account.id) {
-        return res.status(403).send('privateAccess does not match current account')
+        throw httpError(403, 'privateAccess does not match current account')
       }
       if (!access.public && !access.privateAccess.find((p: any) => p.type === type && p.id === id)) {
         continue // pass to next plugin
       }
     } else {
-      return res.status(400).send('privateAccess filter is required')
+      throw httpError(400, 'privateAccess filter is required')
     }
 
     const pluginMetadataPath = path.join(pluginsDir, dir + '-metadata.json')
@@ -215,6 +258,9 @@ router.get('/:id', async (req, res) => {
 })
 
 router.delete('/:id', permissions.isSuperAdmin, async (req, res) => {
+  if (!req.params.id) throw httpError(400, 'Plugin ID is required')
+  if (!fs.existsSync(path.join(pluginsDir, req.params.id))) throw httpError(404, 'Plugin not found')
+
   await fs.remove(path.join(pluginsDir, req.params.id))
   await fs.remove(path.join(pluginsDir, req.params.id + '-config.json'))
   await fs.remove(path.join(pluginsDir, req.params.id + '-access.json'))
@@ -222,7 +268,12 @@ router.delete('/:id', permissions.isSuperAdmin, async (req, res) => {
 })
 
 router.put('/:id/config', permissions.isSuperAdmin, async (req, res) => {
-  const { pluginConfigSchema } = await fs.readJson(path.join(pluginsDir, req.params.id, 'plugin.json'))
+  const pluginPath = path.join(pluginsDir, req.params.id, 'plugin.json')
+  if (!await fs.pathExists(pluginPath)) {
+    throw httpError(404, 'Plugin not found')
+  }
+
+  const { pluginConfigSchema } = await fs.readJson(pluginPath)
   const validate = ajv.compile(pluginConfigSchema)
   const valid = validate(req.body)
   if (!valid) return res.status(400).send(validate.errors)
@@ -231,6 +282,10 @@ router.put('/:id/config', permissions.isSuperAdmin, async (req, res) => {
 })
 
 router.put('/:id/metadata', permissions.isSuperAdmin, async (req, res) => {
+  if (!await fs.pathExists(path.join(pluginsDir, req.params.id, 'plugin.json'))) {
+    throw httpError(404, 'Plugin not found')
+  }
+
   const validate = ajv.compile(pluginMetadataSchema)
   const valid = validate(req.body)
   if (!valid) return res.status(400).send(validate.errors)
@@ -239,6 +294,10 @@ router.put('/:id/metadata', permissions.isSuperAdmin, async (req, res) => {
 })
 
 router.put('/:id/access', permissions.isSuperAdmin, async (req, res) => {
+  if (!await fs.pathExists(path.join(pluginsDir, req.params.id, 'plugin.json'))) {
+    throw httpError(404, 'Plugin not found')
+  }
+
   await fs.writeJson(path.join(pluginsDir, req.params.id + '-access.json'), req.body)
   res.send(req.body)
 })
