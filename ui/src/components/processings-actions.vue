@@ -2,7 +2,7 @@
   <v-list
     density="compact"
     class="list-actions"
-    :style="isSmall ? '' : 'background-color: transparent;'"
+    style="background-color: transparent;"
     data-iframe-height
   >
     <v-list-item
@@ -99,7 +99,6 @@ const processingsProps = defineProps<{
   adminMode: boolean,
   ownerFilter: string,
   facets: { statuses: Record<string, number>, plugins: Record<string, number>, owners: { id: string, name: string, totalCount: number, type: string, departments: { department: string, departmentName: string, count: number }[] }[] },
-  isSmall: boolean,
   processings: any[]
 }>()
 

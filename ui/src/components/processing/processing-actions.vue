@@ -3,7 +3,7 @@
   <v-list
     density="compact"
     class="list-actions"
-    :style="isSmall ? '' : 'background-color: transparent;'"
+    style="background-color: transparent;"
     data-iframe-height
   >
     <v-menu
@@ -338,7 +338,6 @@ const properties = defineProps<{
   canAdmin: boolean,
   canExec: boolean,
   edited: boolean,
-  isSmall: boolean,
   metadata: Record<string, any> | undefined,
   processing: Record<string, any>,
   processingSchema: Record<string, any>,

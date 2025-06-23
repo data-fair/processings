@@ -16,7 +16,7 @@
     :subtitle="dayjs(processing.created.date).format('D MMM YYYY à HH:mm')"
   />
   <v-list-item
-    :prepend-icon="mdiPuzzle"
+    :prepend-icon="mdiPowerPlug"
     :title="pluginTitle"
   />
 </template>

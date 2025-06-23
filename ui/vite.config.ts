@@ -64,7 +64,7 @@ export default defineConfig({
             'mdiPlayCircle',
             'mdiPlusCircle',
             'mdiPlusCircleOutline',
-            'mdiPuzzle',
+            'mdiPowerPlug',
             'mdiStop',
             'mdiToggleSwitch',
             'mdiToggleSwitchOff',

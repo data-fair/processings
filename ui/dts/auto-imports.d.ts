@@ -10,9 +10,6 @@ declare global {
   const $fetch: typeof import('~/context')['$fetch']
   const $sitePath: typeof import('~/context')['$sitePath']
   const $uiConfig: typeof import('~/context')['$uiConfig']
-  const DfPersonalMenu: typeof import('@data-fair/lib-vuetify/personal-menu.vue')['default']
-  const DfTutorialAlert: typeof import('@data-fair/lib-vuetify/tutorial-alert.vue')['default']
-  const DfUserAvatar: typeof import('@data-fair/lib-vuetify/user-avatar.vue')['default']
   const EffectScope: typeof import('vue')['EffectScope']
   const breadcrumbs: typeof import('../src/utils/breadcrumbs')['default']
   const computed: typeof import('vue')['computed']
@@ -52,10 +49,10 @@ declare global {
   const mdiPencil: typeof import('@mdi/js')['mdiPencil']
   const mdiPlay: typeof import('@mdi/js')['mdiPlay']
   const mdiPlayCircle: typeof import('@mdi/js')['mdiPlayCircle']
+  const mdiPlug: typeof import('@mdi/js')['mdiPlug']
   const mdiPlusCircle: typeof import('@mdi/js')['mdiPlusCircle']
   const mdiPlusCircleOutline: typeof import('@mdi/js')['mdiPlusCircleOutline']
   const mdiPowerPlug: typeof import('@mdi/js')['mdiPowerPlug']
-  const mdiPuzzle: typeof import('@mdi/js')['mdiPuzzle']
   const mdiStop: typeof import('@mdi/js')['mdiStop']
   const mdiToggleSwitch: typeof import('@mdi/js')['mdiToggleSwitch']
   const mdiToggleSwitchOff: typeof import('@mdi/js')['mdiToggleSwitchOff']
@@ -180,7 +177,7 @@ declare module 'vue' {
     readonly mdiPlayCircle: UnwrapRef<typeof import('@mdi/js')['mdiPlayCircle']>
     readonly mdiPlusCircle: UnwrapRef<typeof import('@mdi/js')['mdiPlusCircle']>
     readonly mdiPlusCircleOutline: UnwrapRef<typeof import('@mdi/js')['mdiPlusCircleOutline']>
-    readonly mdiPuzzle: UnwrapRef<typeof import('@mdi/js')['mdiPuzzle']>
+    readonly mdiPowerPlug: UnwrapRef<typeof import('@mdi/js')['mdiPowerPlug']>
     readonly mdiStop: UnwrapRef<typeof import('@mdi/js')['mdiStop']>
     readonly mdiToggleSwitch: UnwrapRef<typeof import('@mdi/js')['mdiToggleSwitch']>
     readonly mdiToggleSwitchOff: UnwrapRef<typeof import('@mdi/js')['mdiToggleSwitchOff']>

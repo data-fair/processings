@@ -34,6 +34,10 @@ export default createIdentitiesRouter(
   // onDelete
   async (identity) => {
     debug('Incoming sd webhook for delete', identity)
-    // TODO: delete all processings and runs for this identity ?
+    // Delete all processings and runs for this identity
+    const filter = { 'owner.type': identity.type, 'owner.id': identity.id }
+    await mongo.processings.deleteMany(filter)
+    await mongo.runs.deleteMany(filter)
+    // When departments are deleted, do nothing
   }
 )
