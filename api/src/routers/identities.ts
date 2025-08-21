@@ -7,27 +7,49 @@ import mongo from '#mongo'
 
 const debug = Debug('webhooks-simple-directory')
 
+/** Helper function to update all collections */
+const updateAllCollections = async (filter: any, update: any) => {
+  await Promise.all([
+    mongo.processings.updateMany(filter, update),
+    mongo.runs.updateMany(filter, update)
+  ])
+}
+
 export default createIdentitiesRouter(
   config.secretKeys.identities,
   // onUpdate
   async (identity) => {
     debug('Incoming sd webhook for update', identity)
 
-    const filter = { 'owner.type': identity.type, 'owner.id': identity.id }
-    const update = { $set: { 'owner.name': identity.name } }
+    // Update owner name
+    await updateAllCollections(
+      { 'owner.type': identity.type, 'owner.id': identity.id },
+      { $set: { 'owner.name': identity.name } }
+    )
 
-    await mongo.processings.updateMany(filter, update)
-    await mongo.runs.updateMany(filter, update)
+    if (identity.type === 'user') {
+      // Update created/updated name
+      await Promise.all([
+        updateAllCollections(
+          { 'created.id': identity.id },
+          { $set: { 'created.name': identity.name } }
+        ),
+        updateAllCollections(
+          { 'updated.id': identity.id },
+          { $set: { 'updated.name': identity.name } }
+        )
+      ])
+    }
 
     // If the identity has departments, update the department names in processings and runs
     if (identity.departments) {
-      for (const department of identity.departments) {
-        const filter = { 'owner.type': identity.type, 'owner.id': identity.id, 'owner.department': department.id }
-        const update = { $set: { 'owner.departmentName': department.name } }
-
-        await mongo.processings.updateMany(filter, update)
-        await mongo.runs.updateMany(filter, update)
-      }
+      const departmentUpdates = identity.departments.map(department =>
+        updateAllCollections(
+          { 'owner.type': identity.type, 'owner.id': identity.id, 'owner.department': department.id },
+          { $set: { 'owner.departmentName': department.name } }
+        )
+      )
+      await Promise.all(departmentUpdates)
     }
   },
 
