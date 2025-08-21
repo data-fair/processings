@@ -21,6 +21,7 @@ export default {
       default: 'localhost'
     }
   },
+  maxFailures: 10,
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings',
   privateEventsUrl: null,
   secretKeys: {
@@ -34,6 +35,7 @@ export default {
     active: true,
     port: 9090
   },
+  runsRetention: 500,
   worker: {
     // base interval for polling the database for new resources to work on
     interval: 2000,

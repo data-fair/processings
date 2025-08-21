@@ -1,7 +1,7 @@
-import { Mongo } from '@data-fair/lib-node/mongo.js'
 import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import nodemailer from 'nodemailer'
 import config from '#config'
+import mongo from '#mongo'
 import { run, stop } from './task.ts'
 
 let exitCode = 0
@@ -19,14 +19,13 @@ process.on('SIGTERM', function onSigterm () {
   })
 })
 
-const mongo = new Mongo()
-await mongo.connect(config.mongoUrl, { readPreference: 'primary', maxPoolSize: 1 })
+await mongo.init()
 const mailTransport = nodemailer.createTransport(config.mails.transport)
 await wsEmitter.init(mongo.db)
 
-const err = await run(mongo.db, mailTransport)
+const err = await run(mailTransport)
 if (err) exitCode = 1
-await mongo.client.close()
+await mongo.close()
 mailTransport.close()
 
 process.exit(exitCode)

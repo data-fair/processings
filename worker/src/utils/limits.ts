@@ -1,8 +1,8 @@
 import type { Account } from '@data-fair/lib-express'
-import type { Db } from 'mongodb'
 
 import { getLimits } from '@data-fair/processings-shared/limits.ts'
 import config from '#config'
+import mongo from '#mongo'
 
 const calculateRemainingLimit = (limits: any, key: string) => {
   const limit = limits && limits[key] && limits[key].limit
@@ -11,16 +11,15 @@ const calculateRemainingLimit = (limits: any, key: string) => {
   return Math.max(0, limit - consumption)
 }
 
-export const remaining = async (db: Db, consumer: Account) => {
-  const limits = await getLimits(db, consumer, config.defaultLimits.processingsSeconds)
+export const remaining = async (consumer: Account) => {
+  const limits = await getLimits(mongo.db, consumer, config.defaultLimits.processingsSeconds)
   return {
     processingsSeconds: calculateRemainingLimit(limits, 'processings_seconds')
   }
 }
 
-export const incrementConsumption = async (db: Db, consumer: Account, type: string, inc: number) => {
-  return (await db.collection('limits')
-    .findOneAndUpdate({ type: consumer.type, id: consumer.id }, { $inc: { [`${type}.consumption`]: inc } }, { returnDocument: 'after', upsert: true }))
+export const incrementConsumption = async (consumer: Account, type: string, inc: number) => {
+  return (await mongo.limits.findOneAndUpdate({ type: consumer.type, id: consumer.id }, { $inc: { [`${type}.consumption`]: inc } }, { returnDocument: 'after', upsert: true }))
 }
 
 export default {

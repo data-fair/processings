@@ -15,6 +15,7 @@ export default {
       __format: 'json'
     }
   },
+  maxFailures: 'MAX_FAILURES_BEFORE_INACTIVE',
   mongoUrl: 'MONGO_URL',
   secretKeys: {
     events: 'SECRET_EVENTS'
@@ -28,6 +29,7 @@ export default {
     port: 'OBSERVER_PORT'
   },
   privateDataFairUrl: 'PRIVATE_DATA_FAIR_URL',
+  runsRetention: 'RUNS_RETENTION',
   worker: {
     interval: 'WORKER_INTERVAL',
     inactiveInterval: 'WORKER_INACTIVE_INTERVAL',

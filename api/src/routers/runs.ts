@@ -45,7 +45,7 @@ router.get('', async (req, res) => {
   res.send({ results: runs.map((r) => cleanRun(r as Run, sessionState)), count })
 })
 
-// Get a run (with logs)
+// Get a run (with logs, without secrets)
 router.get('/:id', async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const run = await mongo.runs.findOne({ _id: req.params.id }) as Run

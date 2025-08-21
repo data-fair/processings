@@ -1,29 +1,59 @@
-import config from '#config'
-import type { Db } from 'mongodb'
-import type { Run, Processing } from '#api/types'
+import type { Run } from '#api/types'
 
 import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import { incrementConsumption } from './limits.ts'
 import { runsMetrics } from './metrics.ts'
 import eventsQueue from '@data-fair/lib-node/events-queue.js'
+import config from '#config'
+import mongo from '#mongo'
+import { internalError } from '@data-fair/lib-node/observer.js'
 
-export const running = async (db: Db, run: Run) => {
+const sendProcessingEvent = (
+  run: Run,
+  statusText: string,
+  statusKey: string,
+  body?: string
+) => {
+  // @test:spy("pushEvent", `processings:processing-${statusKey}:${run.processing._id}`)
+  if (!config.privateEventsUrl && !config.secretKeys.events) return
+
+  eventsQueue.pushEvent({
+    title: `Le traitement ${run.processing.title} ${statusText}.`,
+    topic: { key: `processings:processing-${statusKey}:${run.processing._id}` },
+    sender: run.owner,
+    body,
+    visibility: 'private',
+    resource: {
+      type: 'processing',
+      id: run.processing._id,
+      title: 'Traitement associé : ' + run.processing.title,
+    },
+    originator: {
+      internalProcess: {
+        id: 'processings-worker',
+        name: 'Processings Worker'
+      }
+    }
+  })
+}
+
+export const running = async (run: Run) => {
   const patch = { status: 'running' as Run['status'], startedAt: new Date().toISOString() }
-  const lastRun = await db.collection<Run>('runs').findOneAndUpdate(
+  const lastRun = await mongo.runs.findOneAndUpdate(
     { _id: run._id },
     { $set: patch, $unset: { finishedAt: '' } },
     { returnDocument: 'after', projection: { log: 0, processing: 0, owner: 0 } }
   )
   if (!lastRun) throw new Error('Run not found')
   await wsEmitter.emit(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch })
-  await db.collection<Processing>('processings')
+  await mongo.processings
     .updateOne({ _id: run.processing._id }, { $set: { lastRun }, $unset: { nextRun: '' } })
 }
 
 /**
  * Update the database when a run is finished (edit status, log, duration, etc.)
  */
-export const finish = async (db: Db, run: Run, errorMessage: string | undefined = undefined, errorLogType: string = 'debug') => {
+export const finish = async (run: Run, errorMessage: string | undefined = undefined, errorLogType: string = 'debug') => {
   const query: Record<string, any> = {
     $set: {
       status: 'finished',
@@ -35,79 +65,84 @@ export const finish = async (db: Db, run: Run, errorMessage: string | undefined 
     query.$set.status = 'error'
     query.$push = { log: { type: errorLogType, msg: errorMessage, date: new Date().toISOString() } }
   }
-  let lastRun = (await db.collection<Run>('runs').findOneAndUpdate(
+  let lastRun = (await mongo.runs.findOneAndUpdate(
     { _id: run._id },
     query,
     { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
-  )) as Run
+  ))
+  if (!lastRun) return internalError('processing-worker', 'Last run not found after finish update')
   if (!lastRun.startedAt) {
-    lastRun = (await db.collection<Run>('runs').findOneAndUpdate(
+    lastRun = (await mongo.runs.findOneAndUpdate(
       { _id: run._id },
       { $set: { startedAt: lastRun.finishedAt } },
       { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
-    )) as Run
+    ))
+    if (!lastRun) return internalError('processing-worker', 'Last run not found after startedAt update')
   }
   await wsEmitter.emit(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch: query.$set })
   const duration = (new Date(lastRun.finishedAt!).getTime() - new Date(lastRun.startedAt!).getTime()) / 1000
   runsMetrics.labels(({ status: query.$set.status, owner: run.owner.name })).observe(duration)
-  await incrementConsumption(db, run.owner, 'processings_seconds', Math.round(duration))
+  await incrementConsumption(run.owner, 'processings_seconds', Math.round(duration))
 
-  // manage post run notification
-  const sender = { ...run.owner }
-  delete sender.role
-  delete sender.department
-  delete sender.dflt
-  const notif = {
-    sender,
-    urlParams: { id: run.processing._id },
-    visibility: 'private' as const,
-    date: new Date().toISOString()
-  }
   if (lastRun.status === 'finished') {
-    const event = {
-      ...notif,
-      topic: { key: `processings:processing-finish-ok:${run.processing._id}` },
-      title: `Le traitement ${run.processing.title} a terminé avec succès`
-    }
-    // @test:spy("pushEvent", event)
-    if (config.privateEventsUrl && config.secretKeys.events) eventsQueue.pushEvent(event)
-
     const errorLogs = lastRun.log.filter((l) => l.type === 'error')
     if (errorLogs.length) {
-      let htmlBody = '<ul>'
-      for (const errorLog of errorLogs) {
-        htmlBody += `<li>${errorLog.msg}</li>`
-      }
-      htmlBody += '</ul>'
-      const event = {
-        ...notif,
-        topic: { key: `processings:processing-log-error:${run.processing._id}` },
-        title: `Le traitement ${run.processing.title} a terminé correctement mais son journal contient des erreurs`,
-        body: errorLogs.map((l) => l.msg).join(' - '),
-        htmlBody
-      }
-      // @test:spy("pushEvent", event)
-      if (config.privateEventsUrl && config.secretKeys.events) eventsQueue.pushEvent(event)
+      sendProcessingEvent(run, 's\'est terminé correctement mais son journal contient des erreurs', 'log-error', errorLogs.map((l) => l.msg).join(' - '))
+    } else {
+      sendProcessingEvent(run, 's\'est terminé sans erreurs', 'finish-ok')
     }
-  }
-  if (lastRun.status === 'error') {
-    const event = {
-      ...notif,
-      topic: { key: `processings:processing-finish-error:${run.processing._id}` },
-      title: `Le traitement ${run.processing.title} a terminé en échec`,
-      body: errorMessage
+  } else if (lastRun.status === 'error') {
+    sendProcessingEvent(run, 'a échoué', 'finish-error', errorMessage)
+
+    const reachedMaxFailures = (await mongo.runs.aggregate([
+      { $match: { 'processing._id': run.processing._id } }, // filter by processing
+      { $sort: { finishedAt: -1 } },                        // sort by finishedAt descending (most recent first)
+      { $limit: config.maxFailures },                       // take the last X runs
+      {
+        $group: {                                          // aggregate
+          _id: null,
+          total: { $sum: 1 },                              // count total runs in this slice
+          errors: { $sum: { $cond: [{ $eq: ['$status', 'error'] }, 1, 0] } } // count runs with status 'error'
+        }
+      },
+      {
+        $project: {
+          allErrors: { $eq: [config.maxFailures, '$errors'] }       // true if all X runs are errors
+        }
+      }
+    ]).toArray())[0]?.allErrors ?? false
+
+    // Disable processing if reached max failures
+    if (reachedMaxFailures) {
+      await mongo.processings.updateOne(
+        { _id: run.processing._id },
+        { $set: { active: false } }
+      )
+      sendProcessingEvent(run, `a été désactivé car il a échoué ${config.maxFailures} fois de suite`, 'disabled')
     }
-    // @test:spy("pushEvent", event)
-    if (config.privateEventsUrl && config.secretKeys.events) eventsQueue.pushEvent(event)
   }
 
   // store the newly closed run as processing.lastRun for convenient access
   const processingLastRun: Omit<Run, 'log'> = lastRun
   delete processingLastRun.log
-  await db.collection<Processing>('processings').updateOne(
+  await mongo.processings.updateOne(
     { _id: run.processing._id },
     { $set: { lastRun } }
   )
+
+  // remove old runs
+  await mongo.runs.deleteMany({
+    'processing._id': run.processing._id,
+    _id: {
+      $in: await mongo.runs
+        .find({ 'processing._id': run.processing._id })
+        .sort({ createdAt: -1 })
+        .skip(config.runsRetention)
+        .project({ _id: 1 })
+        .map(d => d._id)
+        .toArray()
+    }
+  })
 }
 
 export default {
