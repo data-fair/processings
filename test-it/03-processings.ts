@@ -278,7 +278,7 @@ describe('processing', () => {
     assert.equal(run.log[1].extra.secrets.secretField, 'my new secret value')
   })
 
-  it.only('should patch config with secrets', async () => {
+  it('should patch config with secrets', async () => {
     // create a new processing with a secret field
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',

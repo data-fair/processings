@@ -10,18 +10,25 @@
     "lint": "eslint .",
     "lint-fix": "eslint --fix ."
   },
+  "imports": {
+    "#api/doc": "../api/doc/index.ts",
+    "#api/types": "../api/types/index.ts",
+    "#api/types/*": "../api/types/*"
+  },
   "dependencies": {
     "@data-fair/frame": "^0.9.3",
     "@data-fair/lib-utils": "^1.6.1",
     "@data-fair/lib-vue": "^1.21.1",
     "@data-fair/lib-vuetify": "^1.10.1",
+    "@data-fair/processings-shared": "*",
     "@intlify/unplugin-vue-i18n": "^6.0.8",
     "@koumoul/v-iframe": "^2.4.5",
-    "@koumoul/vjsf": "^3.15.4",
+    "@koumoul/vjsf": "^3.20.4",
     "@mdi/js": "^7.4.47",
     "@types/config": "^3.3.5",
     "@vitejs/plugin-vue": "^5.1.4",
     "@vueuse/core": "^11.2.0",
+    "cronstrue": "^3.2.0",
     "iframe-resizer": "^4.4.5",
     "reconnecting-websocket": "^4.4.0",
     "sass-embedded": "^1.80.5",

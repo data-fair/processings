@@ -312,7 +312,7 @@
 </template>
 
 <script setup lang="ts">
-import Vjsf from '@koumoul/vjsf'
+import Vjsf, { type Options as VjsfOptions } from '@koumoul/vjsf'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 
 const session = useSession()
@@ -492,13 +492,14 @@ async function save (plugin: InstalledPlugin, type: 'config' | 'access' | 'metad
   pluginLocked.value = null
 }
 
-const vjsfOptions = {
+const vjsfOptions = computed<VjsfOptions>(() => ({
   density: 'compact',
-  locale: session.state.lang,
+  initialValidation: 'always',
+  locale: session.lang.value,
   titleDepth: 4,
   updateOn: 'blur',
-  initialValidation: 'always'
-}
+  xI18n: true
+}))
 
 </script>
 

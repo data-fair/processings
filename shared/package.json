@@ -4,7 +4,7 @@
   "dependencies": {
     "@data-fair/lib-node": "^2.8.1",
     "@data-fair/lib-utils": "^1.6.1",
-    "cron": "^3.1.9",
+    "croner": "^9.1.0",
     "dayjs": "^1.11.13",
     "nanoid": "^5.0.8"
   }

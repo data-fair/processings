@@ -17,6 +17,7 @@ const pluginId = '@data-fair-processing-hello-world-1'
 
 describe('plugin', () => {
   before(startApiServer)
+  before(clean)
   after(clean)
   after(stopApiServer)
 

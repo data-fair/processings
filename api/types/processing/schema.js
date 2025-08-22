@@ -32,7 +32,13 @@ export default {
       title: 'Actif',
       type: 'boolean',
       default: false,
-      layout: 'switch'
+      layout: {
+        comp: 'switch',
+        props: {
+          color: 'primary',
+          'base-color': 'error'
+        }
+      }
     },
     created: {
       type: 'object',

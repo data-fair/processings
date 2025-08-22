@@ -14,6 +14,9 @@
         VAutocomplete: {
           persistentPlaceholder: true,
           placeholder: 'Rechercher...'
+        },
+        VNumberInput: {
+          inset: true
         }
       }"
     >
@@ -33,6 +36,10 @@
               :processing="Object.assign(processing, editProcessing)"
               :plugin-title="plugin?.metadata.name"
             />
+          </template>
+          <template #scheduling-summary="{ node }">
+            {{ t(`frequency.${node.data.type}`) }}
+            {{ cronstrue.toString(toCRON(node.data), { locale: session.lang.value }) }}
           </template>
         </vjsf>
       </v-form>
@@ -62,14 +69,19 @@
 <script setup lang="ts">
 import type { Plugin, Processing } from '#api/types'
 
-import { resolvedSchema as contractProcessing } from '../../../../api/types/processing/index.ts'
-import timeZones from 'timezones.json'
-import Vjsf from '@koumoul/vjsf'
-import { v2compat } from '@koumoul/vjsf/compat/v2'
+import cronstrue from 'cronstrue'
+import 'cronstrue/locales/en'
+import 'cronstrue/locales/fr'
 
+import { resolvedSchema as contractProcessing } from '#api/types/processing/index.ts'
+import timeZones from 'timezones.json'
+import Vjsf, { type Options as VjsfOptions } from '@koumoul/vjsf'
+import { v2compat } from '@koumoul/vjsf/compat/v2'
+import { toCRON } from '@data-fair/processings-shared/runs.ts'
+
+const { t } = useI18n()
 const route = useRoute<'/processings/[id]'>()
 const session = useSession()
-// const runtimeConfig = useRuntimeConfig()
 
 const processingId = route.params.id
 const utcs: string[] = []
@@ -163,27 +175,26 @@ const processingSchema = computed(() => {
   return schema
 })
 
-const vjsfOptions = computed(() => {
-  return {
-    context: {
-      owner: processing.value?.owner,
-      // ownerFilter: runtimeConfig.public.dataFairAdminMode ? `owner=${ownerFilter.value}` : '',
-      ownerFilter: `owner=${processing.value?.owner.type}:${processing.value?.owner.id}${processing.value?.owner.department ? ':' + processing.value?.owner.department : ''}`,
-      dataFairUrl: window.location.origin + $sitePath + '/data-fair',
-      directoryUrl: window.location.origin + $sitePath + '/simple-directory',
-      utcs
-    },
-    density: 'comfortable',
-    initialValidation: 'always',
-    readOnly: !canAdminProcessing.value,
-    readOnlyPropertiesMode: 'remove',
-    removeAdditional: true,
-    updateOn: 'blur',
-    validateOn: 'blur',
-    locale: 'fr',
-    titleDepth: 3
-  }
-})
+const vjsfOptions = computed<VjsfOptions>(() => ({
+  context: {
+    owner: processing.value?.owner,
+    // ownerFilter: runtimeConfig.public.dataFairAdminMode ? `owner=${ownerFilter.value}` : '',
+    ownerFilter: `owner=${processing.value?.owner.type}:${processing.value?.owner.id}${processing.value?.owner.department ? ':' + processing.value?.owner.department : ''}`,
+    dataFairUrl: window.location.origin + $sitePath + '/data-fair',
+    directoryUrl: window.location.origin + $sitePath + '/simple-directory',
+    utcs
+  },
+  density: 'comfortable',
+  initialValidation: 'always',
+  readOnly: !canAdminProcessing.value,
+  readOnlyPropertiesMode: 'remove',
+  removeAdditional: true,
+  titleDepth: 3,
+  locale: session.lang.value,
+  updateOn: 'blur',
+  validateOn: 'blur',
+  xI18n: true
+}))
 
 let initialPatch = true
 const patch = useAsyncAction(
@@ -230,6 +241,23 @@ onUnmounted(() => {
 })
 
 </script>
+
+<i18n lang="yaml">
+  en:
+    frequency:
+      daily: Every day,
+      hourly: ''
+      monthly: Every month,
+      weekly: Every week,
+
+  fr:
+    frequency:
+      daily: Tous les jours,
+      hourly: ''
+      monthly: Tous les mois,
+      weekly: Toutes les semaines,
+
+</i18n>
 
 <style>
 .v-autocomplete input::placeholder {

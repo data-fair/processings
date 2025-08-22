@@ -15,7 +15,7 @@ export default {
       __format: 'json'
     }
   },
-  maxFailures: 'MAX_FAILURES_BEFORE_INACTIVE',
+  maxFailures: 'MAX_FAILURES',
   mongoUrl: 'MONGO_URL',
   secretKeys: {
     events: 'SECRET_EVENTS'

@@ -68,6 +68,7 @@ RUN npm i --no-save @rollup/rollup-linux-x64-musl
 COPY --from=types /app/api/config api/config
 COPY --from=types /app/api/types api/types
 ADD /api/src/config.ts api/src/config.ts
+COPY shared shared
 ADD /ui ui
 RUN npm -w ui run build
 
