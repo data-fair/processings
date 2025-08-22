@@ -22,7 +22,7 @@ const sendProcessingEvent = (
     topic: { key: `processings:processing-${statusKey}:${run.processing._id}` },
     sender: run.owner,
     body,
-    visibility: 'private',
+    visibility: 'private' as const,
     resource: {
       type: 'processing',
       id: run.processing._id,
@@ -87,7 +87,12 @@ export const finish = async (run: Run, errorMessage: string | undefined = undefi
   if (lastRun.status === 'finished') {
     const errorLogs = lastRun.log.filter((l) => l.type === 'error')
     if (errorLogs.length) {
-      sendProcessingEvent(run, 's\'est terminé correctement mais son journal contient des erreurs', 'log-error', errorLogs.map((l) => l.msg).join(' - '))
+      sendProcessingEvent(
+        run,
+        's\'est terminé correctement mais son journal contient des erreurs',
+        'log-error',
+        errorLogs.map((l) => l.msg).join('\n --- \n')
+      )
     } else {
       sendProcessingEvent(run, 's\'est terminé sans erreurs', 'finish-ok')
     }

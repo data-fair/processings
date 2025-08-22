@@ -133,7 +133,7 @@ onMounted(async () => {
   ws?.subscribe(`processings/${run.value.processing._id}/run-patch`, onRunPatch)
 
   setBreadcrumbs([{
-    text: 'traitements',
+    text: 'Traitements',
     to: '/processings'
   }, {
     text: run.value.processing.title,

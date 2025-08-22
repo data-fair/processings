@@ -1,7 +1,7 @@
 <template>
   <v-list-item
     :prepend-avatar="avatarUrl"
-    :title="processing.owner.name"
+    :title="ownerName"
   />
   <v-list-item
     v-if="processing.updated"
@@ -31,6 +31,14 @@ const { processing, pluginTitle } = defineProps<{
   pluginTitle: string | undefined
 }>()
 
+const ownerName = computed(() => {
+  if (!processing.owner) return ''
+  const baseName = processing.owner.name || processing.owner.id
+  const departmentInfo = processing.owner.departmentName || processing.owner.department
+  return departmentInfo
+    ? `${baseName} - ${departmentInfo}`
+    : baseName
+})
 const avatarUrl = computed(() => {
   if (processing.owner.department) return `/simple-directory/api/avatars/${processing.owner.type}/${processing.owner.id}/${processing.owner.department}/avatar.png`
   else return `/simple-directory/api/avatars/${processing.owner.type}/${processing.owner.id}/avatar.png`

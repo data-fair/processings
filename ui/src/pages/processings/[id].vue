@@ -246,14 +246,14 @@ onUnmounted(() => {
   en:
     frequency:
       daily: Every day,
-      hourly: ''
+      hours: ''
       monthly: Every month,
       weekly: Every week,
 
   fr:
     frequency:
       daily: Tous les jours,
-      hourly: ''
+      hours: ''
       monthly: Tous les mois,
       weekly: Toutes les semaines,
 

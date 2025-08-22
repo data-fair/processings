@@ -220,7 +220,7 @@ async function iter (run: Run) {
       }
     })
     spawnPromise.childProcess.stderr?.on('data', data => {
-      process.stderr.write(`[spawned task stdout] ${run.processing._id} / ${run._id}` + data)
+      process.stderr.write(`[spawned task stderr] ${run.processing._id} / ${run._id}` + data)
       if (stderr.length <= 2000) {
         stderr += data
         if (stderr.length > 2000) {
@@ -240,9 +240,7 @@ async function iter (run: Run) {
         .forEach(line => errorMessage.push(line))
     }
 
-    if (!errorMessage.length) {
-      errorMessage.push(err.message)
-    }
+    if (!errorMessage.length) errorMessage.push(err.message)
 
     if (run) {
       // case of interruption by a SIGTERM

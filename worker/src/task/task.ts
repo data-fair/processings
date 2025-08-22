@@ -229,11 +229,11 @@ export const run = async (mailTransport: any) => {
       if (errStr.length > 10000) {
         errStr = errStr.slice(0, 10000) + '...'
       }
-      console.log(errStr)
+      console.error(httpMessage)
       await log.error(httpMessage)
       await log.debug('axios error', errStr)
     } else {
-      console.log(err)
+      console.error(err.message || err)
       await log.error(err.message)
       await log.debug(err.stack)
     }

@@ -153,7 +153,7 @@ export default {
         fr: 'Toutes les # heures'
       },
       properties: {
-        type: { const: 'hourly' },
+        type: { const: 'hours' },
         month: { const: '*' },
         dayOfMonth: { const: '*' },
         dayOfWeek: { const: '*' },
