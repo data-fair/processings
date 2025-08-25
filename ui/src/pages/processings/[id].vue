@@ -52,7 +52,7 @@
     />
   </v-container>
 
-  <layout-actions v-if="(canAdminProcessing || canExecProcessing) && processing">
+  <layout-actions v-if="processing">
     <processing-actions
       :processing="processing"
       :processing-schema="processingSchema"
@@ -164,6 +164,9 @@ const processingSchema = computed(() => {
 
   // remove configs for non-admin users
   if (!canAdminProcessing.value) {
+    delete schema.layout
+    delete schema.title
+    delete schema.properties.title
     delete schema.properties.permissions
     delete schema.properties.config
     delete schema.required

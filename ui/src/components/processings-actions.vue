@@ -7,6 +7,7 @@
     data-iframe-height
   >
     <v-list-item
+      v-if="canAdmin"
       :to="{ path: '/processings/new', query: { owner: ownersSelected.length ? ownersSelected[0] as string : undefined } }"
       rounded
     >
@@ -136,8 +137,9 @@ import '@data-fair/frame/lib/d-frame.js'
 
 const processingsProps = defineProps<{
   adminMode: boolean,
-  ownerFilter: string,
+  canAdmin: boolean,
   facets: { statuses: Record<string, number>, plugins: Record<string, number>, owners: { id: string, name: string, totalCount: number, type: string, departments: { department: string, departmentName: string, count: number }[] }[] },
+  ownerFilter: string,
   processings: any[]
 }>()
 
@@ -185,7 +187,7 @@ const notifUrl = computed(() => {
     { key: 'processings:processing-log-error', title: 'Un traitement s\'est terminé correctement mais son journal contient des erreurs' },
     { key: 'processings:processing-disabled', title: 'Un traitement a été désactivé car il a échoué trop de fois à la suite' }
   ]
-  const urlTemplate = window.parent.location.href
+  const urlTemplate = window.location.origin + '/processings/processings/{processingId}'
   return `/events/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false`
 })
 

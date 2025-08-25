@@ -23,6 +23,9 @@ const sendProcessingEvent = (
     sender: run.owner,
     body,
     visibility: 'private' as const,
+    urlParams: {
+      processingId: run.processing._id
+    },
     resource: {
       type: 'processing',
       id: run.processing._id,

@@ -34,9 +34,14 @@ export default {
       default: false,
       layout: {
         comp: 'switch',
+        switch: [{
+          if: '!parent.data.active',
+          props: {
+            'base-color': 'error'
+          }
+        }],
         props: {
-          color: 'primary',
-          'base-color': 'error'
+          color: 'primary'
         }
       }
     },

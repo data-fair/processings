@@ -46,17 +46,18 @@
     </template>
   </v-container>
 
-  <layout-actions v-if="processingsFetch.data.value && canAdmin">
+  <layout-actions v-if="processingsFetch.data.value">
     <processings-actions
       v-model:search="search"
       v-model:show-all="showAll"
       v-model:plugins-selected="plugins"
       v-model:statuses-selected="statuses"
       v-model:owners-selected="owners"
-      :owner-filter="ownerFilter"
       :admin-mode="!!session.state.user?.adminMode"
+      :can-admin="canAdmin"
       :facets="processingsFetch.data.value.facets"
       :is-small="true"
+      :owner-filter="ownerFilter"
       :processings="displayProcessings"
     />
   </layout-actions>
