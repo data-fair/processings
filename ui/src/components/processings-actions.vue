@@ -8,8 +8,8 @@
   >
     <v-list-item
       v-if="canAdmin"
-      :to="{ path: '/processings/new', query: { owner: ownersSelected.length ? ownersSelected[0] as string : undefined } }"
       rounded
+      @click="router.push({ path: '/processings/new', query: { owner: ownersSelected.length ? String(ownersSelected[0]) : undefined } })"
     >
       <template #prepend>
         <v-icon
@@ -135,6 +135,7 @@
 <script setup lang="ts">
 import '@data-fair/frame/lib/d-frame.js'
 
+const router = useRouter()
 const processingsProps = defineProps<{
   adminMode: boolean,
   canAdmin: boolean,
@@ -187,7 +188,7 @@ const notifUrl = computed(() => {
     { key: 'processings:processing-log-error', title: 'Un traitement s\'est terminé correctement mais son journal contient des erreurs' },
     { key: 'processings:processing-disabled', title: 'Un traitement a été désactivé car il a échoué trop de fois à la suite' }
   ]
-  const urlTemplate = window.location.origin + '/processings/processings/{processingId}'
+  const urlTemplate = window.parent.location.origin + window.parent.location.pathname + '?p=./{processingId}'
   return `/events/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false`
 })
 
