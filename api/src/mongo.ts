@@ -37,8 +37,7 @@ export class ProcessingsMongo {
         main: { 'owner.type': 1, 'owner.id': 1 }
       },
       runs: {
-        main: { 'owner.type': 1, 'owner.id': 1, 'processing._id': 1, createdAt: -1 },
-        byProcessing: { 'processing._id': 1, createdAt: -1 }
+        main: { 'owner.type': 1, 'owner.id': 1, 'processing._id': 1, createdAt: -1 }
       },
       limits: {
         fulltext: { id: 'text', name: 'text' },

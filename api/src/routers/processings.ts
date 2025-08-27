@@ -339,6 +339,8 @@ router.patch('/:id', async (req, res) => {
       if (!isAdmin) {
         return res.status(403).send('No permission to change the owner to ' + req.body.owner)
       }
+      // If the owner is changed, also change it in all runs of this processing
+      await mongo.runs.updateMany({ 'processing._id': processing._id }, { $set: { owner: req.body.owner } })
     }
   }
   req.body.updated = {

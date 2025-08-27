@@ -143,7 +143,7 @@ export const finish = async (run: Run, errorMessage: string | undefined = undefi
     'processing._id': run.processing._id,
     _id: {
       $in: await mongo.runs
-        .find({ 'processing._id': run.processing._id })
+        .find({ 'processing._id': run.processing._id, 'owner.type': run.owner.type, 'owner.id': run.owner.id })
         .sort({ createdAt: -1 })
         .skip(config.runsRetention)
         .project({ _id: 1 })
