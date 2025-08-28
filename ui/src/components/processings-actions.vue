@@ -1,13 +1,15 @@
+<!-- eslint-disable vue/no-deprecated-slot-attribute -->
 <template>
   <v-list
     density="compact"
     class="list-actions"
-    :style="isSmall ? '' : 'background-color: transparent;'"
+    style="background-color: transparent;"
     data-iframe-height
   >
     <v-list-item
-      :to="{ path: '/processings/new', query: { owner: ownersSelected.length ? ownersSelected[0] as string : undefined } }"
+      v-if="canAdmin"
       rounded
+      @click="router.push({ path: '/processings/new', query: { owner: ownersSelected.length ? String(ownersSelected[0]) : undefined } })"
     >
       <template #prepend>
         <v-icon
@@ -17,6 +19,43 @@
       </template>
       Créer un nouveau traitement
     </v-list-item>
+    <v-menu
+      v-if="notifUrl"
+      v-model="showNotifMenu"
+      :close-on-content-click="false"
+      max-width="500"
+    >
+      <template #activator="{ props }">
+        <v-list-item
+          v-bind="props"
+          rounded
+        >
+          <template #prepend>
+            <v-icon
+              color="primary"
+              :icon="mdiBell"
+            />
+          </template>
+          Notifications
+        </v-list-item>
+      </template>
+      <v-card
+        rounded="lg"
+        title="Notifications"
+        variant="elevated"
+      >
+        <v-card-text class="py-0 px-3">
+          <d-frame
+            :src="notifUrl"
+            resize
+          >
+            <div slot="loader">
+              <v-skeleton-loader type="paragraph" />
+            </div>
+          </d-frame>
+        </v-card-text>
+      </v-card>
+    </v-menu>
     <v-text-field
       v-model="search"
       :append-inner-icon="mdiMagnify"
@@ -94,12 +133,14 @@
 </template>
 
 <script setup lang="ts">
+import '@data-fair/frame/lib/d-frame.js'
 
+const router = useRouter()
 const processingsProps = defineProps<{
   adminMode: boolean,
-  ownerFilter: string,
+  canAdmin: boolean,
   facets: { statuses: Record<string, number>, plugins: Record<string, number>, owners: { id: string, name: string, totalCount: number, type: string, departments: { department: string, departmentName: string, count: number }[] }[] },
-  isSmall: boolean,
+  ownerFilter: string,
   processings: any[]
 }>()
 
@@ -108,6 +149,7 @@ const showAll = defineModel('showAll', { type: Boolean, default: false })
 const pluginsSelected = defineModel('pluginsSelected', { type: Array, required: true })
 const statusesSelected = defineModel('statusesSelected', { type: Array, required: true })
 const ownersSelected = defineModel('ownersSelected', { type: Array, required: true })
+const showNotifMenu = ref(false)
 
 const statusesText: Record<string, string> = {
   error: 'En échec',
@@ -138,6 +180,17 @@ type InstalledPlugin = {
 
 const installedPluginsFetch = useFetch<{ results: InstalledPlugin[], count: number }>(`${$apiPath}/plugins?privateAccess=${processingsProps.ownerFilter}`)
 const installedPlugins = computed(() => installedPluginsFetch.data.value?.results)
+
+const notifUrl = computed(() => {
+  const topics = [
+    { key: 'processings:processing-finish-ok', title: 'Un traitement s\'est terminé sans erreurs' },
+    { key: 'processings:processing-finish-error', title: 'Un traitement a échoué' },
+    { key: 'processings:processing-log-error', title: 'Un traitement s\'est terminé correctement mais son journal contient des erreurs' },
+    { key: 'processings:processing-disabled', title: 'Un traitement a été désactivé car il a échoué trop de fois à la suite' }
+  ]
+  const urlTemplate = window.parent.location.origin + window.parent.location.pathname + '?p=./{processingId}'
+  return `/events/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false`
+})
 
 const statusesItems = computed(() => {
   if (!processingsProps.facets.statuses) return []

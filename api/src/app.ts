@@ -1,6 +1,7 @@
 import { resolve } from 'node:path'
 import express from 'express'
 import { session, errorHandler, createSiteMiddleware, createSpaMiddleware } from '@data-fair/lib-express/index.js'
+import identitiesRouter from './routers/identities.ts'
 import limitsRouter from './routers/limits.ts'
 import pluginsRegistryRouter from './routers/plugins-registry.ts'
 import pluginsRouter from './routers/plugins.ts'
@@ -22,6 +23,7 @@ app.set('json spaces', 2)
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
+app.use('/api/identities', identitiesRouter)
 app.use('/api/v1/plugins-registry', pluginsRegistryRouter)
 app.use('/api/v1/plugins', pluginsRouter)
 app.use('/api/v1/processings', processingsRouter)

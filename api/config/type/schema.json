@@ -54,11 +54,23 @@
       "type": "string",
       "pattern": "^https?://"
     },
+    "privateEventsUrl": {
+      "type": "string"
+    },
     "secretKeys": {
       "type": "object",
       "properties": {
         "limits": {
-          "type": ["string", "null"]
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "events": {
+          "type": "string"
+        },
+        "identities": {
+          "type": "string"
         }
       }
     },

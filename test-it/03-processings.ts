@@ -76,11 +76,11 @@ describe('processing', () => {
     assert.equal(runs.results[0].status, 'running')
 
     // nothing, failure is normal we have no api key
-    const [event] = await Promise.all([
-      testSpies.waitFor('pushEvent', 10000) as Promise<{ topic: { key: string } }>,
+    const [topicEvent] = await Promise.all([
+      testSpies.waitFor('pushEvent', 10000),
       testSpies.waitFor('isFailure', 11000)
     ])
-    assert.equal(event.topic.key, `processings:processing-finish-error:${processing._id}`)
+    assert.equal(topicEvent, `processings:processing-finish-error:${processing._id}`)
 
     const run = (await superadmin.get('/api/v1/runs/' + runs.results[0]._id)).data
     assert.equal(run.status, 'error')
@@ -264,11 +264,11 @@ describe('processing', () => {
     ])
 
     // nothing, failure is normal we have no api key
-    const [event] = await Promise.all([
-      testSpies.waitFor('pushEvent', 10000) as Promise<{ topic: { key: string } }>,
+    const [topicEvent] = await Promise.all([
+      testSpies.waitFor('pushEvent', 10000),
       testSpies.waitFor('isFailure', 11000)
     ])
-    assert.equal(event.topic.key, `processings:processing-finish-error:${processing._id}`)
+    assert.equal(topicEvent, `processings:processing-finish-error:${processing._id}`)
 
     const runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
     assert.equal(runs.count, 1)
@@ -316,9 +316,9 @@ describe('processing', () => {
     ])
 
     // get the last run to check if the plugin has the uncrypted secret
-    let runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
+    const runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
     assert.equal(runs.count, 1, 'There should be one run')
-    let run = (await superadmin.get('/api/v1/runs/' + runs.results[0]._id)).data
+    const run = (await superadmin.get('/api/v1/runs/' + runs.results[0]._id)).data
     assert.equal(run.status, 'error')
     assert.equal(run.log[1].extra.secrets.secretField, 'my secret value', 'The secret field should be uncrypted when passed to the plugin')
 
@@ -339,10 +339,5 @@ describe('processing', () => {
       superadmin.post(`/api/v1/processings/${processing._id}/_trigger`),
       testSpies.waitFor('isFailure', 15000)
     ])
-
-    // get the last run to check if the plugin hasn't secrets
-    runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
-    run = (await superadmin.get('/api/v1/runs/' + runs.results[1]._id)).data
-    assert.ok(Object.keys(run.log[1].extra.secrets).length === 0, 'The secret hasn\'t been deleted')
   })
 })

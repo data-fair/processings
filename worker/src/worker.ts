@@ -1,6 +1,5 @@
 /* eslint-disable no-async-promise-executor */
-import type { AggregationCursor, Collection, Db } from 'mongodb'
-import type { Processing, Run } from '#api/types'
+import type { Run } from '#api/types'
 
 import { spawn } from 'child-process-promise'
 import Debug from 'debug'
@@ -8,7 +7,7 @@ import { existsSync } from 'fs'
 import resolvePath from 'resolve-path'
 import kill from 'tree-kill'
 
-import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
+import { init as wsInit } from '@data-fair/lib-node/ws-emitter.js'
 import { startObserver, stopObserver, internalError } from '@data-fair/lib-node/observer.js'
 import upgradeScripts from '@data-fair/lib-node/upgrade-scripts.js'
 import { createNext } from '@data-fair/processings-shared/runs.ts'
@@ -37,17 +36,16 @@ export const start = async () => {
     throw new Error(`Data directory ${resolvePath(config.dataDir)} was not mounted`)
   }
   await mongo.init()
-  const db = mongo.db
-  await locks.start(db)
-  await upgradeScripts(db, locks, config.upgradeRoot)
-  await wsEmitter.init(db)
+  await locks.start(mongo.db)
+  await upgradeScripts(mongo.db, locks, config.upgradeRoot)
+  await wsInit(mongo.db)
   if (config.observer.active) {
-    await initMetrics(db)
+    await initMetrics()
     await startObserver(config.observer.port)
   }
   if (config.privateEventsUrl) {
     if (!config.secretKeys.events) {
-      console.error('Missing secretKeys.events in config')
+      internalError('processings', 'Missing secretKeys.events in config')
     } else {
       await eventsQueue.start({ eventsUrl: config.privateEventsUrl, eventsSecret: config.secretKeys.events })
     }
@@ -59,10 +57,10 @@ export const start = async () => {
   }
 
   // non-blocking secondary kill loop
-  killLoop(db)
+  killLoop()
 
   const lastActivity = new Date().getTime()
-  mainLoop(db, lastActivity)
+  mainLoop(lastActivity)
 }
 
 // Stop and wait for all workers to finish their current task
@@ -79,10 +77,9 @@ export const stop = async () => {
  * Main loop
  * Check for available runs to process and start a task for each run
  * If the worker is inactive, wait for a longer delay
- * @param db
  * @param lastActivity the timestamp of the last activity of the worker
  */
-async function mainLoop (db: Db, lastActivity: number) {
+async function mainLoop (lastActivity: number) {
   mainLoopPromise = new Promise(async (resolve) => {
     // eslint-disable-next-line no-unmodified-loop-condition
     while (!stopped) {
@@ -104,7 +101,7 @@ async function mainLoop (db: Db, lastActivity: number) {
       const freeSlot = promisePool.findIndex(p => !p)
       debugLoop('index of a free slot', freeSlot)
 
-      const run = await acquireNext(db)
+      const run = await acquireNext()
 
       if (!run) {
         continue
@@ -115,7 +112,7 @@ async function mainLoop (db: Db, lastActivity: number) {
 
       if (stopped) continue
 
-      const iterPromise = iter(db, run)
+      const iterPromise = iter(run)
       promisePool[freeSlot] = iterPromise
       // empty the slot after the promise is finished
       // do not catch failure, they should trigger a restart of the loop
@@ -130,16 +127,15 @@ async function mainLoop (db: Db, lastActivity: number) {
 /**
  * A secondary loop to handle killing tasks
  */
-async function killLoop (db: Db) {
+async function killLoop () {
   killLoopPromise = new Promise(async (resolve) => {
     // eslint-disable-next-line no-unmodified-loop-condition
     while (!stopped) {
       await new Promise(resolve => setTimeout(resolve, config.worker.killInterval))
       try {
-        const runsCollection = mongo.db.collection('runs') as Collection<Run>
-        for await (const run of runsCollection.find({ status: 'kill' })) {
+        for await (const run of mongo.runs.find({ status: 'kill' })) {
           try {
-            await killRun(db, run)
+            await killRun(run)
           } catch (err) {
             internalError('worker-task-kill', err)
           }
@@ -156,7 +152,7 @@ async function killLoop (db: Db) {
 /**
  * Kill a run
  */
-async function killRun (db: Db, run: Run) {
+async function killRun (run: Run) {
   if (!pids[run._id]) {
     const ack = await locks.acquire(run.processing._id, 'worker-loop-kill')
     if (ack) {
@@ -164,7 +160,7 @@ async function killRun (db: Db, run: Run) {
         console.warn('the run should be killed, it is not locked by another worker and we have no running PID, mark it as already killed', run._id)
         debug('mark as already killed', run)
         run.status = 'killed'
-        await finish(db, run)
+        await finish(run)
       } finally {
         await locks.release(run.processing._id)
       }
@@ -187,33 +183,33 @@ async function killRun (db: Db, run: Run) {
 /**
  * Manage a run
  */
-async function iter (db: Db, run: Run) {
+async function iter (run: Run) {
   let stderr = ''
-  const processing = await db.collection<Processing>('processings').findOne({ _id: run.processing._id })
+  const processing = await mongo.processings.findOne({ _id: run.processing._id })
 
   if (!processing) {
     internalError('worker-missing-processing', 'found a run without associated processing, weird')
-    await db.collection<Run>('runs').deleteOne({ _id: run._id })
+    await mongo.runs.deleteOne({ _id: run._id })
     return
   }
   if (!processing.active) {
-    await finish(db, run, 'le traitement a été désactivé', 'error')
+    await finish(run, 'le traitement a été désactivé', 'error')
     return
   }
 
   debug(`run "${processing.title}" > ${run._id}`)
 
   try {
-    const remaining = await limits.remaining(db, processing.owner)
+    const remaining = await limits.remaining(processing.owner)
     if (remaining.processingsSeconds === 0) {
-      await finish(db, run, 'le temps de traitement autorisé est épuisé', 'error')
+      await finish(run, 'le temps de traitement autorisé est épuisé', 'error')
       // @test:spy("processingsSecondsExceeded")
       return
     }
 
     // Run a task in a dedicated child process for extra resiliency to fatal memory exceptions
     const path = process.env.NODE_ENV === 'test' ? './worker/src/task/index.ts' : './src/task/index.ts'
-    const spawnPromise = spawn('node', ['--no-warnings', '--experimental-strip-types', path, run._id, processing._id], {
+    const spawnPromise = spawn('node', ['--disable-warning=ExperimentalWarning', path, run._id, processing._id], {
       env: process.env,
       stdio: ['ignore', 'pipe', 'pipe']
     })
@@ -224,7 +220,7 @@ async function iter (db: Db, run: Run) {
       }
     })
     spawnPromise.childProcess.stderr?.on('data', data => {
-      process.stderr.write(`[spawned task stdout] ${run.processing._id} / ${run._id}` + data)
+      process.stderr.write(`[spawned task stderr] ${run.processing._id} / ${run._id}` + data)
       if (stderr.length <= 2000) {
         stderr += data
         if (stderr.length > 2000) {
@@ -234,7 +230,7 @@ async function iter (db: Db, run: Run) {
     })
     pids[run._id] = spawnPromise.childProcess.pid || -1
     await spawnPromise // wait for the task to finish
-    await finish(db, run)
+    await finish(run)
   } catch (err: any) {
     // Build back the original error message from the stderr of the child process
     const errorMessage = []
@@ -244,19 +240,17 @@ async function iter (db: Db, run: Run) {
         .forEach(line => errorMessage.push(line))
     }
 
-    if (!errorMessage.length) {
-      errorMessage.push(err.message)
-    }
+    if (!errorMessage.length) errorMessage.push(err.message)
 
     if (run) {
       // case of interruption by a SIGTERM
       if (err.code === 143) {
         run.status = 'killed'
-        await finish(db, run)
+        await finish(run)
         // @test:spy("isKilled")
       } else {
         console.warn(`failure ${processing.title} > ${run._id}`, errorMessage.join('\n'))
-        await finish(db, run, errorMessage.join('\n'))
+        await finish(run, errorMessage.join('\n'))
         // @test:spy("isFailure")
       }
     } else {
@@ -269,11 +263,11 @@ async function iter (db: Db, run: Run) {
     }
     if (processing && processing.scheduling.length) { // we create the next scheduled run
       try {
-        await createNext(db, locks, processing)
+        await createNext(mongo.db, locks, processing)
       } catch (err) {
         // retry once in case of failure, a concurrent call to createNext might have been made, but failed
         await new Promise(resolve => setTimeout(resolve, 2000))
-        await createNext(db, locks, processing)
+        await createNext(mongo.db, locks, processing)
       }
     }
   }
@@ -282,13 +276,12 @@ async function iter (db: Db, run: Run) {
 /**
  * Acquire the next run to process, if a run is already running, check if the lock was released,
  * meaning the task was brutally interrupted
- * @param db
  * @returns the next run to process
  */
-async function acquireNext (db: Db): Promise<Run | undefined> {
+async function acquireNext (): Promise<Run | undefined> {
   // Random sort prevents from insisting on the same failed dataset again and again
-  const cursor = db.collection<Run>('runs')
-    .aggregate([{
+  const cursor = mongo.runs
+    .aggregate<Run>([{
       $match: {
         $or: [
           { status: 'triggered', scheduledAt: { $lte: new Date().toISOString() } },
@@ -297,7 +290,7 @@ async function acquireNext (db: Db): Promise<Run | undefined> {
           { status: 'running' }
         ]
       }
-    }, { $sample: { size: 100 } }]) as AggregationCursor<Run>
+    }, { $sample: { size: 100 } }])
 
   while (await cursor.hasNext()) {
     let run = (await cursor.next())!
@@ -306,7 +299,7 @@ async function acquireNext (db: Db): Promise<Run | undefined> {
 
     if (ack) {
       // re-fetch run to prevent some race condition
-      const foundRun = await db.collection<Run>('runs').findOne({ _id: run._id })
+      const foundRun = await mongo.runs.findOne({ _id: run._id })
       if (!foundRun) {
         await locks.release(run.processing._id)
         continue
@@ -317,11 +310,11 @@ async function acquireNext (db: Db): Promise<Run | undefined> {
       if (run.status === 'running') {
         try {
           console.warn('we had to close a run that was stuck in running status', run)
-          await finish(db, run, 'le traitement a été interrompu suite à une opération de maintenance', 'error')
-          const processing = await db.collection<Processing>('processings').findOne({ _id: run.processing._id })
+          await finish(run, 'le traitement a été interrompu suite à une opération de maintenance', 'error')
+          const processing = await mongo.processings.findOne({ _id: run.processing._id })
           await locks.release(run.processing._id)
           if (processing && processing.scheduling.length) {
-            await createNext(db, locks, processing) // we create the next scheduled run
+            await createNext(mongo.db, locks, processing) // we create the next scheduled run
           }
         } catch (err) {
           const message = `failure while closing a run that was left in running status by error (${run.processing._id} / ${run._id})`

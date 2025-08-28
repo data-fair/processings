@@ -1,6 +1,6 @@
-import type { Db } from 'mongodb'
 import { Histogram, Gauge } from 'prom-client'
 import { servicePromRegistry } from '@data-fair/lib-node/observer.js'
+import mongo from '#mongo'
 
 const runsMetrics = new Histogram({
   name: 'df_processings_runs',
@@ -9,14 +9,14 @@ const runsMetrics = new Histogram({
   labelNames: ['status', 'owner']
 })
 
-const initMetrics = async (db: Db): Promise<void> => {
+const initMetrics = async (): Promise<void> => {
   // eslint-disable-next-line no-new
   new Gauge({
     name: 'df_processings_processings_total',
     help: 'Total number of processings',
     registers: [servicePromRegistry],
     async collect () {
-      this.set(await db.collection('processings').estimatedDocumentCount())
+      this.set(await mongo.processings.estimatedDocumentCount())
     }
   })
 }

@@ -108,6 +108,7 @@ const kill = async () => {
     method: 'POST'
   })
 }
+
 </script>
 
 <style></style>

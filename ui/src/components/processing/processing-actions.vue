@@ -3,7 +3,7 @@
   <v-list
     density="compact"
     class="list-actions"
-    :style="isSmall ? '' : 'background-color: transparent;'"
+    style="background-color: transparent;"
     data-iframe-height
   >
     <v-menu
@@ -257,6 +257,21 @@
     </v-list-item>
 
     <v-list-item
+      v-if="metadata?.documentation"
+      :href="metadata.documentation"
+      target="_blank"
+      rounded
+    >
+      <template #prepend>
+        <v-icon
+          color="primary"
+          :icon="mdiBookOpenVariant"
+        />
+      </template>
+      Tutoriel
+    </v-list-item>
+
+    <v-list-item
       v-if="session.state.user.adminMode"
       :href="`${origin}/openapi-viewer?urlType=processingsId&id=${processing?._id}`"
       target="_blank"
@@ -272,14 +287,13 @@
     </v-list-item>
 
     <v-menu
-      v-if="notifUrl && processing?.owner.type === activeAccount?.type && processing?.owner.id === activeAccount?.id && !activeAccount?.department"
+      v-if="notifUrl && canSubscribeNotif"
       v-model="showNotifMenu"
       :close-on-content-click="false"
       max-width="500"
     >
       <template #activator="{ props }">
         <v-list-item
-          v-if="processingSchema !== null"
           v-bind="props"
           rounded
         >
@@ -319,20 +333,14 @@ import '@data-fair/frame/lib/d-frame.js'
 
 const emit = defineEmits(['triggered'])
 
-const properties = defineProps({
-  canAdmin: Boolean,
-  canExec: Boolean,
-  edited: Boolean,
-  isSmall: Boolean,
-  processing: {
-    type: Object,
-    default: null
-  },
-  processingSchema: {
-    type: Object,
-    default: null
-  }
-})
+const { canAdmin, canExec, edited, metadata, processing, processingSchema } = defineProps<{
+  canAdmin: boolean,
+  canExec: boolean,
+  edited: boolean,
+  metadata: Record<string, any> | undefined,
+  processing: Record<string, any>,
+  processingSchema: Record<string, any>,
+}>()
 
 const router = useRouter()
 const session = useSessionAuthenticated()
@@ -347,37 +355,39 @@ const triggerDelay = ref(0)
 const webhookKey = ref('')
 const ownersReady = ref(false)
 const newOwner = ref<Account>(session.state.account)
-const duplicateTitle = ref(`${properties.processing.title} (copie)`)
+const duplicateTitle = ref(`${processing.title} (copie)`)
 
-const activeAccount = computed(() => session.state.account)
+const canSubscribeNotif = computed(() => processing?.owner.type === session.state.account.type && processing?.owner.id === session.state.account.id)
+const ownerString = computed(() => `${processing?.owner.type}:${processing?.owner.id}${processing?.owner.department ? ':' + processing?.owner.department : ''}`)
 
 const notifUrl = computed(() => {
   const topics = [
-    { key: `processings:processing-finish-ok:${properties.processing?._id ?? ''}`, title: `Le traitement ${properties.processing?.title ?? ''} a terminé avec succès` },
-    { key: `processings:processing-finish-error:${properties.processing?._id}`, title: `Le traitement ${properties.processing?.title} a terminé en échec` },
-    { key: `processings:processing-log-error:${properties.processing?._id}`, title: `Le traitement ${properties.processing?.title} a terminé correctement mais son journal contient des erreurs` }
+    { key: `processings:processing-finish-ok:${processing?._id ?? ''}`, title: `Le traitement ${processing?.title ?? ''} s'est terminé sans erreurs`, sender: ownerString.value },
+    { key: `processings:processing-finish-error:${processing?._id}`, title: `Le traitement ${processing?.title} a échoué`, sender: ownerString.value },
+    { key: `processings:processing-log-error:${processing?._id}`, title: `Le traitement ${processing?.title} s'est terminé correctement mais son journal contient des erreurs`, sender: ownerString.value },
+    { key: `processings:processing-disabled:${processing?._id}`, title: `Le traitement ${processing?.title} a été désactivé car il a échoué trop de fois à la suite`, sender: ownerString.value }
   ]
   const urlTemplate = window.parent.location.href
-  return `/events/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false`
+  return `/events/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false&sender=${encodeURIComponent(topics.map(t => t.sender).join(','))}`
 })
 
 const webhookLink = computed(() => {
-  let link = `${window.location.origin}/processings/api/v1/processings/${properties.processing?._id}/_trigger?key=${webhookKey.value}`
+  let link = `${window.location.origin}/processings/api/v1/processings/${processing?._id}/_trigger?key=${webhookKey.value}`
   if (triggerDelay.value > 0) link += `&delay=${triggerDelay.value}`
   return link
 })
 
 const confirmDuplicate = useAsyncAction(
   async () => {
-    if (!properties.processing) return
+    if (!processing) return
 
     const newProcessing = {
-      owner: properties.processing.owner,
-      plugin: properties.processing.plugin,
-      title: duplicateTitle.value || `${properties.processing.title} (copie)`,
-      config: properties.processing.config,
-      permissions: properties.processing.permissions,
-      scheduling: properties.processing.scheduling
+      owner: processing.owner,
+      plugin: processing.plugin,
+      title: duplicateTitle.value || `${processing.title} (copie)`,
+      config: processing.config,
+      permissions: processing.permissions,
+      scheduling: processing.scheduling
     }
 
     const created = await $fetch('/processings', {
@@ -397,7 +407,7 @@ const confirmDuplicate = useAsyncAction(
 
 const confirmChangeOwner = useAsyncAction(
   async () => {
-    await $fetch(`/processings/${properties.processing?._id}`, {
+    await $fetch(`/processings/${processing?._id}`, {
       method: 'PATCH',
       body: JSON.stringify({ owner: newOwner.value })
     })
@@ -407,7 +417,7 @@ const confirmChangeOwner = useAsyncAction(
 
 const confirmRemove = useAsyncAction(
   async () => {
-    await $fetch(`/processings/${properties.processing?._id}`, {
+    await $fetch(`/processings/${processing?._id}`, {
       method: 'DELETE'
     })
     await router.replace('/processings') // Redirect after deleting
@@ -420,12 +430,12 @@ const confirmRemove = useAsyncAction(
 )
 
 const getWebhookKey = async () => {
-  webhookKey.value = await $fetch(`/processings/${properties.processing?._id}/webhook-key`)
+  webhookKey.value = await $fetch(`/processings/${processing?._id}/webhook-key`)
 }
 
 const triggerExecution = useAsyncAction(
   async () => {
-    let link = `/processings/${properties.processing?._id}/_trigger`
+    let link = `/processings/${processing?._id}/_trigger`
     if (triggerDelay.value > 0) link += `?delay=${triggerDelay.value}`
 
     await $fetch(link, { method: 'POST' })
@@ -439,7 +449,7 @@ const triggerExecution = useAsyncAction(
 )
 
 watch(showTriggerMenu, async (newValue) => {
-  if (newValue && properties.canAdmin) {
+  if (newValue && canAdmin) {
     await getWebhookKey()
   }
 })

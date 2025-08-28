@@ -32,7 +32,18 @@ export default {
       title: 'Actif',
       type: 'boolean',
       default: false,
-      layout: 'switch'
+      layout: {
+        comp: 'switch',
+        switch: [{
+          if: '!parent.data.active',
+          props: {
+            'base-color': 'error'
+          }
+        }],
+        props: {
+          color: 'primary'
+        }
+      }
     },
     created: {
       type: 'object',
@@ -154,6 +165,28 @@ export default {
       title: 'Clé pour exécution à distance du traitement',
       readOnly: true
     }
+  },
+  layout: {
+    title: null,
+    children: [
+      [
+        {
+          children: [
+            'title',
+            'active',
+            'debug'
+          ],
+          cols: 8,
+        },
+        {
+          name: 'activity',
+          cols: 4,
+        }
+      ],
+      'config',
+      'scheduling',
+      'permissions'
+    ]
   },
   $defs: {
     cipheredContent: {

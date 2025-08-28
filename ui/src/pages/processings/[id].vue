@@ -3,83 +3,85 @@
     v-if="processing"
     data-iframe-height
   >
-    <v-row>
-      <v-col>
-        <h2 class="text-h6">
-          Traitement {{ processing.title }}
-        </h2>
-        <v-defaults-provider
-          :defaults="{
-            global: {
-              hideDetails: 'auto'
-            },
-            VAutocomplete: {
-              persistentPlaceholder: true,
-              placeholder: 'Rechercher...'
-            }
-          }"
+    <h2 class="text-h6">
+      Traitement {{ processing.title }}
+    </h2>
+    <v-defaults-provider
+      :defaults="{
+        global: {
+          hideDetails: 'auto'
+        },
+        VAutocomplete: {
+          persistentPlaceholder: true,
+          placeholder: 'Rechercher...'
+        },
+        VNumberInput: {
+          inset: true
+        }
+      }"
+    >
+      <v-form
+        v-model="valid"
+        autocomplete="off"
+      >
+        <vjsf
+          v-if="processingSchema"
+          v-model="editProcessing"
+          :schema="processingSchema"
+          :options="vjsfOptions"
+          @update:model-value="patch.execute()"
         >
-          <v-form
-            v-model="valid"
-            autocomplete="off"
-          >
-            <vjsf
-              v-if="processingSchema"
-              v-model="editProcessing"
-              :schema="processingSchema"
-              :options="vjsfOptions"
-              @update:model-value="patch.execute()"
-            />
-          </v-form>
-        </v-defaults-provider>
-        <processing-runs
-          ref="runs"
-          :can-exec="canExecProcessing"
-          :processing="processing"
-          class="mt-4"
-        />
-      </v-col>
-      <template v-if="canAdminProcessing || canExecProcessing">
-        <layout-navigation-right v-if="$vuetify.display.lgAndUp">
-          <processing-actions
-            :processing="processing"
-            :processing-schema="processingSchema"
-            :can-admin="canAdminProcessing"
-            :can-exec="canExecProcessing"
-            :edited="edited"
-            :is-small="false"
-            @triggered="runs && runs.refresh()"
-          />
-        </layout-navigation-right>
-        <layout-actions-button v-else>
-          <template #actions>
-            <processing-actions
-              :processing="processing"
-              :processing-schema="processingSchema"
-              :can-admin="canAdminProcessing"
-              :can-exec="canExecProcessing"
-              :edited="edited"
-              :is-small="true"
-              @triggered="runs && runs.refresh()"
+          <template #activity>
+            <processing-activity
+              :processing="Object.assign(processing, editProcessing)"
+              :plugin-title="plugin?.metadata.name"
             />
           </template>
-        </layout-actions-button>
-      </template>
-    </v-row>
+          <template #scheduling-summary="{ node }">
+            {{ t(`frequency.${node.data.type}`) }}
+            {{ cronstrue.toString(toCRON(node.data), { locale: session.lang.value }) }}
+          </template>
+        </vjsf>
+      </v-form>
+    </v-defaults-provider>
+    <processing-runs
+      ref="runs"
+      :can-exec="canExecProcessing"
+      :processing="processing"
+      class="mt-4"
+    />
   </v-container>
+
+  <layout-actions v-if="processing">
+    <processing-actions
+      :processing="processing"
+      :processing-schema="processingSchema"
+      :can-admin="canAdminProcessing"
+      :can-exec="canExecProcessing"
+      :edited="edited"
+      :is-small="false"
+      :metadata="plugin?.metadata"
+      @triggered="runs && runs.refresh()"
+    />
+  </layout-actions>
 </template>
 
 <script setup lang="ts">
 import type { Plugin, Processing } from '#api/types'
 
-import { resolvedSchema as contractProcessing } from '../../../../api/types/processing/index.ts'
-import timeZones from 'timezones.json'
-import Vjsf from '@koumoul/vjsf'
-import { v2compat } from '@koumoul/vjsf/compat/v2'
+import cronstrue from 'cronstrue'
+import 'cronstrue/locales/en'
+import 'cronstrue/locales/fr'
 
+import { resolvedSchema as contractProcessing } from '#api/types/processing/index.ts'
+import timeZones from 'timezones.json'
+import Vjsf, { type Options as VjsfOptions } from '@koumoul/vjsf'
+import { v2compat } from '@koumoul/vjsf/compat/v2'
+import { toCRON } from '@data-fair/processings-shared/runs.ts'
+
+const { t } = useI18n()
 const route = useRoute<'/processings/[id]'>()
 const session = useSession()
-// const runtimeConfig = useRuntimeConfig()
 
 const processingId = route.params.id
 const utcs: string[] = []
@@ -141,7 +143,6 @@ const canExecProcessing = computed(() => {
 const processingSchema = computed(() => {
   if (!plugin.value || !processing.value) return
   const schema = JSON.parse(JSON.stringify(contractProcessing))
-  delete schema.title
   schema.properties.config = {
     ...v2compat(plugin.value.processingConfigSchema),
     title: 'Plugin ' + plugin.value.metadata.name,
@@ -163,6 +164,9 @@ const processingSchema = computed(() => {
 
   // remove configs for non-admin users
   if (!canAdminProcessing.value) {
+    delete schema.layout
+    delete schema.title
+    delete schema.properties.title
     delete schema.properties.permissions
     delete schema.properties.config
     delete schema.required
@@ -174,27 +178,26 @@ const processingSchema = computed(() => {
   return schema
 })
 
-const vjsfOptions = computed(() => {
-  return {
-    context: {
-      owner: processing.value?.owner,
-      // ownerFilter: runtimeConfig.public.dataFairAdminMode ? `owner=${ownerFilter.value}` : '',
-      ownerFilter: `owner=${processing.value?.owner.type}:${processing.value?.owner.id}${processing.value?.owner.department ? ':' + processing.value?.owner.department : ''}`,
-      dataFairUrl: window.location.origin + $sitePath + '/data-fair',
-      directoryUrl: window.location.origin + $sitePath + '/simple-directory',
-      utcs
-    },
-    density: 'comfortable',
-    initialValidation: 'always',
-    readOnly: !canAdminProcessing.value,
-    readOnlyPropertiesMode: 'remove',
-    removeAdditional: true,
-    updateOn: 'blur',
-    validateOn: 'blur',
-    locale: 'fr',
-    titleDepth: 3
-  }
-})
+const vjsfOptions = computed<VjsfOptions>(() => ({
+  context: {
+    owner: processing.value?.owner,
+    // ownerFilter: runtimeConfig.public.dataFairAdminMode ? `owner=${ownerFilter.value}` : '',
+    ownerFilter: `owner=${processing.value?.owner.type}:${processing.value?.owner.id}${processing.value?.owner.department ? ':' + processing.value?.owner.department : ''}`,
+    dataFairUrl: window.location.origin + $sitePath + '/data-fair',
+    directoryUrl: window.location.origin + $sitePath + '/simple-directory',
+    utcs
+  },
+  density: 'comfortable',
+  initialValidation: 'always',
+  readOnly: !canAdminProcessing.value,
+  readOnlyPropertiesMode: 'remove',
+  removeAdditional: true,
+  titleDepth: 3,
+  locale: session.lang.value,
+  updateOn: 'blur',
+  validateOn: 'blur',
+  xI18n: true
+}))
 
 let initialPatch = true
 const patch = useAsyncAction(
@@ -241,6 +244,23 @@ onUnmounted(() => {
 })
 
 </script>
+
+<i18n lang="yaml">
+  en:
+    frequency:
+      daily: Every day,
+      hours: ''
+      monthly: Every month,
+      weekly: Every week,
+
+  fr:
+    frequency:
+      daily: Tous les jours,
+      hours: ''
+      monthly: Tous les mois,
+      weekly: Toutes les semaines,
+
+</i18n>
 
 <style>
 .v-autocomplete input::placeholder {

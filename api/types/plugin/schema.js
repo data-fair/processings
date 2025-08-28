@@ -93,6 +93,9 @@ export default {
         },
         icon: {
           type: 'string'
+        },
+        documentation: {
+          type: 'string'
         }
       }
     }

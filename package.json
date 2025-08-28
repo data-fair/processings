@@ -16,7 +16,8 @@
     "lint-fix": "eslint --fix . && npm -w ui run lint-fix",
     "prepare": "husky || true",
     "stop-dev-deps": "docker compose --profile dev stop",
-    "test-base": "NODE_ENV=test node --experimental-strip-types --test-force-exit --test-concurrency=1 --test --test-reporter=@reporters/bail --test-reporter-destination=stderr --test-reporter=spec --test-reporter-destination=stdout",
+    "test-base": "NODE_ENV=test EVENTS_LOG_LEVEL=alert node --disable-warning=ExperimentalWarning --test-force-exit --test-concurrency=1 --test",
+    "test-only": "npm run test-base -- --test-only test-it/*.ts",
     "test": "npm run test-base test-it/*.ts",
     "test-images": "docker compose --profile dev --profile testImages up -d --build --wait",
     "quality": "npm run dev-deps && npm run lint && npm run build-types && npm run check-types && npm -w ui run build && npm run test && npm audit --omit=dev --audit-level=critical"
@@ -38,23 +39,22 @@
   },
   "homepage": "https://github.com/data-fair/processings#readme",
   "dependencies": {
-    "@data-fair/lib-types-builder": "^1.7.0"
+    "@data-fair/lib-types-builder": "^1.8.2"
   },
   "devDependencies": {
-    "@data-fair/lib-common-types": "^1.10.1",
-    "@commitlint/cli": "^19.7.1",
-    "@commitlint/config-conventional": "^19.7.1",
-    "@data-fair/lib-node": "^2.4.0",
-    "@data-fair/lib-utils": "^1.5.0",
-    "@reporters/bail": "^1.2.1",
+    "@data-fair/lib-common-types": "^1.10.6",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@data-fair/lib-node": "^2.8.1",
+    "@data-fair/lib-utils": "^1.6.1",
     "@types/config": "^3.3.5",
     "@types/debug": "^4.1.12",
-    "eslint": "^9.13.0",
-    "eslint-plugin-vue": "^9.30.0",
+    "eslint": "^9.29.0",
+    "eslint-plugin-vue": "^10.2.0",
     "eslint-plugin-vuetify": "github:albanm/eslint-plugin-vuetify",
     "husky": "^9.1.6",
-    "neostandard": "^0.11.7",
+    "neostandard": "^0.12.1",
     "tough-cookie": "^5.0.0",
-    "typescript": "^5.6.3"
+    "typescript": "^5.8.3"
   }
 }

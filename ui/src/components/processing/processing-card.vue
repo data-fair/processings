@@ -179,11 +179,6 @@
 import ownerAvatar from '@data-fair/lib-vuetify/owner-avatar.vue'
 const { dayjs } = useLocaleDayjs()
 
-// const ownerLogo = (owner: any) => {
-//   if (owner.department) return `${$sitePath}/simple-directory/api/avatars/${owner.type}/${owner.id}/${owner.department}/avatar.png`
-//   else return `${$sitePath}/simple-directory/api/avatars/${owner.type}/${owner.id}/avatar.png`
-// }
-
 const props = defineProps({
   pluginName: {
     type: String,
@@ -197,4 +192,5 @@ const props = defineProps({
 })
 
 const pluginFetch = usePluginFetch(props.processing.plugin)
+
 </script>

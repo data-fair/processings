@@ -18,9 +18,11 @@
     "dataFairUrl",
     "defaultLimits",
     "mails",
+    "maxFailures",
     "mongoUrl",
     "locks",
     "observer",
+    "runsRetention",
     "worker",
     "secretKeys",
     "upgradeRoot"
@@ -64,6 +66,10 @@
         }
       }
     },
+    "maxFailures": {
+      "type": "number",
+      "description": "Number of failures before a processing becomes inactive"
+    },
     "mongoUrl": {
       "type": "string"
     },
@@ -102,6 +108,10 @@
     },
     "privateDataFairUrl": {
       "type": "string"
+    },
+    "runsRetention": {
+      "type": "number",
+      "description": "Number of run logs to keep"
     },
     "worker": {
       "type": "object",

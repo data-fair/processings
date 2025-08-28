@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   cipherPassword: undefined,
   dataDir: '/app/data',
   tmpDir: null, // will be dataDir + '/tmp' if null
@@ -21,6 +21,7 @@ module.exports = {
       default: 'localhost'
     }
   },
+  maxFailures: 10,
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings',
   privateEventsUrl: null,
   secretKeys: {
@@ -34,6 +35,7 @@ module.exports = {
     active: true,
     port: 9090
   },
+  runsRetention: 500,
   worker: {
     // base interval for polling the database for new resources to work on
     interval: 2000,

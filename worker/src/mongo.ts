@@ -22,6 +22,10 @@ export class ProcessingsMongo {
     return this.mongo.db.collection<Run>('runs')
   }
 
+  get limits () {
+    return this.mongo.db.collection('limits')
+  }
+
   constructor () {
     this.mongo = new Mongo()
   }

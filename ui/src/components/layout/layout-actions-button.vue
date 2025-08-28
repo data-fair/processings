@@ -1,31 +1,21 @@
 <template>
-  <div
-    class="actions-buttons mt-4"
+  <v-fab
+    size="small"
+    color="primary"
+    location="top right"
+    app
+    icon
   >
+    <v-icon
+      :icon="mdiDotsVertical"
+    />
     <v-menu
-      location="bottom left"
+      activator="parent"
       :close-on-content-click="false"
     >
-      <template #activator="{ props }">
-        <v-btn
-          v-bind="props"
-          size="small"
-          color="primary"
-          :icon="mdiDotsVertical"
-        />
-      </template>
-      <slot name="actions" />
+      <v-card max-width="300">
+        <slot />
+      </v-card>
     </v-menu>
-  </div>
+  </v-fab>
 </template>
-
-<script setup>
-</script>
-
-<style scoped>
-.actions-buttons {
-  z-index: 1000;
-  position: fixed;
-  right: 20px;
-}
-</style>

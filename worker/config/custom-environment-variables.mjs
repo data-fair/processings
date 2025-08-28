@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   cipherPassword: 'CIPHER_PASSWORD',
   dataDir: 'DATA_DIR',
   tmpDir: 'TMP_DIR',
@@ -15,6 +15,7 @@ module.exports = {
       __format: 'json'
     }
   },
+  maxFailures: 'MAX_FAILURES',
   mongoUrl: 'MONGO_URL',
   secretKeys: {
     events: 'SECRET_EVENTS'
@@ -28,6 +29,7 @@ module.exports = {
     port: 'OBSERVER_PORT'
   },
   privateDataFairUrl: 'PRIVATE_DATA_FAIR_URL',
+  runsRetention: 'RUNS_RETENTION',
   worker: {
     interval: 'WORKER_INTERVAL',
     inactiveInterval: 'WORKER_INACTIVE_INTERVAL',
