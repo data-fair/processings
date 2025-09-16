@@ -9,15 +9,18 @@ import { createReactiveSearchParams } from '@data-fair/lib-vue/reactive-search-p
 import { createLocaleDayjs } from '@data-fair/lib-vue/locale-dayjs.js'
 import { createSession } from '@data-fair/lib-vue/session.js'
 import { createUiNotif } from '@data-fair/lib-vue/ui-notif.js'
+import dFrameContent from '@data-fair/frame/lib/vue-router/d-frame-content.js'
 import { createI18n } from 'vue-i18n'
 import App from './App.vue'
+
+// TODO: remove when d-frame is fully integrated
 import '@koumoul/v-iframe/content-window'
 import 'iframe-resizer/js/iframeResizer.contentWindow.js'
-
 (window as any).iFrameResizer = { heightCalculationMethod: 'taggedElement' };
 
 (async function () {
   const router = createRouter({ history: createWebHistory($sitePath + '/processings/'), routes })
+  dFrameContent(router)
   const reactiveSearchParams = createReactiveSearchParams(router)
   const session = await createSession({ directoryUrl: $sitePath + '/simple-directory', siteInfo: true })
   const localeDayjs = createLocaleDayjs(session.state.lang)
@@ -28,6 +31,7 @@ import 'iframe-resizer/js/iframeResizer.contentWindow.js'
   })
   const i18n = createI18n({ locale: session.state.lang });
 
+  // TODO: remove when d-frame is fully integrated
   (window as any).vIframeOptions = { router }
 
   createApp(App)
