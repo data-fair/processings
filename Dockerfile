@@ -46,7 +46,7 @@ COPY api/package.json api/package.json
 COPY worker/package.json worker/package.json
 # full deps install used for types and ui building
 # also used to fill the npm cache for faster install api and worker deps
-RUN npm ci --omit=dev --omit=optional --omit=peer --no-audit --no-fund
+RUN npm ci --omit=dev --omit=optional --no-audit --no-fund
 
 # =============================
 # Build Types for API and Worker
@@ -77,7 +77,7 @@ RUN npm -w ui run build
 # =============================
 FROM installer AS worker-installer
 
-RUN npm ci -w worker --prefer-offline --omit=dev --omit=optional --omit=peer --no-audit --no-fund && \
+RUN npm ci -w worker --prefer-offline --omit=dev --omit=optional --no-audit --no-fund && \
     npx clean-modules --yes
 RUN mkdir -p /app/worker/node_modules
 RUN mkdir -p /app/shared/node_modules
@@ -114,8 +114,8 @@ CMD ["node", "--disable-warning=ExperimentalWarning", "index.ts"]
 # =============================
 FROM installer AS api-installer
 
-# remove other workspaces and reinstall, otherwise we can get rig have some peer dependencies from other workspaces
-RUN npm ci -w api --prefer-offline --omit=dev --omit=optional --omit=peer --no-audit --no-fund && \
+# remove other workspaces and reinstall, otherwise we can have some peer dependencies from other workspaces
+RUN npm ci -w api --prefer-offline --omit=dev --omit=optional --no-audit --no-fund && \
     npx clean-modules --yes
 RUN mkdir -p /app/api/node_modules
 RUN mkdir -p /app/shared/node_modules
