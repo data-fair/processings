@@ -7,6 +7,7 @@
 export {}
 declare global {
   const $apiPath: typeof import('~/context')['$apiPath']
+  const $cspNonce: typeof import('~/context')['$cspNonce']
   const $fetch: typeof import('~/context')['$fetch']
   const $sitePath: typeof import('~/context')['$sitePath']
   const $uiConfig: typeof import('~/context')['$uiConfig']
@@ -144,6 +145,7 @@ declare module 'vue' {
   interface GlobalComponents {}
   interface ComponentCustomProperties {
     readonly $apiPath: UnwrapRef<typeof import('~/context')['$apiPath']>
+    readonly $cspNonce: UnwrapRef<typeof import('~/context')['$cspNonce']>
     readonly $fetch: UnwrapRef<typeof import('~/context')['$fetch']>
     readonly $sitePath: UnwrapRef<typeof import('~/context')['$sitePath']>
     readonly $uiConfig: UnwrapRef<typeof import('~/context')['$uiConfig']>

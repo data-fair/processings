@@ -95,9 +95,6 @@
     },
     "util": {},
     "get": {},
-    "has": {},
-    "serveUi": {
-      "type": "boolean"
-    }
+    "has": {}
   }
 }

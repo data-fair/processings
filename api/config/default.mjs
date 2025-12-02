@@ -23,6 +23,5 @@ export default {
   },
   npm: {
     httpsProxy: null
-  },
-  serveUi: true
+  }
 }

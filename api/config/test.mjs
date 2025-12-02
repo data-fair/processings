@@ -11,6 +11,5 @@ export default {
   secretKeys: {
     identities: 'secret-identities',
     events: 'secret-events'
-  },
-  serveUi: false
+  }
 }
