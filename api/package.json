@@ -30,7 +30,7 @@
     "ajv-formats": "^3.0.1",
     "config": "^4.0.0",
     "crypto-random-string": "^5.0.0",
-    "express": "^5.0.1",
+    "express": "^5.2.0",
     "fs-extra": "^11.2.0",
     "http-terminator": "^3.2.0",
     "memoizee": "^0.4.17",
