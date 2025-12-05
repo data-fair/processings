@@ -5,6 +5,7 @@ import { createVuetify } from 'vuetify'
 import { aliases, mdi } from 'vuetify/iconsets/mdi-svg'
 import { vuetifySessionOptions } from '@data-fair/lib-vuetify'
 import '@data-fair/lib-vuetify/style/global.scss'
+import dFrameContent from '@data-fair/frame/lib/vue-router/d-frame-content.js'
 import { createReactiveSearchParams } from '@data-fair/lib-vue/reactive-search-params.js'
 import { createLocaleDayjs } from '@data-fair/lib-vue/locale-dayjs.js'
 import { createSession } from '@data-fair/lib-vue/session.js'
@@ -18,6 +19,7 @@ import 'iframe-resizer/js/iframeResizer.contentWindow.js'
 
 (async function () {
   const router = createRouter({ history: createWebHistory($sitePath + '/processings/'), routes })
+  dFrameContent(router)
   const reactiveSearchParams = createReactiveSearchParams(router)
   const session = await createSession({ directoryUrl: $sitePath + '/simple-directory' })
   const localeDayjs = createLocaleDayjs(session.state.lang)
