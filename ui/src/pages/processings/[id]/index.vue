@@ -80,7 +80,7 @@ import { v2compat } from '@koumoul/vjsf/compat/v2'
 import { toCRON } from '@data-fair/processings-shared/runs.ts'
 
 const { t } = useI18n()
-const route = useRoute<'/processings/[id]'>()
+const route = useRoute<'/processings/[id]/'>()
 const session = useSession()
 
 const processingId = route.params.id

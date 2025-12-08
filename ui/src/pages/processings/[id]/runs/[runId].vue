@@ -58,9 +58,10 @@
 <script setup lang="ts">
 import type { Run } from '#api/types'
 
-const route = useRoute<'/runs/[id]'>()
+const route = useRoute<'/processings/[id]/runs/[runId]'>()
 const session = useSession()
 const ws = useWS('/processings/api/')
+const { sendUiNotif } = useUiNotif()
 
 const loading = ref(false)
 const run: Ref<Run | null> = ref(null)
@@ -126,18 +127,22 @@ function getIcon (step: Record<string, any>) {
 
 onMounted(async () => {
   loading.value = true
-  run.value = await $fetch(`/runs/${route.params.id}`)
-  if (!run.value) return
+  const fetchedRun = await $fetch(`/runs/${route.params.runId}`)
+  if (!fetchedRun || fetchedRun.processing._id !== route.params.id) {
+    sendUiNotif({ type: 'error', msg: 'unknown run' })
+    return
+  }
+  run.value = fetchedRun
 
-  ws?.subscribe(`processings/${run.value.processing._id}/run-log`, onRunLog)
-  ws?.subscribe(`processings/${run.value.processing._id}/run-patch`, onRunPatch)
+  ws?.subscribe(`processings/${fetchedRun.processing._id}/run-log`, onRunLog)
+  ws?.subscribe(`processings/${fetchedRun.processing._id}/run-patch`, onRunPatch)
 
   setBreadcrumbs([{
     text: 'Traitements',
     to: '/processings'
   }, {
-    text: run.value.processing.title,
-    to: `/processings/${run.value.processing._id}`
+    text: fetchedRun.processing.title,
+    to: `/processings/${fetchedRun.processing._id}`
   }, {
     text: 'exécution'
   }])

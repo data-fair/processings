@@ -1,7 +1,7 @@
 <template>
   <v-list-item
     class="py-4"
-    :to="link ? `/runs/${run._id}` : ''"
+    :to="link ? `/processings/${run.processing._id}/runs/${run._id}` : ''"
   >
     <template #prepend>
       <v-avatar v-if="props.run.status === 'running'">
