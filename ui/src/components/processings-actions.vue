@@ -188,7 +188,7 @@ const notifUrl = computed(() => {
     { key: 'processings:processing-log-error', title: 'Un traitement s\'est terminé correctement mais son journal contient des erreurs' },
     { key: 'processings:processing-disabled', title: 'Un traitement a été désactivé car il a échoué trop de fois à la suite' }
   ]
-  const urlTemplate = window.parent.location.origin + '/data-fair/processings/{processingId}'
+  const urlTemplate = window.parent.location.origin + window.parent.location.pathname + '?p=./{processingId}'
   return `/events/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false`
 })
 
