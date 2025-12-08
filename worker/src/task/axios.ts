@@ -9,16 +9,18 @@ import type { LogFunctions } from '@data-fair/lib-common-types/processings.js'
  * Create an Axios instance.
  */
 export const getAxiosInstance = (processing: Processing, log: LogFunctions) => {
-  const headers: Record<string, string> = {
-    'x-apiKey': config.dataFairAPIKey
+  const privateHeaders: Record<string, string> = {
+    'x-apiKey': config.dataFairAPIKey,
+    // we used to specify User-Agent for all requests, but us creates problems with some external servers
+    'User-Agent': `@data-fair/processings (${processing.plugin})`
   }
   if (config.dataFairAdminMode) {
     const account = { ...processing.owner }
     if (account.name) account.name = encodeURIComponent(account.name)
     if (account.departmentName) account.departmentName = encodeURIComponent(account.departmentName)
-    headers['x-account'] = JSON.stringify(account)
+    privateHeaders['x-account'] = JSON.stringify(account)
   }
-  headers['x-processing'] = JSON.stringify({ _id: processing._id, title: encodeURIComponent(processing.title) })
+  privateHeaders['x-processing'] = JSON.stringify({ _id: processing._id, title: encodeURIComponent(processing.title) })
 
   const axiosInstance = axios.create({
     // this is necessary to prevent excessive memory usage during large file uploads, see https://github.com/axios/axios/issues/1045
@@ -35,8 +37,7 @@ export const getAxiosInstance = (processing: Processing, log: LogFunctions) => {
       else cfg.url = config.dataFairUrl + '/' + cfg.url
     }
     const isDataFairUrl = cfg.url.startsWith(config.dataFairUrl)
-    if (isDataFairUrl) Object.assign(cfg.headers, headers)
-    cfg.headers['User-Agent'] = cfg.headers['User-Agent'] ?? `@data-fair/processings (${processing.plugin})`
+    if (isDataFairUrl) Object.assign(cfg.headers, privateHeaders)
 
     // use private data fair url if specified to prevent leaving internal infrastructure
     // except from GET requests so that they still appear in metrics
