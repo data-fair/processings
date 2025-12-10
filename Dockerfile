@@ -107,7 +107,7 @@ COPY package.json README.md LICENSE BUILD.json* ./
 EXPOSE 9090
 # USER node # This would be great to use, but not possible as the volumes are mounted as root
 WORKDIR /app/worker
-CMD ["node", "--disable-warning=ExperimentalWarning", "index.ts"]
+CMD ["node", "--disable-warning=ExperimentalWarning", "--optimize-for-size", "index.ts"]
 
 # =============================
 # Install production dependencies for API
