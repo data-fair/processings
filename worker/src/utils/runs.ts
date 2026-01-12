@@ -138,7 +138,7 @@ export const finish = async (run: Run, errorMessage: string | undefined = undefi
     { $set: { lastRun } }
   )
 
-  // remove old runs
+  // remove old runs (storage retention)
   await mongo.runs.deleteMany({
     'processing._id': run.processing._id,
     _id: {
