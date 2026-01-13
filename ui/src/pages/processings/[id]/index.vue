@@ -40,6 +40,7 @@
           <template #scheduling-summary="{ node }">
             {{ t(`frequency.${node.data.type}`) }}
             {{ cronstrue.toString(toCRON(node.data), { locale: session.lang.value }) }}
+            {{ timezoneLabel(node.data.timeZone) }}
           </template>
         </vjsf>
       </v-form>
@@ -243,6 +244,11 @@ onUnmounted(() => {
   ws?.unsubscribe(patchConfigWSChannel, onPatchConfig)
 })
 
+const timezoneLabel = (timeZone: string) => {
+  if (timeZone === 'Europe/Paris') return ''
+  return ' — ' + t('timezone') + ' ' + timeZone ? timeZone : 'UTC'
+}
+
 </script>
 
 <i18n lang="yaml">
@@ -252,6 +258,7 @@ onUnmounted(() => {
       hours: ''
       monthly: Every month,
       weekly: Every week,
+    timezone: 'Timezone:'
 
   fr:
     frequency:
@@ -259,6 +266,7 @@ onUnmounted(() => {
       hours: ''
       monthly: Tous les mois,
       weekly: Toutes les semaines,
+    timezone: 'Fuseau horaire :'
 
 </i18n>
 

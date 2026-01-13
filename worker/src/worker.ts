@@ -187,19 +187,19 @@ async function iter (run: Run) {
   let stderr = ''
   const processing = await mongo.processings.findOne({ _id: run.processing._id })
 
-  if (!processing) {
-    internalError('worker-missing-processing', 'found a run without associated processing, weird')
-    await mongo.runs.deleteOne({ _id: run._id })
-    return
-  }
-  if (!processing.active) {
-    await finish(run, 'le traitement a été désactivé', 'error')
-    return
-  }
-
-  debug(`run "${processing.title}" > ${run._id}`)
-
   try {
+    if (!processing) {
+      internalError('worker-missing-processing', 'found a run without associated processing, weird')
+      await mongo.runs.deleteOne({ _id: run._id })
+      return
+    }
+    if (!processing.active) {
+      await finish(run, 'le traitement a été désactivé', 'error')
+      return
+    }
+
+    debug(`run "${processing.title}" > ${run._id}`)
+
     const remaining = await limits.remaining(processing.owner)
     if (remaining.processingsSeconds === 0) {
       await finish(run, 'le temps de traitement autorisé est épuisé', 'error')
@@ -249,7 +249,7 @@ async function iter (run: Run) {
         await finish(run)
         // @test:spy("isKilled")
       } else {
-        console.warn(`failure ${processing.title} > ${run._id}`, errorMessage.join('\n'))
+        console.warn(`failure ${processing?.title ?? run.processing.title} > ${run._id}`, errorMessage.join('\n'))
         await finish(run, errorMessage.join('\n'))
         // @test:spy("isFailure")
       }
@@ -261,13 +261,16 @@ async function iter (run: Run) {
       delete pids[run._id]
       await locks.release(run.processing._id)
     }
-    if (processing && processing.scheduling.length) { // we create the next scheduled run
-      try {
-        await createNext(mongo.db, locks, processing)
-      } catch (err) {
-        // retry once in case of failure, a concurrent call to createNext might have been made, but failed
-        await new Promise(resolve => setTimeout(resolve, 2000))
-        await createNext(mongo.db, locks, processing)
+    if (processing) {
+      const refreshedProcessing = await mongo.processings.findOne({ _id: processing._id })
+      if (refreshedProcessing && refreshedProcessing.scheduling.length && refreshedProcessing.active) { // we create the next scheduled run
+        try {
+          await createNext(mongo.db, locks, refreshedProcessing)
+        } catch (err) {
+          // retry once in case of failure, a concurrent call to createNext might have been made, but failed
+          await new Promise(resolve => setTimeout(resolve, 2000))
+          await createNext(mongo.db, locks, refreshedProcessing)
+        }
       }
     }
   }
@@ -313,7 +316,7 @@ async function acquireNext (): Promise<Run | undefined> {
           await finish(run, 'le traitement a été interrompu suite à une opération de maintenance', 'error')
           const processing = await mongo.processings.findOne({ _id: run.processing._id })
           await locks.release(run.processing._id)
-          if (processing && processing.scheduling.length) {
+          if (processing && processing.active && processing.scheduling.length) {
             await createNext(mongo.db, locks, processing) // we create the next scheduled run
           }
         } catch (err) {

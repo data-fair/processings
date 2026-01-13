@@ -3,18 +3,10 @@
     class="h-100"
     :to="`/processings/${processing._id}`"
   >
-    <v-card-item>
-      <!-- Owner -->
-      <template #append>
-        <owner-avatar
-          v-if="showOwner"
-          :owner="processing.owner"
-        />
-      </template>
-
+    <v-card-item class="text-primary">
       <!-- Processing title -->
       <template #title>
-        <span class="font-weight-bold text-primary">
+        <span class="font-weight-bold">
           {{ processing.title || processing._id }}
         </span>
         <v-tooltip
@@ -23,6 +15,14 @@
           location="top left"
           open-delay="300"
           :text="processing.title"
+        />
+      </template>
+
+      <!-- Owner -->
+      <template #append>
+        <owner-avatar
+          v-if="showOwner"
+          :owner="processing.owner"
         />
       </template>
     </v-card-item>
