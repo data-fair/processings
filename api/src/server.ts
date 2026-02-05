@@ -13,7 +13,7 @@ import config from '#config'
 import mongo from '#mongo'
 import locks from '#locks'
 import http from 'http'
-import permissions from './utils/permissions.ts'
+import permissions from './misc/utils/permissions.ts'
 
 const exec = promisify(execCallback)
 const server = http.createServer(app)

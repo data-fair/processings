@@ -1,4 +1,4 @@
-import runs from '../api/src/utils/runs.ts'
+import runs from '../api/src/runs/service.ts'
 
 async function main () {
   const { db } = await require('../api/utils/db').connect()

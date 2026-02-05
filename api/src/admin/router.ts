@@ -2,7 +2,8 @@ import { resolve } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { Router } from 'express'
 import { reqOrigin, session } from '@data-fair/lib-express'
-import getApiDoc from './utils/api-docs.ts'
+import { getStatus } from './status.ts'
+import getApiDoc from '../misc/utils/api-docs.ts'
 
 const router = Router()
 export default router
@@ -19,6 +20,11 @@ if (process.env.NODE_ENV === 'production') {
 }
 router.get('/info', (req, res) => {
   res.send(info)
+})
+
+router.get('/status', async (req, res) => {
+  const status = await getStatus(req)
+  res.send(status)
 })
 
 // Get the full API documentation of the service

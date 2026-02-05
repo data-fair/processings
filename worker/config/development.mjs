@@ -12,7 +12,7 @@ export default {
     port: 9091
   },
   privateDataFairUrl: 'http://localhost:8081',
-  privateEventsUrl: 'http://localhost:8084',
+  privateEventsUrl: 'http://localhost:8083',
   runsRetention: 5,
   upgradeRoot: '../'
 }

@@ -15,7 +15,7 @@ import multer from 'multer'
 import { session, httpError } from '@data-fair/lib-express'
 import mongo from '#mongo'
 import config from '#config'
-import permissions from '../utils/permissions.ts'
+import permissions from '../misc/utils/permissions.ts'
 
 // @ts-ignore
 const ajv = ajvFormats(new Ajv({ strict: false }))

@@ -43,6 +43,3 @@
 <script setup>
 import personalMenu from '@data-fair/lib-vuetify/personal-menu.vue'
 </script>
-
-<style>
-</style>

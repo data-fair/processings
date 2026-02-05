@@ -60,7 +60,6 @@ declare global {
   const mdiPencil: typeof import('@mdi/js')['mdiPencil']
   const mdiPlay: typeof import('@mdi/js')['mdiPlay']
   const mdiPlayCircle: typeof import('@mdi/js')['mdiPlayCircle']
-  const mdiPlug: typeof import('@mdi/js')['mdiPlug']
   const mdiPlusCircle: typeof import('@mdi/js')['mdiPlusCircle']
   const mdiPlusCircleOutline: typeof import('@mdi/js')['mdiPlusCircleOutline']
   const mdiPowerPlug: typeof import('@mdi/js')['mdiPowerPlug']

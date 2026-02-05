@@ -454,6 +454,3 @@ watch(showTriggerMenu, async (newValue) => {
   }
 })
 </script>
-
-<style>
-</style>

@@ -56,9 +56,7 @@
           <template #prepend>
             <v-icon :icon="mdiPowerPlug" />
           </template>
-          <span>
-            {{ pluginFetch.data.value?.metadata.name }}
-          </span>
+          {{ pluginFetch.data.value?.metadata.name }}
         </v-list-item>
 
         <!-- Linked dataset -->
