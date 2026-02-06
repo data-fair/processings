@@ -52,7 +52,7 @@
     "@types/semver": "^7.7.1",
     "eslint": "^9.29.0",
     "eslint-plugin-vue": "^10.2.0",
-    "eslint-plugin-vuetify": "github:albanm/eslint-plugin-vuetify",
+    "eslint-plugin-vuetify": "^2.5.3",
     "husky": "^9.1.6",
     "neostandard": "^0.12.1",
     "tough-cookie": "^5.0.0",

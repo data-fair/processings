@@ -331,7 +331,7 @@
     >
       <v-toolbar
         :title="result.distTag === 'latest' ? result.name : result.name + ' (' + result.distTag + ')'"
-        dense
+        density="compact"
         flat
       >
         <template #append>

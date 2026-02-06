@@ -1,135 +1,128 @@
-<!-- eslint-disable vue/no-deprecated-slot-attribute -->
 <template>
-  <v-list
-    density="compact"
-    class="list-actions"
-    style="background-color: transparent;"
-    data-iframe-height
+  <!-- Create new processing -->
+  <v-list-item
+    v-if="canAdmin"
+    rounded
+    @click="router.push({ path: '/processings/new', query: { owner: ownersSelected.length ? String(ownersSelected[0]) : undefined } })"
   >
-    <v-list-item
-      v-if="canAdmin"
-      rounded
-      @click="router.push({ path: '/processings/new', query: { owner: ownersSelected.length ? String(ownersSelected[0]) : undefined } })"
-    >
-      <template #prepend>
-        <v-icon
-          color="primary"
-          :icon="mdiPlusCircle"
-        />
-      </template>
-      Créer un nouveau traitement
-    </v-list-item>
-    <v-menu
-      v-if="notifUrl"
-      v-model="showNotifMenu"
-      :close-on-content-click="false"
-      max-width="500"
-    >
-      <template #activator="{ props }">
-        <v-list-item
-          v-bind="props"
-          rounded
-        >
-          <template #prepend>
-            <v-icon
-              color="primary"
-              :icon="mdiBell"
-            />
-          </template>
-          Notifications
-        </v-list-item>
-      </template>
-      <v-card
-        rounded="lg"
-        title="Notifications"
-        variant="elevated"
+    <template #prepend>
+      <v-icon
+        color="primary"
+        :icon="mdiPlusCircle"
+      />
+    </template>
+    Créer un nouveau traitement
+  </v-list-item>
+
+  <!-- Notifications menu -->
+  <v-menu
+    v-if="eventsSubscribeUrl"
+    v-model="showNotifMenu"
+    :close-on-content-click="false"
+    max-width="500"
+  >
+    <template #activator="{ props }">
+      <v-list-item
+        v-bind="props"
+        rounded
       >
-        <v-card-text class="py-0 px-3">
-          <d-frame
-            :src="notifUrl"
-            resize
-          >
-            <div slot="loader">
-              <v-skeleton-loader type="paragraph" />
-            </div>
-          </d-frame>
-        </v-card-text>
-      </v-card>
-    </v-menu>
-    <v-text-field
-      v-model="search"
-      :append-inner-icon="mdiMagnify"
-      class="mt-4 mx-4"
-      clearable
-      color="primary"
-      density="compact"
-      hide-details
-      hide-selected
-      placeholder="rechercher"
-      style="max-width:400px;"
-      variant="outlined"
-    />
-    <v-select
-      v-model="statusesSelected"
-      :items="statusesItems"
-      item-title="display"
-      item-value="statusKey"
-      label="Statut"
-      chips
-      class="mt-4 mx-4"
-      clearable
-      closable-chips
-      density="compact"
-      hide-details
-      multiple
-      rounded="xl"
-      variant="outlined"
-      style="max-width:400px;"
-    />
-    <v-autocomplete
-      v-model="pluginsSelected"
-      :items="pluginsItems"
-      item-title="display"
-      item-value="pluginKey"
-      label="Plugin"
-      chips
-      class="mt-4 mx-4"
-      clearable
-      closable-chips
-      density="compact"
-      hide-details
-      multiple
-      rounded="xl"
-      variant="outlined"
-      style="max-width:400px;"
-    />
-    <v-switch
-      v-if="adminMode"
-      v-model="showAll"
-      color="admin"
-      label="Voir tous les traitements"
-      hide-details
-      class="mt-2 mx-4 text-admin"
-    />
-    <v-autocomplete
-      v-if="showAll"
-      v-model="ownersSelected"
-      :items="ownersItems"
-      item-title="display"
-      item-value="ownerKey"
-      label="Propriétaire"
-      chips
-      class="mt-2 mx-4 text-admin"
-      clearable
-      closable-chips
-      density="compact"
-      hide-details
-      multiple
-      rounded="xl"
-      variant="outlined"
-      style="max-width:400px;"
-    />
-  </v-list>
+        <template #prepend>
+          <v-icon
+            color="primary"
+            :icon="mdiBell"
+          />
+        </template>
+        Notifications
+      </v-list-item>
+    </template>
+    <v-card
+      title="Notifications"
+      rounded="lg"
+    >
+      <v-card-text class="pa-0">
+        <d-frame :src="eventsSubscribeUrl" />
+      </v-card-text>
+    </v-card>
+  </v-menu>
+
+  <!-- Search field -->
+  <v-text-field
+    v-model="search"
+    :append-inner-icon="mdiMagnify"
+    label="Rechercher"
+    class="mt-4 mx-4"
+    color="primary"
+    density="compact"
+    variant="outlined"
+    autofocus
+    hide-details
+    clearable
+  />
+
+  <!-- Status filters -->
+  <v-select
+    v-model="statusesSelected"
+    :items="statusesItems"
+    item-title="display"
+    item-value="statusKey"
+    class="mt-4 mx-4"
+    density="compact"
+    label="Status"
+    rounded="xl"
+    variant="outlined"
+    hide-details
+    chips
+    clearable
+    closable-chips
+    multiple
+  />
+
+  <!-- Plugin filters -->
+  <v-autocomplete
+    v-model="pluginsSelected"
+    :items="pluginsItems"
+    item-title="display"
+    item-value="pluginKey"
+    class="mt-4 mx-4"
+    density="compact"
+    label="Plugin"
+    rounded="xl"
+    variant="outlined"
+    hide-details
+    chips
+    clearable
+    closable-chips
+    multiple
+  />
+
+  <!-- Show all switch (admin only) -->
+  <v-switch
+    v-if="adminMode"
+    v-model="showAll"
+    color="admin"
+    label="Voir tous les traitements"
+    hide-details
+    class="mt-2 mx-4 text-admin"
+  />
+
+  <!-- Owner filters (only if showAll and admin) -->
+  <v-autocomplete
+    v-if="showAll"
+    v-model="ownersSelected"
+    :items="ownersItems"
+    item-title="display"
+    item-value="ownerKey"
+    class="mt-2 mx-4 text-admin"
+    density="compact"
+    label="Propriétaire"
+    rounded="xl"
+    variant="outlined"
+    chips
+    clearable
+    closable-chips
+    hide-details
+    multiple
+  />
 </template>
 
 <script setup lang="ts">
@@ -181,7 +174,7 @@ type InstalledPlugin = {
 const installedPluginsFetch = useFetch<{ results: InstalledPlugin[], count: number }>(`${$apiPath}/plugins?privateAccess=${processingsProps.ownerFilter}`)
 const installedPlugins = computed(() => installedPluginsFetch.data.value?.results)
 
-const notifUrl = computed(() => {
+const eventsSubscribeUrl = computed(() => {
   const topics = [
     { key: 'processings:processing-finish-ok', title: 'Un traitement s\'est terminé sans erreurs' },
     { key: 'processings:processing-finish-error', title: 'Un traitement a échoué' },

@@ -52,17 +52,37 @@ services:
         condition: service_healthy
     environment:
       - PORT=8081
-      - DEBUG=files
       - MONGO_URL=mongodb://localhost:27017/data-fair
-      - OPENAPI_VIEWER_URL=http://localhost:5600/openapi-viewer/
       - DIRECTORY_URL=http://localhost:5600/simple-directory
-      - NOTIFY_URL=http://localhost:5600/events
+      - PRIVATE_EVENTS_URL=http://localhost:8083
+      - PRIVATE_DIRECTORY_URL=http://localhost:8080
       - PUBLIC_URL=http://localhost:5600/data-fair
       - WS_PUBLIC_URL=ws://localhost:5600/data-fair
-      - EXTRA_NAV_ITEMS=[{"id":"events","can":"admin","iframe":"http://localhost:5600/events/embed/events","basePath":"/events","icon":"mdi-clipboard-text-clock","title":"Traçabilité"}, {"id":"processings","can":"contrib","iframe":"http://localhost:5600/processings/processings","basePath":"/processings","icon":"mdi-cog-transfer-outline","title":"Traitements périodiques"}]
-      - EXTRA_ADMIN_NAV_ITEMS=[{"id":"processings","iframe":"http://localhost:5600/processings/admin","basePath":"/processings","icon":"mdi-cog-transfer-outline","title":"Plugins - Traitements"},{"id":"processingsAdminDoc","href":"http://localhost:5600/openapi-viewer?urlType=processingsAdmin","icon":"mdi-cog-transfer-outline","title":"API Traitements périodiques"}]
       - OBSERVER_ACTIVE=false
+
+      - PRIVATE_PROCESSINGS_URL=http://localhost:8082
+      - SECRET_EVENTS=secret-events
+      - EXTRA_ADMIN_NAV_ITEMS=[{"id":"processingsAdminDoc","href":"http://localhost:5600/openapi-viewer?urlType=processingsAdmin","icon":"mdi-cog-transfer-outline","title":"API Traitements périodiques"}]
+      - OPENAPI_VIEWER_URL=http://localhost:5600/openapi-viewer/
       - OPENAPI_VIEWER_V2=true
+
+  #####
+  # optional services
+  #####
+
+  events:
+    profiles:
+      - dev
+    image: ghcr.io/data-fair/events:main
+    network_mode: host
+    environment:
+      - PORT=8083
+      - MONGO_URL=mongodb://localhost:27017/data-fair-events
+      - PRIVATE_DIRECTORY_URL=http://localhost:5600/simple-directory
+      - SECRET_IDENTITIES=secret-identities
+      - SECRET_EVENTS=secret-events
+      - SECRET_SENDMAILS=secret-sendmails
+      - OBSERVER_ACTIVE=false
 
   openapi-viewer:
     profiles:
@@ -72,19 +92,6 @@ services:
       - PORT=8084
       - USE_SIMPLE_DIRECTORY=true
       - ALLOWED_URLS={"processings":"http://localhost:5600/processings/api/v1/api-docs.json","processingsId":"http://localhost:5600/processings/api/v1/processings/{id}/api-docs.json","processingsAdmin":"http://localhost:5600/processings/api/v1/admin/api-docs.json"}
-
-  events:
-    profiles:
-      - dev
-    image: ghcr.io/data-fair/events:main
-    network_mode: host
-    environment:
-      - PORT=8083
-      - PRIVATE_DIRECTORY_URL=http://localhost:5600/simple-directory
-      - SECRET_IDENTITIES=secret-identities
-      - SECRET_EVENTS=secret-events
-      - SECRET_SENDMAILS=secret-sendmails
-      - OBSERVER_ACTIVE=false
 
   #####
   # db and search engine
