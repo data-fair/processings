@@ -49,6 +49,7 @@
     "@data-fair/lib-utils": "^1.6.1",
     "@types/config": "^3.3.5",
     "@types/debug": "^4.1.12",
+    "@types/semver": "^7.7.1",
     "eslint": "^9.29.0",
     "eslint-plugin-vue": "^10.2.0",
     "eslint-plugin-vuetify": "github:albanm/eslint-plugin-vuetify",
