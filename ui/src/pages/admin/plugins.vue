@@ -9,7 +9,7 @@
       density="compact"
       hide-details
       placeholder="rechercher"
-      style="max-width:400px;"
+      max-width="400"
       variant="outlined"
     />
 
@@ -41,78 +41,129 @@
     <v-card
       v-for="result in filteredInstalledPlugins"
       :key="'installed-' + result.id"
+      :loading="pluginLocked === `${result.id}` ? 'primary' : false"
       class="mb-4"
     >
-      <v-progress-linear
-        v-if="pluginLocked === `${result.name}-${result.distTag}`"
-        indeterminate
-        color="primary"
-      />
       <v-toolbar
+        :title="result.distTag === 'latest' ? result.name : result.name + ' (' + result.distTag + ')'"
         density="compact"
-        flat
         variant="outlined"
+        flat
       >
-        <v-toolbar-title>
-          {{ result.distTag === 'latest' ? result.name : result.name + ' (' + result.distTag + ')' }}
-        </v-toolbar-title>
-        <v-spacer />
-        Utilisé {{ result.usages }} fois -
-        {{ result.version }}
-        <v-btn
-          v-if="updateAvailable(result)[0]"
-          :title="`Mettre à jour (${updateAvailable(result)[1]})`"
-          :icon="mdiUpdate"
-          color="primary"
-          :disabled="!!pluginLocked"
-          @click="update(result)"
-        />
-        <v-menu
-          :key="result.id"
-          :close-on-content-click="false"
-          max-width="500"
-        >
-          <template #activator="{ props }">
+        <template #append>
+          Utilisé {{ result.usages }} fois - {{ result.version }}
+          <template v-if="updateAvailable(result)[0]">
             <v-btn
-              v-bind="props"
-              title="Désinstaller"
-              :icon="mdiDelete"
-              color="warning"
+              v-if="!updateAvailable(result)[2]"
+              :title="`Mettre à jour (${updateAvailable(result)[1]})`"
+              :icon="mdiUpdate"
+              color="primary"
               :disabled="!!pluginLocked"
-              @click="deleteMenuShowed = result.id"
+              @click="update(result)"
             />
+            <v-menu
+              v-else
+              :key="`major-update-${result.id}`"
+              :close-on-content-click="false"
+              max-width="500"
+            >
+              <template #activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  :title="`Mettre à jour (${updateAvailable(result)[1]})`"
+                  :icon="mdiUpdate"
+                  color="warning"
+                  :disabled="!!pluginLocked"
+                  @click="showMajorUpdateMenu = result.id"
+                />
+              </template>
+              <v-card v-if="showMajorUpdateMenu === result.id">
+                <v-card-title primary-title>
+                  Mise à jour majeure
+                </v-card-title>
+                <v-progress-linear
+                  v-if="pluginLocked === `${result.id}`"
+                  indeterminate
+                  color="warning"
+                />
+                <v-card-text>
+                  Mettre à jour vers une nouvelle version majeure risque d'entraîner une rupture de compatibilité. Vous pouvez choisir de confirmer la montée en version, ou préférer l'installation de la nouvelle version séparée.
+                </v-card-text>
+                <v-card-actions>
+                  <v-spacer />
+                  <v-btn
+                    :disabled="!!pluginLocked"
+                    @click="showMajorUpdateMenu = null"
+                  >
+                    Annuler
+                  </v-btn>
+                  <v-btn
+                    color="warning"
+                    variant="flat"
+                    :disabled="!!pluginLocked"
+                    @click="showMajorUpdateMenu = null; update(result)"
+                  >
+                    Mettre à jour
+                  </v-btn>
+                  <v-btn
+                    color="primary"
+                    variant="flat"
+                    :disabled="!!pluginLocked"
+                    @click="showMajorUpdateMenu = null; installParallel(result)"
+                  >
+                    Installer séparément
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-menu>
           </template>
-          <v-card v-if="deleteMenuShowed">
-            <v-card-title primary-title>
-              Désinstallation du plugin
-            </v-card-title>
-            <v-progress-linear
-              v-if="pluginLocked === `${result.name}-${result.distTag}`"
-              indeterminate
-              color="warning"
-            />
-            <v-card-text>
-              Voulez-vous vraiment désinstaller le plugin "{{ result.name }}" ?
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer />
+          <v-menu
+            :key="result.id"
+            :close-on-content-click="false"
+            max-width="500"
+          >
+            <template #activator="{ props }">
               <v-btn
-                :disabled="!!pluginLocked"
-                @click="deleteMenuShowed = null"
-              >
-                Non
-              </v-btn>
-              <v-btn
+                v-bind="props"
+                title="Désinstaller"
+                :icon="mdiDelete"
                 color="warning"
-                variant="flat"
                 :disabled="!!pluginLocked"
-                @click="uninstall.execute(result)"
-              >
-                Oui
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-menu>
+                @click="showDeleteMenu = result.id"
+              />
+            </template>
+            <v-card v-if="showDeleteMenu">
+              <v-card-title primary-title>
+                Désinstallation du plugin
+              </v-card-title>
+              <v-progress-linear
+                v-if="pluginLocked === `${result.id}`"
+                indeterminate
+                color="warning"
+              />
+              <v-card-text>
+                Voulez-vous vraiment désinstaller le plugin "{{ result.name }}" ?
+              </v-card-text>
+              <v-card-actions>
+                <v-spacer />
+                <v-btn
+                  :disabled="!!pluginLocked"
+                  @click="showDeleteMenu = null"
+                >
+                  Non
+                </v-btn>
+                <v-btn
+                  color="warning"
+                  variant="flat"
+                  :disabled="!!pluginLocked"
+                  @click="uninstall.execute(result)"
+                >
+                  Oui
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-menu>
+        </template>
       </v-toolbar>
 
       <v-card-text class="py-2">
@@ -168,7 +219,7 @@
       plugins disponibles
 
       <v-menu
-        v-model="showForceInstall"
+        v-model="showManualInstallMenu"
         :close-on-content-click="false"
         max-width="500"
       >
@@ -193,7 +244,7 @@
                 Installer depuis npm
               </p>
               <v-text-field
-                v-model="forceInstallPlugin.name"
+                v-model="manualInstallPlugin.name"
                 class="mb-2"
                 placeholder="@data-fair/processing-my-plugin"
                 label="Nom du plugin"
@@ -203,7 +254,7 @@
                 hide-details
               />
               <v-text-field
-                v-model="forceInstallPlugin.version"
+                v-model="manualInstallPlugin.version"
                 class="mb-2"
                 placeholder="0.0.0"
                 label="Version du plugin"
@@ -211,7 +262,7 @@
                 hide-details
               />
               <v-text-field
-                v-model="forceInstallPlugin.distTag"
+                v-model="manualInstallPlugin.distTag"
                 placeholder="latest"
                 label="Tag de distribution"
                 :disabled="!!pluginLocked || !!selectedFile"
@@ -238,7 +289,7 @@
             <v-spacer />
             <v-btn
               :disabled="!!pluginLocked || install.loading.value"
-              @click="showForceInstall = false; forceInstallPlugin = { name: '', version: '', distTag: 'latest', description: '' }; selectedFile = undefined"
+              @click="showManualInstallMenu = false; manualInstallPlugin = { name: '', version: '', distTag: 'latest' }; selectedFile = undefined"
             >
               Annuler
             </v-btn>
@@ -274,30 +325,25 @@
     <v-card
       v-for="result in filteredAvailablePlugins"
       v-else
-      :key="'available-' + result.name + '-' + result.version"
+      :key="'available-' + result.id"
+      :loading="pluginLocked === `${result.id}` ? 'primary' : false"
       class="mb-4"
     >
-      <v-progress-linear
-        v-if="pluginLocked === `${result.name}-${result.distTag}`"
-        indeterminate
-        color="primary"
-      />
       <v-toolbar
+        :title="result.distTag === 'latest' ? result.name : result.name + ' (' + result.distTag + ')'"
         dense
         flat
       >
-        <v-toolbar-title>
-          {{ result.distTag === 'latest' ? result.name : result.name + ' (' + result.distTag + ')' }}
-        </v-toolbar-title>
-        <v-spacer />
-        {{ result.version }}
-        <v-btn
-          title="Installer"
-          :icon="mdiDownload"
-          color="primary"
-          :disabled="!!pluginLocked"
-          @click="install.execute(result)"
-        />
+        <template #append>
+          {{ result.version }}
+          <v-btn
+            title="Installer"
+            :icon="mdiDownload"
+            color="primary"
+            :disabled="!!pluginLocked"
+            @click="install.execute(result)"
+          />
+        </template>
       </v-toolbar>
       <v-card-text
         v-if="result.description"
@@ -330,8 +376,9 @@ if (!session.state.user?.adminMode) {
 onMounted(() => setBreadcrumbs([{ text: 'Plugins' }]))
 
 type AvailablePlugin = {
+  id?: string // Calculated from name version and distTag
   name: string
-  description: string
+  description?: string
   distTag: string
   version: string
 }
@@ -356,6 +403,7 @@ const installedPluginsFetch = useFetch<{
   count: number
 }>(`${$apiPath}/plugins`)
 
+// Assign usage count to each installed plugin and make old config schema compatible with vjsf 3
 const installedPlugins = computed(() => {
   const results = installedPluginsFetch.data.value?.results || []
   const usages = installedPluginsFetch.data.value?.facets.usages || {}
@@ -370,9 +418,11 @@ const availablePluginsFetch = useFetch<{
   results: AvailablePlugin[],
   count: number
 }>(`${$apiPath}/plugins-registry`, { query: query.value })
+
 const availablePlugins = computed(() => {
   const results = availablePluginsFetch.data.value?.results || []
   results.sort((a, b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
+  results.forEach(r => { r.id = generatePluginId(r.name, r.version, r.distTag) })
   return results
 })
 
@@ -384,7 +434,7 @@ const filteredInstalledPlugins = computed(() => {
 
 const filteredAvailablePlugins = computed(() => {
   const filteredPlugins = availablePlugins.value.filter(result =>
-    !installedPlugins.value.find(r => r.name === result.name && r.distTag === result.distTag)
+    !installedPlugins.value.find(r => r.id === result.id)
   )
 
   if (!search.value) return filteredPlugins
@@ -394,18 +444,20 @@ const filteredAvailablePlugins = computed(() => {
   )
 })
 
-const deleteMenuShowed = ref(null) as Ref<string | null>
+const showDeleteMenu = ref(null) as Ref<string | null>
+const showMajorUpdateMenu = ref(null) as Ref<string | null>
+const showManualInstallMenu = ref<boolean>(false)
 const pluginLocked = ref(null) as Ref<string | null>
-const showForceInstall = ref<boolean>(false)
-const forceInstallPlugin = ref<AvailablePlugin>({ name: '', version: '', distTag: 'latest', description: '' })
+const manualInstallPlugin = ref<AvailablePlugin>({ name: '', version: '', distTag: 'latest' })
 const selectedFile = ref<File>()
 
 const hasNpmFields = computed(() =>
-  !!(forceInstallPlugin.value.name?.trim() || forceInstallPlugin.value.version?.trim())
+  !!(manualInstallPlugin.value.name?.trim() || manualInstallPlugin.value.version?.trim())
 )
 
+// Tue if form is valid
 const canForceInstall = computed(() => {
-  if (hasNpmFields.value) return forceInstallPlugin.value.name && forceInstallPlugin.value.version && forceInstallPlugin.value.distTag
+  if (hasNpmFields.value) return manualInstallPlugin.value.name && manualInstallPlugin.value.version && manualInstallPlugin.value.distTag
   else if (selectedFile.value) return true
   return false
 })
@@ -416,16 +468,20 @@ const install = useAsyncAction(
 
     let body: FormData | AvailablePlugin
 
-    // Installation depuis un fichier
+    // From a file
     if (selectedFile.value) {
       body = new FormData()
       body.append('file', selectedFile.value)
 
-    // Installation depuis npm
+    // From npm registry
     } else {
-      const pluginPost = plugin || forceInstallPlugin.value
-      pluginLocked.value = `${pluginPost.name}-${pluginPost.distTag}`
-      body = pluginPost
+      const pluginPost = plugin || manualInstallPlugin.value
+      pluginLocked.value = `${pluginPost.id || generatePluginId(pluginPost.name, pluginPost.version, pluginPost.distTag)}`
+      body = {
+        name: pluginPost.name,
+        version: pluginPost.version,
+        distTag: pluginPost.distTag
+      }
     }
 
     await $fetch('/plugins', {
@@ -434,9 +490,9 @@ const install = useAsyncAction(
     })
     installedPluginsFetch.refresh()
     pluginLocked.value = null
-    showForceInstall.value = false
+    showManualInstallMenu.value = false
     selectedFile.value = undefined
-    forceInstallPlugin.value = { name: '', version: '', distTag: 'latest', description: '' }
+    manualInstallPlugin.value = { name: '', version: '', distTag: 'latest' }
   },
   {
     error: 'Erreur lors de l\'installation du plugin',
@@ -452,7 +508,7 @@ const uninstall = useAsyncAction(
     })
     installedPluginsFetch.refresh()
     pluginLocked.value = null
-    deleteMenuShowed.value = null
+    showDeleteMenu.value = null
   },
   {
     error: 'Erreur lors de la désinstallation du plugin',
@@ -461,16 +517,78 @@ const uninstall = useAsyncAction(
 )
 
 /**
- * Check if an update is available for a plugin (same distTag, same name, different version)
+ * Check if an update is available for a plugin (same distTag, same name, higher major version)
  * @param plugin - The plugin to check
- * @returns - A tuple with a boolean indicating if an update is available and the new version
+ * @returns - A tuple with a boolean indicating if an update is available, the new version and a major-update flag
  */
-function updateAvailable (plugin: InstalledPlugin): [boolean, string] {
-  if (availablePlugins.value.length === 0) return [false, '']
+function updateAvailable (plugin: InstalledPlugin): [boolean, string, boolean] {
+  if (availablePlugins.value.length === 0) return [false, '', false]
   const availablePlugin = availablePlugins.value.find(r => (r.name === plugin.name && r.distTag === plugin.distTag))
-  if (availablePlugin &&
-    availablePlugin.version !== plugin.version) return [true, availablePlugin.version]
-  return [false, '']
+  if (!availablePlugin) return [false, '', false]
+
+  const relatedInstalled = installedPlugins.value.filter(r => r.name === plugin.name && r.distTag === plugin.distTag)
+  if (relatedInstalled.length === 0) return [false, '', false]
+
+  let latestInstalled = relatedInstalled[0]
+  for (const candidate of relatedInstalled.slice(1)) {
+    const candidateParts = candidate.version.split('.')
+    const latestParts = latestInstalled.version.split('.')
+    let candidateIsNewer = false
+
+    for (let i = 0; i < 3; i += 1) {
+      const candidatePart = Number.parseInt(candidateParts[i] || '0', 10)
+      const latestPart = Number.parseInt(latestParts[i] || '0', 10)
+
+      if (candidatePart > latestPart) {
+        candidateIsNewer = true
+        break
+      }
+      if (candidatePart < latestPart) {
+        candidateIsNewer = false
+        break
+      }
+    }
+
+    if (candidateIsNewer) latestInstalled = candidate
+  }
+
+  if (latestInstalled.id !== plugin.id) return [false, '', false]
+
+  const availableParts = availablePlugin.version.split('.')
+  const installedParts = latestInstalled.version.split('.')
+  let availableIsNewer = false
+  let versionsEqual = true
+
+  for (let i = 0; i < 3; i += 1) {
+    const availablePart = Number.parseInt(availableParts[i] || '0', 10)
+    const installedPart = Number.parseInt(installedParts[i] || '0', 10)
+
+    if (availablePart > installedPart) {
+      availableIsNewer = true
+      versionsEqual = false
+      break
+    }
+    if (availablePart < installedPart) {
+      availableIsNewer = false
+      versionsEqual = false
+      break
+    }
+  }
+
+  if (versionsEqual) return [false, '', false]
+  if (availableIsNewer) {
+    const installedMajor = Number.parseInt(installedParts[0] || '0', 10)
+    const availableMajor = Number.parseInt(availableParts[0] || '0', 10)
+    const isMajorUpdate = availableMajor > installedMajor
+    return [true, availablePlugin.version, isMajorUpdate]
+  }
+  return [false, '', false]
+}
+
+async function installParallel (plugin: InstalledPlugin) {
+  const availablePlugin = availablePlugins.value.find(r => r.name === plugin.name && r.distTag === plugin.distTag)
+  if (!availablePlugin) return
+  await install.execute(availablePlugin)
 }
 
 async function update (plugin: InstalledPlugin) {
@@ -500,6 +618,12 @@ const vjsfOptions = computed<VjsfOptions>(() => ({
   updateOn: 'blur',
   xI18n: true
 }))
+
+const generatePluginId = (name: string, version: string, distTag: string) => {
+  let id = name.replace('/', '-') + '-' + version.split('.')[0]
+  if (distTag && distTag !== 'latest') id += '-' + distTag
+  return id
+}
 
 </script>
 
