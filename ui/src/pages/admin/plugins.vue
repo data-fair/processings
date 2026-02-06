@@ -3,39 +3,39 @@
     <v-text-field
       v-model="search"
       :append-inner-icon="mdiMagnify"
+      :placeholder="t('searchPlaceholder')"
       class="my-2"
-      clearable
       color="primary"
       density="compact"
-      hide-details
-      placeholder="rechercher"
       max-width="400"
       variant="outlined"
+      clearable
+      hide-details
     />
 
     <v-list-subheader>
       <v-progress-circular
         v-if="installedPluginsFetch.loading.value"
-        indeterminate
+        color="primary"
         size="16"
         width="2"
-        color="primary"
+        indeterminate
       />
       <v-icon
         v-else-if="installedPluginsFetch.error.value"
-        color="error"
         :icon="mdiAlert"
+        color="error"
       />
       <template v-else-if="installedPluginsFetch.data.value">
         {{ installedPluginsFetch.data.value.count }}
       </template>
-      plugins installés
+      {{ t('installedPluginsLabel') }}
     </v-list-subheader>
     <v-skeleton-loader
       v-if="installedPluginsFetch.loading.value"
+      :class="$vuetify.theme.current.dark ? 'my-4' : 'my-4 skeleton'"
       :height="100"
       type="list-item-two-line"
-      :class="$vuetify.theme.current.dark ? 'my-4' : 'my-4 skeleton'"
     />
 
     <v-card
@@ -51,14 +51,14 @@
         flat
       >
         <template #append>
-          Utilisé {{ result.usages }} fois - {{ result.version }}
-          <template v-if="updateAvailable(result)[0]">
+          {{ t('usageCount', { count: result.usages }) }} - {{ result.version }}
+          <template v-if="updateInfoById[result.id]?.available">
             <v-btn
-              v-if="!updateAvailable(result)[2]"
-              :title="`Mettre à jour (${updateAvailable(result)[1]})`"
-              :icon="mdiUpdate"
-              color="primary"
+              v-if="!updateInfoById[result.id]?.isMajor"
               :disabled="!!pluginLocked"
+              :icon="mdiUpdate"
+              :title="t('updateWithVersion', { version: updateInfoById[result.id]?.version })"
+              color="primary"
               @click="update(result)"
             />
             <v-menu
@@ -70,24 +70,24 @@
               <template #activator="{ props }">
                 <v-btn
                   v-bind="props"
-                  :title="`Mettre à jour (${updateAvailable(result)[1]})`"
-                  :icon="mdiUpdate"
-                  color="warning"
                   :disabled="!!pluginLocked"
+                  :icon="mdiUpdate"
+                  :title="t('updateWithVersion', { version: updateInfoById[result.id]?.version })"
+                  color="warning"
                   @click="showMajorUpdateMenu = result.id"
                 />
               </template>
               <v-card v-if="showMajorUpdateMenu === result.id">
                 <v-card-title primary-title>
-                  Mise à jour majeure
+                  {{ t('majorUpdateTitleWithVersions', { from: result.version, to: updateInfoById[result.id]?.version }) }}
                 </v-card-title>
                 <v-progress-linear
                   v-if="pluginLocked === `${result.id}`"
-                  indeterminate
                   color="warning"
+                  indeterminate
                 />
                 <v-card-text>
-                  Mettre à jour vers une nouvelle version majeure risque d'entraîner une rupture de compatibilité. Vous pouvez choisir de confirmer la montée en version, ou préférer l'installation de la nouvelle version séparée.
+                  {{ t('majorUpdateBody') }}
                 </v-card-text>
                 <v-card-actions>
                   <v-spacer />
@@ -95,23 +95,23 @@
                     :disabled="!!pluginLocked"
                     @click="showMajorUpdateMenu = null"
                   >
-                    Annuler
+                    {{ t('cancel') }}
                   </v-btn>
                   <v-btn
+                    :disabled="!!pluginLocked"
                     color="warning"
                     variant="flat"
-                    :disabled="!!pluginLocked"
                     @click="showMajorUpdateMenu = null; update(result)"
                   >
-                    Mettre à jour
+                    {{ t('update') }}
                   </v-btn>
                   <v-btn
+                    :disabled="!!pluginLocked"
                     color="primary"
                     variant="flat"
-                    :disabled="!!pluginLocked"
                     @click="showMajorUpdateMenu = null; installParallel(result)"
                   >
-                    Installer séparément
+                    {{ t('installSeparately') }}
                   </v-btn>
                 </v-card-actions>
               </v-card>
@@ -125,24 +125,24 @@
             <template #activator="{ props }">
               <v-btn
                 v-bind="props"
-                title="Désinstaller"
-                :icon="mdiDelete"
-                color="warning"
                 :disabled="!!pluginLocked"
+                :icon="mdiDelete"
+                :title="t('uninstall')"
+                color="warning"
                 @click="showDeleteMenu = result.id"
               />
             </template>
             <v-card v-if="showDeleteMenu">
               <v-card-title primary-title>
-                Désinstallation du plugin
+                {{ t('uninstallTitle') }}
               </v-card-title>
               <v-progress-linear
                 v-if="pluginLocked === `${result.id}`"
-                indeterminate
                 color="warning"
+                indeterminate
               />
               <v-card-text>
-                Voulez-vous vraiment désinstaller le plugin "{{ result.name }}" ?
+                {{ t('uninstallConfirm', { name: result.name }) }}
               </v-card-text>
               <v-card-actions>
                 <v-spacer />
@@ -150,15 +150,15 @@
                   :disabled="!!pluginLocked"
                   @click="showDeleteMenu = null"
                 >
-                  Non
+                  {{ t('no') }}
                 </v-btn>
                 <v-btn
+                  :disabled="!!pluginLocked"
                   color="warning"
                   variant="flat"
-                  :disabled="!!pluginLocked"
                   @click="uninstall.execute(result)"
                 >
-                  Oui
+                  {{ t('yes') }}
                 </v-btn>
               </v-card-actions>
             </v-card>
@@ -179,8 +179,8 @@
         />
         <v-form
           :ref="'form-metadata-' + result.id"
-          autocomplete="off"
           class="mt-4"
+          autocomplete="off"
         >
           <vjsf
             v-model="result.metadata"
@@ -208,15 +208,15 @@
     <v-list-subheader>
       <v-progress-circular
         v-if="availablePluginsFetch.loading.value"
-        indeterminate
+        color="primary"
         size="16"
         width="2"
-        color="primary"
+        indeterminate
       />
       <span v-else-if="filteredAvailablePlugins">
         {{ filteredAvailablePlugins.length }}
       </span>
-      plugins disponibles
+      {{ t('availablePluginsLabel') }}
 
       <v-menu
         v-model="showManualInstallMenu"
@@ -226,59 +226,59 @@
         <template #activator="{ props }">
           <v-btn
             v-bind="props"
+            :disabled="!!pluginLocked"
             class="mx-4"
             size="x-small"
             variant="tonal"
-            :disabled="!!pluginLocked"
           >
-            Installer manuellement
+            {{ t('manualInstall') }}
           </v-btn>
         </template>
         <v-card
-          title="Installation manuelle d'un plugin"
           :loading="install.loading.value ? 'warning' : false"
+          :title="t('manualInstallTitle')"
         >
           <v-card-text class="pb-0">
             <div class="mb-4">
               <p class="text-body-2 font-italic mb-2">
-                Installer depuis npm
+                {{ t('manualInstallFromNpm') }}
               </p>
               <v-text-field
                 v-model="manualInstallPlugin.name"
-                class="mb-2"
-                placeholder="@data-fair/processing-my-plugin"
-                label="Nom du plugin"
-                :loading="availablePluginsFetch.loading.value"
                 :disabled="!!pluginLocked || !!selectedFile"
+                :label="t('manualInstallName')"
+                :loading="availablePluginsFetch.loading.value"
+                placeholder="@data-fair/processing-my-plugin"
+                class="mb-2"
                 autofocus
                 hide-details
               />
               <v-text-field
                 v-model="manualInstallPlugin.version"
-                class="mb-2"
-                placeholder="0.0.0"
-                label="Version du plugin"
                 :disabled="!!pluginLocked || !!selectedFile"
+                :label="t('manualInstallVersion')"
+                placeholder="1.0.0"
+                class="mb-2"
                 hide-details
               />
               <v-text-field
                 v-model="manualInstallPlugin.distTag"
-                placeholder="latest"
-                label="Tag de distribution"
                 :disabled="!!pluginLocked || !!selectedFile"
+                :label="t('manualInstallDistTag')"
+                placeholder="latest"
                 hide-details
               />
             </div>
 
             <div>
               <p class="text-body-2 font-italic mb-2">
-                Installer depuis un fichier
+                {{ t('manualInstallFromFile') }}
               </p>
               <v-file-input
                 v-model="selectedFile"
-                accept=".tgz"
-                label="Sélectionner un fichier .tgz"
                 :disabled="!!pluginLocked || hasNpmFields"
+                :label="t('manualInstallFileLabel')"
+                accept=".tgz"
                 chips
                 hide-details
                 show-size
@@ -289,16 +289,16 @@
             <v-spacer />
             <v-btn
               :disabled="!!pluginLocked || install.loading.value"
-              @click="showManualInstallMenu = false; manualInstallPlugin = { name: '', version: '', distTag: 'latest' }; selectedFile = undefined"
+              @click="resetManualInstall()"
             >
-              Annuler
+              {{ t('cancel') }}
             </v-btn>
             <v-btn
-              color="warning"
               :disabled="!!pluginLocked || !canForceInstall || install.loading.value"
+              color="warning"
               @click="install.execute()"
             >
-              Installer
+              {{ t('install') }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -307,7 +307,7 @@
 
     <v-checkbox
       v-model="query.showAll"
-      label="Afficher les versions de test des plugins"
+      :label="t('showAllLabel')"
       color="primary"
       density="compact"
     />
@@ -316,9 +316,9 @@
       <v-skeleton-loader
         v-for="n in 4"
         :key="n"
+        :class="$vuetify.theme.current.dark ? 'my-4' : 'my-4 skeleton'"
         :height="100"
         type="list-item-two-line"
-        :class="$vuetify.theme.current.dark ? 'my-4' : 'my-4 skeleton'"
       />
     </template>
 
@@ -337,10 +337,10 @@
         <template #append>
           {{ result.version }}
           <v-btn
-            title="Installer"
-            :icon="mdiDownload"
-            color="primary"
             :disabled="!!pluginLocked"
+            :icon="mdiDownload"
+            :title="t('install')"
+            color="primary"
             @click="install.execute(result)"
           />
         </template>
@@ -360,20 +360,17 @@
 <script setup lang="ts">
 import Vjsf, { type Options as VjsfOptions } from '@koumoul/vjsf'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
+import { compare, gt, major } from 'semver'
 
+const { t } = useI18n()
 const session = useSession()
 const search = useStringSearchParam('q')
 const query = ref({ showAll: false })
 const valid = ref<Record<string, boolean>>({})
 
-if (!session.state.user) {
-  throw new Error('Authentification nécessaire')
-}
-if (!session.state.user?.adminMode) {
-  throw new Error('Vous n\'avez pas la permission d\'accéder à cette page, il faut avoir activé le mode super-administration.')
-}
-
-onMounted(() => setBreadcrumbs([{ text: 'Plugins' }]))
+if (!session.state.user) throw new Error(t('authRequired'))
+if (!session.state.user?.adminMode) throw new Error(t('adminRequired'))
+setBreadcrumbs([{ text: t('pluginsBreadcrumb') }])
 
 type AvailablePlugin = {
   id?: string // Calculated from name version and distTag
@@ -403,7 +400,39 @@ const installedPluginsFetch = useFetch<{
   count: number
 }>(`${$apiPath}/plugins`)
 
-// Assign usage count to each installed plugin and make old config schema compatible with vjsf 3
+/** Build a stable key for grouping plugins by name and dist tag. */
+const pluginKey = (name: string, distTag: string) => `${name}::${distTag}`
+
+const availablePluginsFetch = useFetch<{
+  results: AvailablePlugin[],
+  count: number
+}>(`${$apiPath}/plugins-registry`, { query: query.value })
+
+/** Sort registry plugins and inject computed ids. */
+const availablePlugins = computed(() => {
+  const results = availablePluginsFetch.data.value?.results || []
+  results.sort((a, b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
+  results.forEach(r => { r.id = generatePluginId(r.name, r.version, r.distTag) })
+  return results
+})
+
+const showDeleteMenu = ref(null) as Ref<string | null>
+const showMajorUpdateMenu = ref(null) as Ref<string | null>
+const showManualInstallMenu = ref<boolean>(false)
+const pluginLocked = ref(null) as Ref<string | null>
+const manualInstallPlugin = ref<AvailablePlugin>({ name: '', version: '', distTag: 'latest' })
+const selectedFile = ref<File>()
+
+/** Fast lookup of available plugins by key. */
+const availableByKey = computed(() => {
+  const map = new Map<string, AvailablePlugin>()
+  for (const plugin of availablePlugins.value) {
+    map.set(pluginKey(plugin.name, plugin.distTag), plugin)
+  }
+  return map
+})
+
+/** Assign usage count and normalize schema for VJSF v3. */
 const installedPlugins = computed(() => {
   const results = installedPluginsFetch.data.value?.results || []
   const usages = installedPluginsFetch.data.value?.facets.usages || {}
@@ -414,54 +443,98 @@ const installedPlugins = computed(() => {
   }))
 })
 
-const availablePluginsFetch = useFetch<{
-  results: AvailablePlugin[],
-  count: number
-}>(`${$apiPath}/plugins-registry`, { query: query.value })
-
-const availablePlugins = computed(() => {
-  const results = availablePluginsFetch.data.value?.results || []
-  results.sort((a, b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
-  results.forEach(r => { r.id = generatePluginId(r.name, r.version, r.distTag) })
-  return results
+/** Keep the latest installed version per plugin key. */
+const latestInstalledByKey = computed(() => {
+  const map = new Map<string, InstalledPlugin>()
+  for (const plugin of installedPlugins.value) {
+    const key = pluginKey(plugin.name, plugin.distTag)
+    const current = map.get(key)
+    if (!current || compare(plugin.version, current.version) > 0) {
+      map.set(key, plugin)
+    }
+  }
+  return map
 })
 
+/**
+ * Precompute update availability for each installed plugin.
+ * A plugin is updatable if there's an available version with a higher version number than the latest installed one.
+ * We also detect whether the update is a major version change to warn the user about potential breaking changes.
+ * @return A map of plugin id to update info, including availability, latest version and whether it's a major update.
+ */
+const updateInfoById = computed(() => {
+  const info: Record<string, { available: boolean, version: string, isMajor: boolean }> = {}
+  for (const plugin of installedPlugins.value) {
+    const key = pluginKey(plugin.name, plugin.distTag)
+    const latestInstalled = latestInstalledByKey.value.get(key)
+    const available = availableByKey.value.get(key)
+
+    if (!latestInstalled || !available || latestInstalled.id !== plugin.id) {
+      info[plugin.id] = { available: false, version: '', isMajor: false }
+      continue
+    }
+
+    if (!gt(available.version, latestInstalled.version)) {
+      info[plugin.id] = { available: false, version: '', isMajor: false }
+      continue
+    }
+
+    const installedMajor = major(latestInstalled.version)
+    const availableMajor = major(available.version)
+    info[plugin.id] = {
+      available: true,
+      version: available.version,
+      isMajor: availableMajor > installedMajor
+    }
+  }
+  return info
+})
+
+/** Filter installed plugins by search term. */
 const filteredInstalledPlugins = computed(() => {
   if (!search.value) return installedPlugins.value
   return installedPlugins.value
     .filter(r => r.name.includes(search.value) || (r.description && r.description.includes(search.value)))
 })
 
+/** Filter registry plugins by search term, excluding already installed ones. */
 const filteredAvailablePlugins = computed(() => {
   const filteredPlugins = availablePlugins.value.filter(result =>
     !installedPlugins.value.find(r => r.id === result.id)
   )
 
   if (!search.value) return filteredPlugins
-  return filteredPlugins.filter(result =>
-    result.name.includes(search.value) ||
-    (result.description && result.description.includes(search.value))
-  )
+  return filteredPlugins
+    .filter(r => r.name.includes(search.value) || (r.description && r.description.includes(search.value)))
 })
 
-const showDeleteMenu = ref(null) as Ref<string | null>
-const showMajorUpdateMenu = ref(null) as Ref<string | null>
-const showManualInstallMenu = ref<boolean>(false)
-const pluginLocked = ref(null) as Ref<string | null>
-const manualInstallPlugin = ref<AvailablePlugin>({ name: '', version: '', distTag: 'latest' })
-const selectedFile = ref<File>()
-
+/** Detect whether any npm fields are filled for manual install. */
 const hasNpmFields = computed(() =>
   !!(manualInstallPlugin.value.name?.trim() || manualInstallPlugin.value.version?.trim())
 )
 
-// Tue if form is valid
+/** Ensure enough info is provided to install manually. */
 const canForceInstall = computed(() => {
   if (hasNpmFields.value) return manualInstallPlugin.value.name && manualInstallPlugin.value.version && manualInstallPlugin.value.distTag
-  else if (selectedFile.value) return true
+  if (selectedFile.value) return true
   return false
 })
 
+/** Reset manual install form state. */
+const resetManualInstall = () => {
+  showManualInstallMenu.value = false
+  manualInstallPlugin.value = { name: '', version: '', distTag: 'latest' }
+  selectedFile.value = undefined
+}
+
+/** Build a stable plugin id from name, major version and dist tag. */
+const generatePluginId = (name: string, version: string, distTag: string) => {
+  let id = name.replace('/', '-') + '-' + major(version)
+  if (distTag && distTag !== 'latest') id += '-' + distTag
+  return id
+}
+
+/** Install a plugin from registry or a local tgz file. */
 const install = useAsyncAction(
   async (plugin?: AvailablePlugin) => {
     if (!canForceInstall.value && !plugin) return
@@ -490,16 +563,15 @@ const install = useAsyncAction(
     })
     installedPluginsFetch.refresh()
     pluginLocked.value = null
-    showManualInstallMenu.value = false
-    selectedFile.value = undefined
-    manualInstallPlugin.value = { name: '', version: '', distTag: 'latest' }
+    resetManualInstall()
   },
   {
-    error: 'Erreur lors de l\'installation du plugin',
-    success: 'Plugin installé !'
+    error: t('installError'),
+    success: t('installSuccess')
   }
 )
 
+/** Uninstall a plugin by id. */
 const uninstall = useAsyncAction(
   async (plugin: InstalledPlugin) => {
     pluginLocked.value = `${plugin.name}-${plugin.distTag}`
@@ -511,87 +583,20 @@ const uninstall = useAsyncAction(
     showDeleteMenu.value = null
   },
   {
-    error: 'Erreur lors de la désinstallation du plugin',
-    success: 'Plugin désinstallé !'
+    error: t('uninstallError'),
+    success: t('uninstallSuccess')
   }
 )
 
-/**
- * Check if an update is available for a plugin (same distTag, same name, higher major version)
- * @param plugin - The plugin to check
- * @returns - A tuple with a boolean indicating if an update is available, the new version and a major-update flag
- */
-function updateAvailable (plugin: InstalledPlugin): [boolean, string, boolean] {
-  if (availablePlugins.value.length === 0) return [false, '', false]
-  const availablePlugin = availablePlugins.value.find(r => (r.name === plugin.name && r.distTag === plugin.distTag))
-  if (!availablePlugin) return [false, '', false]
-
-  const relatedInstalled = installedPlugins.value.filter(r => r.name === plugin.name && r.distTag === plugin.distTag)
-  if (relatedInstalled.length === 0) return [false, '', false]
-
-  let latestInstalled = relatedInstalled[0]
-  for (const candidate of relatedInstalled.slice(1)) {
-    const candidateParts = candidate.version.split('.')
-    const latestParts = latestInstalled.version.split('.')
-    let candidateIsNewer = false
-
-    for (let i = 0; i < 3; i += 1) {
-      const candidatePart = Number.parseInt(candidateParts[i] || '0', 10)
-      const latestPart = Number.parseInt(latestParts[i] || '0', 10)
-
-      if (candidatePart > latestPart) {
-        candidateIsNewer = true
-        break
-      }
-      if (candidatePart < latestPart) {
-        candidateIsNewer = false
-        break
-      }
-    }
-
-    if (candidateIsNewer) latestInstalled = candidate
-  }
-
-  if (latestInstalled.id !== plugin.id) return [false, '', false]
-
-  const availableParts = availablePlugin.version.split('.')
-  const installedParts = latestInstalled.version.split('.')
-  let availableIsNewer = false
-  let versionsEqual = true
-
-  for (let i = 0; i < 3; i += 1) {
-    const availablePart = Number.parseInt(availableParts[i] || '0', 10)
-    const installedPart = Number.parseInt(installedParts[i] || '0', 10)
-
-    if (availablePart > installedPart) {
-      availableIsNewer = true
-      versionsEqual = false
-      break
-    }
-    if (availablePart < installedPart) {
-      availableIsNewer = false
-      versionsEqual = false
-      break
-    }
-  }
-
-  if (versionsEqual) return [false, '', false]
-  if (availableIsNewer) {
-    const installedMajor = Number.parseInt(installedParts[0] || '0', 10)
-    const availableMajor = Number.parseInt(availableParts[0] || '0', 10)
-    const isMajorUpdate = availableMajor > installedMajor
-    return [true, availablePlugin.version, isMajorUpdate]
-  }
-  return [false, '', false]
-}
-
-async function installParallel (plugin: InstalledPlugin) {
+/** Install the next major version as a separate plugin entry. */
+const installParallel = async (plugin: InstalledPlugin) => {
   const availablePlugin = availablePlugins.value.find(r => r.name === plugin.name && r.distTag === plugin.distTag)
   if (!availablePlugin) return
   await install.execute(availablePlugin)
 }
 
-async function update (plugin: InstalledPlugin) {
+/** Update the currently installed plugin to the latest available version. */
+const update = async (plugin: InstalledPlugin) => {
   pluginLocked.value = `${plugin.name}-${plugin.distTag}`
   if (availablePlugins.value.length === 0) return false
   const availablePlugin = availablePlugins.value.find(r => r.name === plugin.name)
@@ -601,7 +606,8 @@ async function update (plugin: InstalledPlugin) {
   pluginLocked.value = null
 }
 
-async function save (plugin: InstalledPlugin, type: 'config' | 'access' | 'metadata') {
+/** Persist config/access/metadata changes for a plugin. */
+const save = async (plugin: InstalledPlugin, type: 'config' | 'access' | 'metadata') => {
   pluginLocked.value = `${plugin.name}-${plugin.distTag}`
   await $fetch(`/plugins/${plugin.id}/${type}`, {
     method: 'PUT',
@@ -610,6 +616,7 @@ async function save (plugin: InstalledPlugin, type: 'config' | 'access' | 'metad
   pluginLocked.value = null
 }
 
+/** Shared VJSF options for schema-driven forms. */
 const vjsfOptions = computed<VjsfOptions>(() => ({
   density: 'compact',
   initialValidation: 'always',
@@ -619,13 +626,40 @@ const vjsfOptions = computed<VjsfOptions>(() => ({
   xI18n: true
 }))
 
-const generatePluginId = (name: string, version: string, distTag: string) => {
-  let id = name.replace('/', '-') + '-' + version.split('.')[0]
-  if (distTag && distTag !== 'latest') id += '-' + distTag
-  return id
-}
-
 </script>
 
-<style scoped>
-</style>
+<i18n lang="yaml">
+fr:
+  adminRequired: Vous n'avez pas la permission d'accéder à cette page, il faut avoir activé le mode super-administration.
+  authRequired: Authentification nécessaire
+  availablePluginsLabel: plugins disponibles
+  cancel: Annuler
+  install: Installer
+  installError: Erreur lors de l'installation du plugin
+  installSeparately: Installer séparément
+  installSuccess: Plugin installé !
+  installedPluginsLabel: plugins installés
+  majorUpdateBody: Mettre à jour vers une nouvelle version majeure risque d'entraîner une rupture de compatibilité. Vous pouvez choisir de confirmer la montée en version, ou préférer l'installation de la nouvelle version séparée.
+  majorUpdateTitleWithVersions: "Mise à jour majeure - {from} vers {to}"
+  manualInstall: Installer manuellement
+  manualInstallDistTag: Tag de distribution
+  manualInstallFileLabel: Sélectionner un fichier .tgz
+  manualInstallFromFile: Installer depuis un fichier
+  manualInstallFromNpm: Installer depuis npm
+  manualInstallName: Nom du plugin
+  manualInstallTitle: Installation manuelle d'un plugin
+  manualInstallVersion: Version du plugin
+  no: Non
+  pluginsBreadcrumb: Plugins
+  searchPlaceholder: rechercher
+  showAllLabel: Afficher les versions de test des plugins
+  uninstall: Désinstaller
+  uninstallConfirm: Voulez-vous vraiment désinstaller le plugin "{name}" ?
+  uninstallError: Erreur lors de la désinstallation du plugin
+  uninstallSuccess: Plugin désinstallé !
+  uninstallTitle: Désinstallation du plugin
+  update: Mettre à jour
+  updateWithVersion: Mettre à jour ({version})
+  usageCount: Utilisé {count} fois
+  yes: Oui
+</i18n>
