@@ -51,20 +51,20 @@
       :processing="processing"
       class="mt-4"
     />
-  </v-container>
 
-  <navigation-right v-if="processing">
-    <processing-actions
-      :processing="processing"
-      :processing-schema="processingSchema"
-      :can-admin="canAdminProcessing"
-      :can-exec="canExecProcessing"
-      :edited="edited"
-      :is-small="false"
-      :metadata="plugin?.metadata"
-      @triggered="runs && runs.refresh()"
-    />
-  </navigation-right>
+    <navigation-right v-if="processing">
+      <processing-actions
+        :processing="processing"
+        :processing-schema="processingSchema"
+        :can-admin="canAdminProcessing"
+        :can-exec="canExecProcessing"
+        :edited="edited"
+        :is-small="false"
+        :metadata="plugin?.metadata"
+        @triggered="runs && runs.refresh()"
+      />
+    </navigation-right>
+  </v-container>
 </template>
 
 <script setup lang="ts">
