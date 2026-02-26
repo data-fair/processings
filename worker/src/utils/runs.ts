@@ -130,13 +130,16 @@ export const finish = async (run: Run, errorMessage: string | undefined = undefi
     }
   }
 
-  // store the newly closed run as processing.lastRun for convenient access
+  // Store the latest run in the processing (except log for storage optimization)
   const processingLastRun: Omit<Run, 'log'> = lastRun
   delete processingLastRun.log
   await mongo.processings.updateOne(
     { _id: run.processing._id },
-    { $set: { lastRun } }
+    { $set: { lastRun: processingLastRun as Run } }
   )
+
+  // auto-delete run if deleteOnComplete is true
+  if (lastRun.deleteOnComplete) await mongo.runs.deleteOne({ _id: run._id })
 
   // remove old runs (storage retention)
   await mongo.runs.deleteMany({
