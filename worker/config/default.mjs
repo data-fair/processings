@@ -22,6 +22,7 @@ export default {
     }
   },
   maxFailures: 10,
+  maxFailuresCooldown: 12, // in hours
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings',
   privateEventsUrl: null,
   secretKeys: {

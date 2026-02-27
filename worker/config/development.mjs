@@ -4,6 +4,7 @@ export default {
   dataFairAdminMode: true,
   dataFairAPIKey: '', // override in local-development.cjs
   maxFailures: 2,
+  maxFailuresCooldown: 0.05, // 3 minutes
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings-development',
   secretKeys: {
     events: 'secret-events'
