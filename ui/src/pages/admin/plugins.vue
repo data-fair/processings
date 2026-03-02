@@ -79,7 +79,7 @@
               </template>
               <v-card v-if="showMajorUpdateMenu === result.id">
                 <v-card-title primary-title>
-                  {{ t('majorUpdateTitleWithVersions', { from: result.version, to: updateInfoById[result.id]?.version }) }}
+                  {{ t('majorInstallTitleWithVersions') }}
                 </v-card-title>
                 <v-progress-linear
                   v-if="pluginLocked === `${result.id}`"
@@ -87,7 +87,7 @@
                   indeterminate
                 />
                 <v-card-text>
-                  {{ t('majorUpdateBody') }}
+                  {{ t('majorInstallBody') }}
                 </v-card-text>
                 <v-card-actions>
                   <v-spacer />
@@ -99,19 +99,11 @@
                   </v-btn>
                   <v-btn
                     :disabled="!!pluginLocked"
-                    color="warning"
+                    color="primary"
                     variant="flat"
                     @click="showMajorUpdateMenu = null; update(result)"
                   >
-                    {{ t('update') }}
-                  </v-btn>
-                  <v-btn
-                    :disabled="!!pluginLocked"
-                    color="primary"
-                    variant="flat"
-                    @click="showMajorUpdateMenu = null; installParallel(result)"
-                  >
-                    {{ t('installSeparately') }}
+                    {{ t('install') }}
                   </v-btn>
                 </v-card-actions>
               </v-card>
@@ -289,7 +281,7 @@
             <v-spacer />
             <v-btn
               :disabled="!!pluginLocked || install.loading.value"
-              @click="resetManualInstall()"
+              @click="resetManualInstallFrom()"
             >
               {{ t('cancel') }}
             </v-btn>
@@ -396,7 +388,7 @@ type InstalledPlugin = {
 
 const installedPluginsFetch = useFetch<{
   results: InstalledPlugin[],
-  facets: { usages: Record < string, number> },
+  facets: { usages: Record<string, number> },
   count: number
 }>(`${$apiPath}/plugins`)
 
@@ -408,13 +400,12 @@ const availablePluginsFetch = useFetch<{
   count: number
 }>(`${$apiPath}/plugins-registry`, { query: query.value })
 
-/** Sort registry plugins and inject computed ids. */
-const availablePlugins = computed(() => {
-  const results = availablePluginsFetch.data.value?.results || []
-  results.sort((a, b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
-  results.forEach(r => { r.id = generatePluginId(r.name, r.version, r.distTag) })
-  return results
-})
+/** Sort registry plugins and inject computed ids (immutable). */
+const availablePlugins = computed(() =>
+  (availablePluginsFetch.data.value?.results || [])
+    .map(r => ({ ...r, id: generatePluginId(r.name, r.version, r.distTag) }))
+    .sort((a, b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
+)
 
 const showDeleteMenu = ref(null) as Ref<string | null>
 const showMajorUpdateMenu = ref(null) as Ref<string | null>
@@ -456,12 +447,9 @@ const latestInstalledByKey = computed(() => {
   return map
 })
 
-/**
- * Precompute update availability for each installed plugin.
- * A plugin is updatable if there's an available version with a higher version number than the latest installed one.
- * We also detect whether the update is a major version change to warn the user about potential breaking changes.
- * @return A map of plugin id to update info, including availability, latest version and whether it's a major update.
- */
+const noUpdate = { available: false, version: '', isMajor: false } as const
+
+/** Precompute update availability for each installed plugin. */
 const updateInfoById = computed(() => {
   const info: Record<string, { available: boolean, version: string, isMajor: boolean }> = {}
   for (const plugin of installedPlugins.value) {
@@ -469,44 +457,48 @@ const updateInfoById = computed(() => {
     const latestInstalled = latestInstalledByKey.value.get(key)
     const available = availableByKey.value.get(key)
 
-    if (!latestInstalled || !available || latestInstalled.id !== plugin.id) {
-      info[plugin.id] = { available: false, version: '', isMajor: false }
+    if (!latestInstalled || !available || latestInstalled.id !== plugin.id || !gt(available.version, latestInstalled.version)) {
+      info[plugin.id] = noUpdate
       continue
     }
 
-    if (!gt(available.version, latestInstalled.version)) {
-      info[plugin.id] = { available: false, version: '', isMajor: false }
-      continue
-    }
-
-    const installedMajor = major(latestInstalled.version)
-    const availableMajor = major(available.version)
     info[plugin.id] = {
       available: true,
       version: available.version,
-      isMajor: availableMajor > installedMajor
+      isMajor: major(available.version) > major(latestInstalled.version)
     }
   }
   return info
 })
 
+/** Match a plugin name or description against the current search term. */
+const matchesSearch = (r: { name: string, description?: string }) =>
+  !search.value || r.name.includes(search.value) || (r.description && r.description.includes(search.value))
+
 /** Filter installed plugins by search term. */
-const filteredInstalledPlugins = computed(() => {
-  if (!search.value) return installedPlugins.value
-  return installedPlugins.value
-    .filter(r => r.name.includes(search.value) || (r.description && r.description.includes(search.value)))
+const filteredInstalledPlugins = computed(() => installedPlugins.value.filter(matchesSearch))
+
+/** Pre-computed sets for fast installed plugin lookups. */
+const installedIds = computed(() => new Set(installedPlugins.value.map(r => r.id)))
+const installedByNameTag = computed(() => {
+  const map = new Map<string, number>()
+  for (const r of installedPlugins.value) {
+    const key = pluginKey(r.name, r.distTag)
+    const current = map.get(key)
+    if (current === undefined || major(r.version) > current) map.set(key, major(r.version))
+  }
+  return map
 })
 
-/** Filter registry plugins by search term, excluding already installed ones. */
-const filteredAvailablePlugins = computed(() => {
-  const filteredPlugins = availablePlugins.value.filter(result =>
-    !installedPlugins.value.find(r => r.id === result.id)
-  )
-
-  if (!search.value) return filteredPlugins
-  return filteredPlugins
-    .filter(r => r.name.includes(search.value) || (r.description && r.description.includes(search.value)))
-})
+/** Filter registry plugins by search term, excluding already installed ones and major upgrades of installed ones. */
+const filteredAvailablePlugins = computed(() =>
+  availablePlugins.value.filter(r => {
+    if (installedIds.value.has(r.id)) return false
+    const installedMajor = installedByNameTag.value.get(pluginKey(r.name, r.distTag))
+    if (installedMajor !== undefined && major(r.version) > installedMajor) return false
+    return matchesSearch(r)
+  })
+)
 
 /** Detect whether any npm fields are filled for manual install. */
 const hasNpmFields = computed(() =>
@@ -521,7 +513,7 @@ const canForceInstall = computed(() => {
 })
 
 /** Reset manual install form state. */
-const resetManualInstall = () => {
+const resetManualInstallFrom = () => {
   showManualInstallMenu.value = false
   manualInstallPlugin.value = { name: '', version: '', distTag: 'latest' }
   selectedFile.value = undefined
@@ -546,7 +538,7 @@ const install = useAsyncAction(
       body = new FormData()
       body.append('file', selectedFile.value)
 
-    // From npm registry
+      // From npm registry
     } else {
       const pluginPost = plugin || manualInstallPlugin.value
       pluginLocked.value = `${pluginPost.id || generatePluginId(pluginPost.name, pluginPost.version, pluginPost.distTag)}`
@@ -563,7 +555,7 @@ const install = useAsyncAction(
     })
     installedPluginsFetch.refresh()
     pluginLocked.value = null
-    resetManualInstall()
+    resetManualInstallFrom()
   },
   {
     error: t('installError'),
@@ -588,22 +580,11 @@ const uninstall = useAsyncAction(
   }
 )
 
-/** Install the next major version as a separate plugin entry. */
-const installParallel = async (plugin: InstalledPlugin) => {
+/** Install the latest available version of a plugin (minor update or new major). */
+const update = async (plugin: InstalledPlugin) => {
   const availablePlugin = availablePlugins.value.find(r => r.name === plugin.name && r.distTag === plugin.distTag)
   if (!availablePlugin) return
   await install.execute(availablePlugin)
-}
-
-/** Update the currently installed plugin to the latest available version. */
-const update = async (plugin: InstalledPlugin) => {
-  pluginLocked.value = `${plugin.name}-${plugin.distTag}`
-  if (availablePlugins.value.length === 0) return false
-  const availablePlugin = availablePlugins.value.find(r => r.name === plugin.name)
-  if (availablePlugin && availablePlugin.version !== plugin.version) {
-    await install.execute(availablePlugin)
-  }
-  pluginLocked.value = null
 }
 
 /** Persist config/access/metadata changes for a plugin. */
@@ -611,7 +592,7 @@ const save = async (plugin: InstalledPlugin, type: 'config' | 'access' | 'metada
   pluginLocked.value = `${plugin.name}-${plugin.distTag}`
   await $fetch(`/plugins/${plugin.id}/${type}`, {
     method: 'PUT',
-    body: JSON.stringify({ ...plugin[type] })
+    body: plugin[type]
   })
   pluginLocked.value = null
 }
@@ -639,8 +620,8 @@ fr:
   installSeparately: Installer séparément
   installSuccess: Plugin installé !
   installedPluginsLabel: plugins installés
-  majorUpdateBody: Mettre à jour vers une nouvelle version majeure risque d'entraîner une rupture de compatibilité. Vous pouvez choisir de confirmer la montée en version, ou préférer l'installation de la nouvelle version séparée.
-  majorUpdateTitleWithVersions: "Mise à jour majeure - {from} vers {to}"
+  majorInstallBody: L'installation d'une version majeure créera une entrée séparée. Les traitements existants continueront d'utiliser la version actuelle.
+  majorInstallTitleWithVersions: Installation d'une version majeure
   manualInstall: Installer manuellement
   manualInstallDistTag: Tag de distribution
   manualInstallFileLabel: Sélectionner un fichier .tgz
