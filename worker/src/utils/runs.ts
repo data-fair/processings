@@ -102,23 +102,44 @@ export const finish = async (run: Run, errorMessage: string | undefined = undefi
   } else if (lastRun.status === 'error') {
     sendProcessingEvent(run, 'a échoué', 'finish-error', errorMessage)
 
-    const reachedMaxFailures = (await mongo.runs.aggregate([
-      { $match: { 'processing._id': run.processing._id } }, // filter by processing
-      { $sort: { finishedAt: -1 } },                        // sort by finishedAt descending (most recent first)
-      { $limit: config.maxFailures },                       // take the last X runs
+    const raw = (await mongo.runs.aggregate([
+      { $match: { 'processing._id': run.processing._id } },
+      { $sort: { finishedAt: -1 } },
       {
-        $group: {                                          // aggregate
-          _id: null,
-          total: { $sum: 1 },                              // count total runs in this slice
-          errors: { $sum: { $cond: [{ $eq: ['$status', 'error'] }, 1, 0] } } // count runs with status 'error'
-        }
-      },
-      {
-        $project: {
-          allErrors: { $eq: [config.maxFailures, '$errors'] }       // true if all X runs are errors
+        $facet: {
+          lastRuns: [ // for maxFailures
+            { $limit: config.maxFailures },
+            {
+              $group: {
+                _id: null,
+                errors: { $sum: { $cond: [{ $eq: ['$status', 'error'] }, 1, 0] } }
+              }
+            }
+          ],
+          allErrors: [ // for cooldown
+            { $match: { status: 'error' } },
+            {
+              $group: {
+                _id: null,
+                firstError: { $min: '$finishedAt' },
+                lastError: { $max: '$finishedAt' }
+              }
+            }
+          ]
         }
       }
-    ]).toArray())[0]?.allErrors ?? false
+    ]).toArray())[0]
+
+    const errors = raw?.lastRuns?.[0]?.errors ?? 0 // number of errors among the last maxFailures runs
+    const firstError = raw?.allErrors?.[0]?.firstError ? new Date(raw.allErrors[0].firstError) : null     // date of the first error (across all runs)
+    const lastError = raw?.allErrors?.[0]?.lastError ? new Date(raw.allErrors[0].lastError) : null        // date of the last error (across all runs)
+
+    const allErrors = errors === config.maxFailures
+    const cooldownReached = firstError && lastError
+      ? (lastError.getTime() - firstError.getTime()) / (1000 * 60 * 60) >= config.maxFailuresCooldown // (1000 * 60 * 60) convert to hours
+      : false
+
+    const reachedMaxFailures = allErrors && cooldownReached
 
     // Disable processing if reached max failures
     if (reachedMaxFailures) {

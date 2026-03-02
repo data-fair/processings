@@ -19,6 +19,7 @@
     "defaultLimits",
     "mails",
     "maxFailures",
+    "maxFailuresCooldown",
     "mongoUrl",
     "locks",
     "observer",
@@ -69,6 +70,10 @@
     "maxFailures": {
       "type": "number",
       "description": "Number of failures before a processing becomes inactive"
+    },
+    "maxFailuresCooldown": {
+      "type": "number",
+      "description": "Minimum time in hours between first failure and last failure to disable a processing. Set to 0 to disable cooldown."
     },
     "mongoUrl": {
       "type": "string"

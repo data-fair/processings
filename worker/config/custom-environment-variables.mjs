@@ -16,6 +16,7 @@ export default {
     }
   },
   maxFailures: 'MAX_FAILURES',
+  maxFailuresCooldown: 'MAX_FAILURES_COOLDOWN',
   mongoUrl: 'MONGO_URL',
   secretKeys: {
     events: 'SECRET_EVENTS'
