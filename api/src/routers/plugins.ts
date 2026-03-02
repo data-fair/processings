@@ -264,6 +264,7 @@ router.delete('/:id', permissions.isSuperAdmin, async (req, res) => {
   await fs.remove(path.join(pluginsDir, req.params.id))
   await fs.remove(path.join(pluginsDir, req.params.id + '-config.json'))
   await fs.remove(path.join(pluginsDir, req.params.id + '-access.json'))
+  await fs.remove(path.join(pluginsDir, req.params.id + '-metadata.json'))
   res.status(204).send()
 })
 
