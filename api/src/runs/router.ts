@@ -5,8 +5,8 @@ import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import { session } from '@data-fair/lib-express/index.js'
 import { Router } from 'express'
 import mongo from '#mongo'
-import findUtils from '../utils/find.ts'
-import permissions from '../utils/permissions.ts'
+import findUtils from '../misc/utils/find.ts'
+import permissions from '../misc/utils/permissions.ts'
 
 const router = Router()
 export default router

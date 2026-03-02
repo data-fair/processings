@@ -85,6 +85,3 @@ onUnmounted(() => {
 
 defineExpose({ refresh: () => runs.refresh() })
 </script>
-
-<style>
-</style>

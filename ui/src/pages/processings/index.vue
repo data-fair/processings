@@ -3,6 +3,7 @@
     data-iframe-height
     style="min-height:500px"
   >
+    <!-- Skeleton loader-->
     <v-row
       v-if="processingsFetch.loading.value"
       class="d-flex align-stretch"
@@ -22,13 +23,22 @@
         />
       </v-col>
     </v-row>
+    <!-- No processings created -->
+    <span
+      v-else-if="!processingsFetch.data.value?.results.length"
+      class="d-flex justify-center text-h6 mt-4"
+    >
+      {{ t('noProcessingsCreated') }}
+    </span>
+    <!-- No processings displayed (filters) -->
+    <span
+      v-else-if="!displayProcessings.length"
+      class="d-flex justify-center text-h6 mt-4"
+    >
+      {{ t('noProcessingsDisplayed') }}
+    </span>
+    <!-- List of catalogs -->
     <template v-else>
-      <v-list-subheader v-if="displayProcessings.length > 1">
-        {{ displayProcessings.length }}/{{ processingsFetch.data.value?.count }} traitements affichés
-      </v-list-subheader>
-      <v-list-subheader v-else>
-        {{ displayProcessings.length }}/{{ processingsFetch.data.value?.count }} traitement affiché
-      </v-list-subheader>
       <v-row class="d-flex align-stretch">
         <v-col
           v-for="processing in displayProcessings"
@@ -44,36 +54,36 @@
         </v-col>
       </v-row>
     </template>
-  </v-container>
 
-  <layout-actions v-if="processingsFetch.data.value">
-    <processings-actions
-      v-model:search="search"
-      v-model:show-all="showAll"
-      v-model:plugins-selected="plugins"
-      v-model:statuses-selected="statuses"
-      v-model:owners-selected="owners"
-      :admin-mode="!!session.state.user?.adminMode"
-      :can-admin="canAdmin"
-      :facets="processingsFetch.data.value.facets"
-      :is-small="true"
-      :owner-filter="ownerFilter"
-      :processings="displayProcessings"
-    />
-  </layout-actions>
+    <navigation-right v-if="processingsFetch.data.value">
+      <processings-actions
+        v-model:search="search"
+        v-model:show-all="showAll"
+        v-model:plugins-selected="plugins"
+        v-model:statuses-selected="statuses"
+        v-model:owners-selected="owners"
+        :admin-mode="!!session.state.user?.adminMode"
+        :can-admin="canAdmin"
+        :facets="processingsFetch.data.value.facets"
+        :is-small="true"
+        :owner-filter="ownerFilter"
+        :processings="displayProcessings"
+      />
+    </navigation-right>
+  </v-container>
 </template>
 
 <script setup lang="ts">
 import type { Processing } from '#api/types'
+import NavigationRight from '@data-fair/lib-vuetify/navigation-right.vue'
 
+const { t } = useI18n()
 const session = useSessionAuthenticated(() => new Error('Authentification nécessaire'))
 const showAll = useBooleanSearchParam('showAll')
 const search = useStringSearchParam('q')
 const plugins = useStringsArraySearchParam('plugin')
 const statuses = useStringsArraySearchParam('status')
 const owners = useStringsArraySearchParam('owner')
-
-onMounted(() => setBreadcrumbs([{ text: 'Traitements' }]))
 
 /*
   Permissions
@@ -136,7 +146,28 @@ const displayProcessings = computed(() => {
   return processings.filter(processing => processing.title.toLowerCase().includes(search.value.toLowerCase()))
 })
 
+watch(
+  [() => processingsFetch.data.value?.count, () => displayProcessings.value.length],
+  ([count, displayed]) => {
+    setBreadcrumbs([{ text: t('processingDisplayed', { count: count ?? 0, displayed }) }])
+  },
+  { immediate: true }
+)
+
 </script>
+
+<i18n lang="yaml">
+  en:
+    processingDisplayed: No processings | {displayed}/{count} processing displayed | {displayed}/{count} processings displayed
+    noProcessingsCreated: You haven't created any processings yet.
+    noProcessingsDisplayed: No results match the search criteria.
+
+  fr:
+    processingDisplayed: Aucun traitement | {displayed}/{count} traitement affiché | {displayed}/{count} traitements affichés
+    noProcessingsCreated: Vous n'avez pas encore créé de traitement.
+    noProcessingsDisplayed: Aucun résultat ne correspond aux critères de recherche.
+
+</i18n>
 
 <style scoped>
 </style>

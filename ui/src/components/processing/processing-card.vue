@@ -6,16 +6,12 @@
     <v-card-item class="text-primary">
       <!-- Processing title -->
       <template #title>
-        <span class="font-weight-bold">
-          {{ processing.title || processing._id }}
+        <span
+          :title="processing.title"
+          class="font-weight-bold"
+        >
+          {{ processing.title }}
         </span>
-        <v-tooltip
-          v-if="processing.title && processing.title.length > 15"
-          activator="parent"
-          location="top left"
-          open-delay="300"
-          :text="processing.title"
-        />
       </template>
 
       <!-- Owner -->
@@ -56,9 +52,7 @@
           <template #prepend>
             <v-icon :icon="mdiPowerPlug" />
           </template>
-          <span>
-            {{ pluginFetch.data.value?.metadata.name }}
-          </span>
+          {{ pluginFetch.data.value?.metadata.name }}
         </v-list-item>
 
         <!-- Linked dataset -->

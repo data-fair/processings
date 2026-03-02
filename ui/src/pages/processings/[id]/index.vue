@@ -51,20 +51,20 @@
       :processing="processing"
       class="mt-4"
     />
-  </v-container>
 
-  <layout-actions v-if="processing">
-    <processing-actions
-      :processing="processing"
-      :processing-schema="processingSchema"
-      :can-admin="canAdminProcessing"
-      :can-exec="canExecProcessing"
-      :edited="edited"
-      :is-small="false"
-      :metadata="plugin?.metadata"
-      @triggered="runs && runs.refresh()"
-    />
-  </layout-actions>
+    <navigation-right v-if="processing">
+      <processing-actions
+        :processing="processing"
+        :processing-schema="processingSchema"
+        :can-admin="canAdminProcessing"
+        :can-exec="canExecProcessing"
+        :edited="edited"
+        :is-small="false"
+        :metadata="plugin?.metadata"
+        @triggered="runs && runs.refresh()"
+      />
+    </navigation-right>
+  </v-container>
 </template>
 
 <script setup lang="ts">
@@ -79,6 +79,7 @@ import timeZones from 'timezones.json'
 import Vjsf, { type Options as VjsfOptions } from '@koumoul/vjsf'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 import { toCRON } from '@data-fair/processings-shared/runs.ts'
+import NavigationRight from '@data-fair/lib-vuetify/navigation-right.vue'
 
 const { t } = useI18n()
 const route = useRoute<'/processings/[id]/'>()

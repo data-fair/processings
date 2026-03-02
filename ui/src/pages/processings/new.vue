@@ -7,7 +7,8 @@
   >
     <v-stepper
       v-model="step"
-      hide-actions
+      style="background-color: transparent"
+      flat
     >
       <v-stepper-header>
         <v-stepper-item
@@ -41,7 +42,6 @@
                   :key="plugin.id"
                   md="3"
                   sm="4"
-                  xs="6"
                   cols="12"
                 >
                   <v-card
@@ -74,28 +74,32 @@
           <v-text-field
             v-model="newProcessing.title"
             label="Titre"
+            hide-details
           />
           <owner-pick
             v-model="newProcessing.owner"
             v-model:ready="ownersReady"
           />
+        </v-stepper-window-item>
+      </v-stepper-window>
+
+      <v-stepper-actions
+        v-if="step !== '1'"
+        prev-text="Précédent"
+        @click:prev="step = '1'"
+      >
+        <template #next>
           <v-btn
+            color="primary"
+            variant="flat"
             :disabled="!ownersReady || !newProcessing.title || !newProcessing.plugin"
             :loading="createProcessing.loading.value"
-            color="primary"
             @click="createProcessing.execute()"
           >
             Créer
           </v-btn>
-          <v-btn
-            :disabled="createProcessing.loading.value"
-            variant="text"
-            @click="step = '1'"
-          >
-            Retour
-          </v-btn>
-        </v-stepper-window-item>
-      </v-stepper-window>
+        </template>
+      </v-stepper-actions>
     </v-stepper>
   </v-container>
 </template>

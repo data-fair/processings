@@ -144,7 +144,7 @@ onMounted(async () => {
     text: fetchedRun.processing.title,
     to: `/processings/${fetchedRun.processing._id}`
   }, {
-    text: 'exécution'
+    text: 'Exécution',
   }])
   loading.value = false
 })

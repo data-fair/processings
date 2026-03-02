@@ -4,7 +4,7 @@ import { type Plugin, resolvedSchema as PluginSchema } from '#types/plugin/index
 import { readFileSync } from 'node:fs'
 import path from 'path'
 
-const packageJson = JSON.parse(readFileSync(path.resolve(import.meta.dirname, '../../package.json'), 'utf-8'))
+const packageJson = JSON.parse(readFileSync(path.resolve(import.meta.dirname, '../../../package.json'), 'utf-8'))
 
 // CTRL + K CTRL + 4 to fold operations levels
 

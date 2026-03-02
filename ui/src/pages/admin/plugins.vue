@@ -388,7 +388,7 @@ type InstalledPlugin = {
 
 const installedPluginsFetch = useFetch<{
   results: InstalledPlugin[],
-  facets: { usages: Record < string, number> },
+  facets: { usages: Record<string, number> },
   count: number
 }>(`${$apiPath}/plugins`)
 
@@ -538,7 +538,7 @@ const install = useAsyncAction(
       body = new FormData()
       body.append('file', selectedFile.value)
 
-    // From npm registry
+      // From npm registry
     } else {
       const pluginPost = plugin || manualInstallPlugin.value
       pluginLocked.value = `${pluginPost.id || generatePluginId(pluginPost.name, pluginPost.version, pluginPost.distTag)}`
