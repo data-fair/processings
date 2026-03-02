@@ -21,7 +21,7 @@ fs.ensureDirSync(baseTmpDir)
 
 tmp.setGracefulCleanup()
 
-let pluginModule: { run: (context: ProcessingContext) => Promise<void>, stop?: () => Promise<void> }
+let pluginModule: { run: (context: ProcessingContext) => Promise<{ deleteOnComplete?: boolean } | void>, stop?: () => Promise<void> }
 let _stopped: boolean
 const processingsDir = path.join(config.dataDir, 'processings')
 
@@ -133,7 +133,10 @@ export const run = async (mailTransport: any) => {
   try {
     pluginModule = await import(path.join(pluginDir + '/index.js'))
     process.chdir(dir)
-    await pluginModule.run(context)
+    const result = await pluginModule.run(context)
+    if (result?.deleteOnComplete) {
+      await mongo.runs.updateOne({ _id: run._id }, { $set: { deleteOnComplete: true } })
+    }
     process.chdir(cwd)
     if (_stopped) await log.error('L\'exécution a été interrompue', '')
     else await log.info('L\'exécution est terminée', '')

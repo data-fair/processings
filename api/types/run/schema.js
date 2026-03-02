@@ -100,6 +100,10 @@ export default {
       items: {
         $ref: 'https://github.com/data-fair/processings/permission'
       }
+    },
+    deleteOnComplete: {
+      type: 'boolean',
+      description: 'If true, the run will be automatically deleted after completion'
     }
   }
 }
