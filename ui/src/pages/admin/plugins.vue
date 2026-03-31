@@ -607,6 +607,39 @@ const vjsfOptions = computed<VjsfOptions>(() => ({
 </script>
 
 <i18n lang="yaml">
+en:
+  adminRequired: You do not have permission to access this page, you need to enable super-admin mode.
+  authRequired: Authentication required
+  availablePluginsLabel: available plugins
+  cancel: Cancel
+  install: Install
+  installError: Error while installing the plugin
+  installSeparately: Install separately
+  installSuccess: Plugin installed!
+  installedPluginsLabel: installed plugins
+  majorInstallBody: Installing a major version will create a separate entry. Existing processings will continue to use the current version.
+  majorInstallTitleWithVersions: Major version installation
+  manualInstall: Install a plugin manually
+  manualInstallDistTag: Distribution tag
+  manualInstallFileLabel: Select a .tgz file
+  manualInstallFromFile: Install from a file
+  manualInstallFromNpm: Install from npm
+  manualInstallName: Plugin name
+  manualInstallTitle: Manual plugin installation
+  manualInstallVersion: Plugin version
+  no: No
+  pluginsBreadcrumb: Plugins
+  showAllLabel: Show test versions of plugins
+  uninstall: Uninstall
+  uninstallConfirm: Are you sure you want to uninstall the plugin "{name}"?
+  uninstallError: Error while uninstalling the plugin
+  uninstallSuccess: Plugin uninstalled!
+  uninstallTitle: Uninstall plugin
+  update: Update
+  updateWithVersion: Update ({version})
+  usageCount: Used {count} times
+  yes: Yes
+
 fr:
   adminRequired: Vous n'avez pas la permission d'accéder à cette page, il faut avoir activé le mode super-administration.
   authRequired: Authentification nécessaire

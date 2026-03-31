@@ -5,7 +5,7 @@
   >
     <v-row class="ma-0">
       <h2 class="text-headline-small">
-        Exécution du traitement {{ run.processing.title }}
+        {{ t('runTitle', { title: run.processing.title }) }}
       </h2>
     </v-row>
     <v-row>
@@ -62,6 +62,7 @@
 <script setup lang="ts">
 import type { Run } from '#api/types'
 
+const { t } = useI18n()
 const route = useRoute<'/processings/[id]/runs/[runId]'>()
 const session = useSession()
 const ws = useWS('/processings/api/')
@@ -133,7 +134,7 @@ onMounted(async () => {
   loading.value = true
   const fetchedRun = await $fetch(`/runs/${route.params.runId}`)
   if (!fetchedRun || fetchedRun.processing._id !== route.params.id) {
-    sendUiNotif({ type: 'error', msg: 'unknown run' })
+    sendUiNotif({ type: 'error', msg: t('unknownRun') })
     return
   }
   run.value = fetchedRun
@@ -142,13 +143,13 @@ onMounted(async () => {
   ws?.subscribe(`processings/${fetchedRun.processing._id}/run-patch`, onRunPatch)
 
   setBreadcrumbs([{
-    text: 'Traitements',
+    text: t('processings'),
     to: '/processings'
   }, {
     text: fetchedRun.processing.title,
     to: `/processings/${fetchedRun.processing._id}`
   }, {
-    text: 'Exécution',
+    text: t('run'),
   }])
   loading.value = false
 })
@@ -179,3 +180,18 @@ function onRunLog (runLog: Record<string, any>) {
   run.value.log.push(runLog.log)
 }
 </script>
+
+<i18n lang="yaml">
+  en:
+    runTitle: "Run of processing {title}"
+    unknownRun: Unknown run
+    processings: Processings
+    run: Run
+
+  fr:
+    runTitle: "Exécution du traitement {title}"
+    unknownRun: Exécution inconnue
+    processings: Traitements
+    run: Exécution
+
+</i18n>

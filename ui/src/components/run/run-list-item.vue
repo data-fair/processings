@@ -38,32 +38,32 @@
     </template>
 
     <v-list-item-title v-if="props.run.status === 'running'">
-      Démarrée {{ fromNow(run.startedAt) }}
+      {{ t('started') }} {{ fromNow(run.startedAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="props.run.status === 'finished'">
-      Terminée - {{ formatDate(run.finishedAt) }}
+      {{ t('finished') }} {{ formatDate(run.finishedAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="props.run.status === 'error'">
-      En échec - {{ formatDate(run.finishedAt) }}
+      {{ t('error') }} {{ formatDate(run.finishedAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="props.run.status === 'scheduled'">
-      Planifiée - {{ formatDate(run.scheduledAt) }}
+      {{ t('scheduled') }} {{ formatDate(run.scheduledAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="props.run.status === 'triggered'">
-      Déclenchée manuellement {{ fromNow(run.createdAt) }}
+      {{ t('triggered') }} {{ fromNow(run.createdAt) }}
     </v-list-item-title>
     <v-list-item-title v-if="props.run.status === 'kill'">
-      Interruption demandée
+      {{ t('killRequested') }}
     </v-list-item-title>
     <v-list-item-title v-if="props.run.status === 'killed'">
-      Interrompue manuellement - {{ formatDate(run.finishedAt) }}
+      {{ t('killed') }} {{ formatDate(run.finishedAt) }}
     </v-list-item-title>
 
     <v-list-item-subtitle v-if="props.run.status === 'finished' || props.run.status === 'error' || props.run.status === 'killed'">
-      Durée : {{ duration(run.startedAt, run.finishedAt) }}
+      {{ t('duration') }} {{ duration(run.startedAt, run.finishedAt) }}
     </v-list-item-subtitle>
     <v-list-item-subtitle v-if="props.run.status === 'triggered' && run.scheduledAt && run.scheduledAt !== run.createdAt">
-      Planifiée {{ fromNow(run.scheduledAt) }}
+      {{ t('scheduledAt') }} {{ fromNow(run.scheduledAt) }}
     </v-list-item-subtitle>
 
     <template
@@ -74,7 +74,7 @@
         color="warning"
         :icon="mdiStop"
         size="x-small"
-        title="interrompre"
+        :title="t('kill')"
         @click.prevent="kill()"
       />
     </template>
@@ -82,6 +82,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 const { dayjs } = useLocaleDayjs()
 
 const props = defineProps({
@@ -104,6 +105,33 @@ const kill = async () => {
 }
 
 </script>
+
+<i18n lang="yaml">
+  en:
+    started: Started
+    finished: Finished -
+    error: Failed -
+    scheduled: Scheduled -
+    triggered: Manually triggered
+    killRequested: Kill requested
+    killed: Manually killed -
+    duration: "Duration:"
+    scheduledAt: Scheduled
+    kill: kill
+
+  fr:
+    started: Démarrée
+    finished: Terminée -
+    error: En échec -
+    scheduled: Planifiée -
+    triggered: Déclenchée manuellement
+    killRequested: Interruption demandée
+    killed: Interrompue manuellement -
+    duration: "Durée :"
+    scheduledAt: Planifiée
+    kill: interrompre
+
+</i18n>
 
 <style scoped>
 </style>

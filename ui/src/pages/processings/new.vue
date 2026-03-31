@@ -12,7 +12,7 @@
     >
       <v-stepper-header>
         <v-stepper-item
-          title="Sélection du type de traitement"
+          :title="t('selectPluginType')"
           value="1"
           :color="step === '1' ? 'primary' : ''"
           :complete="!!newProcessing.plugin"
@@ -20,7 +20,7 @@
         />
         <v-divider />
         <v-stepper-item
-          title="Informations"
+          :title="t('information')"
           value="2"
           :color="step === '2' ? 'primary' : ''"
           :editable="!!newProcessing.plugin"
@@ -73,7 +73,7 @@
         <v-stepper-window-item value="2">
           <v-text-field
             v-model="newProcessing.title"
-            label="Titre"
+            :label="t('title')"
             hide-details
           />
           <owner-pick
@@ -85,7 +85,7 @@
 
       <v-stepper-actions
         v-if="step !== '1'"
-        prev-text="Précédent"
+        :prev-text="t('previous')"
         @click:prev="step = '1'"
       >
         <template #next>
@@ -96,7 +96,7 @@
             :loading="createProcessing.loading.value"
             @click="createProcessing.execute()"
           >
-            Créer
+            {{ t('create') }}
           </v-btn>
         </template>
       </v-stepper-actions>
@@ -123,6 +123,7 @@ type InstalledPlugin = {
   }
 }
 
+const { t } = useI18n()
 const session = useSessionAuthenticated(() => new Error('Authentification nécessaire'))
 const router = useRouter()
 
@@ -154,7 +155,7 @@ const ownerRole = computed(() => {
   return userOrg ? userOrg.role : 'anonymous'
 })
 const canAdmin = computed(() => ownerRole.value === 'admin' || !!session.state.user?.adminMode)
-if (!canAdmin.value) throw new Error('Vous n\'avez pas les droits pour créer un traitement')
+if (!canAdmin.value) throw new Error(t('noPermission'))
 
 const installedPluginsFetch = useFetch<{ results: InstalledPlugin[], count: number }>(`${$apiPath}/plugins?privateAccess=${ownerFilter.value}`)
 const installedPlugins = computed(() => installedPluginsFetch.data.value?.results)
@@ -164,14 +165,14 @@ const showCreateMenu = ref(false)
 const newProcessing: Ref<Record<string, string>> = ref({})
 const ownersReady = ref(false)
 
-const orderedCategories = [...$uiConfig.pluginCategories, 'Autres']
+const orderedCategories = [...$uiConfig.pluginCategories, t('others')]
 const categorizedPlugins = computed(() => {
   const categories: Record<string, InstalledPlugin[]> = {}
   orderedCategories.forEach(category => {
     categories[category] = []
   })
   installedPlugins.value?.forEach(plugin => {
-    const category = plugin.metadata.category || 'Autres'
+    const category = plugin.metadata.category || t('others')
     if (!categories[category]) categories[category] = []
     categories[category].push(plugin)
   })
@@ -189,21 +190,50 @@ const createProcessing = useAsyncAction(
     showCreateMenu.value = false
   },
   {
-    success: 'Traitement créé !',
-    error: 'Erreur lors de la création du traitement'
+    success: t('createSuccess'),
+    error: t('createError')
   }
 )
 
 onMounted(() => {
   setBreadcrumbs([{
-    text: 'Traitements',
+    text: t('processings'),
     to: '/processings'
   }, {
-    text: 'Créer un traitement'
+    text: t('createProcessing')
   }])
 })
 
 </script>
+
+<i18n lang="yaml">
+  en:
+    selectPluginType: Processing type selection
+    information: Information
+    title: Title
+    previous: Previous
+    create: Create
+    noPermission: You do not have permission to create a processing
+    others: Others
+    createSuccess: Processing created!
+    createError: Error while creating processing
+    processings: Processings
+    createProcessing: Create a processing
+
+  fr:
+    selectPluginType: Sélection du type de traitement
+    information: Informations
+    title: Titre
+    previous: Précédent
+    create: Créer
+    noPermission: Vous n'avez pas les droits pour créer un traitement
+    others: Autres
+    createSuccess: Traitement créé !
+    createError: Erreur lors de la création du traitement
+    processings: Traitements
+    createProcessing: Créer un traitement
+
+</i18n>
 
 <style scoped>
 </style>

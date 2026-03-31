@@ -119,16 +119,16 @@ const statusesSelected = defineModel('statusesSelected', { type: Array, required
 const ownersSelected = defineModel('ownersSelected', { type: Array, required: true })
 const showNotifMenu = ref(false)
 
-const statusesText: Record<string, string> = {
-  error: 'En échec',
-  finished: 'Terminé',
-  kill: 'Interruption',
-  killed: 'Interrompu',
-  none: 'Aucune exécution',
-  running: 'Démarré',
-  scheduled: 'Planifié',
-  triggered: 'Déclenché'
-}
+const statusesText = computed<Record<string, string>>(() => ({
+  error: t('statusError'),
+  finished: t('statusFinished'),
+  kill: t('statusKill'),
+  killed: t('statusKilled'),
+  none: t('statusNone'),
+  running: t('statusRunning'),
+  scheduled: t('statusScheduled'),
+  triggered: t('statusTriggered')
+}))
 
 type InstalledPlugin = {
   name: string
@@ -151,10 +151,10 @@ const installedPlugins = computed(() => installedPluginsFetch.data.value?.result
 
 const eventsSubscribeUrl = computed(() => {
   const topics = [
-    { key: 'processings:processing-finish-ok', title: 'Un traitement s\'est terminé sans erreurs' },
-    { key: 'processings:processing-finish-error', title: 'Un traitement a échoué' },
-    { key: 'processings:processing-log-error', title: 'Un traitement s\'est terminé correctement mais son journal contient des erreurs' },
-    { key: 'processings:processing-disabled', title: 'Un traitement a été désactivé car il a échoué trop de fois à la suite' }
+    { key: 'processings:processing-finish-ok', title: t('topicFinishOk') },
+    { key: 'processings:processing-finish-error', title: t('topicFinishError') },
+    { key: 'processings:processing-log-error', title: t('topicLogError') },
+    { key: 'processings:processing-disabled', title: t('topicDisabled') }
   ]
   const urlTemplate = window.parent.location.origin + '/data-fair/processings/{processingId}'
   return `/events/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false`
@@ -165,7 +165,7 @@ const statusesItems = computed(() => {
 
   return Object.entries(processingsProps.facets.statuses)
     .map(([statusKey, count]) => ({
-      display: `${statusesText[statusKey] || statusKey} (${count})`,
+      display: `${statusesText.value[statusKey] || statusKey} (${count})`,
       statusKey
     }))
     .sort((a, b) => a.display.localeCompare(b.display))
@@ -180,7 +180,7 @@ const pluginsItems = computed(() => {
       ([pluginKey, count]) => {
         const customName = installedPlugins.value?.find((plugin) => plugin.id === pluginKey)?.metadata.name
         return {
-          display: `${customName || 'Supprimé - ' + pluginKey} (${count})`,
+          display: `${customName || t('deleted') + ' - ' + pluginKey} (${count})`,
           pluginKey
         }
       }
@@ -220,15 +220,41 @@ const ownersItems = computed(() => {
 <i18n lang="yaml">
   en:
     createNewProcessing: Create a new processing
+    deleted: Deleted
     notifications: Notifications
     owner: Owner
     showAllProcessings: Show all processings
+    statusError: Failed
+    statusFinished: Finished
+    statusKill: Interrupting
+    statusKilled: Interrupted
+    statusNone: No run
+    statusRunning: Running
+    statusScheduled: Scheduled
+    statusTriggered: Triggered
+    topicDisabled: A processing was disabled because it failed too many times in a row
+    topicFinishError: A processing has failed
+    topicFinishOk: A processing completed without errors
+    topicLogError: A processing completed but its log contains errors
 
   fr:
     createNewProcessing: Créer un nouveau traitement
+    deleted: Supprimé
     notifications: Notifications
     owner: Propriétaire
     showAllProcessings: Voir tous les traitements
+    statusError: En échec
+    statusFinished: Terminé
+    statusKill: Interruption
+    statusKilled: Interrompu
+    statusNone: Aucune exécution
+    statusRunning: Démarré
+    statusScheduled: Planifié
+    statusTriggered: Déclenché
+    topicDisabled: Un traitement a été désactivé car il a échoué trop de fois à la suite
+    topicFinishError: Un traitement a échoué
+    topicFinishOk: Un traitement s'est terminé sans erreurs
+    topicLogError: Un traitement s'est terminé correctement mais son journal contient des erreurs
 
 </i18n>
 

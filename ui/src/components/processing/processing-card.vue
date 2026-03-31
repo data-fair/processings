@@ -45,7 +45,7 @@
             />
           </template>
           <span class="text-error">
-            {{ 'Supprimé - ' + processing.plugin }}
+            {{ t('deleted') + ' - ' + processing.plugin }}
           </span>
         </v-list-item>
         <v-list-item v-else>
@@ -79,7 +79,7 @@
                 class="mr-7"
               />
             </template>
-            Exécution commencée {{ dayjs(processing.lastRun.startedAt).fromNow() }}
+            {{ t('runStarted') }} {{ dayjs(processing.lastRun.startedAt).fromNow() }}
           </v-list-item>
 
           <v-list-item v-if="processing.lastRun.status === 'finished'">
@@ -89,8 +89,8 @@
                 :icon="mdiCheckCircle"
               />
             </template>
-            Dernière exécution terminée {{ dayjs(processing.lastRun.finishedAt).fromNow() }}
-            <br>Durée : {{ dayjs(processing.lastRun.finishedAt).from(processing.lastRun.startedAt, true) }}
+            {{ t('lastRunFinished') }} {{ dayjs(processing.lastRun.finishedAt).fromNow() }}
+            <br>{{ t('duration') }} {{ dayjs(processing.lastRun.finishedAt).from(processing.lastRun.startedAt, true) }}
           </v-list-item>
 
           <v-list-item v-if="processing.lastRun.status === 'error'">
@@ -100,8 +100,8 @@
                 :icon="mdiAlert"
               />
             </template>
-            Dernière exécution en échec {{ dayjs(processing.lastRun.finishedAt).fromNow() }}
-            <br>Durée : {{ dayjs(processing.lastRun.finishedAt).from(processing.lastRun.startedAt, true) }}
+            {{ t('lastRunError') }} {{ dayjs(processing.lastRun.finishedAt).fromNow() }}
+            <br>{{ t('duration') }} {{ dayjs(processing.lastRun.finishedAt).from(processing.lastRun.startedAt, true) }}
           </v-list-item>
 
           <v-list-item v-if="processing.lastRun.status === 'kill' || processing.lastRun.status === 'killed'">
@@ -111,7 +111,7 @@
                 :icon="mdiStop"
               />
             </template>
-            <span>Dernière exécution interrompue {{ dayjs(processing.lastRun.finishedAt).fromNow() }}</span>
+            <span>{{ t('lastRunKilled') }} {{ dayjs(processing.lastRun.finishedAt).fromNow() }}</span>
           </v-list-item>
         </template>
         <v-list-item v-else>
@@ -121,7 +121,7 @@
               :icon="mdiInformation"
             />
           </template>
-          <span>Aucune exécution dans l'historique</span>
+          <span>{{ t('noRuns') }}</span>
         </v-list-item>
 
         <!-- Next run -->
@@ -133,7 +133,7 @@
                 :icon="mdiClock"
               />
             </template>
-            <span>Prochaine exécution planifiée {{ dayjs(processing.nextRun.scheduledAt).fromNow() }}</span>
+            <span>{{ t('nextRunScheduled') }} {{ dayjs(processing.nextRun.scheduledAt).fromNow() }}</span>
           </v-list-item>
 
           <v-list-item v-if="processing.nextRun.status === 'triggered'">
@@ -144,12 +144,12 @@
               />
             </template>
             <span>
-              Prochaine exécution déclenchée manuellement {{ dayjs(processing.nextRun.createdAt).fromNow()
+              {{ t('nextRunTriggered') }} {{ dayjs(processing.nextRun.createdAt).fromNow()
               }}
               <template
                 v-if="processing.nextRun.scheduledAt && processing.nextRun.scheduledAt !== processing.nextRun.createdAt"
               >
-                - planifiée {{ dayjs(processing.nextRun.scheduledAt).fromNow() }}
+                - {{ t('scheduled') }} {{ dayjs(processing.nextRun.scheduledAt).fromNow() }}
               </template>
             </span>
           </v-list-item>
@@ -162,7 +162,7 @@
               :icon="processing.active ? mdiToggleSwitch : mdiToggleSwitchOff"
             />
           </template>
-          {{ processing.active ? 'Actif' : 'Inactif' }}
+          {{ processing.active ? t('active') : t('inactive') }}
         </v-list-item>
       </v-list>
     </v-card-text>
@@ -171,6 +171,7 @@
 
 <script setup lang="ts">
 import ownerAvatar from '@data-fair/lib-vuetify/owner-avatar.vue'
+const { t } = useI18n()
 const { dayjs } = useLocaleDayjs()
 
 const props = defineProps({
@@ -188,3 +189,34 @@ const props = defineProps({
 const pluginFetch = usePluginFetch(props.processing.plugin)
 
 </script>
+
+<i18n lang="yaml">
+  en:
+    deleted: Deleted
+    runStarted: Run started
+    lastRunFinished: Last run finished
+    duration: "Duration:"
+    lastRunError: Last run failed
+    lastRunKilled: Last run interrupted
+    noRuns: No runs in history
+    nextRunScheduled: Next run scheduled
+    nextRunTriggered: Next run triggered manually
+    scheduled: scheduled
+    active: Active
+    inactive: Inactive
+
+  fr:
+    deleted: Supprimé
+    runStarted: Exécution commencée
+    lastRunFinished: Dernière exécution terminée
+    duration: "Durée :"
+    lastRunError: Dernière exécution en échec
+    lastRunKilled: Dernière exécution interrompue
+    noRuns: Aucune exécution dans l'historique
+    nextRunScheduled: Prochaine exécution planifiée
+    nextRunTriggered: Prochaine exécution déclenchée manuellement
+    scheduled: planifiée
+    active: Actif
+    inactive: Inactif
+
+</i18n>
