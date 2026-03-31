@@ -1,16 +1,10 @@
 <template>
   <v-container data-iframe-height>
-    <v-text-field
+    <!-- Search field -->
+    <search-field
       v-model="search"
-      :append-inner-icon="mdiMagnify"
-      :placeholder="t('searchPlaceholder')"
-      class="my-2"
-      color="primary"
-      density="compact"
-      max-width="400"
-      variant="outlined"
-      clearable
-      hide-details
+      autofocus
+      class="mx-n4"
     />
 
     <v-list-subheader>
@@ -78,7 +72,7 @@
                 />
               </template>
               <v-card v-if="showMajorUpdateMenu === result.id">
-                <v-card-title primary-title>
+                <v-card-title>
                   {{ t('majorInstallTitleWithVersions') }}
                 </v-card-title>
                 <v-progress-linear
@@ -125,7 +119,7 @@
               />
             </template>
             <v-card v-if="showDeleteMenu">
-              <v-card-title primary-title>
+              <v-card-title>
                 {{ t('uninstallTitle') }}
               </v-card-title>
               <v-progress-linear
@@ -218,10 +212,11 @@
         <template #activator="{ props }">
           <v-btn
             v-bind="props"
+            class="ml-2"
+            density="comfortable"
+            variant="flat"
+            color="primary"
             :disabled="!!pluginLocked"
-            class="mx-4"
-            size="x-small"
-            variant="tonal"
           >
             {{ t('manualInstall') }}
           </v-btn>
@@ -232,7 +227,7 @@
         >
           <v-card-text class="pb-0">
             <div class="mb-4">
-              <p class="text-body-2 font-italic mb-2">
+              <p class="text-body-medium font-italic mb-2">
                 {{ t('manualInstallFromNpm') }}
               </p>
               <v-text-field
@@ -263,7 +258,7 @@
             </div>
 
             <div>
-              <p class="text-body-2 font-italic mb-2">
+              <p class="text-body-medium font-italic mb-2">
                 {{ t('manualInstallFromFile') }}
               </p>
               <v-file-input
@@ -288,6 +283,7 @@
             <v-btn
               :disabled="!!pluginLocked || !canForceInstall || install.loading.value"
               color="warning"
+              variant="flat"
               @click="install.execute()"
             >
               {{ t('install') }}
@@ -350,6 +346,7 @@
 </template>
 
 <script setup lang="ts">
+import SearchField from '@data-fair/lib-vuetify/search-field.vue'
 import Vjsf, { type Options as VjsfOptions } from '@koumoul/vjsf'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 import { compare, gt, major } from 'semver'
@@ -622,7 +619,7 @@ fr:
   installedPluginsLabel: plugins installés
   majorInstallBody: L'installation d'une version majeure créera une entrée séparée. Les traitements existants continueront d'utiliser la version actuelle.
   majorInstallTitleWithVersions: Installation d'une version majeure
-  manualInstall: Installer manuellement
+  manualInstall: Installer un plugin manuellement
   manualInstallDistTag: Tag de distribution
   manualInstallFileLabel: Sélectionner un fichier .tgz
   manualInstallFromFile: Installer depuis un fichier
@@ -632,7 +629,6 @@ fr:
   manualInstallVersion: Version du plugin
   no: Non
   pluginsBreadcrumb: Plugins
-  searchPlaceholder: rechercher
   showAllLabel: Afficher les versions de test des plugins
   uninstall: Désinstaller
   uninstallConfirm: Voulez-vous vraiment désinstaller le plugin "{name}" ?

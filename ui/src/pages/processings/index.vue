@@ -26,14 +26,14 @@
     <!-- No processings created -->
     <span
       v-else-if="!processingsFetch.data.value?.results.length"
-      class="d-flex justify-center text-h6 mt-4"
+      class="d-flex justify-center text-headline-small mt-4"
     >
       {{ t('noProcessingsCreated') }}
     </span>
     <!-- No processings displayed (filters) -->
     <span
       v-else-if="!displayProcessings.length"
-      class="d-flex justify-center text-h6 mt-4"
+      class="d-flex justify-center text-headline-small mt-4"
     >
       {{ t('noProcessingsDisplayed') }}
     </span>

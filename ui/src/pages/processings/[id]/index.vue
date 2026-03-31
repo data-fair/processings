@@ -3,7 +3,7 @@
     v-if="processing"
     data-iframe-height
   >
-    <h2 class="text-h6">
+    <h2 class="text-headline-small">
       Traitement {{ processing.title }}
     </h2>
     <v-defaults-provider
@@ -271,8 +271,5 @@ const timezoneLabel = (timeZone: string) => {
 
 </i18n>
 
-<style>
-.v-autocomplete input::placeholder {
-  font-style: italic;
-}
+<style scoped>
 </style>

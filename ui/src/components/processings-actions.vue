@@ -2,7 +2,6 @@
   <!-- Create new processing -->
   <v-list-item
     v-if="canAdmin"
-    rounded
     @click="router.push({ path: '/processings/new', query: { owner: ownersSelected.length ? String(ownersSelected[0]) : undefined } })"
   >
     <template #prepend>
@@ -11,7 +10,7 @@
         :icon="mdiPlusCircle"
       />
     </template>
-    Créer un nouveau traitement
+    {{ t('createNewProcessing') }}
   </v-list-item>
 
   <!-- Notifications menu -->
@@ -22,22 +21,18 @@
     max-width="500"
   >
     <template #activator="{ props }">
-      <v-list-item
-        v-bind="props"
-        rounded
-      >
+      <v-list-item v-bind="props">
         <template #prepend>
           <v-icon
             color="primary"
             :icon="mdiBell"
           />
         </template>
-        Notifications
+        {{ t('notifications') }}
       </v-list-item>
     </template>
     <v-card
-      title="Notifications"
-      rounded="lg"
+      :title="t('notifications')"
     >
       <v-card-text class="pa-0">
         <d-frame :src="eventsSubscribeUrl" />
@@ -46,17 +41,9 @@
   </v-menu>
 
   <!-- Search field -->
-  <v-text-field
+  <search-field
     v-model="search"
-    :append-inner-icon="mdiMagnify"
-    label="Rechercher"
-    class="mt-4 mx-4"
-    color="primary"
-    density="compact"
-    variant="outlined"
-    autofocus
-    hide-details
-    clearable
+    class="mt-2"
   />
 
   <!-- Status filters -->
@@ -65,14 +52,9 @@
     :items="statusesItems"
     item-title="display"
     item-value="statusKey"
-    class="mt-4 mx-4"
-    density="compact"
     label="Status"
-    rounded="xl"
-    variant="outlined"
-    hide-details
+    class="mt-4 mx-4"
     chips
-    clearable
     closable-chips
     multiple
   />
@@ -83,14 +65,9 @@
     :items="pluginsItems"
     item-title="display"
     item-value="pluginKey"
-    class="mt-4 mx-4"
-    density="compact"
     label="Plugin"
-    rounded="xl"
-    variant="outlined"
-    hide-details
+    class="mt-4 mx-4"
     chips
-    clearable
     closable-chips
     multiple
   />
@@ -100,8 +77,7 @@
     v-if="adminMode"
     v-model="showAll"
     color="admin"
-    label="Voir tous les traitements"
-    hide-details
+    :label="t('showAllProcessings')"
     class="mt-2 mx-4 text-admin"
   />
 
@@ -112,22 +88,21 @@
     :items="ownersItems"
     item-title="display"
     item-value="ownerKey"
+    :label="t('owner')"
+    color="admin"
     class="mt-2 mx-4 text-admin"
-    density="compact"
-    label="Propriétaire"
-    rounded="xl"
-    variant="outlined"
     chips
     clearable
     closable-chips
-    hide-details
     multiple
   />
 </template>
 
 <script setup lang="ts">
+import SearchField from '@data-fair/lib-vuetify/search-field.vue'
 import '@data-fair/frame/lib/d-frame.js'
 
+const { t } = useI18n()
 const router = useRouter()
 const processingsProps = defineProps<{
   adminMode: boolean,
@@ -241,6 +216,21 @@ const ownersItems = computed(() => {
 })
 
 </script>
+
+<i18n lang="yaml">
+  en:
+    createNewProcessing: Create a new processing
+    notifications: Notifications
+    owner: Owner
+    showAllProcessings: Show all processings
+
+  fr:
+    createNewProcessing: Créer un nouveau traitement
+    notifications: Notifications
+    owner: Propriétaire
+    showAllProcessings: Voir tous les traitements
+
+</i18n>
 
 <style scoped>
 </style>

@@ -4,7 +4,7 @@
     data-iframe-height
   >
     <v-row class="ma-0">
-      <h2 class="text-h6">
+      <h2 class="text-headline-small">
         Exécution du traitement {{ run.processing.title }}
       </h2>
     </v-row>
@@ -21,9 +21,10 @@
         />
         <v-expansion-panels
           v-else
+          :model-value="[steps.length - 1]"
           variant="accordion"
           multiple
-          :model-value="[steps.length - 1]"
+          static
         >
           <v-expansion-panel
             v-for="(step, i) in steps"
@@ -41,11 +42,14 @@
                 :color="getColor(step)"
                 :icon="getIcon(step)"
               />
-              <span style="padding-left: 1rem;">
+              <span class="ml-6">
                 {{ step.msg }}
               </span>
             </v-expansion-panel-title>
-            <v-expansion-panel-text v-if="step.children.length">
+            <v-expansion-panel-text
+              v-if="step.children.length"
+              class="px-2"
+            >
               <run-logs-list :logs="step.children" />
             </v-expansion-panel-text>
           </v-expansion-panel>
@@ -102,7 +106,7 @@ function getColor (step: Record<string, any>) {
       break
     }
     if (child.type === 'warning') {
-      color = 'accent'
+      color = 'info'
     }
   }
 

@@ -2,10 +2,8 @@
   <v-card
     :rounded="false"
     :loading="runs.loading.value ? 'primary' : false"
+    title="Exécutions"
   >
-    <v-card-title>
-      Exécutions
-    </v-card-title>
     <template v-if="runs">
       <v-list class="py-0">
         <template

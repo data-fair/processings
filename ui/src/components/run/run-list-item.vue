@@ -4,43 +4,37 @@
     :to="link ? `/processings/${run.processing._id}/runs/${run._id}` : ''"
   >
     <template #prepend>
-      <v-avatar v-if="props.run.status === 'running'">
-        <v-progress-circular
-          indeterminate
-          color="primary"
-          size="24"
-        />
-      </v-avatar>
-      <v-avatar v-if="props.run.status === 'finished'">
-        <v-icon
-          color="success"
-          :icon="mdiCheckCircle"
-        />
-      </v-avatar>
-      <v-avatar v-if="props.run.status === 'error'">
-        <v-icon
-          color="error"
-          :icon="mdiAlert"
-        />
-      </v-avatar>
-      <v-avatar v-if="props.run.status === 'scheduled'">
-        <v-icon
-          color="primary"
-          :icon="mdiClock"
-        />
-      </v-avatar>
-      <v-avatar v-if="props.run.status === 'triggered'">
-        <v-icon
-          color="primary"
-          :icon="mdiPlayCircle"
-        />
-      </v-avatar>
-      <v-avatar v-if="props.run.status === 'kill' || props.run.status === 'killed'">
-        <v-icon
-          color="accent"
-          :icon="mdiStop"
-        />
-      </v-avatar>
+      <v-progress-circular
+        v-if="props.run.status === 'running'"
+        indeterminate
+        color="primary"
+        size="24"
+      />
+      <v-icon
+        v-if="props.run.status === 'finished'"
+        color="success"
+        :icon="mdiCheckCircle"
+      />
+      <v-icon
+        v-if="props.run.status === 'error'"
+        color="error"
+        :icon="mdiAlert"
+      />
+      <v-icon
+        v-if="props.run.status === 'scheduled'"
+        color="primary"
+        :icon="mdiClock"
+      />
+      <v-icon
+        v-if="props.run.status === 'triggered'"
+        color="primary"
+        :icon="mdiPlayCircle"
+      />
+      <v-icon
+        v-if="props.run.status === 'kill' || props.run.status === 'killed'"
+        color="accent"
+        :icon="mdiStop"
+      />
     </template>
 
     <v-list-item-title v-if="props.run.status === 'running'">
@@ -111,4 +105,5 @@ const kill = async () => {
 
 </script>
 
-<style></style>
+<style scoped>
+</style>
