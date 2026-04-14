@@ -19,7 +19,7 @@
             :icon="mdiPlay"
           />
         </template>
-        <span>Exécuter</span>
+        <span>{{ t('execute') }}</span>
       </v-list-item>
       <v-progress-linear
         v-if="edited"
@@ -28,21 +28,19 @@
       />
     </template>
     <v-card
-      rounded="lg"
-      title="Exécution du traitement"
-      variant="elevated"
+      :title="t('executionTitle')"
       :loading="triggerExecution.loading.value ? 'primary' : false"
     >
       <v-card-text class="py-0">
         <p v-if="canAdmin">
-          Vous pouvez déclencher une exécution sans être connecté à la plateforme en envoyant une requête HTTP POST à cette URL sécurisée :
+          {{ t('webhookDescription') }}
           <br><code>{{ webhookLink }}</code>
         </p>
         <v-text-field
           v-model="triggerDelay"
           class="py-4"
           type="number"
-          label="Appliquer un délai en secondes"
+          :label="t('delayLabel')"
         />
       </v-card-text>
       <v-card-actions>
@@ -51,7 +49,7 @@
           :disabled="triggerExecution.loading.value"
           @click="showTriggerMenu = false"
         >
-          Annuler
+          {{ t('cancel') }}
         </v-btn>
         <v-btn
           color="primary"
@@ -59,7 +57,7 @@
           :loading="triggerExecution.loading.value"
           @click="triggerExecution.execute()"
         >
-          Déclencher manuellement
+          {{ t('triggerManually') }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -83,22 +81,20 @@
             :icon="mdiContentDuplicate"
           />
         </template>
-        Dupliquer
+        {{ t('duplicate') }}
       </v-list-item>
     </template>
     <v-card
-      rounded="lg"
-      title="Duplication du traitement"
-      variant="elevated"
+      :title="t('duplicateTitle')"
       :loading="confirmDuplicate.loading.value ? 'primary' : false"
     >
       <v-card-text>
-        Vous êtes sur le point de créer une copie du traitement "{{ processing?.title }}".
+        {{ t('duplicateDescription', { title: processing?.title }) }}
         <v-text-field
           v-model="duplicateTitle"
-          label="Titre du nouveau traitement"
+          :label="t('newProcessingTitleLabel')"
           class="mt-4"
-          :placeholder="processing?.title + ' (copie)'"
+          :placeholder="processing?.title + ' ' + t('copy')"
           hide-details="auto"
         />
       </v-card-text>
@@ -108,7 +104,7 @@
           :disabled="confirmDuplicate.loading.value"
           @click="showDuplicateMenu = false"
         >
-          Annuler
+          {{ t('cancel') }}
         </v-btn>
         <v-btn
           color="primary"
@@ -116,7 +112,7 @@
           :loading="confirmDuplicate.loading.value"
           @click="confirmDuplicate.execute()"
         >
-          Dupliquer
+          {{ t('duplicate') }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -140,17 +136,15 @@
             :icon="mdiDelete"
           />
         </template>
-        Supprimer
+        {{ t('delete') }}
       </v-list-item>
     </template>
     <v-card
-      rounded="lg"
-      title="Suppression du traitement"
-      variant="elevated"
+      :title="t('deleteTitle')"
       :loading="confirmRemove.loading.value ? 'warning' : false"
     >
       <v-card-text>
-        Voulez-vous vraiment supprimer le traitement "{{ processing?.title }}" et tout son historique ? La suppression est définitive et les données ne pourront pas être récupérées.
+        {{ t('deleteDescription', { title: processing?.title }) }}
       </v-card-text>
       <v-card-actions>
         <v-spacer />
@@ -158,7 +152,7 @@
           :disabled="confirmRemove.loading.value"
           @click="showDeleteMenu = false"
         >
-          Non
+          {{ t('no') }}
         </v-btn>
         <v-btn
           color="warning"
@@ -166,7 +160,7 @@
           :loading="confirmRemove.loading.value"
           @click="confirmRemove.execute()"
         >
-          Oui
+          {{ t('yes') }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -190,13 +184,11 @@
             :icon="mdiAccount"
           />
         </template>
-        Changer le propriétaire
+        {{ t('changeOwner') }}
       </v-list-item>
     </template>
     <v-card
-      rounded="lg"
-      title="Changer le proriétaire"
-      variant="elevated"
+      :title="t('changeOwner')"
     >
       <v-progress-linear
         v-if="confirmChangeOwner.loading.value"
@@ -212,8 +204,8 @@
         />
         <v-alert
           type="warning"
-          title="Opération sensible"
-          text="Changer le propriétaire d'un traitement peut avoir des conséquences sur l'execution du traitement."
+          :title="t('sensitiveOperation')"
+          :text="t('changeOwnerWarning')"
           variant="outlined"
         />
       </v-card-text>
@@ -223,7 +215,7 @@
           :disabled="confirmChangeOwner.loading.value"
           @click="showChangeOwnerMenu = false"
         >
-          Annuler
+          {{ t('cancel') }}
         </v-btn>
         <v-btn
           color="warning"
@@ -232,7 +224,7 @@
           :loading="confirmChangeOwner.loading.value"
           @click="confirmChangeOwner.execute()"
         >
-          Confirmer
+          {{ t('confirm') }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -251,7 +243,7 @@
         :icon="mdiOpenInNew"
       />
     </template>
-    Voir le jeu de données
+    {{ t('viewDataset') }}
   </v-list-item>
 
   <!-- Documentation link -->
@@ -267,7 +259,7 @@
         :icon="mdiBookOpenVariant"
       />
     </template>
-    Tutoriel
+    {{ t('tutorial') }}
   </v-list-item>
 
   <!-- API link -->
@@ -283,7 +275,7 @@
         :icon="mdiCloud"
       />
     </template>
-    Utiliser l'API
+    {{ t('useApi') }}
   </v-list-item>
 
   <!-- Notifications menu -->
@@ -304,13 +296,11 @@
             :icon="mdiBell"
           />
         </template>
-        Notifications
+        {{ t('notifications') }}
       </v-list-item>
     </template>
     <v-card
-      rounded="lg"
-      title="Notifications"
-      variant="elevated"
+      :title="t('notifications')"
     >
       <v-card-text class="pa-0">
         <d-frame :src="eventsSubscribeUrl" />
@@ -335,6 +325,7 @@ const { canAdmin, canExec, edited, metadata, processing, processingSchema } = de
   processingSchema: Record<string, any>,
 }>()
 
+const { t } = useI18n()
 const router = useRouter()
 const session = useSessionAuthenticated()
 
@@ -348,20 +339,20 @@ const triggerDelay = ref(0)
 const webhookKey = ref('')
 const ownersReady = ref(false)
 const newOwner = ref<Account>(session.state.account)
-const duplicateTitle = ref(`${processing.title} (copie)`)
+const duplicateTitle = ref(`${processing.title} ${t('copy')}`)
 
 const canSubscribeNotif = computed(() => processing?.owner.type === session.state.account.type && processing?.owner.id === session.state.account.id)
 const ownerString = computed(() => `${processing?.owner.type}:${processing?.owner.id}${processing?.owner.department ? ':' + processing?.owner.department : ''}`)
 
 const eventsSubscribeUrl = computed(() => {
   const topics = [
-    { key: `processings:processing-finish-ok:${processing?._id ?? ''}`, title: `Le traitement ${processing?.title ?? ''} s'est terminé sans erreurs`, sender: ownerString.value },
-    { key: `processings:processing-finish-error:${processing?._id}`, title: `Le traitement ${processing?.title} a échoué`, sender: ownerString.value },
-    { key: `processings:processing-log-error:${processing?._id}`, title: `Le traitement ${processing?.title} s'est terminé correctement mais son journal contient des erreurs`, sender: ownerString.value },
-    { key: `processings:processing-disabled:${processing?._id}`, title: `Le traitement ${processing?.title} a été désactivé car il a échoué trop de fois à la suite`, sender: ownerString.value }
+    { key: `processings:processing-finish-ok:${processing?._id ?? ''}`, title: t('notifFinishOk', { title: processing?.title ?? '' }), sender: ownerString.value },
+    { key: `processings:processing-finish-error:${processing?._id}`, title: t('notifFinishError', { title: processing?.title }), sender: ownerString.value },
+    { key: `processings:processing-log-error:${processing?._id}`, title: t('notifLogError', { title: processing?.title }), sender: ownerString.value },
+    { key: `processings:processing-disabled:${processing?._id}`, title: t('notifDisabled', { title: processing?.title }), sender: ownerString.value }
   ]
   const urlTemplate = window.parent.location.href
-  return `/events/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false&sender=${encodeURIComponent(topics.map(t => t.sender).join(','))}`
+  return `/events/embed/subscribe?key=${encodeURIComponent(topics.map(tp => tp.key).join(','))}&title=${encodeURIComponent(topics.map(tp => tp.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false&sender=${encodeURIComponent(topics.map(tp => tp.sender).join(','))}`
 })
 
 const webhookLink = computed(() => {
@@ -377,7 +368,7 @@ const confirmDuplicate = useAsyncAction(
     const newProcessing = {
       owner: processing.owner,
       plugin: processing.plugin,
-      title: duplicateTitle.value || `${processing.title} (copie)`,
+      title: duplicateTitle.value || `${processing.title} ${t('copy')}`,
       config: processing.config,
       permissions: processing.permissions,
       scheduling: processing.scheduling
@@ -393,8 +384,8 @@ const confirmDuplicate = useAsyncAction(
     showDuplicateMenu.value = false
   },
   {
-    error: 'Erreur lors de la duplication du traitement',
-    success: 'Traitement dupliqué !'
+    error: t('duplicateError'),
+    success: t('duplicateSuccess')
   }
 )
 
@@ -417,8 +408,8 @@ const confirmRemove = useAsyncAction(
     showDeleteMenu.value = false
   },
   {
-    error: 'Erreur lors de la suppression du traitement',
-    success: 'Traitement supprimé !'
+    error: t('deleteError'),
+    success: t('deleteSuccess')
   }
 )
 
@@ -436,8 +427,8 @@ const triggerExecution = useAsyncAction(
     showTriggerMenu.value = false
   },
   {
-    error: 'Erreur lors de le déclenchement du traitement',
-    success: 'Traitement déclenché !'
+    error: t('triggerError'),
+    success: t('triggerSuccess')
   }
 )
 
@@ -447,3 +438,77 @@ watch(showTriggerMenu, async (newValue) => {
   }
 })
 </script>
+
+<i18n lang="yaml">
+en:
+  execute: Execute
+  executionTitle: Processing execution
+  webhookDescription: "You can trigger an execution without being connected to the platform by sending an HTTP POST request to this secure URL:"
+  delayLabel: Apply a delay in seconds
+  cancel: Cancel
+  triggerManually: Trigger manually
+  duplicate: Duplicate
+  duplicateTitle: Processing duplication
+  duplicateDescription: "You are about to create a copy of the processing \"{title}\"."
+  newProcessingTitleLabel: New processing title
+  copy: (copy)
+  delete: Delete
+  deleteTitle: Processing deletion
+  deleteDescription: "Do you really want to delete the processing \"{title}\" and all its history? Deletion is permanent and data cannot be recovered."
+  no: "No"
+  yes: "Yes"
+  changeOwner: Change owner
+  sensitiveOperation: Sensitive operation
+  changeOwnerWarning: Changing the owner of a processing can have consequences on the processing execution.
+  confirm: Confirm
+  viewDataset: View the dataset
+  tutorial: Tutorial
+  useApi: Use the API
+  notifications: Notifications
+  notifFinishOk: "Processing {title} finished without errors"
+  notifFinishError: "Processing {title} failed"
+  notifLogError: "Processing {title} finished successfully but its log contains errors"
+  notifDisabled: "Processing {title} was disabled because it failed too many times in a row"
+  duplicateError: Error while duplicating the processing
+  duplicateSuccess: Processing duplicated!
+  deleteError: Error while deleting the processing
+  deleteSuccess: Processing deleted!
+  triggerError: Error while triggering the processing
+  triggerSuccess: Processing triggered!
+
+fr:
+  execute: Exécuter
+  executionTitle: Exécution du traitement
+  webhookDescription: "Vous pouvez déclencher une exécution sans être connecté à la plateforme en envoyant une requête HTTP POST à cette URL sécurisée :"
+  delayLabel: Appliquer un délai en secondes
+  cancel: Annuler
+  triggerManually: Déclencher manuellement
+  duplicate: Dupliquer
+  duplicateTitle: Duplication du traitement
+  duplicateDescription: "Vous êtes sur le point de créer une copie du traitement \"{title}\"."
+  newProcessingTitleLabel: Titre du nouveau traitement
+  copy: (copie)
+  delete: Supprimer
+  deleteTitle: Suppression du traitement
+  deleteDescription: "Voulez-vous vraiment supprimer le traitement \"{title}\" et tout son historique ? La suppression est définitive et les données ne pourront pas être récupérées."
+  no: Non
+  yes: Oui
+  changeOwner: Changer le propriétaire
+  sensitiveOperation: Opération sensible
+  changeOwnerWarning: Changer le propriétaire d'un traitement peut avoir des conséquences sur l'execution du traitement.
+  confirm: Confirmer
+  viewDataset: Voir le jeu de données
+  tutorial: Tutoriel
+  useApi: Utiliser l'API
+  notifications: Notifications
+  notifFinishOk: "Le traitement {title} s'est terminé sans erreurs"
+  notifFinishError: "Le traitement {title} a échoué"
+  notifLogError: "Le traitement {title} s'est terminé correctement mais son journal contient des erreurs"
+  notifDisabled: "Le traitement {title} a été désactivé car il a échoué trop de fois à la suite"
+  duplicateError: Erreur lors de la duplication du traitement
+  duplicateSuccess: Traitement dupliqué !
+  deleteError: Erreur lors de la suppression du traitement
+  deleteSuccess: Traitement supprimé !
+  triggerError: Erreur lors du déclenchement du traitement
+  triggerSuccess: Traitement déclenché !
+</i18n>

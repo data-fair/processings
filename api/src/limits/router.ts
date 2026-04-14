@@ -20,12 +20,14 @@ const isAccountMember = async (req: Request, res: Response, next: NextFunction) 
   const sessionState = await session.req(req)
   if (!sessionState.user) return res.status(401).send()
   if (sessionState.user.adminMode) return next()
-  if (!['organization', 'user'].includes(req.params.type)) return res.status(400).send('Wrong consumer type')
-  if (req.params.type === 'user') {
-    if (sessionState.user.id !== req.params.id) return res.status(403).send()
+  const type = req.params.type as string
+  const id = req.params.id as string
+  if (!['organization', 'user'].includes(type)) return res.status(400).send('Wrong consumer type')
+  if (type === 'user') {
+    if (sessionState.user.id !== id) return res.status(403).send()
   }
-  if (req.params.type === 'organization') {
-    const org = sessionState.user.organizations.find(o => o.id === req.params.id)
+  if (type === 'organization') {
+    const org = sessionState.user.organizations.find(o => o.id === id)
     if (!org) return res.status(403).send()
   }
   next()
@@ -49,7 +51,7 @@ router.post('/:type/:id', async (req, res) => {
 
 // A user can get limits information for himself only
 router.get('/:type/:id', isAccountMember, async (req, res) => {
-  const consumer = { type: req.params.type as 'organization' | 'user', id: req.params.id, name: req.params.id, department: '' }
+  const consumer = { type: req.params.type as 'organization' | 'user', id: req.params.id as string, name: req.params.id as string, department: '' }
   const limits = await getLimits(mongo.db, consumer)
   if (!limits) return res.status(404).send()
   if ('_id' in limits) delete limits._id

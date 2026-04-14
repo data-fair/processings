@@ -1,7 +1,7 @@
 /* eslint-disable no-async-promise-executor */
 import type { Run } from '#api/types'
 
-import { spawn } from 'child-process-promise'
+import { spawn } from 'node:child_process'
 import Debug from 'debug'
 import { existsSync } from 'fs'
 import resolvePath from 'resolve-path'
@@ -209,17 +209,17 @@ async function iter (run: Run) {
 
     // Run a task in a dedicated child process for extra resiliency to fatal memory exceptions
     const path = process.env.NODE_ENV === 'test' ? './worker/src/task/index.ts' : './src/task/index.ts'
-    const spawnPromise = spawn('node', ['--disable-warning=ExperimentalWarning', path, run._id, processing._id], {
+    const child = spawn('node', ['--disable-warning=ExperimentalWarning', path, run._id, processing._id], {
       env: process.env,
       stdio: ['ignore', 'pipe', 'pipe']
     })
-    spawnPromise.childProcess.stdout?.on('data', data => {
+    child.stdout?.on('data', data => {
       process.stdout.write(`[spawned task stdout] ${run.processing._id} / ${run._id}` + data)
       if (data.includes('<running>')) {
         // @test:spy("isRunning")
       }
     })
-    spawnPromise.childProcess.stderr?.on('data', data => {
+    child.stderr?.on('data', data => {
       process.stderr.write(`[spawned task stderr] ${run.processing._id} / ${run._id}` + data)
       if (stderr.length <= 2000) {
         stderr += data
@@ -228,8 +228,18 @@ async function iter (run: Run) {
         }
       }
     })
-    pids[run._id] = spawnPromise.childProcess.pid || -1
-    await spawnPromise // wait for the task to finish
+    pids[run._id] = child.pid || -1
+    await new Promise<void>((resolve, reject) => {
+      child.on('close', (code) => {
+        if (code === 0) resolve()
+        else {
+          const err: any = new Error(`child process exited with code ${code}`)
+          err.code = code
+          reject(err)
+        }
+      })
+      child.on('error', reject)
+    })
     await finish(run)
   } catch (err: any) {
     // Build back the original error message from the stderr of the child process

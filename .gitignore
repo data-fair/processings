@@ -1,6 +1,5 @@
 data/
 node_modules/
-worker/config/local-*
-api/config/local-*
+**/config/local-*
 .config/
 .type/

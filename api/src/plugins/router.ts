@@ -258,18 +258,20 @@ router.get('/:id', async (req, res) => {
 })
 
 router.delete('/:id', permissions.isSuperAdmin, async (req, res) => {
-  if (!req.params.id) throw httpError(400, 'Plugin ID is required')
-  if (!fs.existsSync(path.join(pluginsDir, req.params.id))) throw httpError(404, 'Plugin not found')
+  const id = req.params.id as string
+  if (!id) throw httpError(400, 'Plugin ID is required')
+  if (!fs.existsSync(path.join(pluginsDir, id))) throw httpError(404, 'Plugin not found')
 
-  await fs.remove(path.join(pluginsDir, req.params.id))
-  await fs.remove(path.join(pluginsDir, req.params.id + '-config.json'))
-  await fs.remove(path.join(pluginsDir, req.params.id + '-access.json'))
-  await fs.remove(path.join(pluginsDir, req.params.id + '-metadata.json'))
+  await fs.remove(path.join(pluginsDir, id))
+  await fs.remove(path.join(pluginsDir, id + '-config.json'))
+  await fs.remove(path.join(pluginsDir, id + '-access.json'))
+  await fs.remove(path.join(pluginsDir, id + '-metadata.json'))
   res.status(204).send()
 })
 
 router.put('/:id/config', permissions.isSuperAdmin, async (req, res) => {
-  const pluginPath = path.join(pluginsDir, req.params.id, 'plugin.json')
+  const id = req.params.id as string
+  const pluginPath = path.join(pluginsDir, id, 'plugin.json')
   if (!await fs.pathExists(pluginPath)) {
     throw httpError(404, 'Plugin not found')
   }
@@ -278,27 +280,29 @@ router.put('/:id/config', permissions.isSuperAdmin, async (req, res) => {
   const validate = ajv.compile(pluginConfigSchema)
   const valid = validate(req.body)
   if (!valid) return res.status(400).send(validate.errors)
-  await fs.writeJson(path.join(pluginsDir, req.params.id + '-config.json'), req.body)
+  await fs.writeJson(path.join(pluginsDir, id + '-config.json'), req.body)
   res.send(req.body)
 })
 
 router.put('/:id/metadata', permissions.isSuperAdmin, async (req, res) => {
-  if (!await fs.pathExists(path.join(pluginsDir, req.params.id, 'plugin.json'))) {
+  const id = req.params.id as string
+  if (!await fs.pathExists(path.join(pluginsDir, id, 'plugin.json'))) {
     throw httpError(404, 'Plugin not found')
   }
 
   const validate = ajv.compile(pluginMetadataSchema)
   const valid = validate(req.body)
   if (!valid) return res.status(400).send(validate.errors)
-  await fs.writeJson(path.join(pluginsDir, req.params.id + '-metadata.json'), req.body)
+  await fs.writeJson(path.join(pluginsDir, id + '-metadata.json'), req.body)
   res.send(req.body)
 })
 
 router.put('/:id/access', permissions.isSuperAdmin, async (req, res) => {
-  if (!await fs.pathExists(path.join(pluginsDir, req.params.id, 'plugin.json'))) {
+  const id = req.params.id as string
+  if (!await fs.pathExists(path.join(pluginsDir, id, 'plugin.json'))) {
     throw httpError(404, 'Plugin not found')
   }
 
-  await fs.writeJson(path.join(pluginsDir, req.params.id + '-access.json'), req.body)
+  await fs.writeJson(path.join(pluginsDir, id + '-access.json'), req.body)
   res.send(req.body)
 })

@@ -4,7 +4,7 @@ services:
   # reverse proxy for the whole environment
   #####
   nginx:
-    image: nginx:1.23.1-alpine
+    image: nginx:1.29.4-alpine
     network_mode: host
     volumes:
       - ./dev/resources/nginx.conf:/etc/nginx/nginx.conf:ro
@@ -29,20 +29,21 @@ services:
       - MAILDEV_ACTIVE=true
       - MONGO_URL=mongodb://localhost:27017/simple-directory
       - STORAGE_TYPE=file
-      - AUTHRATELIMIT_ATTEMPTS=200
+      - AUTHRATELIMIT_ATTEMPTS=500
+      - AUTHRATELIMIT_DURATION=30
       - OBSERVER_ACTIVE=false
       - MANAGE_PARTNERS=true
       - MANAGE_DEPARTMENTS=true
-      - CIPHER_PASSWORD=cipherpassword
+      - CIPHER_PASSWORD=dev
     volumes:
-      - ./dev/resources/users.json:/webapp/data/users.json
-      - ./dev/resources/organizations.json:/webapp/data/organizations.json
+      - ./dev/resources/users.json:/app/data/users.json
+      - ./dev/resources/organizations.json:/app/data/organizations.json
 
   data-fair:
     profiles:
       - dev
       - test
-    image: ghcr.io/data-fair/data-fair:master
+    image: ghcr.io/data-fair/data-fair:5
     restart: on-failure:10
     network_mode: host
     depends_on:
@@ -107,12 +108,14 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms128m -Xmx128m"
+      - ES_HEAP_SIZE=128m
+      - "ES_JAVA_OPTS=-Xms128m -Xmx128m -server"
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9200"]
-      timeout: 10s
+      start_period: 10s
+      timeout: 5s
       interval: 2s
       retries: 50
 

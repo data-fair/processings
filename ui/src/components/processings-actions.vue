@@ -2,7 +2,6 @@
   <!-- Create new processing -->
   <v-list-item
     v-if="canAdmin"
-    rounded
     @click="router.push({ path: '/processings/new', query: { owner: ownersSelected.length ? String(ownersSelected[0]) : undefined } })"
   >
     <template #prepend>
@@ -11,7 +10,7 @@
         :icon="mdiPlusCircle"
       />
     </template>
-    Créer un nouveau traitement
+    {{ t('createNewProcessing') }}
   </v-list-item>
 
   <!-- Notifications menu -->
@@ -22,22 +21,18 @@
     max-width="500"
   >
     <template #activator="{ props }">
-      <v-list-item
-        v-bind="props"
-        rounded
-      >
+      <v-list-item v-bind="props">
         <template #prepend>
           <v-icon
             color="primary"
             :icon="mdiBell"
           />
         </template>
-        Notifications
+        {{ t('notifications') }}
       </v-list-item>
     </template>
     <v-card
-      title="Notifications"
-      rounded="lg"
+      :title="t('notifications')"
     >
       <v-card-text class="pa-0">
         <d-frame :src="eventsSubscribeUrl" />
@@ -46,17 +41,9 @@
   </v-menu>
 
   <!-- Search field -->
-  <v-text-field
+  <search-field
     v-model="search"
-    :append-inner-icon="mdiMagnify"
-    label="Rechercher"
-    class="mt-4 mx-4"
-    color="primary"
-    density="compact"
-    variant="outlined"
-    autofocus
-    hide-details
-    clearable
+    class="mt-2"
   />
 
   <!-- Status filters -->
@@ -65,14 +52,9 @@
     :items="statusesItems"
     item-title="display"
     item-value="statusKey"
-    class="mt-4 mx-4"
-    density="compact"
     label="Status"
-    rounded="xl"
-    variant="outlined"
-    hide-details
+    class="mt-4 mx-4"
     chips
-    clearable
     closable-chips
     multiple
   />
@@ -83,14 +65,9 @@
     :items="pluginsItems"
     item-title="display"
     item-value="pluginKey"
-    class="mt-4 mx-4"
-    density="compact"
     label="Plugin"
-    rounded="xl"
-    variant="outlined"
-    hide-details
+    class="mt-4 mx-4"
     chips
-    clearable
     closable-chips
     multiple
   />
@@ -100,8 +77,7 @@
     v-if="adminMode"
     v-model="showAll"
     color="admin"
-    label="Voir tous les traitements"
-    hide-details
+    :label="t('showAllProcessings')"
     class="mt-2 mx-4 text-admin"
   />
 
@@ -112,22 +88,21 @@
     :items="ownersItems"
     item-title="display"
     item-value="ownerKey"
+    :label="t('owner')"
+    color="admin"
     class="mt-2 mx-4 text-admin"
-    density="compact"
-    label="Propriétaire"
-    rounded="xl"
-    variant="outlined"
     chips
     clearable
     closable-chips
-    hide-details
     multiple
   />
 </template>
 
 <script setup lang="ts">
+import SearchField from '@data-fair/lib-vuetify/search-field.vue'
 import '@data-fair/frame/lib/d-frame.js'
 
+const { t } = useI18n()
 const router = useRouter()
 const processingsProps = defineProps<{
   adminMode: boolean,
@@ -144,16 +119,16 @@ const statusesSelected = defineModel('statusesSelected', { type: Array, required
 const ownersSelected = defineModel('ownersSelected', { type: Array, required: true })
 const showNotifMenu = ref(false)
 
-const statusesText: Record<string, string> = {
-  error: 'En échec',
-  finished: 'Terminé',
-  kill: 'Interruption',
-  killed: 'Interrompu',
-  none: 'Aucune exécution',
-  running: 'Démarré',
-  scheduled: 'Planifié',
-  triggered: 'Déclenché'
-}
+const statusesText = computed<Record<string, string>>(() => ({
+  error: t('statusError'),
+  finished: t('statusFinished'),
+  kill: t('statusKill'),
+  killed: t('statusKilled'),
+  none: t('statusNone'),
+  running: t('statusRunning'),
+  scheduled: t('statusScheduled'),
+  triggered: t('statusTriggered')
+}))
 
 type InstalledPlugin = {
   name: string
@@ -176,10 +151,10 @@ const installedPlugins = computed(() => installedPluginsFetch.data.value?.result
 
 const eventsSubscribeUrl = computed(() => {
   const topics = [
-    { key: 'processings:processing-finish-ok', title: 'Un traitement s\'est terminé sans erreurs' },
-    { key: 'processings:processing-finish-error', title: 'Un traitement a échoué' },
-    { key: 'processings:processing-log-error', title: 'Un traitement s\'est terminé correctement mais son journal contient des erreurs' },
-    { key: 'processings:processing-disabled', title: 'Un traitement a été désactivé car il a échoué trop de fois à la suite' }
+    { key: 'processings:processing-finish-ok', title: t('topicFinishOk') },
+    { key: 'processings:processing-finish-error', title: t('topicFinishError') },
+    { key: 'processings:processing-log-error', title: t('topicLogError') },
+    { key: 'processings:processing-disabled', title: t('topicDisabled') }
   ]
   const urlTemplate = window.parent.location.origin + '/data-fair/processings/{processingId}'
   return `/events/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false`
@@ -190,7 +165,7 @@ const statusesItems = computed(() => {
 
   return Object.entries(processingsProps.facets.statuses)
     .map(([statusKey, count]) => ({
-      display: `${statusesText[statusKey] || statusKey} (${count})`,
+      display: `${statusesText.value[statusKey] || statusKey} (${count})`,
       statusKey
     }))
     .sort((a, b) => a.display.localeCompare(b.display))
@@ -205,7 +180,7 @@ const pluginsItems = computed(() => {
       ([pluginKey, count]) => {
         const customName = installedPlugins.value?.find((plugin) => plugin.id === pluginKey)?.metadata.name
         return {
-          display: `${customName || 'Supprimé - ' + pluginKey} (${count})`,
+          display: `${customName || t('deleted') + ' - ' + pluginKey} (${count})`,
           pluginKey
         }
       }
@@ -241,6 +216,47 @@ const ownersItems = computed(() => {
 })
 
 </script>
+
+<i18n lang="yaml">
+  en:
+    createNewProcessing: Create a new processing
+    deleted: Deleted
+    notifications: Notifications
+    owner: Owner
+    showAllProcessings: Show all processings
+    statusError: Failed
+    statusFinished: Finished
+    statusKill: Interrupting
+    statusKilled: Interrupted
+    statusNone: No run
+    statusRunning: Running
+    statusScheduled: Scheduled
+    statusTriggered: Triggered
+    topicDisabled: A processing was disabled because it failed too many times in a row
+    topicFinishError: A processing has failed
+    topicFinishOk: A processing completed without errors
+    topicLogError: A processing completed but its log contains errors
+
+  fr:
+    createNewProcessing: Créer un nouveau traitement
+    deleted: Supprimé
+    notifications: Notifications
+    owner: Propriétaire
+    showAllProcessings: Voir tous les traitements
+    statusError: En échec
+    statusFinished: Terminé
+    statusKill: Interruption
+    statusKilled: Interrompu
+    statusNone: Aucune exécution
+    statusRunning: Démarré
+    statusScheduled: Planifié
+    statusTriggered: Déclenché
+    topicDisabled: Un traitement a été désactivé car il a échoué trop de fois à la suite
+    topicFinishError: Un traitement a échoué
+    topicFinishOk: Un traitement s'est terminé sans erreurs
+    topicLogError: Un traitement s'est terminé correctement mais son journal contient des erreurs
+
+</i18n>
 
 <style scoped>
 </style>

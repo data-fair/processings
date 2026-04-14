@@ -5,6 +5,7 @@ FROM node:24.11.1-alpine3.22 AS base
 
 WORKDIR /app
 ENV NODE_ENV=production
+ENV DEBUG=upgrade*
 
 # =============================
 # Package preparation (stripping version for caching)

@@ -26,14 +26,14 @@
     <!-- No processings created -->
     <span
       v-else-if="!processingsFetch.data.value?.results.length"
-      class="d-flex justify-center text-h6 mt-4"
+      class="d-flex justify-center text-headline-small mt-4"
     >
       {{ t('noProcessingsCreated') }}
     </span>
     <!-- No processings displayed (filters) -->
     <span
       v-else-if="!displayProcessings.length"
-      class="d-flex justify-center text-h6 mt-4"
+      class="d-flex justify-center text-headline-small mt-4"
     >
       {{ t('noProcessingsDisplayed') }}
     </span>
@@ -78,7 +78,7 @@ import type { Processing } from '#api/types'
 import NavigationRight from '@data-fair/lib-vuetify/navigation-right.vue'
 
 const { t } = useI18n()
-const session = useSessionAuthenticated(() => new Error('Authentification nécessaire'))
+const session = useSessionAuthenticated(() => new Error(t('authRequired')))
 const showAll = useBooleanSearchParam('showAll')
 const search = useStringSearchParam('q')
 const plugins = useStringsArraySearchParam('plugin')
@@ -158,11 +158,13 @@ watch(
 
 <i18n lang="yaml">
   en:
+    authRequired: Authentication required
     processingDisplayed: No processings | {displayed}/{count} processing displayed | {displayed}/{count} processings displayed
     noProcessingsCreated: You haven't created any processings yet.
     noProcessingsDisplayed: No results match the search criteria.
 
   fr:
+    authRequired: Authentification nécessaire
     processingDisplayed: Aucun traitement | {displayed}/{count} traitement affiché | {displayed}/{count} traitements affichés
     noProcessingsCreated: Vous n'avez pas encore créé de traitement.
     noProcessingsDisplayed: Aucun résultat ne correspond aux critères de recherche.

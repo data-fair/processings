@@ -2,10 +2,8 @@
   <v-card
     :rounded="false"
     :loading="runs.loading.value ? 'primary' : false"
+    :title="t('runs')"
   >
-    <v-card-title>
-      Exécutions
-    </v-card-title>
     <template v-if="runs">
       <v-list class="py-0">
         <template
@@ -32,6 +30,8 @@
 
 <script setup lang="ts">
 import type { Run } from '#api/types'
+
+const { t } = useI18n()
 
 const props = defineProps({
   canExec: Boolean,
@@ -85,3 +85,12 @@ onUnmounted(() => {
 
 defineExpose({ refresh: () => runs.refresh() })
 </script>
+
+<i18n lang="yaml">
+  en:
+    runs: Runs
+
+  fr:
+    runs: Exécutions
+
+</i18n>

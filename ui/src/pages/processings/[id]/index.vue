@@ -3,8 +3,8 @@
     v-if="processing"
     data-iframe-height
   >
-    <h2 class="text-h6">
-      Traitement {{ processing.title }}
+    <h2 class="text-headline-small">
+      {{ t('processingTitle', { title: processing.title }) }}
     </h2>
     <v-defaults-provider
       :defaults="{
@@ -13,7 +13,7 @@
         },
         VAutocomplete: {
           persistentPlaceholder: true,
-          placeholder: 'Rechercher...'
+          placeholder: t('search')
         },
         VNumberInput: {
           inset: true
@@ -107,7 +107,7 @@ const runs: Ref<Record<string, any>> = ref([])
 onMounted(async () => {
   await fetchProcessing()
   setBreadcrumbs([{
-    text: 'Traitements',
+    text: t('processings'),
     to: '/processings'
   }, {
     text: processing.value?.title || ''
@@ -226,7 +226,7 @@ const patch = useAsyncAction(
     edited.value = false
   },
   {
-    error: 'Erreur lors de la mise à jour du traitement',
+    error: t('updateError'),
   }
 )
 
@@ -259,7 +259,11 @@ const timezoneLabel = (timeZone: string) => {
       hours: ''
       monthly: Every month,
       weekly: Every week,
+    processings: Processings
+    processingTitle: 'Processing {title}'
+    search: 'Search...'
     timezone: 'Timezone:'
+    updateError: Error while updating the processing
 
   fr:
     frequency:
@@ -267,12 +271,13 @@ const timezoneLabel = (timeZone: string) => {
       hours: ''
       monthly: Tous les mois,
       weekly: Toutes les semaines,
+    processings: Traitements
+    processingTitle: 'Traitement {title}'
+    search: 'Rechercher...'
     timezone: 'Fuseau horaire :'
+    updateError: Erreur lors de la mise à jour du traitement
 
 </i18n>
 
-<style>
-.v-autocomplete input::placeholder {
-  font-style: italic;
-}
+<style scoped>
 </style>

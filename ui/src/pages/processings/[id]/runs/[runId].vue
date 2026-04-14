@@ -4,8 +4,8 @@
     data-iframe-height
   >
     <v-row class="ma-0">
-      <h2 class="text-h6">
-        Exécution du traitement {{ run.processing.title }}
+      <h2 class="text-headline-small">
+        {{ t('runTitle', { title: run.processing.title }) }}
       </h2>
     </v-row>
     <v-row>
@@ -21,9 +21,10 @@
         />
         <v-expansion-panels
           v-else
+          :model-value="[steps.length - 1]"
           variant="accordion"
           multiple
-          :model-value="[steps.length - 1]"
+          static
         >
           <v-expansion-panel
             v-for="(step, i) in steps"
@@ -41,11 +42,14 @@
                 :color="getColor(step)"
                 :icon="getIcon(step)"
               />
-              <span style="padding-left: 1rem;">
+              <span class="ml-6">
                 {{ step.msg }}
               </span>
             </v-expansion-panel-title>
-            <v-expansion-panel-text v-if="step.children.length">
+            <v-expansion-panel-text
+              v-if="step.children.length"
+              class="px-2"
+            >
               <run-logs-list :logs="step.children" />
             </v-expansion-panel-text>
           </v-expansion-panel>
@@ -58,6 +62,7 @@
 <script setup lang="ts">
 import type { Run } from '#api/types'
 
+const { t } = useI18n()
 const route = useRoute<'/processings/[id]/runs/[runId]'>()
 const session = useSession()
 const ws = useWS('/processings/api/')
@@ -102,7 +107,7 @@ function getColor (step: Record<string, any>) {
       break
     }
     if (child.type === 'warning') {
-      color = 'accent'
+      color = 'info'
     }
   }
 
@@ -129,7 +134,7 @@ onMounted(async () => {
   loading.value = true
   const fetchedRun = await $fetch(`/runs/${route.params.runId}`)
   if (!fetchedRun || fetchedRun.processing._id !== route.params.id) {
-    sendUiNotif({ type: 'error', msg: 'unknown run' })
+    sendUiNotif({ type: 'error', msg: t('unknownRun') })
     return
   }
   run.value = fetchedRun
@@ -138,13 +143,13 @@ onMounted(async () => {
   ws?.subscribe(`processings/${fetchedRun.processing._id}/run-patch`, onRunPatch)
 
   setBreadcrumbs([{
-    text: 'Traitements',
+    text: t('processings'),
     to: '/processings'
   }, {
     text: fetchedRun.processing.title,
     to: `/processings/${fetchedRun.processing._id}`
   }, {
-    text: 'Exécution',
+    text: t('run'),
   }])
   loading.value = false
 })
@@ -175,3 +180,18 @@ function onRunLog (runLog: Record<string, any>) {
   run.value.log.push(runLog.log)
 }
 </script>
+
+<i18n lang="yaml">
+  en:
+    runTitle: "Run of processing {title}"
+    unknownRun: Unknown run
+    processings: Processings
+    run: Run
+
+  fr:
+    runTitle: "Exécution du traitement {title}"
+    unknownRun: Exécution inconnue
+    processings: Traitements
+    run: Exécution
+
+</i18n>
