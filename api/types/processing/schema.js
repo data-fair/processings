@@ -77,7 +77,7 @@ export default {
     debug: {
       type: 'boolean',
       title: 'Mode debug',
-      description: 'Active le mode debug pour ce traitement',
+      description: 'Capture des logs détaillés (stacks d\'erreurs, appels HTTP) réservés aux super-admins, pour diagnostiquer un plugin en erreur.',
       readOnly: true
     },
     owner: {
