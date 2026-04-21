@@ -1,4 +1,33 @@
 <template>
+  <!-- Navigation -->
+  <template v-if="linkedDatasets.length">
+    <v-list-subheader class="text-uppercase">
+      {{ t('navigation') }}
+    </v-list-subheader>
+    <v-list-item
+      v-for="d in linkedDatasets"
+      :key="d.id"
+      :href="`/data-fair/dataset/${d.id}`"
+      target="_blank"
+      rounded
+    >
+      <template #prepend>
+        <v-icon
+          color="primary"
+          :icon="mdiOpenInNew"
+        />
+      </template>
+      {{ t('viewDataset', { title: d.title }) }}
+    </v-list-item>
+  </template>
+
+  <v-list-subheader
+    v-if="hasActions"
+    class="text-uppercase"
+  >
+    {{ t('actions') }}
+  </v-list-subheader>
+
   <!-- Execute -->
   <v-menu
     v-if="canAdmin || canExec"
@@ -230,22 +259,6 @@
     </v-card>
   </v-menu>
 
-  <!-- Dataset link -->
-  <v-list-item
-    v-if="processing?.config?.dataset?.id"
-    :href="`/data-fair/dataset/${processing.config.dataset.id}`"
-    target="_blank"
-    rounded
-  >
-    <template #prepend>
-      <v-icon
-        color="primary"
-        :icon="mdiOpenInNew"
-      />
-    </template>
-    {{ t('viewDataset') }}
-  </v-list-item>
-
   <!-- Documentation link -->
   <v-list-item
     v-if="metadata?.documentation"
@@ -342,6 +355,32 @@ const newOwner = ref<Account>(session.state.account)
 const duplicateTitle = ref(`${processing.title} ${t('copy')}`)
 
 const canSubscribeNotif = computed(() => processing?.owner.type === session.state.account.type && processing?.owner.id === session.state.account.id)
+
+const linkedDatasets = computed(() => {
+  const seen = new Set<string>()
+  const result: { id: string, title: string }[] = []
+  const add = (d: any) => {
+    if (!d?.id || seen.has(d.id)) return
+    seen.add(d.id)
+    result.push({ id: d.id, title: d.title || d.id })
+  }
+  const cfg = processing?.config
+  if (!cfg) return result
+  add(cfg.dataset)
+  if (Array.isArray(cfg.datasets)) {
+    for (const entry of cfg.datasets) {
+      add(entry?.dataset ?? entry)
+    }
+  }
+  return result
+})
+
+const hasActions = computed(() =>
+  canAdmin || canExec ||
+  !!metadata?.documentation ||
+  !!session.state.user?.adminMode ||
+  (!!eventsSubscribeUrl.value && canSubscribeNotif.value)
+)
 const ownerString = computed(() => `${processing?.owner.type}:${processing?.owner.id}${processing?.owner.department ? ':' + processing?.owner.department : ''}`)
 
 const eventsSubscribeUrl = computed(() => {
@@ -461,7 +500,9 @@ en:
   sensitiveOperation: Sensitive operation
   changeOwnerWarning: Changing the owner of a processing can have consequences on the processing execution.
   confirm: Confirm
-  viewDataset: View the dataset
+  navigation: Navigation
+  actions: Actions
+  viewDataset: "View {title}"
   tutorial: Tutorial
   useApi: Use the API
   notifications: Notifications
@@ -497,7 +538,9 @@ fr:
   sensitiveOperation: Opération sensible
   changeOwnerWarning: Changer le propriétaire d'un traitement peut avoir des conséquences sur l'execution du traitement.
   confirm: Confirmer
-  viewDataset: Voir le jeu de données
+  navigation: Navigation
+  actions: Actions
+  viewDataset: "Voir {title}"
   tutorial: Tutoriel
   useApi: Utiliser l'API
   notifications: Notifications
