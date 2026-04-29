@@ -1,13 +1,19 @@
+const apiPort = parseInt(process.env.DEV_API_PORT ?? '8082')
+const mongoPort = process.env.MONGO_PORT ?? '27017'
+const sdPort = process.env.SD_PORT ?? '8080'
+const eventsPort = process.env.EVENTS_PORT ?? '8083'
+const observerPort = parseInt(process.env.DEV_API_OBSERVER_PORT ?? '9092')
+
 export default {
   cipherPassword: 'dev',
   dataDir: '../data/development',
-  mongoUrl: 'mongodb://localhost:27017/data-fair-processings-development',
+  mongoUrl: `mongodb://localhost:${mongoPort}/data-fair-processings-development`,
   observer: {
-    port: 9092
+    port: observerPort
   },
-  port: 8082,
-  privateDirectoryUrl: 'http://localhost:8080',
-  privateEventsUrl: 'http://localhost:8083',
+  port: apiPort,
+  privateDirectoryUrl: `http://localhost:${sdPort}`,
+  privateEventsUrl: `http://localhost:${eventsPort}`,
   secretKeys: {
     identities: 'secret-identities',
     events: 'secret-events'

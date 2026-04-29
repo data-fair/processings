@@ -1,5 +1,9 @@
 data/
+dev/logs/
 node_modules/
 **/config/local-*
 .config/
 .type/
+.env
+playwright-report/
+test-results/

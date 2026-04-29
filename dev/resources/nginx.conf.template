@@ -1,0 +1,69 @@
+# nginx configuration file for processings development and test environment
+
+server {
+  listen ${NGINX_PORT1};
+  server_name ${DEV_HOST};
+
+  # Transmit host, protocol and user ip, we use it for routing, rate limiting, etc.
+  proxy_set_header Host $http_host;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_set_header X-Forwarded-Host $http_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Client-IP $remote_addr;
+
+  # web socket support
+  proxy_set_header Upgrade $http_upgrade;
+  proxy_set_header Connection "Upgrade";
+
+  # accept some occasional long queries + HMR long poll from the Vite dev server
+  proxy_read_timeout 86400;
+  # body size limits are implemented by services themselves
+  client_max_body_size 0;
+  # direct streaming of uploads
+  proxy_request_buffering off;
+  # direct streaming of downloads
+  proxy_buffering off;
+  # allow large response headers (setCookies with large session token)
+  proxy_buffer_size 32k;
+  proxy_buffers 4 32k;
+
+  location = / {
+    return 302 /processings/;
+  }
+
+  location = /processings/ {
+    return 302 /processings/dev;
+  }
+
+  # API routes served by API server
+  location /processings/api/ {
+    proxy_pass http://localhost:${DEV_API_PORT};
+  }
+
+  # ui-config served by API
+  location ~ /processings/(.*)-ui-config.js {
+    proxy_pass http://localhost:${DEV_API_PORT};
+  }
+
+  # UI served by Vite dev server
+  location /processings/ {
+    proxy_pass http://localhost:${DEV_UI_PORT};
+  }
+
+  location /simple-directory/ {
+    proxy_pass http://localhost:${SD_PORT}/simple-directory/;
+  }
+
+  location /data-fair/ {
+    proxy_pass http://localhost:${DF_PORT}/data-fair/;
+  }
+
+  location /openapi-viewer/ {
+    proxy_pass http://localhost:${OAV_PORT}/;
+  }
+
+  location /events/ {
+    proxy_pass http://localhost:${EVENTS_PORT}/;
+  }
+}

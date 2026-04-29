@@ -18,9 +18,53 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Run quality checks
-      run: npm run quality
+    - name: Lint
+      run: npm run lint
 
-    - name: Docker logs in case of failure
+    - name: Build types
+      run: npm run build-types
+
+    - name: Type check
+      run: npm run check-types
+
+    - name: Build UI
+      run: npm -w ui run build
+
+    - name: Init .env
+      run: ./dev/init-env.sh
+
+    - name: Use localhost as DEV_HOST in CI
+      run: sed -i 's/^DEV_HOST=.*/DEV_HOST=localhost/' .env
+
+    - name: Start docker compose services
+      run: docker compose --profile dev up -d --wait
+
+    - name: Start dev API
+      run: npx dotenv -- npm run dev-api &
+
+    - name: Start dev worker
+      run: npx dotenv -- npm run dev-worker &
+
+    - name: Wait for dev API to be ready
+      run: |
+        set -a; source .env; set +a
+        for i in {1..30}; do
+          curl -sf "http://localhost:${DEV_API_PORT}/api/v1/_ping" && exit 0
+          sleep 2
+        done
+        echo "dev API did not become ready" >&2
+        exit 1
+
+    - name: Run tests
+      run: npm test
+
+    - name: Audit
+      run: npm audit --omit=dev --audit-level=critical
+
+    - name: Docker compose logs on failure
       if: failure()
-      run: docker compose logs data-fair
+      run: docker compose --profile dev logs
+
+    - name: Stop docker compose services
+      if: always()
+      run: docker compose --profile dev down
