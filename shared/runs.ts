@@ -19,6 +19,24 @@ export const toCRON = (scheduling: Scheduling): string => {
   return `${minute} ${hour} ${dayOfMonth} ${month} ${dayOfWeek}`
 }
 
+/**
+ * Compute the earliest next-fire date across a list of scheduling rules.
+ * Returns null when the list is empty. Throws if any rule yields no next date.
+ */
+export const nextScheduledDate = (schedulings: Scheduling[]): Date | null => {
+  let nextDate: Date | null = null
+  for (const scheduling of schedulings) {
+    const cron = toCRON(scheduling)
+    const job = new Cron(cron, { timezone: scheduling.timeZone || 'Europe/Paris' })
+    const candidate = job.nextRun()
+    if (!candidate) {
+      throw new Error('No next date returned for processing scheduling ' + JSON.stringify(scheduling))
+    }
+    if (!nextDate || candidate < nextDate) nextDate = candidate
+  }
+  return nextDate
+}
+
 export const createNext = async (db: Db, locks: Locks, processing: Processing, triggered: boolean = false, delaySeconds:number = 0): Promise<Run | null> => {
   const ack = await locks.acquire(processing._id + '/next-run')
   try {
@@ -60,19 +78,7 @@ export const createNext = async (db: Db, locks: Locks, processing: Processing, t
       }
       await runsCollection.deleteMany({ 'processing._id': processing._id, status: 'scheduled' })
       await processingsCollection.updateOne({ _id: run.processing._id }, { $unset: { nextRun: 1 } })
-      let nextDate = null
-      for (const scheduling of processing.scheduling) {
-        const cron = toCRON(scheduling)
-        const job = new Cron(cron, { timezone: scheduling.timeZone || 'Europe/Paris' })
-        const nextDateCandidate = job.nextRun()
-        if (!nextDateCandidate) {
-          throw new Error('No next date returned for processing scheduling ' + JSON.stringify(scheduling))
-        }
-        if (!nextDate || nextDateCandidate < nextDate) {
-          nextDate = nextDateCandidate
-        }
-      }
-
+      const nextDate = nextScheduledDate(processing.scheduling)
       if (nextDate) run.scheduledAt = nextDate.toISOString()
     }
 

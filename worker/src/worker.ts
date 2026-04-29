@@ -18,6 +18,7 @@ import locks from '#locks'
 import limits from './utils/limits.ts'
 import { initMetrics } from './utils/metrics.ts'
 import { finish } from './utils/runs.ts'
+import { buildErrorMessageFromStderr } from './utils/worker-operations.ts'
 
 const debug = Debug('worker')
 const debugLoop = Debug('worker-loop')
@@ -242,14 +243,7 @@ async function iter (run: Run) {
     await finish(run)
   } catch (err: any) {
     // Build back the original error message from the stderr of the child process
-    const errorMessage = []
-    if (stderr) {
-      stderr.split('\n')
-        .filter(line => !!line && !line.startsWith('worker:') && !line.includes('NODE_TLS_REJECT_UNAUTHORIZED'))
-        .forEach(line => errorMessage.push(line))
-    }
-
-    if (!errorMessage.length) errorMessage.push(err.message)
+    const errorMessage = buildErrorMessageFromStderr(stderr, err.message)
 
     if (run) {
       // case of interruption by a SIGTERM
@@ -258,8 +252,8 @@ async function iter (run: Run) {
         await finish(run)
         // @test:spy("isKilled")
       } else {
-        console.warn(`failure ${processing?.title ?? run.processing.title} > ${run._id}`, errorMessage.join('\n'))
-        await finish(run, errorMessage.join('\n'))
+        console.warn(`failure ${processing?.title ?? run.processing.title} > ${run._id}`, errorMessage)
+        await finish(run, errorMessage)
         // @test:spy("isFailure")
       }
     } else {
