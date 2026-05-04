@@ -5,7 +5,7 @@
   "scripts": {
     "build": "vite build",
     "check-types": "vue-tsc",
-    "dev": "NODE_CONFIG_DIR=../api/config/ vite --port 3039",
+    "dev": "NODE_CONFIG_DIR=../api/config/ vite --port $DEV_UI_PORT",
     "lint": "eslint .",
     "lint-fix": "eslint --fix .",
     "preview": "vite preview"
