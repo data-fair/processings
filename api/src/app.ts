@@ -23,6 +23,10 @@ app.set('json spaces', 2)
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
+app.get('/api/v1/_ping', (req, res) => {
+  res.send('ok')
+})
+
 app.use('/api/identities', identitiesRouter)
 app.use('/api/v1/plugins-registry', pluginsRegistryRouter)
 app.use('/api/v1/plugins', pluginsRouter)
@@ -31,7 +35,12 @@ app.use('/api/v1/runs', runsRouter)
 app.use('/api/v1/limits', limitsRouter)
 app.use('/api/v1/admin', adminRouter)
 
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV === 'development') {
+  app.use('/api/v1/test-env', (await import('./misc/routers/test-env.ts')).default)
+}
+
+if (process.env.NODE_ENV !== 'development') {
+  // in development the UI is served by the Vite dev server through nginx
   const cspDirectives = { ...defaultNonceCSPDirectives }
   // necessary to use vjsf without pre-compilation
   cspDirectives['script-src'] = "'unsafe-eval' " + defaultNonceCSPDirectives['script-src']

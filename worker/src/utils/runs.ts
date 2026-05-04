@@ -7,6 +7,7 @@ import eventsQueue from '@data-fair/lib-node/events-queue.js'
 import config from '#config'
 import mongo from '#mongo'
 import { internalError } from '@data-fair/lib-node/observer.js'
+import { shouldDisableForFailures } from './runs-operations.ts'
 
 const sendProcessingEvent = (
   run: Run,
@@ -134,15 +135,7 @@ export const finish = async (run: Run, errorMessage: string | undefined = undefi
     const firstError = raw?.allErrors?.[0]?.firstError ? new Date(raw.allErrors[0].firstError) : null     // date of the first error (across all runs)
     const lastError = raw?.allErrors?.[0]?.lastError ? new Date(raw.allErrors[0].lastError) : null        // date of the last error (across all runs)
 
-    const allErrors = errors === config.maxFailures
-    const cooldownReached = firstError && lastError
-      ? (lastError.getTime() - firstError.getTime()) / (1000 * 60 * 60) >= config.maxFailuresCooldown // (1000 * 60 * 60) convert to hours
-      : false
-
-    const reachedMaxFailures = allErrors && cooldownReached
-
-    // Disable processing if reached max failures
-    if (reachedMaxFailures) {
+    if (shouldDisableForFailures(errors, firstError, lastError, config.maxFailures, config.maxFailuresCooldown)) {
       await mongo.processings.updateOne(
         { _id: run.processing._id },
         { $set: { active: false } }

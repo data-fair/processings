@@ -1,3 +1,8 @@
+const mongoPort = process.env.MONGO_PORT ?? '27017'
+const eventsPort = process.env.EVENTS_PORT ?? '8083'
+const dfPort = process.env.DF_PORT ?? '8081'
+const observerPort = parseInt(process.env.DEV_WORKER_OBSERVER_PORT ?? '9091')
+
 export default {
   cipherPassword: 'dev',
   dataDir: '../data/development',
@@ -5,15 +10,19 @@ export default {
   dataFairAPIKey: '', // override in local-development.cjs
   maxFailures: 2,
   maxFailuresCooldown: 0.05, // 3 minutes
-  mongoUrl: 'mongodb://localhost:27017/data-fair-processings-development',
+  mongoUrl: `mongodb://localhost:${mongoPort}/data-fair-processings-development`,
   secretKeys: {
     events: 'secret-events'
   },
   observer: {
-    port: 9091
+    port: observerPort
   },
-  privateDataFairUrl: 'http://localhost:8081',
-  privateEventsUrl: 'http://localhost:8083',
+  privateDataFairUrl: `http://localhost:${dfPort}`,
+  privateEventsUrl: `http://localhost:${eventsPort}`,
   runsRetention: 5,
-  upgradeRoot: '../'
+  upgradeRoot: '../',
+  worker: {
+    killInterval: 2000,
+    gracePeriod: 3000
+  }
 }

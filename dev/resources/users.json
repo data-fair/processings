@@ -136,5 +136,77 @@
     "password": {
       "clear": "superpasswd"
     }
+  },
+  {
+    "id": "test_user1",
+    "firstName": "Test User1",
+    "lastName": "",
+    "email": "test_user1@test.com",
+    "password": {
+      "clear": "passwd"
+    }
+  },
+  {
+    "id": "test_user2",
+    "firstName": "Test User2",
+    "lastName": "",
+    "email": "test_user2@test.com",
+    "password": {
+      "clear": "passwd"
+    }
+  },
+  {
+    "id": "test_contrib1",
+    "firstName": "Test Contrib1",
+    "lastName": "",
+    "email": "test_contrib1@test.com",
+    "password": {
+      "clear": "passwd"
+    }
+  },
+  {
+    "id": "test_admin1",
+    "firstName": "Test Admin1",
+    "lastName": "",
+    "email": "test_admin1@test.com",
+    "password": {
+      "clear": "passwd"
+    }
+  },
+  {
+    "id": "test_alone",
+    "firstName": "Test Alone",
+    "lastName": "",
+    "email": "test_alone@test.com",
+    "password": {
+      "clear": "passwd"
+    }
+  },
+  {
+    "id": "test_dep_admin",
+    "firstName": "Test Dep",
+    "lastName": "Admin",
+    "email": "test_dep_admin@test.com",
+    "password": {
+      "clear": "passwd"
+    }
+  },
+  {
+    "id": "test_outsider",
+    "firstName": "Test",
+    "lastName": "Outsider",
+    "email": "test_outsider@test.com",
+    "password": {
+      "clear": "passwd"
+    }
+  },
+  {
+    "id": "test_superadmin",
+    "firstName": "Test Super",
+    "lastName": "Admin",
+    "email": "test_superadmin@test.com",
+    "password": {
+      "clear": "superpasswd"
+    }
   }
 ]

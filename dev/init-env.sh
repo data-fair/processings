@@ -1,0 +1,29 @@
+#!/bin/bash
+
+RANDOM_NB=$((1024 + RANDOM % 48000))
+echo "Use random base port $RANDOM_NB"
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null | sed 's/[^a-zA-Z0-9-]/-/g')
+DEV_HOST="${BRANCH:-df}.localhost"
+
+cat <<EOF > ".env"
+DEV_HOST=${DEV_HOST}
+
+NGINX_PORT1=$((RANDOM_NB))
+NGINX_PORT2=$((RANDOM_NB + 1))
+
+DEV_API_PORT=$((RANDOM_NB + 10))
+DEV_UI_PORT=$((RANDOM_NB + 11))
+DEV_WORKER_PORT=$((RANDOM_NB + 12))
+DEV_API_OBSERVER_PORT=$((RANDOM_NB + 13))
+DEV_WORKER_OBSERVER_PORT=$((RANDOM_NB + 14))
+DEV_UI_HMR_PORT=$((RANDOM_NB + 15))
+
+MONGO_PORT=$((RANDOM_NB + 20))
+ES_PORT=$((RANDOM_NB + 21))
+
+SD_PORT=$((RANDOM_NB + 30))
+EVENTS_PORT=$((RANDOM_NB + 31))
+OAV_PORT=$((RANDOM_NB + 32))
+DF_PORT=$((RANDOM_NB + 33))
+EOF
