@@ -70,13 +70,15 @@
 
         <!-- Last run -->
         <template v-if="processing.lastRun">
-          <v-list-item v-if="processing.lastRun.status === 'running'">
+          <v-list-item
+            v-if="processing.lastRun.status === 'running'"
+            prepend-gap="28"
+          >
             <template #prepend>
               <v-progress-circular
                 indeterminate
                 color="primary"
                 size="small"
-                class="mr-7"
               />
             </template>
             {{ t('runStarted') }} {{ dayjs(processing.lastRun.startedAt).fromNow() }}
