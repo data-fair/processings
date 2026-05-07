@@ -42,15 +42,30 @@ import config from '../../worker/src/config.ts'
 
 type PluginManifest = { name: string, version: string, distTag?: string }
 
-async function listLegacyPluginDirs (pluginsDir: string): Promise<string[]> {
-  const entries = await readdir(pluginsDir)
+async function listLegacyPluginDirs (pluginsDir: string, debug: (msg: string) => void): Promise<string[]> {
+  const entries = await readdir(pluginsDir, { withFileTypes: true })
   const dirs: string[] = []
   for (const entry of entries) {
-    if (entry.endsWith('.json')) continue
-    const full = path.join(pluginsDir, entry)
-    try {
-      if ((await stat(full)).isDirectory()) dirs.push(entry)
-    } catch { /* unreadable, skip */ }
+    if (entry.name.endsWith('.json')) continue
+    if (entry.isDirectory()) {
+      dirs.push(entry.name)
+      continue
+    }
+    if (entry.isSymbolicLink()) {
+      // Follow the link only enough to confirm it points to an actual directory.
+      // Broken or non-dir symlinks are skipped — they show up in legacy volumes
+      // when a plugin was renamed (e.g. unscoped → @scope) and a stale link
+      // was left behind.
+      try {
+        const s = await stat(path.join(pluginsDir, entry.name))
+        if (s.isDirectory()) dirs.push(entry.name)
+        else debug(`${entry.name}: symlink to non-directory, skipping`)
+      } catch (err: any) {
+        debug(`${entry.name}: broken symlink (${err?.code ?? err?.message}), skipping`)
+      }
+      continue
+    }
+    debug(`${entry.name}: not a directory, skipping`)
   }
   return dirs
 }
@@ -188,14 +203,27 @@ export default {
       return
     }
 
-    const dirs = await listLegacyPluginDirs(pluginsDir)
+    const dirs = await listLegacyPluginDirs(pluginsDir, debug)
     const ax = createRegistryClient()
 
+    // Track per-dir failures so the operator sees them surfaced together at the
+    // end. A single broken plugin dir (stale symlink, corrupted node_modules,
+    // partial install) shouldn't block migration of the rest.
+    const failures: { dir: string, error: string }[] = []
     for (const dir of dirs) {
-      const manifest = await readPluginManifest(pluginsDir, dir, debug)
-      if (!manifest) continue
-      await publishToRegistry(ax, pluginsDir, dir, manifest, debug)
-      await pushMetadataAndAccess(ax, pluginsDir, dir, manifest, debug)
+      try {
+        const manifest = await readPluginManifest(pluginsDir, dir, debug)
+        if (!manifest) continue
+        await publishToRegistry(ax, pluginsDir, dir, manifest, debug)
+        await pushMetadataAndAccess(ax, pluginsDir, dir, manifest, debug)
+      } catch (err: any) {
+        const msg = err?.code ? `${err.code}: ${err.message}` : (err?.message ?? String(err))
+        debug(`${dir}: failed to migrate (${msg}) — leaving on volume for manual reconciliation`)
+        failures.push({ dir, error: msg })
+      }
+    }
+    if (failures.length > 0) {
+      debug(`${failures.length} plugin dir(s) failed migration: ${failures.map(f => f.dir).join(', ')}. Inspect logs above and reconcile manually before the v7.0 upgrade.`)
     }
   }
 } as UpgradeScript
