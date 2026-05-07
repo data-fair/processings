@@ -51,13 +51,19 @@ export default {
 
     for (const p of legacyProcessings) {
       const id = p.plugin as string
-      const pluginJsonPath = path.join(pluginsDir, id, 'plugin.json')
-      if (!existsSync(pluginJsonPath)) {
+      // Older legacy data sometimes stored the id without the leading `@` from
+      // the npm scope (e.g. `data-fair-processing-accidents-0` in mongo while the
+      // dir on disk is `@data-fair-processing-accidents-0`). Try the verbatim
+      // form first, then fall back to the `@`-prefixed form.
+      const candidates = id.startsWith('@') ? [id] : [id, '@' + id]
+      const dir = candidates.find(c => existsSync(path.join(pluginsDir, c, 'plugin.json')))
+      if (!dir) {
         throw new Error(
           `processing ${p._id} (${p.title}) references plugin "${id}" but no matching directory exists on the legacy volume. ` +
           'Either restore the plugin dir or delete the processing manually before retrying the v6.0 boot.'
         )
       }
+      const pluginJsonPath = path.join(pluginsDir, dir, 'plugin.json')
       const pluginJson = JSON.parse(await readFile(pluginJsonPath, 'utf-8'))
       const { name, version, distTag } = pluginJson as { name: string, version: string, distTag?: string }
       if (!name || !version) {
