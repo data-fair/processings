@@ -114,9 +114,14 @@ async function publishToRegistry (ax: AxiosInstance, pluginsDir: string, dir: st
   const stagingDir = await mkdtemp(path.join(os.tmpdir(), 'processings-migrate-'))
   const tarballPath = path.join(stagingDir, `${dir}.tgz`)
   try {
+    // The `tar` package follows GNU tar's `@FILE` convention: any entry
+    // whose first character is `@` is interpreted as a path to a file
+    // containing the actual list of paths to archive. Scoped npm packages
+    // produce dirs like `@data-fair-processing-accidents-0`, which would
+    // be misread that way. Prefix with `./` to bypass the special case.
     await tar.create(
       { gzip: true, cwd: pluginsDir, file: tarballPath, prefix: 'package/' },
-      [dir]
+      ['./' + dir]
     )
 
     const form = new FormData()
