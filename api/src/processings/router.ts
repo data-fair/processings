@@ -16,6 +16,7 @@ import { ensureArtefact } from '@data-fair/lib-node-registry'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import { createNext } from '@data-fair/processings-shared/runs.ts'
 import { parsePluginId } from '@data-fair/processings-shared/plugin-id.ts'
+import { importPluginModule } from '@data-fair/processings-shared/plugin-load.ts'
 import { applyProcessing, deleteProcessing } from '../runs/service.ts'
 import { cipher, decipher } from '@data-fair/processings-shared/cipher.ts'
 import mongo from '#mongo'
@@ -33,9 +34,13 @@ export default router
 const ajv = ajvFormats(new Ajv({ strict: false }))
 
 /**
- * Ensure the plugin tarball is in the API's local cache (downloads on miss),
- * then read its package.json. Registry enforces that `processing.owner` has
- * access to the artefact; a 403 here surfaces directly to the caller.
+ * Ensure the plugin tarball is in the API's local cache (downloads on miss).
+ * Registry enforces that `processing.owner` has access to the artefact; a 403
+ * here surfaces directly to the caller.
+ *
+ * The plugin's processing config schema is read from the conventional
+ * `processing-config-schema.json` shipped alongside the plugin (same convention
+ * as v5). Returns `undefined` when the plugin doesn't ship one.
  */
 async function ensurePluginAndReadSchema (processing: Pick<Processing, 'pluginId' | 'owner'>) {
   const { name, major } = parsePluginId(processing.pluginId)
@@ -52,11 +57,12 @@ async function ensurePluginAndReadSchema (processing: Pick<Processing, 'pluginId
       ...(processing.owner.department ? { department: processing.owner.department } : {})
     }
   })
-  const pkg = await fs.readJson(path.join(ensured.path, 'package.json'))
-  return {
-    ensured,
-    processingConfigSchema: pkg.registry?.processingConfigSchema as Record<string, unknown> | undefined
+  const schemaPath = path.join(ensured.path, 'processing-config-schema.json')
+  let processingConfigSchema: Record<string, unknown> | undefined
+  if (await fs.pathExists(schemaPath)) {
+    processingConfigSchema = await fs.readJson(schemaPath)
   }
+  return { ensured, processingConfigSchema }
 }
 
 const sensitiveParts = ['permissions', 'webhookKey', 'config']
@@ -114,7 +120,7 @@ async function validateFullProcessing (processing: any): Promise<Processing> {
 const prepareProcessing = async (processing: Processing) => {
   // Get the plugin file and execute the prepare function if it exists.
   const { ensured } = await ensurePluginAndReadSchema(processing)
-  const plugin = await import(path.join(ensured.path, 'index.js') + `?imported=${Date.now()}`)
+  const plugin = await importPluginModule<{ prepare?: PrepareFunction }>(ensured.path, { cacheBust: true })
   if (!(plugin.prepare && typeof plugin.prepare === 'function')) return
 
   // Decipher the actuals secrets if they are present
@@ -410,8 +416,8 @@ router.get('/:id', async (req, res) => {
 
 // Get the plugin's processingConfigSchema for this processing's pinned major.
 // Registry only stores tarballs and ignores their inner shape; the schema
-// lives in the package.json under `registry.processingConfigSchema` and is
-// read on demand from the API's local cache.
+// ships as `processing-config-schema.json` next to the plugin and is read
+// on demand from the API's local cache.
 router.get('/:id/plugin-config-schema', async (req, res, next) => {
   try {
     const sessionState = await session.reqAuthenticated(req)

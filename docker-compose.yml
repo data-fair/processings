@@ -126,9 +126,12 @@ services:
       - CIPHER_PASSWORD=1234567890123456789012345678901234567890
       - API_KEYS_SALT=1234567890123456789012345678901234567890
       - OBSERVER_ACTIVE=false
-      - STORAGE_TYPE=fs
-    volumes:
-      - registry-data:/app/data
+      - FILES_STORAGE=fs
+      # /tmp is world-writable in the registry image; the container runs as
+      # uid 1000 ("node") and can't write to a docker-managed volume on /app/data
+      # without an init step. Tarballs are throwaway in dev/test so we just keep
+      # them inside the container and drop the named volume.
+      - DATA_DIR=/tmp/registry-data
 
   #####
   # db and search engine
@@ -207,4 +210,3 @@ volumes:
   elasticsearch-data:
   mongo-data:
   processings-data:
-  registry-data:

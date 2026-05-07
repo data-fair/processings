@@ -12,6 +12,7 @@ import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import { ensureArtefact } from '@data-fair/lib-node-registry'
 import { decipher } from '@data-fair/processings-shared/cipher.ts'
 import { parsePluginId } from '@data-fair/processings-shared/plugin-id.ts'
+import { importPluginModule } from '@data-fair/processings-shared/plugin-load.ts'
 import { running } from '../utils/runs.ts'
 import config, { registryCacheDir } from '#config'
 import mongo from '#mongo'
@@ -117,10 +118,6 @@ export const run = async (mailTransport: any) => {
       await log.warning(`deprecation: plugin ${pluginName} still relies on legacy plugin-config from volume`)
     }
   }
-  if (!await fs.pathExists(path.join(pluginDir, 'index.js'))) {
-    throw new Error('fichier source manquant : ' + path.join(pluginDir, 'index.js'))
-  }
-
   const dir = resolvePath(processingsDir, processing._id)
   await fs.ensureDir(dir)
   const tmpDir = await tmp.dir({ unsafeCleanup: true, tmpdir: config.tmpDir, prefix: `processing-run-${processing._id}-${run._id}` })
@@ -158,7 +155,7 @@ export const run = async (mailTransport: any) => {
 
   const cwd = process.cwd()
   try {
-    pluginModule = await import(path.join(pluginDir, 'index.js'))
+    pluginModule = await importPluginModule(pluginDir)
     process.chdir(dir)
     const result = await pluginModule.run(context)
     if (result?.deleteOnComplete) {

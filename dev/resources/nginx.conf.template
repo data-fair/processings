@@ -67,7 +67,11 @@ server {
     proxy_pass http://localhost:${EVENTS_PORT}/;
   }
 
+  # No URI on proxy_pass: nginx forwards the original encoded request URI as-is
+  # so artefact ids like @data-fair%2Fprocessing-hello-world keep their %2F
+  # all the way to the express :name route. Registry expects the /registry
+  # prefix in the URL itself (PUBLIC_URL=...registry).
   location /registry/ {
-    proxy_pass http://localhost:${REGISTRY_PORT}/registry/;
+    proxy_pass http://localhost:${REGISTRY_PORT};
   }
 }

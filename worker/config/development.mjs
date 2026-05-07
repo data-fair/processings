@@ -8,7 +8,10 @@ export default {
   cipherPassword: 'dev',
   dataDir: '../data/development',
   dataFairAdminMode: true,
-  dataFairAPIKey: '', // override in local-development.cjs
+  // Dev/test default. The matching settings doc in DF's mongo is seeded by
+  // tests/state-setup.ts (idempotent). Real deployments override this via
+  // DATA_FAIR_API_KEY or local-development.cjs.
+  dataFairAPIKey: 'dev-test-processings-worker-key',
   maxFailures: 2,
   maxFailuresCooldown: 0.05, // 3 minutes
   mongoUrl: `mongodb://localhost:${mongoPort}/data-fair-processings-development`,

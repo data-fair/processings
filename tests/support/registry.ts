@@ -14,11 +14,17 @@ import { axiosBuilder } from '@data-fair/lib-node/axios.js'
  * `data-fair-registry` mongo db directly.
  */
 
+// Through nginx for browser-visible reads (matches what the UI does in dev).
 export const registryBaseUrl = `http://${process.env.DEV_HOST}:${process.env.NGINX_PORT1}/registry`
+// Direct to the registry container for internal-secret writes — the registry
+// only honours x-secret-key when reqIsInternal is true, which checks for the
+// absence of x-forwarded-host. nginx adds that header, so internal calls have
+// to skip the proxy.
+export const registryInternalUrl = `http://localhost:${process.env.REGISTRY_PORT}/registry`
 export const registryInternalSecret = 'secret-registry-internal'
 
 export const axiosRegistryInternal = axiosBuilder({
-  baseURL: registryBaseUrl,
+  baseURL: registryInternalUrl,
   headers: { 'x-secret-key': registryInternalSecret }
 })
 
@@ -26,6 +32,8 @@ export interface PublishedFixture {
   /** Registry artefact id (`{name}@{major}`) — same value stored on `processing.pluginId`. */
   pluginId: string
 }
+
+export type Grantee = { type: 'user' | 'organization', id: string }
 
 export interface PublishOptions {
   /** npm package name as it appears in package.json — used in the upload URL. */
@@ -38,9 +46,27 @@ export interface PublishOptions {
   tarballPath?: string
   /** Set the artefact public (default true) — the cheap path for most tests. */
   isPublic?: boolean
-  /** Per-account grants to seed in lieu of, or alongside, public. */
-  privateAccess?: { type: 'user' | 'organization', id: string }[]
+  /** Per-account `privateAccess` entries on the artefact. */
+  privateAccess?: Grantee[]
+  /**
+   * Global access-grants to create (POST /api/v1/access-grants). Registry's
+   * canDownload requires a grant for the calling account even when the
+   * artefact is public, so the API & worker hitting the registry on behalf
+   * of `processing.owner` will 403 unless that owner has a grant.
+   *
+   * Defaults to the test accounts the lifecycle / permissions / ui specs
+   * use as `processing.owner`. Any privateAccess entries are also granted
+   * automatically — there is no scenario where a privateAccess entry
+   * should not also have a grant.
+   */
+  grants?: Grantee[]
 }
+
+const DEFAULT_GRANTS: Grantee[] = [
+  { type: 'user', id: 'test_superadmin' },
+  { type: 'organization', id: 'test_org1' },
+  { type: 'organization', id: 'test_org2' }
+]
 
 const DEFAULT_TARBALL = path.resolve(import.meta.dirname, '../fixtures/processing-hello-world.tgz')
 
@@ -80,7 +106,15 @@ export const publishFixturePlugin = async (opts: PublishOptions): Promise<Publis
     privateAccess: opts.privateAccess ?? []
   })
 
-  for (const acc of opts.privateAccess ?? []) {
+  // Always grant the privateAccess set + the default test owners. Dedup so
+  // the same account isn't POSTed twice (registry would 409 on the dup, which
+  // we accept, but keeping it tidy).
+  const grants = opts.grants ?? DEFAULT_GRANTS
+  const seen = new Set<string>()
+  for (const acc of [...(opts.privateAccess ?? []), ...grants]) {
+    const key = `${acc.type}:${acc.id}`
+    if (seen.has(key)) continue
+    seen.add(key)
     await axiosRegistryInternal.post(
       '/api/v1/access-grants',
       { account: acc },
@@ -92,9 +126,11 @@ export const publishFixturePlugin = async (opts: PublishOptions): Promise<Publis
 }
 
 /**
- * Drop the registry mongo db. Called from the global state-setup before each
- * test run to ensure a clean registry across runs. Uses the direct mongo
- * connection because registry has no test-env DELETE endpoint.
+ * Drop the registry mongo db AND the API/worker tarball caches. Called from
+ * `clean()` between tests so a re-published fixture (same version, possibly
+ * different content) is actually re-downloaded — lib-node-registry's cache
+ * key is `${version}_${arch}` only and would otherwise serve stale extracted
+ * files from the previous test.
  */
 export const cleanRegistryDb = async () => {
   const url = `mongodb://localhost:${process.env.MONGO_PORT ?? '27017'}/data-fair-registry`
@@ -105,4 +141,10 @@ export const cleanRegistryDb = async () => {
   } finally {
     await client.close()
   }
+  // The API and worker each have their own tarball cache under
+  // <dataDir>/tmp/registry-cache (dev config: ../data/development/tmp/...).
+  // Wiping both keeps tests deterministic across rebuilds of the fixture.
+  const repoRoot = path.resolve(import.meta.dirname, '../..')
+  const cacheRoot = path.join(repoRoot, 'data/development/tmp/registry-cache')
+  await fs.promises.rm(cacheRoot, { recursive: true, force: true })
 }
