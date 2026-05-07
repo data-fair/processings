@@ -114,14 +114,17 @@ async function publishToRegistry (ax: AxiosInstance, pluginsDir: string, dir: st
   const stagingDir = await mkdtemp(path.join(os.tmpdir(), 'processings-migrate-'))
   const tarballPath = path.join(stagingDir, `${dir}.tgz`)
   try {
-    // The `tar` package follows GNU tar's `@FILE` convention: any entry
-    // whose first character is `@` is interpreted as a path to a file
-    // containing the actual list of paths to archive. Scoped npm packages
-    // produce dirs like `@data-fair-processing-accidents-0`, which would
-    // be misread that way. Prefix with `./` to bypass the special case.
+    // Pack the dir's *contents* (not the dir itself) so entries land at
+    // `package/package.json` etc. — the npm-pack layout the registry's
+    // extractManifest requires (`header.name === 'package/package.json'`).
+    // Listing children also avoids the `tar` package's `@FILE` convention
+    // (any entry starting with `@` would be misread as a file-list path),
+    // which would otherwise trip on scoped dir names.
+    const pluginDir = path.join(pluginsDir, dir)
+    const children = await readdir(pluginDir)
     await tar.create(
-      { gzip: true, cwd: pluginsDir, file: tarballPath, prefix: 'package/' },
-      ['./' + dir]
+      { gzip: true, cwd: pluginDir, file: tarballPath, prefix: 'package/' },
+      children
     )
 
     const form = new FormData()
@@ -134,8 +137,14 @@ async function publishToRegistry (ax: AxiosInstance, pluginsDir: string, dir: st
     }).catch((err) => {
       const status = err?.response?.status
       const body = err?.response?.data
+      const bodyStr = typeof body === 'string' ? body : JSON.stringify(body)
       if (status === 409) {
-        throw new Error(`${dir}: artefact ${name} is mirrored or claimed by another uploader (409). Reconcile manually before re-running. Registry said: ${JSON.stringify(body)}`)
+        throw new Error(`${dir}: artefact ${name} is mirrored or claimed by another uploader (409). Reconcile manually before re-running. Registry said: ${bodyStr}`)
+      }
+      // Surface the registry's actual rejection reason — bare status codes
+      // ("Request failed with status code 400") are useless for operators.
+      if (status) {
+        throw new Error(`${dir}: registry rejected upload (${status}): ${bodyStr}`)
       }
       throw err
     })
