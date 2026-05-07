@@ -93,11 +93,14 @@ router.post('/set-config', (req, res, next) => {
   }
 })
 
-// Wipe the installed plugins directory (used between test runs)
+// Wipe the installed plugins directory (used between test runs).
+// No-op when the legacy plugins volume isn't mounted (config.dataDir unset).
 router.delete('/plugins', async (req, res, next) => {
   try {
-    const pluginsDir = path.resolve(config.dataDir, 'plugins')
-    await fs.emptyDir(pluginsDir)
+    if (config.dataDir) {
+      const pluginsDir = path.resolve(config.dataDir, 'plugins')
+      await fs.emptyDir(pluginsDir)
+    }
     res.json({ ok: true })
   } catch (err) {
     next(err)

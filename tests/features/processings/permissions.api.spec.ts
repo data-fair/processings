@@ -1,24 +1,18 @@
 import { test, expect } from '@playwright/test'
 import { axiosAuth, clean } from '../../support/axios.ts'
+import { publishFixturePlugin } from '../../support/registry.ts'
 
-const installTestPlugin = async (superadmin: any) => {
-  const plugin = (await superadmin.post('/api/v1/plugins', {
-    name: '@data-fair/processing-hello-world',
-    version: '0.12.2',
-    distTag: 'latest',
-    description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.'
-  })).data
-  await superadmin.put(`/api/v1/plugins/${plugin.id}/access`, { public: true })
-  return plugin
-}
+const installTestPlugin = async () => publishFixturePlugin({
+  name: '@data-fair/processing-hello-world',
+  version: '1.2.2'
+})
 
 test.describe('processing permissions', () => {
   test.beforeEach(clean)
   test.afterAll(clean)
 
   test('should create a processing and check permissions across roles', async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
-    const plugin = await installTestPlugin(superadmin)
+    const plugin = await installTestPlugin()
 
     const adminTestOrg1 = await axiosAuth({ email: 'test_admin1@test.com', org: 'test_org1' })
     const contribTestOrg1 = await axiosAuth({ email: 'test_contrib1@test.com', org: 'test_org1' })
@@ -28,7 +22,7 @@ test.describe('processing permissions', () => {
 
     const processing = (await adminTestOrg1.post('/api/v1/processings', {
       title: 'Hello processing',
-      plugin: plugin.id
+      pluginId: plugin.pluginId
     })).data
 
     await adminTestOrg1.patch(`/api/v1/processings/${processing._id}`, {
@@ -95,23 +89,23 @@ test.describe('processing permissions', () => {
     await expect(partnerAdmin.patch(`/api/v1/processings/${processing._id}`, { title: 'test' })).rejects.toMatchObject({ status: 403 })
     await expect(aloneOutsider.patch(`/api/v1/processings/${processing._id}`, { title: 'test' })).rejects.toMatchObject({ status: 403 })
 
-    await superadmin.delete(`/api/v1/plugins/${plugin.id}`)
+    // plugin lifecycle is managed by registry now — no per-test deletion
   })
 
   test('should list processings with proper org isolation', async () => {
     const superadmin = await axiosAuth('test_superadmin@test.com')
-    const plugin = await installTestPlugin(superadmin)
+    const plugin = await installTestPlugin()
 
     const adminTestOrg1 = await axiosAuth({ email: 'test_admin1@test.com', org: 'test_org1' })
     const partnerAdmin = await axiosAuth({ email: 'test_user2@test.com', org: 'test_org2' })
 
     await adminTestOrg1.post('/api/v1/processings', {
       title: 'Hello processing 1',
-      plugin: plugin.id
+      pluginId: plugin.pluginId
     })
     await partnerAdmin.post('/api/v1/processings', {
       title: 'Hello processing 2',
-      plugin: plugin.id
+      pluginId: plugin.pluginId
     })
 
     expect((await adminTestOrg1.get('/api/v1/processings?owner=organization:test_org1')).data.count).toBe(1)
@@ -122,14 +116,13 @@ test.describe('processing permissions', () => {
   })
 
   test('should manage processings as a department admin', async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
-    const plugin = await installTestPlugin(superadmin)
+    const plugin = await installTestPlugin()
     const depAdmin = await axiosAuth({ email: 'test_dep_admin@test.com', org: 'test_org1', dep: 'dep1' })
 
     // create a processing in his department
     const processing = (await depAdmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      plugin: plugin.id,
+      pluginId: plugin.pluginId,
       owner: {
         id: 'test_org1',
         name: 'Test Org 1',
@@ -143,7 +136,7 @@ test.describe('processing permissions', () => {
     // cannot create in another department
     await expect(depAdmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      plugin: plugin.id,
+      pluginId: plugin.pluginId,
       owner: {
         id: 'test_org1',
         name: 'Test Org 1',
@@ -156,7 +149,7 @@ test.describe('processing permissions', () => {
     // cannot create in the root organization (no department)
     await expect(depAdmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      plugin: plugin.id,
+      pluginId: plugin.pluginId,
       owner: {
         id: 'test_org1',
         name: 'Test Org 1',

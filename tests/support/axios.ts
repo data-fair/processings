@@ -43,6 +43,10 @@ export const clean = async () => {
   await waitForWorkerIdle()
   await anonymousAx.delete(`${apiUrl}/api/v1/test-env`)
   await anonymousAx.delete(`${apiUrl}/api/v1/test-env/plugins`)
+  // Registry has no test-env endpoint — drop the db directly. Lazy import to
+  // avoid pulling the mongodb client into specs that don't need it.
+  const { cleanRegistryDb } = await import('./registry.ts')
+  await cleanRegistryDb()
 }
 
 /** Poll the test-env raw-run endpoint until status matches one of the given values. */

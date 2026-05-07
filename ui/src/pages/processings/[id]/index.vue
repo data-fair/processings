@@ -34,7 +34,7 @@
           <template #activity>
             <processing-activity
               :processing="Object.assign(processing, editProcessing)"
-              :plugin-title="plugin?.metadata.name"
+              :plugin-title="plugin?.title?.fr ?? plugin?.title?.en ?? plugin?.name"
             />
           </template>
           <template #scheduling-summary="{ node }">
@@ -60,7 +60,7 @@
         :can-exec="canExecProcessing"
         :edited="edited"
         :is-small="false"
-        :metadata="plugin?.metadata"
+        :documentation="plugin?.documentation"
         @triggered="runs && runs.refresh()"
       />
     </navigation-right>
@@ -68,7 +68,8 @@
 </template>
 
 <script setup lang="ts">
-import type { Plugin, Processing } from '#api/types'
+import type { Processing } from '#api/types'
+import type { RegistryArtefact } from '~/composables/use-plugin-fetch'
 
 import cronstrue from 'cronstrue'
 import 'cronstrue/locales/en'
@@ -79,6 +80,7 @@ import timeZones from 'timezones.json'
 import Vjsf, { type Options as VjsfOptions } from '@koumoul/vjsf'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 import { toCRON } from '@data-fair/processings-shared/runs.ts'
+import { parsePluginId } from '@data-fair/processings-shared/plugin-id.ts'
 import NavigationRight from '@data-fair/lib-vuetify/navigation-right.vue'
 
 const { t } = useI18n()
@@ -97,7 +99,8 @@ const valid = ref(false)
 const edited = ref(false)
 const editProcessing: Ref<Processing | null> = ref(null)
 const processing: Ref<Processing | null> = ref(null)
-const plugin: Ref<Plugin | null> = ref(null)
+const plugin: Ref<RegistryArtefact | null> = ref(null)
+const configSchema: Ref<Record<string, unknown> | null> = ref(null)
 const runs: Ref<Record<string, any>> = ref([])
 
 /*
@@ -120,9 +123,20 @@ async function fetchProcessing () {
   if (processing.value) editProcessing.value = { ...processing.value }
 }
 async function fetchPlugin () {
-  if (processing.value?.plugin) {
-    plugin.value = await $fetch(`/plugins/${processing.value.plugin}`)
-  }
+  if (!processing.value?.pluginId) return
+  const { name } = parsePluginId(processing.value.pluginId)
+  // Display metadata comes from registry (artefact-level, name-keyed).
+  // The config schema is read out of the cached package.json by the
+  // processings API — registry doesn't know or care what's inside packages.
+  const [artefact, schema] = await Promise.all([
+    $fetch<RegistryArtefact>(`/registry/api/v1/artefacts/${encodeURIComponent(name)}`),
+    $fetch<Record<string, unknown>>(`/processings/${processingId}/plugin-config-schema`).catch(err => {
+      if (err?.statusCode === 404 || err?.status === 404) return null
+      throw err
+    })
+  ])
+  plugin.value = artefact
+  configSchema.value = schema
 }
 
 /*
@@ -144,19 +158,21 @@ const canExecProcessing = computed(() => {
 
 const processingSchema = computed(() => {
   if (!plugin.value || !processing.value) return
+  const pluginConfigSchema = configSchema.value as any
+  if (!pluginConfigSchema) return
   const schema = JSON.parse(JSON.stringify(contractProcessing))
   schema.properties.config = {
-    ...v2compat(plugin.value.processingConfigSchema),
-    title: 'Plugin ' + plugin.value.metadata.name,
+    ...v2compat(pluginConfigSchema),
+    title: 'Plugin ' + (plugin.value.title?.fr ?? plugin.value.title?.en ?? plugin.value.name)
   }
 
   // merge processingConfigSchema $defs and definitions into the global Processing schema
-  if (plugin.value.processingConfigSchema.$defs) {
-    schema.$defs = { ...schema.$defs, ...plugin.value.processingConfigSchema.$defs }
+  if (pluginConfigSchema.$defs) {
+    schema.$defs = { ...schema.$defs, ...pluginConfigSchema.$defs }
     delete schema.properties.config.$defs
   }
-  if (plugin.value.processingConfigSchema.definitions) {
-    schema.definitions = { ...schema.definitions, ...plugin.value.processingConfigSchema.definitions }
+  if (pluginConfigSchema.definitions) {
+    schema.definitions = { ...schema.definitions, ...pluginConfigSchema.definitions }
     delete schema.properties.config.definitions
   }
   delete schema.properties.config.$id

@@ -18,6 +18,7 @@ services:
       - DF_PORT=${DF_PORT}
       - EVENTS_PORT=${EVENTS_PORT}
       - OAV_PORT=${OAV_PORT}
+      - REGISTRY_PORT=${REGISTRY_PORT}
     volumes:
       - ./dev/resources/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
 
@@ -106,6 +107,29 @@ services:
       - USE_SIMPLE_DIRECTORY=true
       - ALLOWED_URLS={"processings":"http://${DEV_HOST}:${NGINX_PORT1}/processings/api/v1/api-docs.json","processingsId":"http://${DEV_HOST}:${NGINX_PORT1}/processings/api/v1/processings/{id}/api-docs.json","processingsAdmin":"http://${DEV_HOST}:${NGINX_PORT1}/processings/api/v1/admin/api-docs.json"}
 
+  # registry-side dev container — same domain as processings under /registry
+  # so the UI can hit it directly with the SimpleDirectory session cookie.
+  registry:
+    profiles:
+      - dev
+    image: ghcr.io/data-fair/registry:feat-processings-integration
+    network_mode: host
+    depends_on:
+      - mongo
+      - simple-directory
+    environment:
+      - PORT=${REGISTRY_PORT}
+      - MONGO_URL=mongodb://localhost:${MONGO_PORT}/data-fair-registry
+      - PRIVATE_DIRECTORY_URL=http://localhost:${SD_PORT}
+      - PUBLIC_URL=http://${DEV_HOST}:${NGINX_PORT1}/registry
+      - SECRET_INTERNAL_SERVICES=secret-registry-internal
+      - CIPHER_PASSWORD=1234567890123456789012345678901234567890
+      - API_KEYS_SALT=1234567890123456789012345678901234567890
+      - OBSERVER_ACTIVE=false
+      - STORAGE_TYPE=fs
+    volumes:
+      - registry-data:/app/data
+
   #####
   # db and search engine
   #####
@@ -183,3 +207,4 @@ volumes:
   elasticsearch-data:
   mongo-data:
   processings-data:
+  registry-data:

@@ -1,6 +1,5 @@
 import jsonSchema from '@data-fair/lib-utils/json-schema.js'
 import { type Processing, resolvedSchema as ProcessingSchema } from '#types/processing/index.ts'
-import { type Plugin, resolvedSchema as PluginSchema } from '#types/plugin/index.ts'
 import { readFileSync } from 'node:fs'
 import path from 'path'
 
@@ -8,7 +7,10 @@ const packageJson = JSON.parse(readFileSync(path.resolve(import.meta.dirname, '.
 
 // CTRL + K CTRL + 4 to fold operations levels
 
-export default (origin: string, options?: { processing?: Processing, plugin?: Plugin }) => {
+// In v6 the API only needs the plugin's name, version and processingConfigSchema.
+type ApiDocPlugin = { name: string, version: string, processingConfigSchema?: Record<string, unknown> }
+
+export default (origin: string, options?: { processing?: Processing, plugin?: ApiDocPlugin }) => {
   if (options?.plugin?.processingConfigSchema) ProcessingSchema.properties.config = options?.plugin?.processingConfigSchema
 
   const doc: Record<string, any> = {
@@ -196,13 +198,13 @@ export default (origin: string, options?: { processing?: Processing, plugin?: Pl
             content: {
               'application/json': {
                 schema: jsonSchema(ProcessingSchema)
-                  .pickProperties(['owner', 'plugin', 'title'])
+                  .pickProperties(['owner', 'pluginId', 'title'])
                   .removeFromRequired(['scheduling', '_id'])
                   .removeId()
                   .appendTitle(' post')
                   .schema,
                 example: {
-                  plugin: '@data-fair/processing-export-file',
+                  pluginId: '@data-fair/processing-export-file@1',
                   owner: {
                     type: 'organization',
                     id: 'koumoul',
@@ -592,317 +594,6 @@ export default (origin: string, options?: { processing?: Processing, plugin?: Pl
           }
         }
       },
-
-      '/plugins-registry': {
-        get: {
-          summary: 'Obtenir la liste des plugins',
-          description: 'Accéder à la liste des plugins disponibles sur NPM.',
-          operationId: 'getPluginsRegistry',
-          tags: ['Plugins'],
-          parameters: [
-            {
-              name: 'q',
-              in: 'query',
-              description: 'Le nom du plugin à rechercher.',
-              schema: {
-                type: 'string',
-                title: 'Nom du plugin à rechercher'
-              }
-            },
-            {
-              name: 'showAll',
-              in: 'query',
-              description: 'Afficher tous les plugins disponibles (même ceux en version bêta). La requête peut prendre plus de temps.',
-              schema: {
-                type: 'boolean',
-                title: 'Afficher tous les plugins disponibles'
-              }
-            }
-          ],
-          responses: {
-            200: {
-              description: 'La liste des plugins disponibles',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      count: {
-                        type: 'integer',
-                        description: 'Le nombre de plugins trouvés.'
-                      },
-                      results: {
-                        type: 'array',
-                        items: {
-                          type: 'object',
-                          properties: {
-                            name: {
-                              type: 'string',
-                              description: 'Le nom du plugin.'
-                            },
-                            description: {
-                              type: 'string',
-                              description: 'La description du plugin.'
-                            },
-                            version: {
-                              type: 'string',
-                              description: 'La version du plugin.'
-                            },
-                            distTag: {
-                              type: 'string',
-                              description: 'Le tag de distribution du plugin.',
-                              example: 'latest'
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            400: {
-              description: 'Requête invalide, le paramètre "q" est mal formaté.'
-            },
-            429: {
-              description: 'Erreur renvoyée par l\'API NPM, trop de requêtes envoyées.'
-            },
-            500: {
-              description: 'Erreur interne (Il se peut que le service NPM soit indisponible).'
-            }
-          }
-        }
-      },
-      '/plugins': {
-        get: {
-          summary: 'Obtenir la liste des plugins installés',
-          description: 'Accéder à la liste des plugins installés.',
-          operationId: 'getPlugins',
-          tags: ['Plugins'],
-          parameters: [
-            {
-              name: 'privateAccess',
-              in: 'query',
-              description: 'Filtre par accès',
-              schema: {
-                type: 'string',
-                title: 'Filtre par accès',
-                example: 'type:id'
-              }
-            }
-          ],
-          responses: {
-            200: {
-              description: 'La liste des plugins installés',
-              content: {
-                'application/json': {
-                  schema: {
-                    count: {
-                      type: 'integer',
-                      description: 'Le nombre de plugins trouvés.'
-                    },
-                    facets: {
-                      type: 'object',
-                      properties: {
-                        usages: {
-                          type: 'object',
-                          additionalProperties: {
-                            type: 'integer',
-                            description: 'Le nombre de fois que le plugin est utilisé'
-                          }
-                        }
-                      }
-                    },
-                    results: {
-                      type: 'array',
-                      items: PluginSchema
-                    }
-                  }
-                }
-              }
-            },
-            400: {
-              description: 'Le paramètre "privateAccess" est manquant et l\'utilisateur n\'est pas super administrateur.'
-            },
-            403: {
-              description: 'Le privateAccess ne correspond pas avec l\'utilisateur authentifié.'
-            }
-          }
-        },
-        post: {
-          summary: 'Installer un plugin',
-          description: 'Installer/Mettre à jour un plugin, voir même baisser en version un plugin. Cette requête prends beaucoup de temps à s\'executer, c\'est le temps que le plugin s\'installe sur le serveur.',
-          operationId: 'postPlugin',
-          tags: ['Plugins'],
-          requestBody: {
-            description: 'Le plugin à installer',
-            required: true,
-            content: {
-              'application/json': {
-                schema: jsonSchema(PluginSchema)
-                  .pickProperties(['distTag', 'name', 'version', 'description'])
-                  .removeFromRequired(['description'])
-                  .removeId()
-                  .appendTitle(' post')
-                  .schema,
-                example: {
-                  name: '@data-fair/processing-export-file',
-                  description: 'Export File',
-                  version: '0.6.2',
-                  distTag: 'latest'
-                }
-              }
-            }
-          },
-          responses: {
-            200: {
-              description: 'Le plugin a été installé avec succès.',
-              content: {
-                'application/json': {
-                  schema: PluginSchema
-                }
-              }
-            }
-          }
-        }
-      },
-      '/plugins/{id}': {
-        parameters: [
-          {
-            name: 'id',
-            in: 'path',
-            required: true,
-            description: 'L\'identifiant du plugin.',
-            schema: {
-              type: 'string',
-              title: 'Identifiant du plugin'
-            }
-          }
-        ],
-        get: {
-          summary: 'Lire les informations d\'un plugin',
-          description: 'Accéder aux données d\'un plugin.',
-          operationId: 'getPlugin',
-          tags: ['Plugins'],
-          responses: {
-            200: {
-              description: 'Le plugin trouvé.',
-              content: {
-                'application/json': {
-                  schema: PluginSchema
-                }
-              }
-            },
-            404: {
-              description: 'Plugin non trouvé.'
-            }
-          }
-        },
-        delete: {
-          summary: 'Supprimer un plugin',
-          description: 'Supprimer un plugin.',
-          operationId: 'deletePlugin',
-          tags: ['Plugins'],
-          responses: {
-            204: {
-              description: 'Le plugin a été supprimé avec succès.'
-            }
-          }
-        },
-      },
-      '/plugins/{id}/config': {
-        parameters: [
-          {
-            name: 'id',
-            in: 'path',
-            required: true,
-            description: 'L\'identifiant du plugin.',
-            schema: {
-              type: 'string',
-              title: 'Identifiant du plugin'
-            }
-          }
-        ],
-        put: {
-          summary: 'Mettre à jour la configuration d\'un plugin',
-          description: 'Mettre à jour la configuration d\'un plugin.',
-          operationId: 'putPluginConfig',
-          tags: ['Plugins'],
-          requestBody: {
-            description: 'La configuration du plugin',
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object'
-                }
-              }
-            }
-          },
-        }
-      },
-      '/plugins/{id}/metadata': {
-        parameters: [
-          {
-            name: 'id',
-            in: 'path',
-            required: true,
-            description: 'L\'identifiant du plugin.',
-            schema: {
-              type: 'string',
-              title: 'Identifiant du plugin'
-            }
-          }
-        ],
-        put: {
-          summary: 'Mettre à jour les métadonnées d\'un plugin',
-          description: 'Mettre à jour les métadonnées d\'un plugin.',
-          operationId: 'putPluginMetadata',
-          tags: ['Plugins'],
-          requestBody: {
-            description: 'Les métadonnées du plugin',
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object'
-                }
-              }
-            }
-          },
-        }
-      },
-      '/plugins/{id}/access': {
-        parameters: [
-          {
-            name: 'id',
-            in: 'path',
-            required: true,
-            description: 'L\'identifiant du plugin.',
-            schema: {
-              type: 'string',
-              title: 'Identifiant du plugin'
-            }
-          }
-        ],
-        put: {
-          summary: 'Mettre à jour les accès d\'un plugin',
-          description: 'Mettre à jour les accès d\'un plugin.',
-          operationId: 'putPluginAccess',
-          tags: ['Plugins'],
-          requestBody: {
-            description: 'les accès du plugin',
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object'
-                }
-              }
-            }
-          },
-        }
-      }
     }
   }
 

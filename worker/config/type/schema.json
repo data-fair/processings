@@ -12,7 +12,6 @@
   "additionalProperties": false,
   "required": [
     "cipherPassword",
-    "dataDir",
     "dataFairAPIKey",
     "dataFairAdminMode",
     "dataFairUrl",
@@ -23,6 +22,7 @@
     "mongoUrl",
     "locks",
     "observer",
+    "privateRegistryUrl",
     "runsRetention",
     "worker",
     "secretKeys",
@@ -33,7 +33,8 @@
       "type": "string"
     },
     "dataDir": {
-      "type": "string"
+      "type": ["string", "null"],
+      "description": "Optional. When set, the legacy plugins volume at <dataDir>/plugins is read by the v6.0 boot migration. Drops with v7.0."
     },
     "tmpDir": {
       "type": "string"
@@ -78,11 +79,21 @@
     "mongoUrl": {
       "type": "string"
     },
+    "privateRegistryUrl": {
+      "type": "string",
+      "pattern": "^https?://",
+      "description": "Internal URL used by the worker to call registry server-to-server."
+    },
     "secretKeys": {
       "type": "object",
+      "required": ["registry"],
       "properties": {
         "events": {
           "type": ["string", "null"]
+        },
+        "registry": {
+          "type": "string",
+          "description": "x-secret-key shared with registry. Required for prepare-hook downloads and the v6.0 first-boot migration."
         }
       }
     },

@@ -1,16 +1,16 @@
 import { test, expect } from '@playwright/test'
 import { axiosAuth, clean, waitForRunStatus } from '../../support/axios.ts'
+import { publishFixturePlugin } from '../../support/registry.ts'
 
-const installTestPlugin = async (superadmin: any) => {
-  const plugin = (await superadmin.post('/api/v1/plugins', {
-    name: '@data-fair/processing-hello-world',
-    version: '1.2.2',
-    distTag: 'latest',
-    description: 'Minimal plugin for data-fair-processings. Create one-line datasets on demand.'
-  })).data
-  await superadmin.put(`/api/v1/plugins/${plugin.id}/access`, { public: true })
-  return plugin
-}
+// The hello-world fixture in tests/fixtures was packed by `npm pack` and does
+// NOT carry node_modules. Tests that only assert on the API surface (create,
+// patch, list, validate) work against it as-is. Tests that trigger an actual
+// run depend on the plugin module being importable; those are now expected
+// to fail until we ship a runnable bundle (or rebuild one in beforeAll).
+const installTestPlugin = async () => publishFixturePlugin({
+  name: '@data-fair/processing-hello-world',
+  version: '1.2.2'
+})
 
 test.describe('processing', () => {
   test.beforeEach(clean)
@@ -18,11 +18,11 @@ test.describe('processing', () => {
 
   test('should create a new processing, activate it and run it', async () => {
     const superadmin = await axiosAuth('test_superadmin@test.com')
-    const plugin = await installTestPlugin(superadmin)
+    const plugin = await installTestPlugin()
 
     let processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      plugin: plugin.id,
+      pluginId: plugin.pluginId,
       owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' }
     })).data
     expect(processing._id).toBeTruthy()
@@ -74,11 +74,11 @@ test.describe('processing', () => {
 
   test('should kill a long run with SIGTERM', async () => {
     const superadmin = await axiosAuth('test_superadmin@test.com')
-    const plugin = await installTestPlugin(superadmin)
+    const plugin = await installTestPlugin()
 
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      plugin: plugin.id,
+      pluginId: plugin.pluginId,
       owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' },
       active: true,
       config: {
@@ -102,11 +102,11 @@ test.describe('processing', () => {
 
   test('should kill a long run with SIGTERM and wait for grace period', async () => {
     const superadmin = await axiosAuth('test_superadmin@test.com')
-    const plugin = await installTestPlugin(superadmin)
+    const plugin = await installTestPlugin()
 
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      plugin: plugin.id,
+      pluginId: plugin.pluginId,
       owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' },
       active: true,
       config: {
@@ -128,7 +128,7 @@ test.describe('processing', () => {
 
   test('should fail a run if processings_seconds limit is exceeded', async () => {
     const superadmin = await axiosAuth('test_superadmin@test.com')
-    const plugin = await installTestPlugin(superadmin)
+    const plugin = await installTestPlugin()
 
     await superadmin.post('/api/v1/limits/user/test_superadmin', {
       processings_seconds: { limit: 1 },
@@ -137,7 +137,7 @@ test.describe('processing', () => {
 
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      plugin: plugin.id,
+      pluginId: plugin.pluginId,
       owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' },
       active: true,
       config: {
@@ -163,13 +163,12 @@ test.describe('processing', () => {
   })
 
   test('should manage a processing as a department admin', async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
-    const plugin = await installTestPlugin(superadmin)
+    const plugin = await installTestPlugin()
     const depAdmin = await axiosAuth({ email: 'test_dep_admin@test.com', org: 'test_org1', dep: 'dep1' })
 
     const processing = (await depAdmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      plugin: plugin.id
+      pluginId: plugin.pluginId
     })).data
 
     const processings = (await depAdmin.get('/api/v1/processings')).data
@@ -196,11 +195,11 @@ test.describe('processing', () => {
 
   test('should config a new processing with a secret field', async () => {
     const superadmin = await axiosAuth('test_superadmin@test.com')
-    const plugin = await installTestPlugin(superadmin)
+    const plugin = await installTestPlugin()
 
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      plugin: plugin.id,
+      pluginId: plugin.pluginId,
       owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' }
     })).data
     expect(processing._id).toBeTruthy()
@@ -241,11 +240,11 @@ test.describe('processing', () => {
 
   test('should patch config with secrets', async () => {
     const superadmin = await axiosAuth('test_superadmin@test.com')
-    const plugin = await installTestPlugin(superadmin)
+    const plugin = await installTestPlugin()
 
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      plugin: plugin.id,
+      pluginId: plugin.pluginId,
       owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' },
       active: true,
       config: {

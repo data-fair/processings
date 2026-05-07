@@ -45,14 +45,14 @@
             />
           </template>
           <span class="text-error">
-            {{ t('deleted') + ' - ' + processing.plugin }}
+            {{ t('deleted') + ' - ' + processing.pluginId }}
           </span>
         </v-list-item>
         <v-list-item v-else>
           <template #prepend>
             <v-icon :icon="mdiPowerPlug" />
           </template>
-          {{ pluginFetch.data.value?.metadata.name }}
+          {{ pluginFetch.data.value?.title?.fr ?? pluginFetch.data.value?.title?.en ?? pluginFetch.data.value?.name ?? processing.pluginId }}
         </v-list-item>
 
         <!-- Linked dataset -->
@@ -186,7 +186,7 @@ const props = defineProps({
   showOwner: Boolean
 })
 
-const pluginFetch = usePluginFetch(props.processing.plugin)
+const pluginFetch = usePluginFetch(props.processing.pluginId)
 
 </script>
 

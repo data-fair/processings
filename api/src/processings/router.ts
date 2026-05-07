@@ -8,17 +8,18 @@ import cryptoRandomString from 'crypto-random-string'
 import { Router } from 'express'
 import fs from 'fs-extra'
 import path from 'path'
-import resolvePath from 'resolve-path'
 import { nanoid } from 'nanoid'
 
 import eventsQueue from '@data-fair/lib-node/events-queue.js'
 import { reqOrigin, session } from '@data-fair/lib-express/index.js'
+import { ensureArtefact } from '@data-fair/lib-node-registry'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import { createNext } from '@data-fair/processings-shared/runs.ts'
+import { parsePluginId } from '@data-fair/processings-shared/plugin-id.ts'
 import { applyProcessing, deleteProcessing } from '../runs/service.ts'
 import { cipher, decipher } from '@data-fair/processings-shared/cipher.ts'
 import mongo from '#mongo'
-import config from '#config'
+import config, { registryCacheDir } from '#config'
 import locks from '#locks'
 import { resolvedSchema as processingSchema } from '#types/processing/index.ts'
 import getApiDoc from '../misc/utils/api-docs.ts'
@@ -30,7 +31,33 @@ export default router
 
 // @ts-ignore
 const ajv = ajvFormats(new Ajv({ strict: false }))
-const pluginsDir = path.join(config.dataDir, 'plugins')
+
+/**
+ * Ensure the plugin tarball is in the API's local cache (downloads on miss),
+ * then read its package.json. Registry enforces that `processing.owner` has
+ * access to the artefact; a 403 here surfaces directly to the caller.
+ */
+async function ensurePluginAndReadSchema (processing: Pick<Processing, 'pluginId' | 'owner'>) {
+  const { name, major } = parsePluginId(processing.pluginId)
+  const ensured = await ensureArtefact({
+    registryUrl: config.privateRegistryUrl,
+    secretKey: config.secretKeys.registry,
+    artefactId: name,
+    version: major,
+    cacheDir: registryCacheDir,
+    architecture: process.arch,
+    account: {
+      type: processing.owner.type,
+      id: processing.owner.id,
+      ...(processing.owner.department ? { department: processing.owner.department } : {})
+    }
+  })
+  const pkg = await fs.readJson(path.join(ensured.path, 'package.json'))
+  return {
+    ensured,
+    processingConfigSchema: pkg.registry?.processingConfigSchema as Record<string, unknown> | undefined
+  }
+}
 
 const sensitiveParts = ['permissions', 'webhookKey', 'config']
 
@@ -62,26 +89,32 @@ const sendProcessingEvent = (
 }
 
 /**
- * Check that a processing object is valid
- * Check if the plugin exists
- * Check if the config is valid (only if the processing is activated)
- * Encrypt secrets if present
+ * Check that a processing object is valid:
+ * - run schema validation
+ * - require a config when active
+ * - validate the config against the plugin's processingConfigSchema (read
+ *   from the cached package.json#registry block, downloaded on cache miss)
+ *
+ * Errors from registry (404 unknown artefact, 403 owner has no access) bubble
+ * up as the corresponding HTTP errors and replace the explicit access check
+ * that used to live in the create/update endpoints.
  */
 async function validateFullProcessing (processing: any): Promise<Processing> {
   (await import('#types/processing/index.ts')).returnValid(processing)
   if (processing.active && !processing.config) throw httpError(400, 'Config is required for an active processing')
-  if (!await fs.pathExists(path.join(pluginsDir, processing.plugin))) throw httpError(400, 'Plugin not found')
   if (!processing.config) return processing // no config to validate
-  const pluginInfo = await fs.readJson(path.join(pluginsDir, processing.plugin, 'plugin.json'))
-  const configValidate = ajv.compile(pluginInfo.processingConfigSchema)
+  const { processingConfigSchema } = await ensurePluginAndReadSchema(processing)
+  if (!processingConfigSchema) throw httpError(400, 'plugin has no processingConfigSchema')
+  const configValidate = ajv.compile(processingConfigSchema)
   const configValid = configValidate(processing.config)
   if (!configValid) throw httpError(400, JSON.stringify(configValidate.errors))
   return processing
 }
 
 const prepareProcessing = async (processing: Processing) => {
-  // Get the plugin file and execute the prepare function if it exists
-  const plugin = await import(path.resolve(process.cwd(), pluginsDir, processing.plugin, 'index.js') + `?imported=${Date.now()}`)
+  // Get the plugin file and execute the prepare function if it exists.
+  const { ensured } = await ensurePluginAndReadSchema(processing)
+  const plugin = await import(path.join(ensured.path, 'index.js') + `?imported=${Date.now()}`)
   if (!(plugin.prepare && typeof plugin.prepare === 'function')) return
 
   // Decipher the actuals secrets if they are present
@@ -144,10 +177,10 @@ router.get('', async (req, res) => {
       ].filter(Boolean)
     })
   }
-  // Filter by plugins
+  // Filter by plugins (matches the denormalized pluginId, e.g. `@scope/foo@1`)
   const plugins = params.plugins ? params.plugins.split(',') : []
   if (plugins.length > 0) {
-    queryWithFilters.plugin = { $in: plugins }
+    queryWithFilters.pluginId = { $in: plugins }
   }
 
   // Get the processings
@@ -187,7 +220,7 @@ router.get('', async (req, res) => {
         plugins: [
           {
             $group: {
-              _id: '$plugin',
+              _id: '$pluginId',
               count: { $sum: 1 }
             }
           }
@@ -297,17 +330,9 @@ router.post('', async (req, res) => {
     date: new Date().toISOString()
   }
 
-  const access = await fs.pathExists(resolvePath(pluginsDir, body.plugin + '-access.json')) ? await fs.readJson(resolvePath(pluginsDir, body.plugin + '-access.json')) : { public: false, privateAccess: [] }
-  if (sessionState.user.adminMode) {
-    // ok for super admins
-  } else if (access && access.public) {
-    // ok, this plugin is public
-  } else if (access && access.privateAccess && access.privateAccess.find((p: any) => p.type === body.owner.type && p.id === body.owner.id)) {
-    // ok, private access is granted
-  } else {
-    return res.status(403).send('Access denied to this plugin')
-  }
-
+  // Plugin access check is delegated to registry: validateFullProcessing
+  // calls ensureArtefact with owner=body.owner, and registry returns 403 if
+  // the artefact is private and the owner has no privateAccess entry.
   const processing = await validateFullProcessing(body)
   Object.assign(processing, await prepareProcessing(processing))
   await mongo.processings.insertOne(processing)
@@ -383,6 +408,22 @@ router.get('/:id', async (req, res) => {
   res.status(200).json(cleanProcessing(processing, sessionState))
 })
 
+// Get the plugin's processingConfigSchema for this processing's pinned major.
+// Registry only stores tarballs and ignores their inner shape; the schema
+// lives in the package.json under `registry.processingConfigSchema` and is
+// read on demand from the API's local cache.
+router.get('/:id/plugin-config-schema', async (req, res, next) => {
+  try {
+    const sessionState = await session.reqAuthenticated(req)
+    const processing = await mongo.processings.findOne({ _id: req.params.id })
+    if (!processing) return res.status(404).send()
+    if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState) ?? '')) return res.status(403).send()
+    const { processingConfigSchema } = await ensurePluginAndReadSchema(processing)
+    if (!processingConfigSchema) return res.status(404).send()
+    res.status(200).json(processingConfigSchema)
+  } catch (err) { next(err) }
+})
+
 // Delete a processing
 router.delete('/:id', async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
@@ -432,11 +473,17 @@ router.post('/:id/_trigger', async (req, res) => {
 })
 
 // Get the API documentation of a processing
-router.get('/:id/api-docs.json', permissions.isSuperAdmin, async (req, res) => {
-  const processing = await mongo.processings.findOne({ _id: req.params.id })
-  if (!processing) return res.status(404).send()
-  const pluginPath = path.join(pluginsDir, processing.plugin, 'plugin.json')
-  if (!await fs.pathExists(pluginPath)) return res.status(404).send('Plugin not found')
-  const plugin = await fs.readJson(pluginPath)
-  res.json(getApiDoc(reqOrigin(req), { processing, plugin }))
+router.get('/:id/api-docs.json', permissions.isSuperAdmin, async (req, res, next) => {
+  try {
+    const processing = await mongo.processings.findOne({ _id: req.params.id })
+    if (!processing) return res.status(404).send()
+    const { ensured, processingConfigSchema } = await ensurePluginAndReadSchema(processing)
+    const pluginPkg = await fs.readJson(path.join(ensured.path, 'package.json'))
+    const plugin = {
+      name: pluginPkg.name,
+      version: pluginPkg.version,
+      processingConfigSchema
+    }
+    res.json(getApiDoc(reqOrigin(req), { processing, plugin }))
+  } catch (err) { next(err) }
 })

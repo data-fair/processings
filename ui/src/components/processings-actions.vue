@@ -130,23 +130,18 @@ const statusesText = computed<Record<string, string>>(() => ({
   triggered: t('statusTriggered')
 }))
 
-type InstalledPlugin = {
+// Subset of registry's Artefact shape used to render the plugin filter labels.
+type RegistryArtefact = {
+  _id: string
   name: string
-  description: string
-  version: string
-  distTag: string
-  id: string
-  pluginConfigSchema: any
-  processingConfigSchema: any
-  metadata: {
-    name: string
-    description: string
-    category: string
-    icon: Record<string, string>
-  }
+  majorVersion: number
+  title?: { fr?: string, en?: string }
 }
 
-const installedPluginsFetch = useFetch<{ results: InstalledPlugin[], count: number }>(`${$apiPath}/plugins?privateAccess=${processingsProps.ownerFilter}`)
+const installedPluginsFetch = useFetch<{ results: RegistryArtefact[], count: number }>(
+  '/registry/api/v1/artefacts',
+  { query: { category: 'processing', size: 200 } }
+)
 const installedPlugins = computed(() => installedPluginsFetch.data.value?.results)
 
 const eventsSubscribeUrl = computed(() => {
@@ -175,10 +170,13 @@ const pluginsItems = computed(() => {
   if (!installedPlugins.value) return []
   if (!processingsProps.facets.plugins) return []
 
+  // facets.plugins keys are the denormalized pluginId — `${name}@${major}` —
+  // matching registry artefact._id directly.
   return Object.entries(processingsProps.facets.plugins)
     .map(
       ([pluginKey, count]) => {
-        const customName = installedPlugins.value?.find((plugin) => plugin.id === pluginKey)?.metadata.name
+        const artefact = installedPlugins.value?.find((p) => p._id === pluginKey)
+        const customName = artefact?.title?.fr ?? artefact?.title?.en ?? artefact?.name
         return {
           display: `${customName || t('deleted') + ' - ' + pluginKey} (${count})`,
           pluginKey

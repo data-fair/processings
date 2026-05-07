@@ -1,7 +1,10 @@
 export default {
   cipherPassword: undefined,
-  dataDir: '/app/data',
-  tmpDir: null, // will be dataDir + '/tmp' if null
+  // Optional. When set, the legacy plugins volume at <dataDir>/plugins is read
+  // by the v6.0 boot migration. Drops with v7.0.
+  dataDir: null,
+  // Defaults to <dataDir>/tmp when dataDir is set, else <os.tmpdir>/data-fair-processings.
+  tmpDir: null,
   dataFairAdminMode: false,
   dataFairAPIKey: null,
   dataFairUrl: 'http://localhost:5600/data-fair',
@@ -25,8 +28,13 @@ export default {
   maxFailuresCooldown: 12, // in hours
   mongoUrl: 'mongodb://localhost:27017/data-fair-processings',
   privateEventsUrl: null,
+  // Internal URL the worker uses for server-to-server calls to registry.
+  privateRegistryUrl: 'http://registry:8080',
   secretKeys: {
-    events: null
+    events: null,
+    // x-secret-key shared with registry. Required for prepare-hook downloads
+    // and the v6.0 first-boot migration.
+    registry: undefined
   },
   locks: {
     // in seconds

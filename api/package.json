@@ -23,6 +23,7 @@
   "dependencies": {
     "@data-fair/lib-express": "^1.22.5",
     "@data-fair/lib-node": "^2.12.1",
+    "@data-fair/lib-node-registry": "file:../../registry/lib-node",
     "@data-fair/lib-utils": "^1.10.1",
     "@data-fair/processings-shared": "*",
     "ajv": "^8.17.1",

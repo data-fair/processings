@@ -18,7 +18,7 @@ export const getAxiosInstance = (processing: Processing, log: LogFunctions) => {
   const privateHeaders: Record<string, string> = {
     'x-apiKey': config.dataFairAPIKey,
     // we used to specify User-Agent for all requests, but us creates problems with some external servers
-    'User-Agent': `@data-fair/processings (${processing.plugin})`
+    'User-Agent': `@data-fair/processings (${processing.pluginId})`
   }
   if (config.dataFairAdminMode) {
     const account = { ...processing.owner }

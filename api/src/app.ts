@@ -3,8 +3,6 @@ import express from 'express'
 import { session, errorHandler, createSiteMiddleware, createSpaMiddleware, defaultNonceCSPDirectives } from '@data-fair/lib-express/index.js'
 import identitiesRouter from './misc/routers/identities.ts'
 import limitsRouter from './limits/router.ts'
-import pluginsRegistryRouter from './plugins-registry/router.ts'
-import pluginsRouter from './plugins/router.ts'
 import processingsRouter from './processings/router.ts'
 import runsRouter from './runs/router.ts'
 import adminRouter from './admin/router.ts'
@@ -28,8 +26,6 @@ app.get('/api/v1/_ping', (req, res) => {
 })
 
 app.use('/api/identities', identitiesRouter)
-app.use('/api/v1/plugins-registry', pluginsRegistryRouter)
-app.use('/api/v1/plugins', pluginsRouter)
 app.use('/api/v1/processings', processingsRouter)
 app.use('/api/v1/runs', runsRouter)
 app.use('/api/v1/limits', limitsRouter)

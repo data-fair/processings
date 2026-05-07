@@ -1,8 +1,6 @@
-import path from 'node:path'
-import fs from 'node:fs'
-import FormData from 'form-data'
 import { test, expect } from '../../fixtures/login.ts'
 import { axiosAuth, clean } from '../../support/axios.ts'
+import { publishFixturePlugin } from '../../support/registry.ts'
 
 test.describe('UI layout', () => {
   test.beforeEach(clean)
@@ -15,16 +13,14 @@ test.describe('UI layout', () => {
 
   test('processings list renders a card for an existing processing', async ({ page, goToWithAuth }) => {
     const superadmin = await axiosAuth('test_superadmin@test.com')
-
-    const tarballPath = path.join(import.meta.dirname, '..', '..', 'fixtures', 'processing-hello-world.tgz')
-    const formData = new FormData()
-    formData.append('file', fs.createReadStream(tarballPath))
-    const plugin = (await superadmin.post('/api/v1/plugins', formData, { headers: formData.getHeaders() })).data
-    await superadmin.put(`/api/v1/plugins/${plugin.id}/access`, { public: true })
+    const fixture = await publishFixturePlugin({
+      name: '@data-fair/processing-hello-world',
+      version: '1.2.2'
+    })
 
     await superadmin.post('/api/v1/processings', {
       title: 'My e2e processing',
-      plugin: plugin.id,
+      pluginId: fixture.pluginId,
       owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' }
     })
 

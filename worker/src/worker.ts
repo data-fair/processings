@@ -33,7 +33,7 @@ let killLoopPromise: Promise<void>
 
 // Start the worker (start the mail loop and all dependencies)
 export const start = async () => {
-  if (!existsSync(config.dataDir) && process.env.NODE_ENV === 'production') {
+  if (config.dataDir && !existsSync(config.dataDir) && process.env.NODE_ENV === 'production') {
     throw new Error(`Data directory ${resolvePath(config.dataDir)} was not mounted`)
   }
   await mongo.init()
