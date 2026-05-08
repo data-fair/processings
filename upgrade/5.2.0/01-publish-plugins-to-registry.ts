@@ -6,7 +6,29 @@ import os from 'node:os'
 import { arch as hostArch } from 'node:process'
 import * as tar from 'tar'
 import axios, { type AxiosInstance } from 'axios'
+import * as mdi from '@mdi/js'
 import config from '../../worker/src/config.ts'
+
+// Convert a legacy v5 mdi icon name (e.g. `mdi-database`, `mdiDatabase`,
+// `database`) into its @mdi/js export name `mdiDatabase`. Returns null if
+// the input doesn't resolve to a known icon.
+const resolveMdiPath = (icon: string): string | null => {
+  const trimmed = icon.trim()
+  if (!trimmed) return null
+  const stripped = trimmed.replace(/^mdi[-_]?/i, '')
+  const camel = 'mdi' + stripped
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('')
+  const path = (mdi as unknown as Record<string, unknown>)[camel]
+  return typeof path === 'string' ? path : null
+}
+
+// Render a 256×256 SVG wrapping an mdi path. Larger than 24 so the registry's
+// sharp-based thumbnail resize (target 400 px wide) gets a clean rasterization.
+const renderMdiSvg = (mdiPath: string): string =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 24 24"><path d="${mdiPath}"/></svg>`
 
 /**
  * v6.0 first-boot migration — step 1/2.
@@ -19,11 +41,9 @@ import config from '../../worker/src/config.ts'
  *        `group.fr` (from v5 `category`), `documentation` via PATCH /artefacts/:id
  *      - `-access.json`   → registry artefact `public` + `privateAccess` via
  *        the same PATCH, and one POST /access-grants per privateAccess entry
- *
- * The mdi `icon` field on `-metadata.json` is intentionally NOT migrated:
- * registry uses thumbnail uploads (binary) for icons; converting an mdi name
- * to an SVG and uploading is left as a manual follow-up because automating
- * that produces middling visuals.
+ *      - `metadata.icon`  → rendered to a 256×256 SVG using @mdi/js and posted
+ *        to the artefact's thumbnail endpoint. Unknown icon names are logged
+ *        and skipped (operator can upload a custom thumbnail later).
  *
  * Idempotent:
  *  - the publish step probes registry first and skips any (name, version,
@@ -129,6 +149,9 @@ async function publishToRegistry (ax: AxiosInstance, pluginsDir: string, dir: st
 
     const form = new FormData()
     form.append('architecture', hostArch)
+    // Backfill the artefact category for legacy plugin tarballs whose
+    // package.json predates the `registry.category` convention.
+    form.append('category', 'processing')
     form.append('file', new Blob([await readFile(tarballPath)]), 'package.tgz')
 
     debug(`${dir}: uploading ${name}@${version} (${hostArch}) to registry`)
@@ -190,6 +213,32 @@ async function pushMetadataAndAccess (ax: AxiosInstance, pluginsDir: string, dir
       return
     }
     throw err
+  }
+
+  // Render the legacy mdi icon to an SVG and upload it as the artefact
+  // thumbnail. Failures are swallowed with a debug log — the artefact still
+  // shows up in the picker, just without an icon, and the operator can
+  // upload a thumbnail manually later.
+  if (typeof metadata.icon === 'string' && metadata.icon.trim()) {
+    const mdiPath = resolveMdiPath(metadata.icon)
+    if (!mdiPath) {
+      debug(`${dir}: unknown mdi icon "${metadata.icon}", skipping thumbnail`)
+    } else {
+      try {
+        const svg = renderMdiSvg(mdiPath)
+        const tform = new FormData()
+        tform.append('file', new Blob([svg], { type: 'image/svg+xml' }), 'icon.svg')
+        await ax.post(`/api/v1/artefacts/${encodeURIComponent(name)}/thumbnail`, tform, {
+          validateStatus: s => s === 201
+        })
+        debug(`${dir}: uploaded thumbnail from mdi:${metadata.icon}`)
+      } catch (err: any) {
+        const status = err?.response?.status
+        const body = err?.response?.data
+        const bodyStr = typeof body === 'string' ? body : JSON.stringify(body)
+        debug(`${dir}: thumbnail upload failed (${status ?? 'no-response'}: ${bodyStr ?? err?.message}) — leaving artefact without icon`)
+      }
+    }
   }
 
   // Access grants — one per privateAccess entry. POST returns 201 on
