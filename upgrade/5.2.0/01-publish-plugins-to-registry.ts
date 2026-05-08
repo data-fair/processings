@@ -1,10 +1,12 @@
 import type { UpgradeScript } from '@data-fair/lib-node/upgrade-scripts.js'
-import { existsSync } from 'node:fs'
-import { readdir, readFile, stat, mkdtemp, rm } from 'node:fs/promises'
+import { existsSync, createReadStream, createWriteStream } from 'node:fs'
+import { readdir, readFile, stat, lstat, readlink, mkdtemp, rm } from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
 import { arch as hostArch } from 'node:process'
-import * as tar from 'tar'
+import { createGzip } from 'node:zlib'
+import { pipeline } from 'node:stream/promises'
+import * as tarStream from 'tar-stream'
 import axios, { type AxiosInstance } from 'axios'
 import * as mdi from '@mdi/js'
 import config from '../../worker/src/config.ts'
@@ -29,6 +31,33 @@ const resolveMdiPath = (icon: string): string | null => {
 // sharp-based thumbnail resize (target 400 px wide) gets a clean rasterization.
 const renderMdiSvg = (mdiPath: string): string =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 24 24"><path d="${mdiPath}"/></svg>`
+
+// v5 stored icons in `-metadata.json` as either an mdi name string OR an
+// object `{ svg, svgPath, name }` (post-overhaul). Prefer svgPath/name so we
+// control the output dimensions — sharp resizes with `withoutEnlargement: true`,
+// so a 24×24 inline SVG would yield a tiny webp.
+const extractIconSvg = (icon: unknown): string | null => {
+  if (typeof icon === 'string' && icon.trim()) {
+    const p = resolveMdiPath(icon)
+    return p ? renderMdiSvg(p) : null
+  }
+  if (icon && typeof icon === 'object') {
+    const obj = icon as { svg?: unknown, svgPath?: unknown, name?: unknown }
+    if (typeof obj.svgPath === 'string' && obj.svgPath.trim()) return renderMdiSvg(obj.svgPath)
+    if (typeof obj.name === 'string' && obj.name.trim()) {
+      const p = resolveMdiPath(obj.name)
+      if (p) return renderMdiSvg(p)
+    }
+    // Last resort: rewrite width/height on the embedded SVG so the rasteriser
+    // produces a usably-large thumbnail.
+    if (typeof obj.svg === 'string' && obj.svg.trim()) {
+      return obj.svg
+        .replace(/(\swidth=")[^"]*(")/i, '$1256$2')
+        .replace(/(\sheight=")[^"]*(")/i, '$1256$2')
+    }
+  }
+  return null
+}
 
 /**
  * v6.0 first-boot migration — step 1/2.
@@ -109,6 +138,89 @@ async function readPluginManifest (pluginsDir: string, dir: string, debug: (msg:
   return pluginJson
 }
 
+// Read the published plugin's own package.json (under
+// `node_modules/<name>/package.json`) for the description/license/homepage
+// fields the v5 wrapper package.json doesn't carry. Returns {} on any failure
+// — those fields are nice-to-have, not critical for registry validation.
+async function readRealPluginPkg (pluginDir: string, name: string): Promise<{ description?: string, license?: string, homepage?: string }> {
+  try {
+    const realPkgPath = path.join(pluginDir, 'node_modules', ...name.split('/'), 'package.json')
+    const realPkg = JSON.parse(await readFile(realPkgPath, 'utf-8'))
+    const out: { description?: string, license?: string, homepage?: string } = {}
+    if (typeof realPkg.description === 'string') out.description = realPkg.description
+    if (typeof realPkg.license === 'string') out.license = realPkg.license
+    if (typeof realPkg.homepage === 'string') out.homepage = realPkg.homepage
+    return out
+  } catch {
+    return {}
+  }
+}
+
+// Pack a v5 plugin dir into a registry-shaped tarball.
+//
+// Substitutes a synthesized `package/package.json` carrying the plugin's real
+// name+version (from plugin.json) and `registry.category: "processing"` so
+// the registry's extractManifest accepts the upload. The original wrapper
+// package.json is dropped; everything else (index.js, plugin.json,
+// node_modules/...) is streamed verbatim. Symlinks are preserved as symlinks.
+async function packLegacyPlugin (pluginDir: string, manifest: PluginManifest, tarballPath: string): Promise<void> {
+  const realPkg = await readRealPluginPkg(pluginDir, manifest.name)
+  const synthesizedPkg: Record<string, unknown> = {
+    name: manifest.name,
+    version: manifest.version,
+    ...(realPkg.description ? { description: realPkg.description } : {}),
+    ...(realPkg.license ? { license: realPkg.license } : {}),
+    ...(realPkg.homepage ? { homepage: realPkg.homepage } : {}),
+    registry: { category: 'processing' }
+  }
+
+  const pack = tarStream.pack()
+  const writeDone = pipeline(pack, createGzip(), createWriteStream(tarballPath))
+
+  const addEntry = (header: tarStream.Headers, body?: string | Buffer): Promise<void> =>
+    new Promise<void>((resolve, reject) => {
+      const cb = (err?: Error | null) => err ? reject(err) : resolve()
+      if (body !== undefined) {
+        pack.entry(header, body, cb)
+        return
+      }
+      const entry = pack.entry(header, cb)
+      if (!entry) return
+      createReadStream(path.join(pluginDir, header.name.replace(/^package\//, '')))
+        .on('error', reject)
+        .pipe(entry)
+    })
+
+  // Synthesized manifest first — registry's extractor matches the exact path.
+  await addEntry({ name: 'package/package.json' }, JSON.stringify(synthesizedPkg, null, 2))
+
+  const walk = async (relPath: string): Promise<void> => {
+    if (relPath === 'package.json') return // skip the v5 wrapper
+    const fullPath = path.join(pluginDir, relPath)
+    const st = await lstat(fullPath)
+    const tarName = `package/${relPath}`
+    if (st.isDirectory()) {
+      const children = await readdir(fullPath)
+      for (const child of children) {
+        await walk(`${relPath}/${child}`)
+      }
+    } else if (st.isFile()) {
+      await addEntry({ name: tarName, size: st.size, mode: st.mode, mtime: st.mtime, type: 'file' })
+    } else if (st.isSymbolicLink()) {
+      const target = await readlink(fullPath)
+      await addEntry({ name: tarName, type: 'symlink', linkname: target, mode: st.mode, mtime: st.mtime })
+    }
+    // sockets/devices/etc — not relevant for plugin tarballs, skip silently
+  }
+
+  for (const child of await readdir(pluginDir)) {
+    await walk(child)
+  }
+
+  pack.finalize()
+  await writeDone
+}
+
 function createRegistryClient (): AxiosInstance {
   return axios.create({
     baseURL: config.privateRegistryUrl.replace(/\/$/, ''),
@@ -131,21 +243,18 @@ async function publishToRegistry (ax: AxiosInstance, pluginsDir: string, dir: st
 
   // Repack the dir into a gzipped tarball with the npm `package/` prefix.
   // node_modules is included so lib-node consumers get a runnable bundle.
+  //
+  // The wrapper `package.json` v5 wrote (just `{ name, dependencies }`) is
+  // missing the `version` field that the registry's extractManifest requires.
+  // We synthesize a fresh `package/package.json` here from the plugin.json
+  // manifest plus the published plugin's own metadata (description, license)
+  // so registry validation passes and the artefact carries useful info.
+  // Everything else from the dir is streamed verbatim.
   const stagingDir = await mkdtemp(path.join(os.tmpdir(), 'processings-migrate-'))
   const tarballPath = path.join(stagingDir, `${dir}.tgz`)
   try {
-    // Pack the dir's *contents* (not the dir itself) so entries land at
-    // `package/package.json` etc. — the npm-pack layout the registry's
-    // extractManifest requires (`header.name === 'package/package.json'`).
-    // Listing children also avoids the `tar` package's `@FILE` convention
-    // (any entry starting with `@` would be misread as a file-list path),
-    // which would otherwise trip on scoped dir names.
     const pluginDir = path.join(pluginsDir, dir)
-    const children = await readdir(pluginDir)
-    await tar.create(
-      { gzip: true, cwd: pluginDir, file: tarballPath, prefix: 'package/' },
-      children
-    )
+    await packLegacyPlugin(pluginDir, manifest, tarballPath)
 
     const form = new FormData()
     form.append('architecture', hostArch)
@@ -217,26 +326,25 @@ async function pushMetadataAndAccess (ax: AxiosInstance, pluginsDir: string, dir
     throw err
   }
 
-  // Render the legacy mdi icon to an SVG and upload it as the artefact
+  // Render the legacy v5 icon as an SVG and upload it as the artefact
   // thumbnail. Skipped if the artefact already has a thumbnail — re-runs of
   // this migration must not clobber a manually uploaded one. Upload failures
   // are swallowed with a debug log so a single bad icon doesn't fail the run.
-  if (typeof metadata.icon === 'string' && metadata.icon.trim()) {
+  if (metadata.icon !== undefined && metadata.icon !== null) {
     if (updatedArtefact?.thumbnail) {
-      debug(`${dir}: artefact ${name} already has a thumbnail, skipping mdi:${metadata.icon}`)
+      debug(`${dir}: artefact ${name} already has a thumbnail, skipping`)
     } else {
-      const mdiPath = resolveMdiPath(metadata.icon)
-      if (!mdiPath) {
-        debug(`${dir}: unknown mdi icon "${metadata.icon}", skipping thumbnail`)
+      const svg = extractIconSvg(metadata.icon)
+      if (!svg) {
+        debug(`${dir}: unrecognized icon shape, skipping thumbnail`)
       } else {
         try {
-          const svg = renderMdiSvg(mdiPath)
           const tform = new FormData()
           tform.append('file', new Blob([svg], { type: 'image/svg+xml' }), 'icon.svg')
           await ax.post(`/api/v1/artefacts/${encodeURIComponent(name)}/thumbnail`, tform, {
             validateStatus: s => s === 201
           })
-          debug(`${dir}: uploaded thumbnail from mdi:${metadata.icon}`)
+          debug(`${dir}: uploaded thumbnail`)
         } catch (err: any) {
           const status = err?.response?.status
           const body = err?.response?.data
