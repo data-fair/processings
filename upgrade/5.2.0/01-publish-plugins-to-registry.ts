@@ -203,8 +203,10 @@ async function pushMetadataAndAccess (ax: AxiosInstance, pluginsDir: string, dir
   if (typeof metadata.category === 'string') patch.group = { fr: metadata.category }
   if (typeof metadata.documentation === 'string') patch.documentation = metadata.documentation
 
+  let updatedArtefact: { thumbnail?: unknown } | undefined
   try {
-    await ax.patch(`/api/v1/artefacts/${encodeURIComponent(name)}`, patch)
+    const patchRes = await ax.patch(`/api/v1/artefacts/${encodeURIComponent(name)}`, patch)
+    updatedArtefact = patchRes.data as { thumbnail?: unknown }
     debug(`${dir}: PATCHed metadata into ${name}`)
   } catch (err: any) {
     const status = err?.response?.status
@@ -216,27 +218,31 @@ async function pushMetadataAndAccess (ax: AxiosInstance, pluginsDir: string, dir
   }
 
   // Render the legacy mdi icon to an SVG and upload it as the artefact
-  // thumbnail. Failures are swallowed with a debug log — the artefact still
-  // shows up in the picker, just without an icon, and the operator can
-  // upload a thumbnail manually later.
+  // thumbnail. Skipped if the artefact already has a thumbnail — re-runs of
+  // this migration must not clobber a manually uploaded one. Upload failures
+  // are swallowed with a debug log so a single bad icon doesn't fail the run.
   if (typeof metadata.icon === 'string' && metadata.icon.trim()) {
-    const mdiPath = resolveMdiPath(metadata.icon)
-    if (!mdiPath) {
-      debug(`${dir}: unknown mdi icon "${metadata.icon}", skipping thumbnail`)
+    if (updatedArtefact?.thumbnail) {
+      debug(`${dir}: artefact ${name} already has a thumbnail, skipping mdi:${metadata.icon}`)
     } else {
-      try {
-        const svg = renderMdiSvg(mdiPath)
-        const tform = new FormData()
-        tform.append('file', new Blob([svg], { type: 'image/svg+xml' }), 'icon.svg')
-        await ax.post(`/api/v1/artefacts/${encodeURIComponent(name)}/thumbnail`, tform, {
-          validateStatus: s => s === 201
-        })
-        debug(`${dir}: uploaded thumbnail from mdi:${metadata.icon}`)
-      } catch (err: any) {
-        const status = err?.response?.status
-        const body = err?.response?.data
-        const bodyStr = typeof body === 'string' ? body : JSON.stringify(body)
-        debug(`${dir}: thumbnail upload failed (${status ?? 'no-response'}: ${bodyStr ?? err?.message}) — leaving artefact without icon`)
+      const mdiPath = resolveMdiPath(metadata.icon)
+      if (!mdiPath) {
+        debug(`${dir}: unknown mdi icon "${metadata.icon}", skipping thumbnail`)
+      } else {
+        try {
+          const svg = renderMdiSvg(mdiPath)
+          const tform = new FormData()
+          tform.append('file', new Blob([svg], { type: 'image/svg+xml' }), 'icon.svg')
+          await ax.post(`/api/v1/artefacts/${encodeURIComponent(name)}/thumbnail`, tform, {
+            validateStatus: s => s === 201
+          })
+          debug(`${dir}: uploaded thumbnail from mdi:${metadata.icon}`)
+        } catch (err: any) {
+          const status = err?.response?.status
+          const body = err?.response?.data
+          const bodyStr = typeof body === 'string' ? body : JSON.stringify(body)
+          debug(`${dir}: thumbnail upload failed (${status ?? 'no-response'}: ${bodyStr ?? err?.message}) — leaving artefact without icon`)
+        }
       }
     }
   }
