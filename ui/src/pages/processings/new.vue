@@ -72,7 +72,7 @@
                     >
                       <v-avatar
                         size="32"
-                        :image="`/registry/api/v1/artefacts/${encodeURIComponent(artefact._id)}/thumbnail/${artefact.thumbnail.id}`"
+                        :image="`/registry/api/v1/thumbnails/${artefact.thumbnail.id}/data`"
                       />
                     </template>
                     <v-card-text>{{ artefactDisplayDescription(artefact) }}</v-card-text>
