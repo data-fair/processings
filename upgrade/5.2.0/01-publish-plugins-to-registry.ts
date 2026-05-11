@@ -29,13 +29,22 @@ const resolveMdiPath = (icon: string): string | null => {
 
 // Render a 256×256 SVG wrapping an mdi path. Larger than 24 so the registry's
 // sharp-based thumbnail resize (target 400 px wide) gets a clean rasterization.
+// Deliberately bare — no `<?xml?>` prologue, no `<!DOCTYPE>`: libvips/librsvg
+// chokes on (or tries to fetch) the external SVG 1.1 DTD that v5's stored
+// `svg` blobs carry.
 const renderMdiSvg = (mdiPath: string): string =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 24 24"><path d="${mdiPath}"/></svg>`
 
+// Pull the first `<path d="...">` out of an arbitrary SVG string.
+const pathFromSvg = (svg: string): string | null => {
+  const m = svg.match(/<path[^>]*\sd="([^"]+)"/i)
+  return m ? m[1] : null
+}
+
 // v5 stored icons in `-metadata.json` as either an mdi name string OR an
-// object `{ svg, svgPath, name }` (post-overhaul). Prefer svgPath/name so we
-// control the output dimensions — sharp resizes with `withoutEnlargement: true`,
-// so a 24×24 inline SVG would yield a tiny webp.
+// object `{ svg, svgPath, name }` (post-overhaul). We always re-wrap the path
+// data in our own clean 256×256 template — never pass v5's `svg` blob through,
+// since its XML prologue / external DOCTYPE can hang or crash libvips.
 const extractIconSvg = (icon: unknown): string | null => {
   if (typeof icon === 'string' && icon.trim()) {
     const p = resolveMdiPath(icon)
@@ -48,12 +57,9 @@ const extractIconSvg = (icon: unknown): string | null => {
       const p = resolveMdiPath(obj.name)
       if (p) return renderMdiSvg(p)
     }
-    // Last resort: rewrite width/height on the embedded SVG so the rasteriser
-    // produces a usably-large thumbnail.
     if (typeof obj.svg === 'string' && obj.svg.trim()) {
-      return obj.svg
-        .replace(/(\swidth=")[^"]*(")/i, '$1256$2')
-        .replace(/(\sheight=")[^"]*(")/i, '$1256$2')
+      const p = pathFromSvg(obj.svg)
+      if (p) return renderMdiSvg(p)
     }
   }
   return null
