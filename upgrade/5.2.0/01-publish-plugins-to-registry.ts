@@ -190,8 +190,19 @@ async function packLegacyPlugin (pluginDir: string, manifest: PluginManifest, ta
         pack.entry(header, body, cb)
         return
       }
+      // symlinks (and any other non-file entry) carry no body — the linkname
+      // lives in the header. tar-stream hands back a "void" sink for these and
+      // throws "No body allowed for this entry" the moment any byte is written
+      // into it, so we must not pipe a file stream in.
+      if (header.type && header.type !== 'file' && header.type !== 'contiguous-file') {
+        pack.entry(header, cb).end()
+        return
+      }
       const entry = pack.entry(header, cb)
-      if (!entry) return
+      // Forward stream-level failures (e.g. a file changing size mid-read) to
+      // the promise instead of letting an unhandled 'error' kill the process —
+      // the per-dir try/catch in exec() is meant to isolate a single bad plugin.
+      entry.on('error', reject)
       createReadStream(path.join(pluginDir, header.name.replace(/^package\//, '')))
         .on('error', reject)
         .pipe(entry)
