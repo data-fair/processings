@@ -29,12 +29,14 @@ const resolveMdiPath = (icon: string): string | null => {
 
 // Render a 256×256 SVG wrapping an mdi path: a dark-grey glyph over a white
 // rounded-corner square so the thumbnail reads cleanly against any UI
-// background. Larger than 24 so the registry's sharp-based thumbnail resize
-// (target 400 px wide) gets a clean rasterization. Deliberately bare — no
-// `<?xml?>` prologue, no `<!DOCTYPE>`: libvips/librsvg chokes on (or tries to
-// fetch) the external SVG 1.1 DTD that v5's stored `svg` blobs carry.
+// background. The glyph (native 24×24) is scaled to 60% and centred, leaving a
+// generous margin inside the square. Larger than 24 so the registry's
+// sharp-based thumbnail resize (target 400 px wide) gets a clean rasterization.
+// Deliberately bare — no `<?xml?>` prologue, no `<!DOCTYPE>`: libvips/librsvg
+// chokes on (or tries to fetch) the external SVG 1.1 DTD that v5's stored
+// `svg` blobs carry.
 const renderMdiSvg = (mdiPath: string): string =>
-  `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="#ffffff"/><path d="${mdiPath}" fill="#424242"/></svg>`
+  `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="#ffffff"/><g transform="translate(4.8 4.8) scale(0.6)"><path d="${mdiPath}" fill="#424242"/></g></svg>`
 
 // Pull the first `<path d="...">` out of an arbitrary SVG string.
 const pathFromSvg = (svg: string): string | null => {
