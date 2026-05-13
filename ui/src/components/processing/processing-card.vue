@@ -37,7 +37,10 @@
             width="3"
           />
         </v-list-item>
-        <v-list-item v-else-if="pluginFetch.error.value?.statusCode">
+        <v-list-item
+          v-else-if="pluginFetch.error.value?.statusCode"
+          :title="t('pluginUnavailableHint')"
+        >
           <template #prepend>
             <v-icon
               :icon="mdiPowerPlug"
@@ -45,7 +48,7 @@
             />
           </template>
           <span class="text-error">
-            {{ t('deleted') + ' - ' + processing.pluginId }}
+            {{ t('pluginUnavailable') + ' — ' + processing.pluginId }}
           </span>
         </v-list-item>
         <v-list-item v-else>
@@ -192,7 +195,8 @@ const pluginFetch = usePluginFetch(props.processing.pluginId)
 
 <i18n lang="yaml">
   en:
-    deleted: Deleted
+    pluginUnavailable: Plugin unavailable
+    pluginUnavailableHint: This processing's plugin has been removed or its access revoked. You can no longer edit or run it, but you can view its history and delete it.
     runStarted: Run started
     lastRunFinished: Last run finished
     duration: "Duration:"
@@ -206,7 +210,8 @@ const pluginFetch = usePluginFetch(props.processing.pluginId)
     inactive: Inactive
 
   fr:
-    deleted: Supprimé
+    pluginUnavailable: Plugin indisponible
+    pluginUnavailableHint: Le plugin de ce traitement a été supprimé ou son accès retiré. Vous ne pouvez plus le modifier ni l'exécuter, mais vous pouvez consulter son historique et le supprimer.
     runStarted: Exécution commencée
     lastRunFinished: Dernière exécution terminée
     duration: "Durée :"
