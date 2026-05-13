@@ -22,13 +22,20 @@ const fetches: Record<string, ReturnType<typeof useFetch<RegistryArtefact>>> = {
  * (`{name}@{major}`). Only the `name` part identifies the artefact; the
  * major is the runtime version pin and is not used here.
  *
+ * Errors (404 deleted, 403 no access) are NOT broadcast as a global ui
+ * notification — callers read `error.value` and render their own inline
+ * state. See processing-card.vue and pages/processings/[id]/index.vue.
+ *
  * Same-domain assumption: registry is always mounted at `/registry` of the
  * current domain. The session cookie is sent automatically.
  */
 export const usePluginFetch = (pluginId: string) => {
   const { name } = parsePluginId(pluginId)
   if (!fetches[name]) {
-    fetches[name] = useFetch<RegistryArtefact>(`/registry/api/v1/artefacts/${encodeURIComponent(name)}`)
+    fetches[name] = useFetch<RegistryArtefact>(
+      `/registry/api/v1/artefacts/${encodeURIComponent(name)}`,
+      { notifError: false }
+    )
   }
   return fetches[name]
 }
