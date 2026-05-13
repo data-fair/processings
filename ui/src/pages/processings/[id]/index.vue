@@ -136,6 +136,7 @@ async function fetchProcessing () {
   if (processing.value) editProcessing.value = { ...processing.value }
 }
 async function fetchPlugin () {
+  pluginBroken.value = false
   if (!processing.value?.pluginId) return
   const { name } = parsePluginId(processing.value.pluginId)
   // Display metadata comes from registry (artefact-level, name-keyed).
