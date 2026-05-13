@@ -375,16 +375,11 @@ async function pushMetadataAndAccess (ax: AxiosInstance, pluginsDir: string, dir
     }
   }
 
-  // Access grants — one per privateAccess entry. POST returns 201 on
-  // create, 409 when already granted (idempotent).
-  for (const acc of access.privateAccess ?? []) {
-    await ax.post('/api/v1/access-grants', { account: acc }, {
-      validateStatus: s => s === 201 || s === 409
-    })
-  }
-  if ((access.privateAccess ?? []).length > 0) {
-    debug(`${dir}: ensured ${(access.privateAccess ?? []).length} access-grant(s)`)
-  }
+  // Note: we do NOT auto-create access-grants for privateAccess entries.
+  // privateAccess governs whether an account *may* see the artefact; the
+  // access-grant is a separate operator enrolment step that the superadmin
+  // owns from the registry UI. Pre-creating grants here would silently
+  // expand the trust surface beyond what the v5 access.json expressed.
 }
 
 export default {
