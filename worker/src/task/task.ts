@@ -91,19 +91,28 @@ export const run = async (mailTransport: any) => {
   // registryCacheDir on cache miss, returns the existing path on cache hit.
   // account is passed so registry enforces this owner's grants.
   const { name: pluginName, major } = parsePluginId(processing.pluginId)
-  const ensured = await ensureArtefact({
-    registryUrl: config.privateRegistryUrl,
-    secretKey: config.secretKeys.registry,
-    artefactId: pluginName,
-    version: major,
-    cacheDir: registryCacheDir,
-    architecture: process.arch,
-    account: {
-      type: processing.owner.type,
-      id: processing.owner.id,
-      ...(processing.owner.department ? { department: processing.owner.department } : {})
+  let ensured
+  try {
+    ensured = await ensureArtefact({
+      registryUrl: config.privateRegistryUrl,
+      secretKey: config.secretKeys.registry,
+      artefactId: pluginName,
+      version: major,
+      cacheDir: registryCacheDir,
+      architecture: process.arch,
+      account: {
+        type: processing.owner.type,
+        id: processing.owner.id,
+        ...(processing.owner.department ? { department: processing.owner.department } : {})
+      }
+    })
+  } catch (err) {
+    const status = (err as any)?.statusCode
+    if (status === 404 || status === 403) {
+      await log.error(`Le plugin ${processing.pluginId} n'est plus disponible (supprimé ou accès retiré).`)
     }
-  })
+    throw err
+  }
   const pluginDir = ensured.path
 
   // Legacy plugin-config (deprecated, removed in v7.0): if dataDir is set the
