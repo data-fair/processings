@@ -3,6 +3,17 @@
     v-if="processing"
     data-iframe-height
   >
+    <v-alert
+      v-if="pluginBroken"
+      type="error"
+      variant="tonal"
+      class="mb-4"
+      :title="t('pluginUnavailableTitle')"
+    >
+      {{ t('pluginUnavailableBody') }}
+      <br>
+      <code>{{ processing?.pluginId }}</code>
+    </v-alert>
     <h2 class="text-headline-small">
       {{ t('processingTitle', { title: processing.title }) }}
     </h2>
@@ -25,7 +36,7 @@
         autocomplete="off"
       >
         <vjsf
-          v-if="processingSchema"
+          v-if="processingSchema && !pluginBroken"
           v-model="editProcessing"
           :schema="processingSchema"
           :options="vjsfOptions"
@@ -61,6 +72,7 @@
         :edited="edited"
         :is-small="false"
         :documentation="plugin?.documentation"
+        :plugin-broken="pluginBroken"
         @triggered="runs && runs.refresh()"
       />
     </navigation-right>
@@ -100,6 +112,7 @@ const edited = ref(false)
 const editProcessing: Ref<Processing | null> = ref(null)
 const processing: Ref<Processing | null> = ref(null)
 const plugin: Ref<RegistryArtefact | null> = ref(null)
+const pluginBroken = ref(false)
 const configSchema: Ref<Record<string, unknown> | null> = ref(null)
 const runs: Ref<Record<string, any>> = ref([])
 
@@ -128,15 +141,32 @@ async function fetchPlugin () {
   // Display metadata comes from registry (artefact-level, name-keyed).
   // The config schema is read out of the cached package.json by the
   // processings API — registry doesn't know or care what's inside packages.
-  const [artefact, schema] = await Promise.all([
-    $fetch<RegistryArtefact>(`/registry/api/v1/artefacts/${encodeURIComponent(name)}`),
-    $fetch<Record<string, unknown>>(`/processings/${processingId}/plugin-config-schema`).catch(err => {
-      if (err?.statusCode === 404 || err?.status === 404) return null
+  //
+  // Registry returns 404 when the plugin has been deleted, 403 when the
+  // owner has lost access. We collapse both into pluginBroken=true and
+  // render a banner; the config-schema fetch's 404 (no schema for this
+  // major) is a separate, narrower state that does NOT trigger the banner.
+  const artefactResult = await $fetch<RegistryArtefact>(
+    `/registry/api/v1/artefacts/${encodeURIComponent(name)}`
+  ).then(
+    (data) => ({ ok: true as const, data }),
+    (err) => {
+      const status = err?.statusCode ?? err?.status
+      if (status === 404 || status === 403) return { ok: false as const }
       throw err
-    })
-  ])
-  plugin.value = artefact
-  configSchema.value = schema
+    }
+  )
+  if (!artefactResult.ok) {
+    pluginBroken.value = true
+    return
+  }
+  plugin.value = artefactResult.data
+  configSchema.value = await $fetch<Record<string, unknown>>(
+    `/processings/${processingId}/plugin-config-schema`
+  ).catch(err => {
+    if (err?.statusCode === 404 || err?.status === 404) return null
+    throw err
+  })
 }
 
 /*
@@ -280,6 +310,8 @@ const timezoneLabel = (timeZone: string) => {
     search: 'Search...'
     timezone: 'Timezone:'
     updateError: Error while updating the processing
+    pluginUnavailableTitle: Plugin unavailable
+    pluginUnavailableBody: This processing's plugin has been removed or its access revoked. You can no longer edit or run this processing, but you can still view its run history and delete it.
 
   fr:
     frequency:
@@ -292,6 +324,8 @@ const timezoneLabel = (timeZone: string) => {
     search: 'Rechercher...'
     timezone: 'Fuseau horaire :'
     updateError: Erreur lors de la mise à jour du traitement
+    pluginUnavailableTitle: Plugin indisponible
+    pluginUnavailableBody: Le plugin de ce traitement a été supprimé ou son accès retiré. Vous ne pouvez plus modifier ni exécuter ce traitement, mais vous pouvez consulter son historique et le supprimer.
 
 </i18n>
 
