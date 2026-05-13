@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { anonymousAx, apiUrl, axiosAuth, clean } from '../../support/axios.ts'
+import { anonymousAx, apiUrl, axiosAuth, clean, waitForRunStatus } from '../../support/axios.ts'
 import { publishFixturePlugin } from '../../support/registry.ts'
 
 // Helper: create a processing through the normal API, then flip its
@@ -68,5 +68,27 @@ test.describe('processing with unavailable plugin', () => {
       { validateStatus: () => true }
     )
     expect(after.status).toBe(404)
+  })
+
+  test('worker logs a friendly French message when the plugin is unavailable', async () => {
+    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const id = await createBrokenProcessing(superadmin)
+
+    // Activate the processing via the raw test-env endpoint to bypass the
+    // registry check that would reject a normal PATCH for an unknown pluginId.
+    await anonymousAx.patch(
+      `${apiUrl}/api/v1/test-env/raw-processing/${id}`,
+      { active: true }
+    )
+
+    const triggered = (await superadmin.post(`/api/v1/processings/${id}/_trigger`)).data
+    const triggeredRunId = triggered._id
+
+    await waitForRunStatus(triggeredRunId, 'error', 30_000)
+
+    const run = (await superadmin.get(`/api/v1/runs/${triggeredRunId}`)).data
+    expect(
+      run.log.some((l: any) => l.type === 'error' && l.msg.includes("n'est plus disponible"))
+    ).toBe(true)
   })
 })

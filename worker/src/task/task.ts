@@ -107,7 +107,7 @@ export const run = async (mailTransport: any) => {
       }
     })
   } catch (err) {
-    const status = (err as any)?.statusCode
+    const status = (err as any)?.status ?? (err as any)?.statusCode
     if (status === 404 || status === 403) {
       await log.error(`Le plugin ${processing.pluginId} n'est plus disponible (supprimé ou accès retiré).`)
     }
