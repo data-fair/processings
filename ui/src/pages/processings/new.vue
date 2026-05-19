@@ -65,6 +65,15 @@
                       <span :class="!isPicked(artefact) ? 'text-primary' : ''">
                         {{ artefactDisplayName(artefact) }}
                       </span>
+                      <v-chip
+                        v-if="artefact.format === 'branch'"
+                        size="x-small"
+                        color="warning"
+                        class="ml-2"
+                        variant="flat"
+                      >
+                        {{ artefact.branchName ? `dev: ${artefact.branchName}` : 'dev build' }}
+                      </v-chip>
                     </template>
                     <template
                       v-if="artefact.thumbnail"
@@ -129,17 +138,32 @@ import OwnerPick from '@data-fair/lib-vuetify/owner-pick.vue'
 
 // Subset of registry's Artefact shape that the picker actually uses. Kept
 // inline to avoid importing the registry types into processings.
-// Artefacts are keyed by package name (no @major); `latestMajor` is the
-// pin we apply when creating a new processing.
+// Two flavours appear in the same picker:
+//  - `npm` artefacts have a `latestMajor`; we pin processings to that major
+//    so the registry serves the latest minor.patch at runtime.
+//  - `branch` artefacts have a single mutable tarball and no `latestMajor`;
+//    we just store the artefact id and let the registry serve the current
+//    tarball on every run.
 type RegistryArtefact = {
   _id: string
   name: string
+  format?: 'npm' | 'file' | 'branch'
   latestMajor?: number
+  branchName?: string
   category: string
   title?: { fr?: string, en?: string }
   description?: { fr?: string, en?: string }
   group?: { fr?: string, en?: string }
   thumbnail?: { id: string, width: number, height: number }
+}
+
+// Map an artefact to the pluginId we store on the processing. Returns
+// `undefined` when the artefact is unselectable (e.g. an npm artefact with
+// no versions uploaded yet).
+const pluginIdForArtefact = (a: RegistryArtefact): string | undefined => {
+  if (a.format === 'branch') return a._id
+  if (a.latestMajor === undefined) return undefined
+  return `${a._id}@${a.latestMajor}`
 }
 
 type NewProcessing = {
@@ -228,16 +252,14 @@ const newProcessing = ref<NewProcessing>({})
 const ownersReady = ref(false)
 
 const pickPlugin = (artefact: RegistryArtefact) => {
-  // Pin to the artefact's current major; registry resolves to the latest
-  // minor.patch on every run. Older majors are still resolvable from old
-  // processings but are not surfaced in the picker.
-  if (artefact.latestMajor === undefined) return
-  newProcessing.value.pluginId = `${artefact._id}@${artefact.latestMajor}`
+  const pluginId = pluginIdForArtefact(artefact)
+  if (!pluginId) return
+  newProcessing.value.pluginId = pluginId
   step.value = '2'
 }
 const isPicked = (artefact: RegistryArtefact) =>
-  artefact.latestMajor !== undefined &&
-  newProcessing.value.pluginId === `${artefact._id}@${artefact.latestMajor}`
+  newProcessing.value.pluginId !== undefined &&
+  newProcessing.value.pluginId === pluginIdForArtefact(artefact)
 
 const createProcessing = useAsyncAction(
   async () => {

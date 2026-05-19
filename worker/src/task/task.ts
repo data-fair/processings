@@ -9,7 +9,7 @@ import resolvePath from 'resolve-path'
 import tmp from 'tmp-promise'
 import { DataFairWsClient } from '@data-fair/lib-node/ws-client.js'
 import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
-import { ensureArtefact } from '@data-fair/lib-node-registry'
+import { ensureArtefact, ensureBranchArtefact } from '@data-fair/lib-node-registry'
 import { decipher } from '@data-fair/processings-shared/cipher.ts'
 import { parsePluginId } from '@data-fair/processings-shared/plugin-id.ts'
 import { importPluginModule } from '@data-fair/processings-shared/plugin-load.ts'
@@ -89,23 +89,36 @@ export const run = async (mailTransport: any) => {
   console.log('<running>')
   // Resolve plugin via registry. lib-node downloads + extracts the tarball into
   // registryCacheDir on cache miss, returns the existing path on cache hit.
-  // account is passed so registry enforces this owner's grants.
+  // account is passed so registry enforces this owner's grants. Branch-format
+  // pluginIds (no @major) hit the mutable-tarball endpoint instead — cache is
+  // invalidated when the artefact's dataUpdatedAt bumps.
   const { name: pluginName, major } = parsePluginId(processing.pluginId)
+  const account = {
+    type: processing.owner.type,
+    id: processing.owner.id,
+    ...(processing.owner.department ? { department: processing.owner.department } : {})
+  }
   let ensured
   try {
-    ensured = await ensureArtefact({
-      registryUrl: config.privateRegistryUrl,
-      secretKey: config.secretKeys.registry,
-      artefactId: pluginName,
-      version: major,
-      cacheDir: registryCacheDir,
-      architecture: process.arch,
-      account: {
-        type: processing.owner.type,
-        id: processing.owner.id,
-        ...(processing.owner.department ? { department: processing.owner.department } : {})
-      }
-    })
+    if (major) {
+      ensured = await ensureArtefact({
+        registryUrl: config.privateRegistryUrl,
+        secretKey: config.secretKeys.registry,
+        artefactId: pluginName,
+        version: major,
+        cacheDir: registryCacheDir,
+        architecture: process.arch,
+        account
+      })
+    } else {
+      ensured = await ensureBranchArtefact({
+        registryUrl: config.privateRegistryUrl,
+        secretKey: config.secretKeys.registry,
+        artefactId: pluginName,
+        cacheDir: registryCacheDir,
+        account
+      })
+    }
   } catch (err) {
     const status = (err as any)?.status ?? (err as any)?.statusCode
     if (status === 404 || status === 403) {

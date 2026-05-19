@@ -16,6 +16,16 @@
     </v-alert>
     <h2 class="text-headline-small">
       {{ t('processingTitle', { title: processing.title }) }}
+      <v-chip
+        v-if="plugin?.format === 'branch'"
+        size="small"
+        color="warning"
+        variant="flat"
+        class="ml-2"
+        :title="t('devBuildHint')"
+      >
+        {{ plugin.branchName ? `dev: ${plugin.branchName}` : 'dev build' }}
+      </v-chip>
     </h2>
     <v-defaults-provider
       :defaults="{
@@ -313,6 +323,7 @@ const timezoneLabel = (timeZone: string) => {
     updateError: Error while updating the processing
     pluginUnavailableTitle: Plugin unavailable
     pluginUnavailableBody: This processing's plugin has been removed or its access revoked. You can no longer edit or run this processing, but you can still view its run history and delete it.
+    devBuildHint: This processing is pinned to a rolling dev build — the underlying tarball can change at any time.
 
   fr:
     frequency:
@@ -327,6 +338,7 @@ const timezoneLabel = (timeZone: string) => {
     updateError: Erreur lors de la mise à jour du traitement
     pluginUnavailableTitle: Plugin indisponible
     pluginUnavailableBody: Le plugin de ce traitement a été supprimé ou son accès retiré. Vous ne pouvez plus modifier ni exécuter ce traitement, mais vous pouvez consulter son historique et le supprimer.
+    devBuildHint: Ce traitement utilise une build de développement glissante — le tarball sous-jacent peut changer à tout moment.
 
 </i18n>
 

@@ -1,12 +1,19 @@
 import { parsePluginId } from '@data-fair/processings-shared/plugin-id.ts'
 
-// Subset of registry's Artefact shape that the UI uses. Artefacts are now
-// keyed by package name (no @major suffix); per-major data — including
-// processingConfigSchema — lives on the version documents instead.
+// Subset of registry's Artefact shape that the UI uses. Two flavours share
+// the same shape:
+//  - `npm` artefacts are keyed by package name; per-major data
+//    (processingConfigSchema, etc.) lives on the version documents.
+//  - `branch` artefacts have no version history — a single mutable tarball
+//    sits directly on the artefact doc, replaced on each upload. `branchName`
+//    is optional metadata (the source git branch).
 export interface RegistryArtefact {
   _id: string
   name: string
+  format?: 'npm' | 'file' | 'branch'
   latestMajor?: number
+  branchName?: string
+  version?: string
   category: string
   title?: { fr?: string, en?: string }
   description?: { fr?: string, en?: string }

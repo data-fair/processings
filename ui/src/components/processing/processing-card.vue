@@ -56,6 +56,15 @@
             <v-icon :icon="mdiPowerPlug" />
           </template>
           {{ pluginFetch.data.value?.title?.fr ?? pluginFetch.data.value?.title?.en ?? pluginFetch.data.value?.name ?? processing.pluginId }}
+          <v-chip
+            v-if="pluginFetch.data.value?.format === 'branch'"
+            size="x-small"
+            color="warning"
+            variant="flat"
+            class="ml-2"
+          >
+            {{ pluginFetch.data.value?.branchName ? `dev: ${pluginFetch.data.value.branchName}` : 'dev build' }}
+          </v-chip>
         </v-list-item>
 
         <!-- Linked dataset -->

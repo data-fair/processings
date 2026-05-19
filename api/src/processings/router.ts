@@ -12,7 +12,7 @@ import { nanoid } from 'nanoid'
 
 import eventsQueue from '@data-fair/lib-node/events-queue.js'
 import { reqOrigin, session } from '@data-fair/lib-express/index.js'
-import { ensureArtefact } from '@data-fair/lib-node-registry'
+import { ensureArtefact, ensureBranchArtefact } from '@data-fair/lib-node-registry'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import { createNext } from '@data-fair/processings-shared/runs.ts'
 import { parsePluginId } from '@data-fair/processings-shared/plugin-id.ts'
@@ -44,19 +44,30 @@ const ajv = ajvFormats(new Ajv({ strict: false }))
  */
 async function ensurePluginAndReadSchema (processing: Pick<Processing, 'pluginId' | 'owner'>) {
   const { name, major } = parsePluginId(processing.pluginId)
-  const ensured = await ensureArtefact({
-    registryUrl: config.privateRegistryUrl,
-    secretKey: config.secretKeys.registry,
-    artefactId: name,
-    version: major,
-    cacheDir: registryCacheDir,
-    architecture: process.arch,
-    account: {
-      type: processing.owner.type,
-      id: processing.owner.id,
-      ...(processing.owner.department ? { department: processing.owner.department } : {})
-    }
-  })
+  const account = {
+    type: processing.owner.type,
+    id: processing.owner.id,
+    ...(processing.owner.department ? { department: processing.owner.department } : {})
+  }
+  // Branch-format artefacts have no major; we resolve them via the rolling
+  // tarball endpoint instead. Cache lives under the same registryCacheDir.
+  const ensured = major
+    ? await ensureArtefact({
+      registryUrl: config.privateRegistryUrl,
+      secretKey: config.secretKeys.registry,
+      artefactId: name,
+      version: major,
+      cacheDir: registryCacheDir,
+      architecture: process.arch,
+      account
+    })
+    : await ensureBranchArtefact({
+      registryUrl: config.privateRegistryUrl,
+      secretKey: config.secretKeys.registry,
+      artefactId: name,
+      cacheDir: registryCacheDir,
+      account
+    })
   const schemaPath = path.join(ensured.path, 'processing-config-schema.json')
   let processingConfigSchema: Record<string, unknown> | undefined
   if (await fs.pathExists(schemaPath)) {

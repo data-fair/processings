@@ -82,6 +82,65 @@ const DEFAULT_TARBALL = path.resolve(import.meta.dirname, '../fixtures/processin
  * a beforeAll (npm install + repack into a tmp tarball) or assert on
  * non-execution behaviour.
  */
+export interface PublishBranchOptions {
+  /** Registry artefact id (the branch artefact's `_id`, e.g. `@data-fair/processing-hello-world-main`). */
+  artefactId: string
+  /** Local path to the .tgz to upload. */
+  tarballPath?: string
+  /** Optional source-branch metadata. */
+  branchName?: string
+  /** Optional architecture tag. */
+  architecture?: string
+  /** Set the artefact public (default true). */
+  isPublic?: boolean
+  /** Per-account `privateAccess` entries on the artefact. */
+  privateAccess?: Grantee[]
+  /** Global access-grants to create (defaults to the test owner set). */
+  grants?: Grantee[]
+}
+
+/**
+ * Publish a fixture plugin as a branch artefact. Branch artefacts don't carry
+ * a version — the tarball at the given `artefactId` is mutable and replaced on
+ * each upload. The returned `pluginId` is just the artefact id with no
+ * `@major` suffix, which is the shape `processing.pluginId` takes for
+ * branch-backed processings.
+ */
+export const publishFixtureBranchPlugin = async (opts: PublishBranchOptions): Promise<PublishedFixture> => {
+  const tarballPath = opts.tarballPath ?? DEFAULT_TARBALL
+  const tgz = await fs.promises.readFile(tarballPath)
+
+  const form = new FormData()
+  form.append('file', tgz, { filename: 'package.tgz', contentType: 'application/gzip' })
+  if (opts.branchName) form.append('branchName', opts.branchName)
+  if (opts.architecture) form.append('architecture', opts.architecture)
+  await axiosRegistryInternal.post(
+    `/api/v1/artefacts/branch/${encodeURIComponent(opts.artefactId)}`,
+    form,
+    { headers: form.getHeaders() }
+  )
+
+  await axiosRegistryInternal.patch(`/api/v1/artefacts/${encodeURIComponent(opts.artefactId)}`, {
+    public: opts.isPublic ?? true,
+    privateAccess: opts.privateAccess ?? []
+  })
+
+  const grants = opts.grants ?? DEFAULT_GRANTS
+  const seen = new Set<string>()
+  for (const acc of [...(opts.privateAccess ?? []), ...grants]) {
+    const key = `${acc.type}:${acc.id}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    await axiosRegistryInternal.post(
+      '/api/v1/access-grants',
+      { account: acc },
+      { validateStatus: s => s === 201 || s === 409 }
+    )
+  }
+
+  return { pluginId: opts.artefactId }
+}
+
 export const publishFixturePlugin = async (opts: PublishOptions): Promise<PublishedFixture> => {
   const tarballPath = opts.tarballPath ?? DEFAULT_TARBALL
   const tgz = await fs.promises.readFile(tarballPath)
