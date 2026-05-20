@@ -8,11 +8,13 @@ const volumeStatus = async () => {
   await fs.writeFile(`${config.dataDir}/check-access.txt`, 'ok')
 }
 
-export const getStatus = async (req: Request) =>
-  runHealthChecks(req, [
-    { fn: mongoStatus, name: 'mongodb' },
-    { fn: volumeStatus, name: 'data volume' }
-  ])
+export const getStatus = async (req: Request) => {
+  const checks: Array<{ fn: (req: Request) => Promise<void>; name: string }> = [
+    { fn: mongoStatus, name: 'mongodb' }
+  ]
+  if (config.dataDir) checks.push({ fn: volumeStatus, name: 'data volume' })
+  return runHealthChecks(req, checks)
+}
 
 // Helper functions
 const getSingleStatus = async (req: Request, fn: (req: Request) => Promise<void>, name: string) => {

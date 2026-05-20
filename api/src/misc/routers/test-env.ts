@@ -51,6 +51,23 @@ router.get('/raw-processing/:id', async (req, res, next) => {
   }
 })
 
+// Patch a processing document without validation (used by tests to put a
+// processing into states that the normal API guards prevent, e.g. setting
+// plugin to a value that doesn't resolve in the registry).
+router.patch('/raw-processing/:id', async (req, res, next) => {
+  try {
+    const result = await mongo.processings.updateOne(
+      { _id: req.params.id },
+      { $set: req.body }
+    )
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'processing not found' })
+    const processing = await mongo.processings.findOne({ _id: req.params.id })
+    res.json(processing)
+  } catch (err) {
+    next(err)
+  }
+})
+
 // Return the raw MongoDB document for a run
 router.get('/raw-run/:id', async (req, res, next) => {
   try {
@@ -93,11 +110,14 @@ router.post('/set-config', (req, res, next) => {
   }
 })
 
-// Wipe the installed plugins directory (used between test runs)
+// Wipe the installed plugins directory (used between test runs).
+// No-op when the legacy plugins volume isn't mounted (config.dataDir unset).
 router.delete('/plugins', async (req, res, next) => {
   try {
-    const pluginsDir = path.resolve(config.dataDir, 'plugins')
-    await fs.emptyDir(pluginsDir)
+    if (config.dataDir) {
+      const pluginsDir = path.resolve(config.dataDir, 'plugins')
+      await fs.emptyDir(pluginsDir)
+    }
     res.json({ ok: true })
   } catch (err) {
     next(err)

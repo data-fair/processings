@@ -86,7 +86,8 @@ export default {
     },
     plugin: {
       type: 'string',
-      readOnly: true
+      readOnly: true,
+      description: 'Registry artefact id of the plugin (e.g. @data-fair-processing-hello-world-1).'
     },
     scheduling: {
       type: 'array',

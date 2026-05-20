@@ -13,10 +13,12 @@ export default {
   port: 'PORT',
   privateDirectoryUrl: 'PRIVATE_DIRECTORY_URL',
   privateEventsUrl: 'PRIVATE_EVENTS_URL',
+  privateRegistryUrl: 'PRIVATE_REGISTRY_URL',
   secretKeys: {
     limits: 'SECRET_LIMITS',
     events: 'SECRET_EVENTS',
-    identities: 'SECRET_IDENTITIES'
+    identities: 'SECRET_IDENTITIES',
+    registry: 'SECRET_REGISTRY'
   },
   observer: {
     active: 'OBSERVER_ACTIVE',

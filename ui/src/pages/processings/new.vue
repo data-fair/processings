@@ -29,46 +29,66 @@
 
       <v-stepper-window>
         <v-stepper-window-item value="1">
+          <v-text-field
+            v-model="search"
+            :label="t('searchPlugin')"
+            density="compact"
+            variant="outlined"
+            clearable
+            class="mb-4"
+            hide-details
+            prepend-inner-icon="mdi-magnify"
+          />
           <div
-            v-for="category in orderedCategories"
-            :key="category"
+            v-for="group in orderedGroups"
+            :key="group"
             class="mb-4"
           >
-            <template v-if="categorizedPlugins[category]?.length">
-              <h3>{{ category }}</h3>
+            <template v-if="groupedArtefacts[group]?.length">
+              <h3 class="text-h6 mb-2">
+                {{ group }}
+              </h3>
               <v-row class="d-flex align-stretch">
                 <v-col
-                  v-for="plugin in categorizedPlugins[category]"
-                  :key="plugin.id"
+                  v-for="artefact in groupedArtefacts[group]"
+                  :key="artefact._id"
                   md="3"
                   sm="4"
                   cols="12"
                 >
                   <v-card
                     class="h-100"
-                    :color="newProcessing.plugin === plugin.id ? 'primary' : ''"
-                    @click="newProcessing.plugin = plugin.id; step = '2'"
+                    :color="isPicked(artefact) ? 'primary' : ''"
+                    @click="pickPlugin(artefact)"
                   >
                     <template #title>
-                      <span :class="newProcessing.plugin !== plugin.id ? 'text-primary' : ''">
-                        {{ plugin.metadata.name }}
+                      <span :class="!isPicked(artefact) ? 'text-primary' : ''">
+                        {{ artefactDisplayName(artefact) }}
                       </span>
                     </template>
                     <template
-                      v-if="plugin.metadata.icon"
+                      v-if="artefact.thumbnail"
                       #prepend
                     >
-                      <v-icon
-                        :color="newProcessing.plugin !== plugin.id ? 'primary' : ''"
-                        :icon="plugin.metadata.icon.svgPath"
+                      <v-avatar
+                        size="32"
+                        :image="`/registry/api/v1/thumbnails/${artefact.thumbnail.id}/data`"
                       />
                     </template>
-                    <v-card-text>{{ plugin.metadata.description }}</v-card-text>
+                    <v-card-text>{{ artefactDisplayDescription(artefact) }}</v-card-text>
                   </v-card>
                 </v-col>
               </v-row>
             </template>
           </div>
+          <v-alert
+            v-if="!filteredArtefacts.length && !installedPluginsFetch.loading.value"
+            type="info"
+            variant="tonal"
+            class="mt-4"
+          >
+            {{ search ? t('noMatch') : t('noPlugins') }}
+          </v-alert>
         </v-stepper-window-item>
         <v-stepper-window-item value="2">
           <v-text-field
@@ -107,23 +127,30 @@
 <script setup lang="ts">
 import OwnerPick from '@data-fair/lib-vuetify/owner-pick.vue'
 
-type InstalledPlugin = {
+// Subset of registry's Artefact shape that the picker actually uses. Kept
+// inline to avoid importing the registry types into processings. The
+// artefact `_id` is the registry artefact id, stored directly as
+// `processing.plugin`.
+type RegistryArtefact = {
+  _id: string
   name: string
-  description: string
-  version: string
-  distTag: string
-  id: string
-  pluginConfigSchema: any
-  processingConfigSchema: any
-  metadata: {
-    name: string
-    description: string
-    category: string
-    icon: Record<string, string>
-  }
+  format?: 'npm' | 'file'
+  category: string
+  title?: { fr?: string, en?: string }
+  description?: { fr?: string, en?: string }
+  group?: { fr?: string, en?: string }
+  thumbnail?: { id: string, width: number, height: number }
 }
 
-const { t } = useI18n()
+const pluginForArtefact = (a: RegistryArtefact): string => a._id
+
+type NewProcessing = {
+  title?: string
+  owner?: { type: 'user' | 'organization', id: string, department?: string }
+  plugin?: string
+}
+
+const { t, locale } = useI18n()
 const session = useSessionAuthenticated(() => new Error('Authentification nécessaire'))
 const router = useRouter()
 
@@ -139,7 +166,6 @@ const owner = computed(() => {
     return session.state.account
   }
 })
-const ownerFilter = computed(() => `${owner.value.type}:${owner.value.id}${owner.value.department ? ':' + owner.value.department : ''}`)
 const ownerRole = computed(() => {
   const user = session.state.user
   if (owner.value.type === 'user') {
@@ -157,27 +183,59 @@ const ownerRole = computed(() => {
 const canAdmin = computed(() => ownerRole.value === 'admin' || !!session.state.user?.adminMode)
 if (!canAdmin.value) throw new Error(t('noPermission'))
 
-const installedPluginsFetch = useFetch<{ results: InstalledPlugin[], count: number }>(`${$apiPath}/plugins?privateAccess=${ownerFilter.value}`)
-const installedPlugins = computed(() => installedPluginsFetch.data.value?.results)
+// Registry sits on the same domain at /registry — same-origin call, the
+// SimpleDirectory session cookie is sent automatically. Filtered server-side
+// to processing-category artefacts the calling account can see.
+const installedPluginsFetch = useFetch<{ results: RegistryArtefact[], count: number }>(
+  '/registry/api/v1/artefacts',
+  { query: { category: 'processing', size: 100 } }
+)
+const installedPlugins = computed(() => installedPluginsFetch.data.value?.results ?? [])
+
+const search = ref('')
+const filteredArtefacts = computed(() => {
+  const q = search.value?.trim().toLowerCase()
+  if (!q) return installedPlugins.value
+  return installedPlugins.value.filter(a =>
+    a.name.toLowerCase().includes(q) ||
+    artefactDisplayName(a).toLowerCase().includes(q) ||
+    (artefactDisplayDescription(a) ?? '').toLowerCase().includes(q)
+  )
+})
+
+const artefactDisplayName = (a: RegistryArtefact) =>
+  a.title?.[locale.value as 'fr' | 'en'] ?? a.title?.fr ?? a.title?.en ?? a.name
+const artefactDisplayDescription = (a: RegistryArtefact) =>
+  a.description?.[locale.value as 'fr' | 'en'] ?? a.description?.fr ?? a.description?.en ?? ''
+const artefactGroup = (a: RegistryArtefact) =>
+  a.group?.[locale.value as 'fr' | 'en'] ?? a.group?.fr ?? a.group?.en ?? t('otherGroup')
+
+// Configured group order, with a trailing fallback bucket for ungrouped or
+// unknown groups. Empty buckets are hidden by the template.
+const orderedGroups = computed(() => [...$uiConfig.pluginCategories, t('otherGroup')])
+const groupedArtefacts = computed(() => {
+  const buckets: Record<string, RegistryArtefact[]> = {}
+  for (const group of orderedGroups.value) buckets[group] = []
+  for (const artefact of filteredArtefacts.value) {
+    const group = artefactGroup(artefact)
+    if (!buckets[group]) buckets[group] = []
+    buckets[group].push(artefact)
+  }
+  return buckets
+})
 
 const step = ref('1')
 const showCreateMenu = ref(false)
-const newProcessing: Ref<Record<string, string>> = ref({})
+const newProcessing = ref<NewProcessing>({})
 const ownersReady = ref(false)
 
-const orderedCategories = [...$uiConfig.pluginCategories, t('others')]
-const categorizedPlugins = computed(() => {
-  const categories: Record<string, InstalledPlugin[]> = {}
-  orderedCategories.forEach(category => {
-    categories[category] = []
-  })
-  installedPlugins.value?.forEach(plugin => {
-    const category = plugin.metadata.category || t('others')
-    if (!categories[category]) categories[category] = []
-    categories[category].push(plugin)
-  })
-  return categories
-})
+const pickPlugin = (artefact: RegistryArtefact) => {
+  newProcessing.value.plugin = pluginForArtefact(artefact)
+  step.value = '2'
+}
+const isPicked = (artefact: RegistryArtefact) =>
+  newProcessing.value.plugin !== undefined &&
+  newProcessing.value.plugin === pluginForArtefact(artefact)
 
 const createProcessing = useAsyncAction(
   async () => {
@@ -214,11 +272,14 @@ onMounted(() => {
     previous: Previous
     create: Create
     noPermission: You do not have permission to create a processing
-    others: Others
+    searchPlugin: Search for a plugin
+    noPlugins: No processing plugins are available for this account.
+    noMatch: No plugin matches your search.
     createSuccess: Processing created!
     createError: Error while creating processing
     processings: Processings
     createProcessing: Create a processing
+    otherGroup: Other
 
   fr:
     selectPluginType: Sélection du type de traitement
@@ -227,11 +288,14 @@ onMounted(() => {
     previous: Précédent
     create: Créer
     noPermission: Vous n'avez pas les droits pour créer un traitement
-    others: Autres
+    searchPlugin: Rechercher un plugin
+    noPlugins: Aucun plugin de traitement n'est disponible pour ce compte.
+    noMatch: Aucun plugin ne correspond à votre recherche.
     createSuccess: Traitement créé !
     createError: Erreur lors de la création du traitement
     processings: Traitements
     createProcessing: Créer un traitement
+    otherGroup: Autres
 
 </i18n>
 

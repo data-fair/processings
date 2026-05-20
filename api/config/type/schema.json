@@ -12,8 +12,8 @@
   "additionalProperties": false,
   "required": [
     "cipherPassword",
-    "dataDir",
     "privateDirectoryUrl",
+    "privateRegistryUrl",
     "mongoUrl",
     "pluginCategories",
     "port",
@@ -25,7 +25,8 @@
       "type": "string"
     },
     "dataDir": {
-      "type": "string"
+      "type": ["string", "null"],
+      "description": "Optional. When set, the legacy plugins volume at <dataDir>/plugins is read by the v6.0 boot migration. Drops with v7.0."
     },
     "tmpDir": {
       "type": "string"
@@ -57,8 +58,14 @@
     "privateEventsUrl": {
       "type": "string"
     },
+    "privateRegistryUrl": {
+      "type": "string",
+      "pattern": "^https?://",
+      "description": "Internal URL used by the API to call registry server-to-server. The UI hits /registry on the same domain."
+    },
     "secretKeys": {
       "type": "object",
+      "required": ["registry"],
       "properties": {
         "limits": {
           "type": [
@@ -71,6 +78,10 @@
         },
         "identities": {
           "type": "string"
+        },
+        "registry": {
+          "type": "string",
+          "description": "x-secret-key shared with registry. Required for save-time validation, prepare-hook downloads, and the v6.0 first-boot migration."
         }
       }
     },

@@ -1,7 +1,7 @@
 <template>
   <!-- Execute -->
   <v-menu
-    v-if="canAdmin || canExec"
+    v-if="(canAdmin || canExec) && !pluginBroken"
     v-model="showTriggerMenu"
     :close-on-content-click="false"
     max-width="800"
@@ -65,7 +65,7 @@
 
   <!-- Duplicate -->
   <v-menu
-    v-if="canAdmin"
+    v-if="canAdmin && !pluginBroken"
     v-model="showDuplicateMenu"
     :close-on-content-click="false"
     max-width="500"
@@ -168,7 +168,7 @@
 
   <!-- Change owner -->
   <v-menu
-    v-if="canAdmin"
+    v-if="canAdmin && !pluginBroken"
     v-model="showChangeOwnerMenu"
     :close-on-content-click="false"
     max-width="500"
@@ -248,8 +248,8 @@
 
   <!-- Documentation link -->
   <v-list-item
-    v-if="metadata?.documentation"
-    :href="metadata.documentation"
+    v-if="documentation"
+    :href="documentation"
     target="_blank"
     rounded
   >
@@ -316,13 +316,14 @@ import '@data-fair/frame/lib/d-frame.js'
 
 const emit = defineEmits(['triggered'])
 
-const { canAdmin, canExec, edited, metadata, processing, processingSchema } = defineProps<{
+const { canAdmin, canExec, edited, documentation, processing, processingSchema, pluginBroken } = defineProps<{
   canAdmin: boolean,
   canExec: boolean,
   edited: boolean,
-  metadata: Record<string, any> | undefined,
+  documentation?: string,
   processing: Record<string, any>,
   processingSchema: Record<string, any>,
+  pluginBroken?: boolean,
 }>()
 
 const { t } = useI18n()

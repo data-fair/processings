@@ -8,7 +8,7 @@ import path from 'path'
 import resolvePath from 'resolve-path'
 import locks from '#locks'
 
-const processingsDir = path.resolve(config.dataDir, 'processings')
+const processingsDir = path.resolve(config.dataDir ?? config.tmpDir, 'processings')
 
 /**
  * Stop all pending runs for a processing if it is deactivated

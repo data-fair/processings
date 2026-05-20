@@ -9,21 +9,22 @@ import resolvePath from 'resolve-path'
 import tmp from 'tmp-promise'
 import { DataFairWsClient } from '@data-fair/lib-node/ws-client.js'
 import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
+import { ensureArtefact } from '@data-fair/lib-node-registry'
 import { decipher } from '@data-fair/processings-shared/cipher.ts'
+import { importPluginModule } from '@data-fair/processings-shared/plugin-load.ts'
 import { running } from '../utils/runs.ts'
-import config from '#config'
+import config, { registryCacheDir } from '#config'
 import mongo from '#mongo'
 import { getAxiosInstance, getHttpErrorMessage, prepareAxiosError } from './axios.ts'
 
-fs.ensureDirSync(config.dataDir)
-const baseTmpDir = config.tmpDir || path.join(config.dataDir, 'tmp')
-fs.ensureDirSync(baseTmpDir)
+if (config.dataDir) fs.ensureDirSync(config.dataDir)
+fs.ensureDirSync(config.tmpDir)
 
 tmp.setGracefulCleanup()
 
 let pluginModule: { run: (context: ProcessingContext) => Promise<{ deleteOnComplete?: boolean } | void>, stop?: () => Promise<void> }
 let _stopped: boolean
-const processingsDir = path.join(config.dataDir, 'processings')
+const processingsDir = path.join(config.dataDir ?? config.tmpDir, 'processings')
 
 /**
  * Create a WebSocket instance.
@@ -85,18 +86,49 @@ export const run = async (mailTransport: any) => {
   }
   await running(run)
   console.log('<running>')
-  const pluginDir = path.resolve(config.dataDir, 'plugins', processing.plugin)
-  let pluginConfig = {}
-  if (await fs.pathExists(pluginDir + '-config.json')) {
-    pluginConfig = await fs.readJson(pluginDir + '-config.json')
+  // Resolve plugin via registry. lib-node downloads + extracts the tarball into
+  // registryCacheDir on cache miss, returns the existing path on cache hit.
+  // account is passed so registry enforces this owner's grants. `processing.plugin`
+  // is the registry artefact id, passed through as-is; the cache is invalidated
+  // when the artefact's dataUpdatedAt bumps.
+  const account = {
+    type: processing.owner.type,
+    id: processing.owner.id,
+    ...(processing.owner.department ? { department: processing.owner.department } : {})
   }
-  if (!await fs.pathExists(pluginDir + '/index.js')) {
-    throw new Error('fichier source manquant : ' + pluginDir + '/index.js')
+  let ensured
+  try {
+    ensured = await ensureArtefact({
+      registryUrl: config.privateRegistryUrl,
+      secretKey: config.secretKeys.registry,
+      artefactId: processing.plugin,
+      cacheDir: registryCacheDir,
+      architecture: process.arch,
+      account
+    })
+  } catch (err) {
+    const status = (err as any)?.status ?? (err as any)?.statusCode
+    if (status === 404 || status === 403) {
+      await log.error(`Le plugin ${processing.plugin} n'est plus disponible (supprimé ou accès retiré).`)
+    }
+    throw err
   }
+  const pluginDir = ensured.path
 
+  // Legacy plugin-config (deprecated, removed in v7.0): if dataDir is set the
+  // legacy plugins volume is implicitly enabled — read the per-instance global
+  // config keyed by the plugin id (the legacy directory name).
+  let pluginConfig: Record<string, unknown> = {}
+  if (config.dataDir) {
+    const legacyConfigPath = path.join(config.dataDir, 'plugins', `${processing.plugin}-config.json`)
+    if (await fs.pathExists(legacyConfigPath)) {
+      pluginConfig = await fs.readJson(legacyConfigPath)
+      await log.warning(`deprecation: plugin ${processing.plugin} still relies on legacy plugin-config from volume`)
+    }
+  }
   const dir = resolvePath(processingsDir, processing._id)
   await fs.ensureDir(dir)
-  const tmpDir = await tmp.dir({ unsafeCleanup: true, tmpdir: baseTmpDir, prefix: `processing-run-${processing._id}-${run._id}` })
+  const tmpDir = await tmp.dir({ unsafeCleanup: true, tmpdir: config.tmpDir, prefix: `processing-run-${processing._id}-${run._id}` })
   const processingConfig = processing.config || {}
 
   const axiosInstance = getAxiosInstance(processing, log)
@@ -131,7 +163,7 @@ export const run = async (mailTransport: any) => {
 
   const cwd = process.cwd()
   try {
-    pluginModule = await import(path.join(pluginDir + '/index.js'))
+    pluginModule = await importPluginModule(pluginDir)
     process.chdir(dir)
     const result = await pluginModule.run(context)
     if (result?.deleteOnComplete) {

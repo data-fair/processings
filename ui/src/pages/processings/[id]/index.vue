@@ -3,6 +3,17 @@
     v-if="processing"
     data-iframe-height
   >
+    <v-alert
+      v-if="pluginBroken"
+      type="error"
+      variant="tonal"
+      class="mb-4"
+      :title="t('pluginUnavailableTitle')"
+    >
+      {{ t('pluginUnavailableBody') }}
+      <br>
+      <code>{{ processing?.plugin }}</code>
+    </v-alert>
     <h2 class="text-headline-small">
       {{ t('processingTitle', { title: processing.title }) }}
     </h2>
@@ -25,7 +36,7 @@
         autocomplete="off"
       >
         <vjsf
-          v-if="processingSchema"
+          v-if="processingSchema && !pluginBroken"
           v-model="editProcessing"
           :schema="processingSchema"
           :options="vjsfOptions"
@@ -34,7 +45,7 @@
           <template #activity>
             <processing-activity
               :processing="Object.assign(processing, editProcessing)"
-              :plugin-title="plugin?.metadata.name"
+              :plugin-title="plugin?.title?.fr ?? plugin?.title?.en ?? plugin?.name"
             />
           </template>
           <template #scheduling-summary="{ node }">
@@ -60,7 +71,8 @@
         :can-exec="canExecProcessing"
         :edited="edited"
         :is-small="false"
-        :metadata="plugin?.metadata"
+        :documentation="plugin?.documentation"
+        :plugin-broken="pluginBroken"
         @triggered="runs && runs.refresh()"
       />
     </navigation-right>
@@ -68,8 +80,10 @@
 </template>
 
 <script setup lang="ts">
-import type { Plugin, Processing } from '#api/types'
+import type { Processing } from '#api/types'
+import type { RegistryArtefact } from '~/composables/use-plugin-fetch'
 
+import { ofetch } from 'ofetch'
 import cronstrue from 'cronstrue'
 import 'cronstrue/locales/en'
 import 'cronstrue/locales/fr'
@@ -97,7 +111,9 @@ const valid = ref(false)
 const edited = ref(false)
 const editProcessing: Ref<Processing | null> = ref(null)
 const processing: Ref<Processing | null> = ref(null)
-const plugin: Ref<Plugin | null> = ref(null)
+const plugin: Ref<RegistryArtefact | null> = ref(null)
+const pluginBroken = ref(false)
+const configSchema: Ref<Record<string, unknown> | null> = ref(null)
 const runs: Ref<Record<string, any>> = ref([])
 
 /*
@@ -120,9 +136,42 @@ async function fetchProcessing () {
   if (processing.value) editProcessing.value = { ...processing.value }
 }
 async function fetchPlugin () {
-  if (processing.value?.plugin) {
-    plugin.value = await $fetch(`/plugins/${processing.value.plugin}`)
+  pluginBroken.value = false
+  if (!processing.value?.plugin) return
+  // Display metadata comes from registry — `processing.plugin` is the artefact id.
+  // The config schema is read out of the cached package.json by the
+  // processings API — registry doesn't know or care what's inside packages.
+  //
+  // Registry returns 404 when the plugin has been deleted, 403 when the
+  // owner has lost access. We collapse both into pluginBroken=true and
+  // render a banner; the config-schema fetch's 404 (no schema for this
+  // plugin) is a separate, narrower state that does NOT trigger the banner.
+  //
+  // Hit the registry with the bare `ofetch` — not the app's `$fetch`, whose
+  // `/processings/api/v1` baseURL would rewrite this to
+  // `/processings/api/v1/registry/...` and 404. Registry is mounted at
+  // `/registry` of the current domain (same convention as use-plugin-fetch).
+  const artefactResult = await ofetch<RegistryArtefact>(
+    `/registry/api/v1/artefacts/${encodeURIComponent(processing.value.plugin)}`
+  ).then(
+    (data) => ({ ok: true as const, data }),
+    (err) => {
+      const status = err?.statusCode ?? err?.status
+      if (status === 404 || status === 403) return { ok: false as const }
+      throw err
+    }
+  )
+  if (!artefactResult.ok) {
+    pluginBroken.value = true
+    return
   }
+  plugin.value = artefactResult.data
+  configSchema.value = await $fetch<Record<string, unknown>>(
+    `/processings/${processingId}/plugin-config-schema`
+  ).catch(err => {
+    if (err?.statusCode === 404 || err?.status === 404) return null
+    throw err
+  })
 }
 
 /*
@@ -144,19 +193,21 @@ const canExecProcessing = computed(() => {
 
 const processingSchema = computed(() => {
   if (!plugin.value || !processing.value) return
+  const pluginConfigSchema = configSchema.value as any
+  if (!pluginConfigSchema) return
   const schema = JSON.parse(JSON.stringify(contractProcessing))
   schema.properties.config = {
-    ...v2compat(plugin.value.processingConfigSchema),
-    title: 'Plugin ' + plugin.value.metadata.name,
+    ...v2compat(pluginConfigSchema),
+    title: 'Plugin ' + (plugin.value.title?.fr ?? plugin.value.title?.en ?? plugin.value.name)
   }
 
   // merge processingConfigSchema $defs and definitions into the global Processing schema
-  if (plugin.value.processingConfigSchema.$defs) {
-    schema.$defs = { ...schema.$defs, ...plugin.value.processingConfigSchema.$defs }
+  if (pluginConfigSchema.$defs) {
+    schema.$defs = { ...schema.$defs, ...pluginConfigSchema.$defs }
     delete schema.properties.config.$defs
   }
-  if (plugin.value.processingConfigSchema.definitions) {
-    schema.definitions = { ...schema.definitions, ...plugin.value.processingConfigSchema.definitions }
+  if (pluginConfigSchema.definitions) {
+    schema.definitions = { ...schema.definitions, ...pluginConfigSchema.definitions }
     delete schema.properties.config.definitions
   }
   delete schema.properties.config.$id
@@ -264,6 +315,8 @@ const timezoneLabel = (timeZone: string) => {
     search: 'Search...'
     timezone: 'Timezone:'
     updateError: Error while updating the processing
+    pluginUnavailableTitle: Plugin unavailable
+    pluginUnavailableBody: This processing's plugin has been removed or its access revoked. You can no longer edit or run this processing, but you can still view its run history and delete it.
 
   fr:
     frequency:
@@ -276,6 +329,8 @@ const timezoneLabel = (timeZone: string) => {
     search: 'Rechercher...'
     timezone: 'Fuseau horaire :'
     updateError: Erreur lors de la mise à jour du traitement
+    pluginUnavailableTitle: Plugin indisponible
+    pluginUnavailableBody: Le plugin de ce traitement a été supprimé ou son accès retiré. Vous ne pouvez plus modifier ni exécuter ce traitement, mais vous pouvez consulter son historique et le supprimer.
 
 </i18n>
 
