@@ -83,6 +83,7 @@
 import type { Processing } from '#api/types'
 import type { RegistryArtefact } from '~/composables/use-plugin-fetch'
 
+import { ofetch } from 'ofetch'
 import cronstrue from 'cronstrue'
 import 'cronstrue/locales/en'
 import 'cronstrue/locales/fr'
@@ -145,7 +146,12 @@ async function fetchPlugin () {
   // owner has lost access. We collapse both into pluginBroken=true and
   // render a banner; the config-schema fetch's 404 (no schema for this
   // plugin) is a separate, narrower state that does NOT trigger the banner.
-  const artefactResult = await $fetch<RegistryArtefact>(
+  //
+  // Hit the registry with the bare `ofetch` — not the app's `$fetch`, whose
+  // `/processings/api/v1` baseURL would rewrite this to
+  // `/processings/api/v1/registry/...` and 404. Registry is mounted at
+  // `/registry` of the current domain (same convention as use-plugin-fetch).
+  const artefactResult = await ofetch<RegistryArtefact>(
     `/registry/api/v1/artefacts/${encodeURIComponent(processing.value.plugin)}`
   ).then(
     (data) => ({ ok: true as const, data }),
