@@ -14,7 +14,7 @@ export default {
   required: [
     '_id',
     'owner',
-    'pluginId',
+    'plugin',
     'scheduling',
     'title'
   ],
@@ -84,10 +84,10 @@ export default {
       $ref: 'https://github.com/data-fair/lib/account',
       readOnly: true
     },
-    pluginId: {
+    plugin: {
       type: 'string',
       readOnly: true,
-      description: 'Registry artefact id "{name}@{majorVersion}" (e.g. @data-fair/processing-hello-world@1). Patch upgrades inside a major are implicit — registry resolves the latest available version at run time.'
+      description: 'Registry artefact id of the plugin (e.g. @data-fair-processing-hello-world-1).'
     },
     scheduling: {
       type: 'array',

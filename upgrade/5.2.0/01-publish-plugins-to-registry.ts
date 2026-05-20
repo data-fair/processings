@@ -91,8 +91,9 @@ const extractIconSvg = (icon: unknown): string | null => {
  *
  * distTag-suffixed plugin dirs (i.e. installed under a non-`latest` distTag)
  * are skipped with a warning — registry has no distTag concept, so the
- * operator must republish them under a distinct artefact name manually. The
- * processings that reference them will be flagged by step 02.
+ * operator must republish them under a distinct artefact name manually. A
+ * processing referencing an unpublished plugin surfaces as a broken plugin
+ * in the UI.
  *
  * Concurrency: relies on the upgrade-scripts mongo lock; only one worker pod
  * runs this at a time.
@@ -250,14 +251,17 @@ function createRegistryClient (): AxiosInstance {
 
 async function publishToRegistry (ax: AxiosInstance, pluginsDir: string, dir: string, manifest: PluginManifest, debug: (msg: string) => void): Promise<void> {
   const { name, version } = manifest
+  // The artefact id is the legacy plugin directory name (the v5 id) — exactly
+  // what `processing.plugin` already references.
+  const artefactId = dir
 
-  // Probe: skip if (name, version, arch) already in registry.
-  const probe = await ax.get(`/api/v1/artefacts/${encodeURIComponent(name)}/versions/${version}`, {
-    params: { architecture: hostArch },
+  // Probe: skip if (artefactId, arch) already in registry. The registry
+  // stores per-arch tarball slots inside `tarballs` on the artefact doc.
+  const probe = await ax.get(`/api/v1/artefacts/${encodeURIComponent(artefactId)}`, {
     validateStatus: s => s === 200 || s === 404
   })
-  if (probe.status === 200) {
-    debug(`${dir}: ${name}@${version} (${hostArch}) already published, skipping`)
+  if (probe.status === 200 && probe.data?.tarballs?.[hostArch]) {
+    debug(`${dir}: ${artefactId} (${hostArch}) already published, skipping`)
     return
   }
 
@@ -283,15 +287,15 @@ async function publishToRegistry (ax: AxiosInstance, pluginsDir: string, dir: st
     form.append('category', 'processing')
     form.append('file', new Blob([await readFile(tarballPath)]), 'package.tgz')
 
-    debug(`${dir}: uploading ${name}@${version} (${hostArch}) to registry`)
-    await ax.post(`/api/v1/artefacts/${encodeURIComponent(name)}/versions`, form, {
+    debug(`${dir}: uploading ${name}@${version} as ${artefactId} (${hostArch}) to registry`)
+    await ax.post(`/api/v1/artefacts/npm/${encodeURIComponent(artefactId)}`, form, {
       validateStatus: s => s === 201
     }).catch((err) => {
       const status = err?.response?.status
       const body = err?.response?.data
       const bodyStr = typeof body === 'string' ? body : JSON.stringify(body)
       if (status === 409) {
-        throw new Error(`${dir}: artefact ${name} is mirrored or claimed by another uploader (409). Reconcile manually before re-running. Registry said: ${bodyStr}`)
+        throw new Error(`${dir}: artefact ${artefactId} is mirrored or claimed by another uploader (409). Reconcile manually before re-running. Registry said: ${bodyStr}`)
       }
       // Surface the registry's actual rejection reason — bare status codes
       // ("Request failed with status code 400") are useless for operators.
@@ -306,8 +310,8 @@ async function publishToRegistry (ax: AxiosInstance, pluginsDir: string, dir: st
   }
 }
 
-async function pushMetadataAndAccess (ax: AxiosInstance, pluginsDir: string, dir: string, manifest: PluginManifest, debug: (msg: string) => void): Promise<void> {
-  const { name } = manifest
+async function pushMetadataAndAccess (ax: AxiosInstance, pluginsDir: string, dir: string, debug: (msg: string) => void): Promise<void> {
+  const artefactId = dir
 
   let metadata: Record<string, unknown> = {}
   const metadataPath = path.join(pluginsDir, `${dir}-metadata.json`)
@@ -334,13 +338,13 @@ async function pushMetadataAndAccess (ax: AxiosInstance, pluginsDir: string, dir
 
   let updatedArtefact: { thumbnail?: unknown } | undefined
   try {
-    const patchRes = await ax.patch(`/api/v1/artefacts/${encodeURIComponent(name)}`, patch)
+    const patchRes = await ax.patch(`/api/v1/artefacts/${encodeURIComponent(artefactId)}`, patch)
     updatedArtefact = patchRes.data as { thumbnail?: unknown }
-    debug(`${dir}: PATCHed metadata into ${name}`)
+    debug(`${dir}: PATCHed metadata into ${artefactId}`)
   } catch (err: any) {
     const status = err?.response?.status
     if (status === 404) {
-      debug(`${dir}: artefact ${name} not in registry — publish must have failed, skipping metadata push`)
+      debug(`${dir}: artefact ${artefactId} not in registry — publish must have failed, skipping metadata push`)
       return
     }
     throw err
@@ -352,7 +356,7 @@ async function pushMetadataAndAccess (ax: AxiosInstance, pluginsDir: string, dir
   // are swallowed with a debug log so a single bad icon doesn't fail the run.
   if (metadata.icon !== undefined && metadata.icon !== null) {
     if (updatedArtefact?.thumbnail) {
-      debug(`${dir}: artefact ${name} already has a thumbnail, skipping`)
+      debug(`${dir}: artefact ${artefactId} already has a thumbnail, skipping`)
     } else {
       const svg = extractIconSvg(metadata.icon)
       if (!svg) {
@@ -361,7 +365,7 @@ async function pushMetadataAndAccess (ax: AxiosInstance, pluginsDir: string, dir
         try {
           const tform = new FormData()
           tform.append('file', new Blob([svg], { type: 'image/svg+xml' }), 'icon.svg')
-          await ax.post(`/api/v1/artefacts/${encodeURIComponent(name)}/thumbnail`, tform, {
+          await ax.post(`/api/v1/artefacts/${encodeURIComponent(artefactId)}/thumbnail`, tform, {
             validateStatus: s => s === 201
           })
           debug(`${dir}: uploaded thumbnail`)
@@ -407,7 +411,7 @@ export default {
         const manifest = await readPluginManifest(pluginsDir, dir, debug)
         if (!manifest) continue
         await publishToRegistry(ax, pluginsDir, dir, manifest, debug)
-        await pushMetadataAndAccess(ax, pluginsDir, dir, manifest, debug)
+        await pushMetadataAndAccess(ax, pluginsDir, dir, debug)
       } catch (err: any) {
         const msg = err?.code ? `${err.code}: ${err.message}` : (err?.message ?? String(err))
         debug(`${dir}: failed to migrate (${msg}) — leaving on volume for manual reconciliation`)

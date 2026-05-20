@@ -3,7 +3,7 @@ import { anonymousAx, apiUrl, axiosAuth, clean, waitForRunStatus } from '../../s
 import { publishFixturePlugin } from '../../support/registry.ts'
 
 // Helper: create a processing through the normal API, then flip its
-// pluginId to a value that doesn't resolve in the registry via the
+// plugin to a value that doesn't resolve in the registry via the
 // dev-only test-env raw-processing PATCH endpoint.
 const createBrokenProcessing = async (
   superadmin: Awaited<ReturnType<typeof axiosAuth>>
@@ -14,12 +14,12 @@ const createBrokenProcessing = async (
   })
   const processing = (await superadmin.post('/api/v1/processings', {
     title: 'Broken processing',
-    pluginId: fixture.pluginId,
+    plugin: fixture.pluginId,
     owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' }
   })).data
   await anonymousAx.patch(
     `${apiUrl}/api/v1/test-env/raw-processing/${processing._id}`,
-    { pluginId: '@test/never-existed@1' }
+    { plugin: '@test-never-existed-1' }
   )
   return processing._id as string
 }
@@ -35,7 +35,7 @@ test.describe('processing with unavailable plugin', () => {
     const res = await superadmin.get(`/api/v1/processings/${id}`)
     expect(res.status).toBe(200)
     expect(res.data._id).toBe(id)
-    expect(res.data.pluginId).toBe('@test/never-existed@1')
+    expect(res.data.plugin).toBe('@test-never-existed-1')
   })
 
   test('PATCH /processings/:id surfaces the registry error', async () => {
@@ -75,7 +75,7 @@ test.describe('processing with unavailable plugin', () => {
     const id = await createBrokenProcessing(superadmin)
 
     // Activate the processing via the raw test-env endpoint to bypass the
-    // registry check that would reject a normal PATCH for an unknown pluginId.
+    // registry check that would reject a normal PATCH for an unknown plugin.
     await anonymousAx.patch(
       `${apiUrl}/api/v1/test-env/raw-processing/${id}`,
       { active: true }

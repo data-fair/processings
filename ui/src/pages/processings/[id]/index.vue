@@ -12,20 +12,10 @@
     >
       {{ t('pluginUnavailableBody') }}
       <br>
-      <code>{{ processing?.pluginId }}</code>
+      <code>{{ processing?.plugin }}</code>
     </v-alert>
     <h2 class="text-headline-small">
       {{ t('processingTitle', { title: processing.title }) }}
-      <v-chip
-        v-if="plugin?.format === 'branch'"
-        size="small"
-        color="warning"
-        variant="flat"
-        class="ml-2"
-        :title="t('devBuildHint')"
-      >
-        {{ plugin.branchName ? `dev: ${plugin.branchName}` : 'dev build' }}
-      </v-chip>
     </h2>
     <v-defaults-provider
       :defaults="{
@@ -102,7 +92,6 @@ import timeZones from 'timezones.json'
 import Vjsf, { type Options as VjsfOptions } from '@koumoul/vjsf'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 import { toCRON } from '@data-fair/processings-shared/runs.ts'
-import { parsePluginId } from '@data-fair/processings-shared/plugin-id.ts'
 import NavigationRight from '@data-fair/lib-vuetify/navigation-right.vue'
 
 const { t } = useI18n()
@@ -147,18 +136,17 @@ async function fetchProcessing () {
 }
 async function fetchPlugin () {
   pluginBroken.value = false
-  if (!processing.value?.pluginId) return
-  const { name } = parsePluginId(processing.value.pluginId)
-  // Display metadata comes from registry (artefact-level, name-keyed).
+  if (!processing.value?.plugin) return
+  // Display metadata comes from registry — `processing.plugin` is the artefact id.
   // The config schema is read out of the cached package.json by the
   // processings API — registry doesn't know or care what's inside packages.
   //
   // Registry returns 404 when the plugin has been deleted, 403 when the
   // owner has lost access. We collapse both into pluginBroken=true and
   // render a banner; the config-schema fetch's 404 (no schema for this
-  // major) is a separate, narrower state that does NOT trigger the banner.
+  // plugin) is a separate, narrower state that does NOT trigger the banner.
   const artefactResult = await $fetch<RegistryArtefact>(
-    `/registry/api/v1/artefacts/${encodeURIComponent(name)}`
+    `/registry/api/v1/artefacts/${encodeURIComponent(processing.value.plugin)}`
   ).then(
     (data) => ({ ok: true as const, data }),
     (err) => {
@@ -323,7 +311,6 @@ const timezoneLabel = (timeZone: string) => {
     updateError: Error while updating the processing
     pluginUnavailableTitle: Plugin unavailable
     pluginUnavailableBody: This processing's plugin has been removed or its access revoked. You can no longer edit or run this processing, but you can still view its run history and delete it.
-    devBuildHint: This processing is pinned to a rolling dev build — the underlying tarball can change at any time.
 
   fr:
     frequency:
@@ -338,7 +325,6 @@ const timezoneLabel = (timeZone: string) => {
     updateError: Erreur lors de la mise à jour du traitement
     pluginUnavailableTitle: Plugin indisponible
     pluginUnavailableBody: Le plugin de ce traitement a été supprimé ou son accès retiré. Vous ne pouvez plus modifier ni exécuter ce traitement, mais vous pouvez consulter son historique et le supprimer.
-    devBuildHint: Ce traitement utilise une build de développement glissante — le tarball sous-jacent peut changer à tout moment.
 
 </i18n>
 

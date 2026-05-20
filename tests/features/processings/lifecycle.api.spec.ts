@@ -22,7 +22,7 @@ test.describe('processing', () => {
 
     let processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      pluginId: plugin.pluginId,
+      plugin: plugin.pluginId,
       owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' }
     })).data
     expect(processing._id).toBeTruthy()
@@ -78,7 +78,7 @@ test.describe('processing', () => {
 
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      pluginId: plugin.pluginId,
+      plugin: plugin.pluginId,
       owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' },
       active: true,
       config: {
@@ -106,7 +106,7 @@ test.describe('processing', () => {
 
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      pluginId: plugin.pluginId,
+      plugin: plugin.pluginId,
       owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' },
       active: true,
       config: {
@@ -137,7 +137,7 @@ test.describe('processing', () => {
 
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      pluginId: plugin.pluginId,
+      plugin: plugin.pluginId,
       owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' },
       active: true,
       config: {
@@ -168,7 +168,7 @@ test.describe('processing', () => {
 
     const processing = (await depAdmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      pluginId: plugin.pluginId
+      plugin: plugin.pluginId
     })).data
 
     const processings = (await depAdmin.get('/api/v1/processings')).data
@@ -199,7 +199,7 @@ test.describe('processing', () => {
 
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      pluginId: plugin.pluginId,
+      plugin: plugin.pluginId,
       owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' }
     })).data
     expect(processing._id).toBeTruthy()
@@ -244,7 +244,7 @@ test.describe('processing', () => {
 
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      pluginId: plugin.pluginId,
+      plugin: plugin.pluginId,
       owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' },
       active: true,
       config: {

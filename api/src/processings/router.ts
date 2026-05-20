@@ -12,10 +12,9 @@ import { nanoid } from 'nanoid'
 
 import eventsQueue from '@data-fair/lib-node/events-queue.js'
 import { reqOrigin, session } from '@data-fair/lib-express/index.js'
-import { ensureArtefact, ensureBranchArtefact } from '@data-fair/lib-node-registry'
+import { ensureArtefact } from '@data-fair/lib-node-registry'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import { createNext } from '@data-fair/processings-shared/runs.ts'
-import { parsePluginId } from '@data-fair/processings-shared/plugin-id.ts'
 import { importPluginModule } from '@data-fair/processings-shared/plugin-load.ts'
 import { applyProcessing, deleteProcessing } from '../runs/service.ts'
 import { cipher, decipher } from '@data-fair/processings-shared/cipher.ts'
@@ -42,32 +41,23 @@ const ajv = ajvFormats(new Ajv({ strict: false }))
  * `processing-config-schema.json` shipped alongside the plugin (same convention
  * as v5). Returns `undefined` when the plugin doesn't ship one.
  */
-async function ensurePluginAndReadSchema (processing: Pick<Processing, 'pluginId' | 'owner'>) {
-  const { name, major } = parsePluginId(processing.pluginId)
+async function ensurePluginAndReadSchema (processing: Pick<Processing, 'plugin' | 'owner'>) {
   const account = {
     type: processing.owner.type,
     id: processing.owner.id,
     ...(processing.owner.department ? { department: processing.owner.department } : {})
   }
-  // Branch-format artefacts have no major; we resolve them via the rolling
-  // tarball endpoint instead. Cache lives under the same registryCacheDir.
-  const ensured = major
-    ? await ensureArtefact({
-      registryUrl: config.privateRegistryUrl,
-      secretKey: config.secretKeys.registry,
-      artefactId: name,
-      version: major,
-      cacheDir: registryCacheDir,
-      architecture: process.arch,
-      account
-    })
-    : await ensureBranchArtefact({
-      registryUrl: config.privateRegistryUrl,
-      secretKey: config.secretKeys.registry,
-      artefactId: name,
-      cacheDir: registryCacheDir,
-      account
-    })
+  // `processing.plugin` is the registry artefact id, passed through as-is.
+  // lib-node downloads + extracts the tarball into registryCacheDir on cache
+  // miss; the cache is invalidated when the artefact's dataUpdatedAt bumps.
+  const ensured = await ensureArtefact({
+    registryUrl: config.privateRegistryUrl,
+    secretKey: config.secretKeys.registry,
+    artefactId: processing.plugin,
+    cacheDir: registryCacheDir,
+    architecture: process.arch,
+    account
+  })
   const schemaPath = path.join(ensured.path, 'processing-config-schema.json')
   let processingConfigSchema: Record<string, unknown> | undefined
   if (await fs.pathExists(schemaPath)) {
@@ -194,10 +184,10 @@ router.get('', async (req, res) => {
       ].filter(Boolean)
     })
   }
-  // Filter by plugins (matches the denormalized pluginId, e.g. `@scope/foo@1`)
+  // Filter by plugins (matches the registry artefact id stored on `plugin`)
   const plugins = params.plugins ? params.plugins.split(',') : []
   if (plugins.length > 0) {
-    queryWithFilters.pluginId = { $in: plugins }
+    queryWithFilters.plugin = { $in: plugins }
   }
 
   // Get the processings
@@ -237,7 +227,7 @@ router.get('', async (req, res) => {
         plugins: [
           {
             $group: {
-              _id: '$pluginId',
+              _id: '$plugin',
               count: { $sum: 1 }
             }
           }

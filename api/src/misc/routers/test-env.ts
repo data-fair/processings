@@ -53,7 +53,7 @@ router.get('/raw-processing/:id', async (req, res, next) => {
 
 // Patch a processing document without validation (used by tests to put a
 // processing into states that the normal API guards prevent, e.g. setting
-// pluginId to a value that doesn't resolve in the registry).
+// plugin to a value that doesn't resolve in the registry).
 router.patch('/raw-processing/:id', async (req, res, next) => {
   try {
     const result = await mongo.processings.updateOne(

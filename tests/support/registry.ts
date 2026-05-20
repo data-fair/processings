@@ -29,7 +29,7 @@ export const axiosRegistryInternal = axiosBuilder({
 })
 
 export interface PublishedFixture {
-  /** Registry artefact id (`{name}@{major}`) — same value stored on `processing.pluginId`. */
+  /** Registry artefact id — the value stored on `processing.plugin`. */
   pluginId: string
 }
 
@@ -73,7 +73,7 @@ const DEFAULT_TARBALL = path.resolve(import.meta.dirname, '../fixtures/processin
 /**
  * Publish a fixture plugin to registry as the internal service. Patches the
  * artefact metadata so it is visible to the test owner, and returns the
- * pluginId string that `processing.pluginId` now expects.
+ * artefact id string that `processing.plugin` expects.
  *
  * NOTE: the bundled `processing-hello-world.tgz` fixture is the plain
  * `npm pack` output and does NOT include `node_modules`. That is fine for
@@ -83,12 +83,10 @@ const DEFAULT_TARBALL = path.resolve(import.meta.dirname, '../fixtures/processin
  * non-execution behaviour.
  */
 export interface PublishBranchOptions {
-  /** Registry artefact id (the branch artefact's `_id`, e.g. `@data-fair/processing-hello-world-main`). */
+  /** Registry artefact id (the v5 id form, e.g. `@data-fair-processing-hello-world-main`). */
   artefactId: string
   /** Local path to the .tgz to upload. */
   tarballPath?: string
-  /** Optional source-branch metadata. */
-  branchName?: string
   /** Optional architecture tag. */
   architecture?: string
   /** Set the artefact public (default true). */
@@ -100,11 +98,10 @@ export interface PublishBranchOptions {
 }
 
 /**
- * Publish a fixture plugin as a branch artefact. Branch artefacts don't carry
- * a version — the tarball at the given `artefactId` is mutable and replaced on
- * each upload. The returned `pluginId` is just the artefact id with no
- * `@major` suffix, which is the shape `processing.pluginId` takes for
- * branch-backed processings.
+ * Publish a fixture plugin as a branch ref — an artefact whose id carries a
+ * non-numeric (branch-name) suffix instead of a major (e.g.
+ * `@data-fair-processing-hello-world-main`); its tarball slots are replaced on
+ * each upload. The returned `pluginId` is the artefact id verbatim.
  */
 export const publishFixtureBranchPlugin = async (opts: PublishBranchOptions): Promise<PublishedFixture> => {
   const tarballPath = opts.tarballPath ?? DEFAULT_TARBALL
@@ -112,10 +109,9 @@ export const publishFixtureBranchPlugin = async (opts: PublishBranchOptions): Pr
 
   const form = new FormData()
   form.append('file', tgz, { filename: 'package.tgz', contentType: 'application/gzip' })
-  if (opts.branchName) form.append('branchName', opts.branchName)
   if (opts.architecture) form.append('architecture', opts.architecture)
   await axiosRegistryInternal.post(
-    `/api/v1/artefacts/branch/${encodeURIComponent(opts.artefactId)}`,
+    `/api/v1/artefacts/npm/${encodeURIComponent(opts.artefactId)}`,
     form,
     { headers: form.getHeaders() }
   )
@@ -146,21 +142,21 @@ export const publishFixturePlugin = async (opts: PublishOptions): Promise<Publis
   const tgz = await fs.promises.readFile(tarballPath)
   const arch = opts.architecture ?? process.arch
 
+  const major = parseInt(opts.version.split('.')[0], 10)
+  // The artefact id is the v5 id form (`{name}` with `/` flattened to `-`, plus
+  // `-{major}`) — the same value stored on `processing.plugin`.
+  const pluginId = `${opts.name.replace('/', '-')}-${major}`
+
   const form = new FormData()
   form.append('architecture', arch)
   form.append('file', tgz, { filename: 'package.tgz', contentType: 'application/gzip' })
   await axiosRegistryInternal.post(
-    `/api/v1/artefacts/${encodeURIComponent(opts.name)}/versions`,
+    `/api/v1/artefacts/npm/${encodeURIComponent(pluginId)}`,
     form,
     { headers: form.getHeaders() }
   )
 
-  const major = parseInt(opts.version.split('.')[0], 10)
-  const pluginId = `${opts.name}@${major}`
-
-  // Artefacts are keyed by package name; the major suffix only lives on
-  // the processings side as a runtime version pin.
-  await axiosRegistryInternal.patch(`/api/v1/artefacts/${encodeURIComponent(opts.name)}`, {
+  await axiosRegistryInternal.patch(`/api/v1/artefacts/${encodeURIComponent(pluginId)}`, {
     public: opts.isPublic ?? true,
     privateAccess: opts.privateAccess ?? []
   })
@@ -186,9 +182,9 @@ export const publishFixturePlugin = async (opts: PublishOptions): Promise<Publis
 
 /**
  * Drop the registry mongo db AND the API/worker tarball caches. Called from
- * `clean()` between tests so a re-published fixture (same version, possibly
+ * `clean()` between tests so a re-published fixture (same ref, possibly
  * different content) is actually re-downloaded — lib-node-registry's cache
- * key is `${version}_${arch}` only and would otherwise serve stale extracted
+ * key is `{artefactId}/{arch}` and would otherwise serve stale extracted
  * files from the previous test.
  */
 export const cleanRegistryDb = async () => {

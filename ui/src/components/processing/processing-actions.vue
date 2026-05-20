@@ -368,7 +368,7 @@ const confirmDuplicate = useAsyncAction(
 
     const newProcessing = {
       owner: processing.owner,
-      pluginId: processing.pluginId,
+      plugin: processing.plugin,
       title: duplicateTitle.value || `${processing.title} ${t('copy')}`,
       config: processing.config,
       permissions: processing.permissions,

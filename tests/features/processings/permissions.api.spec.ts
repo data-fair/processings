@@ -22,7 +22,7 @@ test.describe('processing permissions', () => {
 
     const processing = (await adminTestOrg1.post('/api/v1/processings', {
       title: 'Hello processing',
-      pluginId: plugin.pluginId
+      plugin: plugin.pluginId
     })).data
 
     await adminTestOrg1.patch(`/api/v1/processings/${processing._id}`, {
@@ -101,11 +101,11 @@ test.describe('processing permissions', () => {
 
     await adminTestOrg1.post('/api/v1/processings', {
       title: 'Hello processing 1',
-      pluginId: plugin.pluginId
+      plugin: plugin.pluginId
     })
     await partnerAdmin.post('/api/v1/processings', {
       title: 'Hello processing 2',
-      pluginId: plugin.pluginId
+      plugin: plugin.pluginId
     })
 
     expect((await adminTestOrg1.get('/api/v1/processings?owner=organization:test_org1')).data.count).toBe(1)
@@ -122,7 +122,7 @@ test.describe('processing permissions', () => {
     // create a processing in his department
     const processing = (await depAdmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      pluginId: plugin.pluginId,
+      plugin: plugin.pluginId,
       owner: {
         id: 'test_org1',
         name: 'Test Org 1',
@@ -136,7 +136,7 @@ test.describe('processing permissions', () => {
     // cannot create in another department
     await expect(depAdmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      pluginId: plugin.pluginId,
+      plugin: plugin.pluginId,
       owner: {
         id: 'test_org1',
         name: 'Test Org 1',
@@ -149,7 +149,7 @@ test.describe('processing permissions', () => {
     // cannot create in the root organization (no department)
     await expect(depAdmin.post('/api/v1/processings', {
       title: 'Hello processing',
-      pluginId: plugin.pluginId,
+      plugin: plugin.pluginId,
       owner: {
         id: 'test_org1',
         name: 'Test Org 1',

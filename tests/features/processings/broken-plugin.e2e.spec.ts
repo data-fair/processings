@@ -10,12 +10,12 @@ const setupBrokenProcessing = async () => {
   })
   const processing = (await superadmin.post('/api/v1/processings', {
     title: 'Broken e2e processing',
-    pluginId: fixture.pluginId,
+    plugin: fixture.pluginId,
     owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' }
   })).data
   await anonymousAx.patch(
     `${apiUrl}/api/v1/test-env/raw-processing/${processing._id}`,
-    { pluginId: '@test/never-existed@1' }
+    { plugin: '@test-never-existed-1' }
   )
   return processing._id as string
 }
@@ -28,7 +28,7 @@ test.describe('processing with unavailable plugin — UI', () => {
     await setupBrokenProcessing()
     await goToWithAuth('/processings/processings', 'test_superadmin')
     await expect(page.getByText('Broken e2e processing')).toBeVisible({ timeout: 10000 })
-    // The card list-item renders: t('pluginUnavailable') + ' — ' + processing.pluginId
+    // The card list-item renders: t('pluginUnavailable') + ' — ' + processing.plugin
     // FR locale is the test default.
     await expect(page.getByText(/Plugin indisponible/)).toBeVisible()
   })

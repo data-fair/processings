@@ -20,7 +20,7 @@ test.describe('UI layout', () => {
 
     await superadmin.post('/api/v1/processings', {
       title: 'My e2e processing',
-      pluginId: fixture.pluginId,
+      plugin: fixture.pluginId,
       owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' }
     })
 

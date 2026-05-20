@@ -170,7 +170,7 @@ const pluginsItems = computed(() => {
   if (!installedPlugins.value) return []
   if (!processingsProps.facets.plugins) return []
 
-  // facets.plugins keys are the denormalized pluginId — `${name}@${major}` —
+  // facets.plugins keys are the registry artefact id stored on `plugin`,
   // matching registry artefact._id directly.
   return Object.entries(processingsProps.facets.plugins)
     .map(

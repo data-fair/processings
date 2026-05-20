@@ -198,13 +198,13 @@ export default (origin: string, options?: { processing?: Processing, plugin?: Ap
             content: {
               'application/json': {
                 schema: jsonSchema(ProcessingSchema)
-                  .pickProperties(['owner', 'pluginId', 'title'])
+                  .pickProperties(['owner', 'plugin', 'title'])
                   .removeFromRequired(['scheduling', '_id'])
                   .removeId()
                   .appendTitle(' post')
                   .schema,
                 example: {
-                  pluginId: '@data-fair/processing-export-file@1',
+                  plugin: '@data-fair-processing-export-file-1',
                   owner: {
                     type: 'organization',
                     id: 'koumoul',

@@ -15,7 +15,7 @@
           :title="t('selectPluginType')"
           value="1"
           :color="step === '1' ? 'primary' : ''"
-          :complete="!!newProcessing.pluginId"
+          :complete="!!newProcessing.plugin"
           editable
         />
         <v-divider />
@@ -23,7 +23,7 @@
           :title="t('information')"
           value="2"
           :color="step === '2' ? 'primary' : ''"
-          :editable="!!newProcessing.pluginId"
+          :editable="!!newProcessing.plugin"
         />
       </v-stepper-header>
 
@@ -65,15 +65,6 @@
                       <span :class="!isPicked(artefact) ? 'text-primary' : ''">
                         {{ artefactDisplayName(artefact) }}
                       </span>
-                      <v-chip
-                        v-if="artefact.format === 'branch'"
-                        size="x-small"
-                        color="warning"
-                        class="ml-2"
-                        variant="flat"
-                      >
-                        {{ artefact.branchName ? `dev: ${artefact.branchName}` : 'dev build' }}
-                      </v-chip>
                     </template>
                     <template
                       v-if="artefact.thumbnail"
@@ -121,7 +112,7 @@
           <v-btn
             color="primary"
             variant="flat"
-            :disabled="!ownersReady || !newProcessing.title || !newProcessing.pluginId"
+            :disabled="!ownersReady || !newProcessing.title || !newProcessing.plugin"
             :loading="createProcessing.loading.value"
             @click="createProcessing.execute()"
           >
@@ -137,19 +128,13 @@
 import OwnerPick from '@data-fair/lib-vuetify/owner-pick.vue'
 
 // Subset of registry's Artefact shape that the picker actually uses. Kept
-// inline to avoid importing the registry types into processings.
-// Two flavours appear in the same picker:
-//  - `npm` artefacts have a `latestMajor`; we pin processings to that major
-//    so the registry serves the latest minor.patch at runtime.
-//  - `branch` artefacts have a single mutable tarball and no `latestMajor`;
-//    we just store the artefact id and let the registry serve the current
-//    tarball on every run.
+// inline to avoid importing the registry types into processings. The
+// artefact `_id` is the registry artefact id, stored directly as
+// `processing.plugin`.
 type RegistryArtefact = {
   _id: string
   name: string
-  format?: 'npm' | 'file' | 'branch'
-  latestMajor?: number
-  branchName?: string
+  format?: 'npm' | 'file'
   category: string
   title?: { fr?: string, en?: string }
   description?: { fr?: string, en?: string }
@@ -157,19 +142,12 @@ type RegistryArtefact = {
   thumbnail?: { id: string, width: number, height: number }
 }
 
-// Map an artefact to the pluginId we store on the processing. Returns
-// `undefined` when the artefact is unselectable (e.g. an npm artefact with
-// no versions uploaded yet).
-const pluginIdForArtefact = (a: RegistryArtefact): string | undefined => {
-  if (a.format === 'branch') return a._id
-  if (a.latestMajor === undefined) return undefined
-  return `${a._id}@${a.latestMajor}`
-}
+const pluginForArtefact = (a: RegistryArtefact): string => a._id
 
 type NewProcessing = {
   title?: string
   owner?: { type: 'user' | 'organization', id: string, department?: string }
-  pluginId?: string
+  plugin?: string
 }
 
 const { t, locale } = useI18n()
@@ -252,14 +230,12 @@ const newProcessing = ref<NewProcessing>({})
 const ownersReady = ref(false)
 
 const pickPlugin = (artefact: RegistryArtefact) => {
-  const pluginId = pluginIdForArtefact(artefact)
-  if (!pluginId) return
-  newProcessing.value.pluginId = pluginId
+  newProcessing.value.plugin = pluginForArtefact(artefact)
   step.value = '2'
 }
 const isPicked = (artefact: RegistryArtefact) =>
-  newProcessing.value.pluginId !== undefined &&
-  newProcessing.value.pluginId === pluginIdForArtefact(artefact)
+  newProcessing.value.plugin !== undefined &&
+  newProcessing.value.plugin === pluginForArtefact(artefact)
 
 const createProcessing = useAsyncAction(
   async () => {

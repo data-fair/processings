@@ -9,9 +9,8 @@ import resolvePath from 'resolve-path'
 import tmp from 'tmp-promise'
 import { DataFairWsClient } from '@data-fair/lib-node/ws-client.js'
 import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
-import { ensureArtefact, ensureBranchArtefact } from '@data-fair/lib-node-registry'
+import { ensureArtefact } from '@data-fair/lib-node-registry'
 import { decipher } from '@data-fair/processings-shared/cipher.ts'
-import { parsePluginId } from '@data-fair/processings-shared/plugin-id.ts'
 import { importPluginModule } from '@data-fair/processings-shared/plugin-load.ts'
 import { running } from '../utils/runs.ts'
 import config, { registryCacheDir } from '#config'
@@ -89,10 +88,9 @@ export const run = async (mailTransport: any) => {
   console.log('<running>')
   // Resolve plugin via registry. lib-node downloads + extracts the tarball into
   // registryCacheDir on cache miss, returns the existing path on cache hit.
-  // account is passed so registry enforces this owner's grants. Branch-format
-  // pluginIds (no @major) hit the mutable-tarball endpoint instead — cache is
-  // invalidated when the artefact's dataUpdatedAt bumps.
-  const { name: pluginName, major } = parsePluginId(processing.pluginId)
+  // account is passed so registry enforces this owner's grants. `processing.plugin`
+  // is the registry artefact id, passed through as-is; the cache is invalidated
+  // when the artefact's dataUpdatedAt bumps.
   const account = {
     type: processing.owner.type,
     id: processing.owner.id,
@@ -100,29 +98,18 @@ export const run = async (mailTransport: any) => {
   }
   let ensured
   try {
-    if (major) {
-      ensured = await ensureArtefact({
-        registryUrl: config.privateRegistryUrl,
-        secretKey: config.secretKeys.registry,
-        artefactId: pluginName,
-        version: major,
-        cacheDir: registryCacheDir,
-        architecture: process.arch,
-        account
-      })
-    } else {
-      ensured = await ensureBranchArtefact({
-        registryUrl: config.privateRegistryUrl,
-        secretKey: config.secretKeys.registry,
-        artefactId: pluginName,
-        cacheDir: registryCacheDir,
-        account
-      })
-    }
+    ensured = await ensureArtefact({
+      registryUrl: config.privateRegistryUrl,
+      secretKey: config.secretKeys.registry,
+      artefactId: processing.plugin,
+      cacheDir: registryCacheDir,
+      architecture: process.arch,
+      account
+    })
   } catch (err) {
     const status = (err as any)?.status ?? (err as any)?.statusCode
     if (status === 404 || status === 403) {
-      await log.error(`Le plugin ${processing.pluginId} n'est plus disponible (supprimé ou accès retiré).`)
+      await log.error(`Le plugin ${processing.plugin} n'est plus disponible (supprimé ou accès retiré).`)
     }
     throw err
   }
@@ -130,14 +117,13 @@ export const run = async (mailTransport: any) => {
 
   // Legacy plugin-config (deprecated, removed in v7.0): if dataDir is set the
   // legacy plugins volume is implicitly enabled — read the per-instance global
-  // config keyed by the v5 id form.
+  // config keyed by the plugin id (the legacy directory name).
   let pluginConfig: Record<string, unknown> = {}
   if (config.dataDir) {
-    const legacyId = `${pluginName.replace('/', '-')}-${major}`
-    const legacyConfigPath = path.join(config.dataDir, 'plugins', `${legacyId}-config.json`)
+    const legacyConfigPath = path.join(config.dataDir, 'plugins', `${processing.plugin}-config.json`)
     if (await fs.pathExists(legacyConfigPath)) {
       pluginConfig = await fs.readJson(legacyConfigPath)
-      await log.warning(`deprecation: plugin ${pluginName} still relies on legacy plugin-config from volume`)
+      await log.warning(`deprecation: plugin ${processing.plugin} still relies on legacy plugin-config from volume`)
     }
   }
   const dir = resolvePath(processingsDir, processing._id)
