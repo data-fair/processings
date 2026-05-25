@@ -18,7 +18,7 @@ import locks from '#locks'
 import limits from './utils/limits.ts'
 import { initMetrics } from './utils/metrics.ts'
 import { finish } from './utils/runs.ts'
-import { buildErrorMessageFromStderr } from './utils/worker-operations.ts'
+import { buildErrorMessageFromStderr, exitCodeHint } from './utils/worker-operations.ts'
 
 const debug = Debug('worker')
 const debugLoop = Debug('worker-loop')
@@ -243,7 +243,9 @@ async function iter (run: Run) {
     await finish(run)
   } catch (err: any) {
     // Build back the original error message from the stderr of the child process
-    const errorMessage = buildErrorMessageFromStderr(stderr, err.message)
+    let errorMessage = buildErrorMessageFromStderr(stderr, err.message)
+    const hint = exitCodeHint(err.code)
+    if (hint) errorMessage = `${errorMessage}\n${hint}`
 
     if (run) {
       // case of interruption by a SIGTERM

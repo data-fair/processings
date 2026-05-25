@@ -3,8 +3,13 @@ import nodemailer from 'nodemailer'
 import config from '#config'
 import mongo from '#mongo'
 import { run, stop } from './task.ts'
+import { formatMemoryUsage } from '../utils/worker-operations.ts'
 
 let exitCode = 0
+
+// Memory diagnostic: print on stderr so the parent worker captures it via
+// buildErrorMessageFromStderr when the child exits non-zero.
+console.error(`task start mem ${formatMemoryUsage()}`)
 
 process.on('SIGTERM', function onSigterm () {
   console.info('Received SIGTERM signal, shutdown gracefully...')
@@ -28,4 +33,5 @@ if (err) exitCode = 1
 await mongo.close()
 mailTransport.close()
 
+console.error(`task end mem ${formatMemoryUsage()}`)
 process.exit(exitCode)

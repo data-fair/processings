@@ -108,7 +108,10 @@ COPY package.json README.md LICENSE BUILD.json* ./
 EXPOSE 9090
 # USER node # This would be great to use, but not possible as the volumes are mounted as root
 WORKDIR /app/worker
-CMD ["node", "--disable-warning=ExperimentalWarning", "--optimize-for-size", "index.ts"]
+# Heavy per-run work happens in a child process spawned by the orchestrator (see worker/src/worker.ts).
+# The orchestrator itself only schedules; memory tuning should be done at the container level via
+# NODE_OPTIONS=--max-old-space-size=... and mem_limit, which propagate to both the orchestrator and the child.
+CMD ["node", "--disable-warning=ExperimentalWarning", "index.ts"]
 
 # =============================
 # Install production dependencies for API
