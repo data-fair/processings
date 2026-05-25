@@ -35,7 +35,7 @@ export const formatMemoryUsage = (mem: NodeJS.MemoryUsage = process.memoryUsage(
  * - 137 = SIGKILL, the signature of an OOM-kill from the host kernel / docker cgroup.
  */
 export const exitCodeHint = (code: number | null | undefined): string => {
-  if (code === 134) return 'le processus enfant a abandonné (SIGABRT, code 134) — typique d\'une allocation V8 impossible. Vérifier NODE_OPTIONS=--max-old-space-size et la limite mémoire du conteneur.'
-  if (code === 137) return 'le processus enfant a été tué (SIGKILL, code 137) — typique d\'un OOM-kill par le noyau / cgroup docker. Augmenter mem_limit du conteneur.'
+  if (code === 134) return 'le processus enfant a abandonné (SIGABRT, code 134) — typique d\'une allocation V8 impossible. Vérifier NODE_OPTIONS=--max-old-space-size et la limite mémoire du conteneur (mem_limit / resources.limits.memory).'
+  if (code === 137) return 'le processus enfant a été tué (SIGKILL, code 137) — typique d\'un OOM-kill par le noyau / cgroup. Augmenter la limite mémoire du conteneur (mem_limit / resources.limits.memory).'
   return ''
 }

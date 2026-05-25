@@ -242,10 +242,11 @@ async function iter (run: Run) {
     })
     await finish(run)
   } catch (err: any) {
-    // Build back the original error message from the stderr of the child process
-    let errorMessage = buildErrorMessageFromStderr(stderr, err.message)
+    // Build back the original error message from the stderr of the child process,
+    // appending a hint when the child exit code matches a known OOM signature.
+    const baseMessage = buildErrorMessageFromStderr(stderr, err.message)
     const hint = exitCodeHint(err.code)
-    if (hint) errorMessage = `${errorMessage}\n${hint}`
+    const errorMessage = hint ? `${baseMessage}\n${hint}` : baseMessage
 
     if (run) {
       // case of interruption by a SIGTERM
