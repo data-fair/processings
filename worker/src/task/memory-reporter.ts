@@ -1,11 +1,11 @@
 import type { Processing } from '#api/types'
-import { formatMem, type MemorySamplePhase } from '../utils/mem-sample.ts'
+import { formatMem, type MemorySample, type MemorySamplePhase } from '../utils/mem-sample.ts'
 
 type DebugLog = (msg: string, extra?: string) => Promise<void>
 
-const writeStdoutSample = (phase: MemorySamplePhase): void => {
+const buildSample = (phase: MemorySamplePhase): MemorySample => {
   const m = process.memoryUsage()
-  const payload = {
+  return {
     t: Date.now(),
     phase,
     rss: m.rss,
@@ -14,8 +14,11 @@ const writeStdoutSample = (phase: MemorySamplePhase): void => {
     external: m.external,
     arrayBuffers: m.arrayBuffers
   }
+}
+
+const writeStdoutSample = (sample: MemorySample): void => {
   // Synchronous write; survives process aborts because stdout is piped to parent.
-  process.stdout.write(`df-mem:${JSON.stringify(payload)}\n`)
+  process.stdout.write(`df-mem:${JSON.stringify(sample)}\n`)
 }
 
 export type MemoryReporterHandle = {
@@ -27,25 +30,17 @@ export const startMemoryReporter = (
   debug: DebugLog,
   intervalMs: number
 ): MemoryReporterHandle => {
-  writeStdoutSample('startup')
+  writeStdoutSample(buildSample('startup'))
 
   let timer: NodeJS.Timeout | null = null
   if (intervalMs > 0) {
     timer = setInterval(() => {
-      writeStdoutSample('running')
+      const sample = buildSample('running')
+      writeStdoutSample(sample)
       if (processing.debug) {
-        const m = process.memoryUsage()
-        const extra = formatMem({
-          t: Date.now(),
-          phase: 'running',
-          rss: m.rss,
-          heapTotal: m.heapTotal,
-          heapUsed: m.heapUsed,
-          external: m.external,
-          arrayBuffers: m.arrayBuffers
-        })
-        // Best-effort: don't await; mongo serialises per-doc writes.
-        debug('memory', extra).catch(() => { /* best-effort */ })
+        // Skip building the debug string when debug is off
+        // (log.debug also no-ops, but avoids formatMem cost).
+        debug('memory', formatMem(sample)).catch(() => { /* best-effort */ })
       }
     }, intervalMs)
     timer.unref()
@@ -53,7 +48,7 @@ export const startMemoryReporter = (
 
   const onExit = () => {
     if (timer) { clearInterval(timer); timer = null }
-    writeStdoutSample('exit')
+    writeStdoutSample(buildSample('exit'))
   }
   process.on('exit', onExit)
 
