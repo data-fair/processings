@@ -57,7 +57,7 @@ export const computeBudget = (input: MemoryBudgetInput): MemoryBudgetReport => {
     : 0
   let status: MemoryBudgetReport['status']
   if (headroomMB < 0) status = 'overbudget'
-  else if (headroomPct < (100 - input.warnThresholdPct)) status = 'tight'
+  else if (headroomPct < input.warnThresholdPct) status = 'tight'
   else status = 'ok'
   return { ...input, effectiveLimitMB, projectedTaskHeapMB, headroomMB, headroomPct, status }
 }

@@ -15,7 +15,7 @@ const baseInput: MemoryBudgetInput = {
   workerProcessRssMB: 72,
   concurrency: 4,
   taskMaxHeapMB: 768,
-  warnThresholdPct: 70
+  warnThresholdPct: 30
 }
 
 test.describe('computeBudget', () => {
@@ -35,7 +35,7 @@ test.describe('computeBudget', () => {
     // projected = 4 * 256 = 1024 ; effective = 8192
     // headroomPct = (8192 - 72 - 1024) / 8192 ≈ 86.7%
     expect(r.status).toBe('ok')
-    expect(r.headroomPct).toBeGreaterThan(70)
+    expect(r.headroomPct).toBeGreaterThan(30)
   })
 
   test('tight when headroom falls below threshold', () => {
@@ -48,6 +48,35 @@ test.describe('computeBudget', () => {
   test('uses host total when containerLimitMB is null', () => {
     const r = computeBudget({ ...baseInput, containerLimitMB: null })
     expect(r.effectiveLimitMB).toBe(baseInput.hostTotalMB)
+  })
+
+  test('boundary: headroom exactly at threshold is ok (strict less-than)', () => {
+    // Choose inputs so headroomPct == warnThresholdPct exactly.
+    // effective=1000, workerRss=0, projected=700 → headroom=300 → 30.0%
+    const r = computeBudget({
+      hostTotalMB: 1000,
+      containerLimitMB: 1000,
+      workerProcessRssMB: 0,
+      concurrency: 1,
+      taskMaxHeapMB: 700,
+      warnThresholdPct: 30
+    })
+    expect(r.headroomPct).toBe(30)
+    expect(r.status).toBe('ok')
+  })
+
+  test('headroom below threshold is tight', () => {
+    // headroom=299 → 29.9%
+    const r = computeBudget({
+      hostTotalMB: 1000,
+      containerLimitMB: 1000,
+      workerProcessRssMB: 1,
+      concurrency: 1,
+      taskMaxHeapMB: 700,
+      warnThresholdPct: 30
+    })
+    expect(r.headroomPct).toBeLessThan(30)
+    expect(r.status).toBe('tight')
   })
 })
 

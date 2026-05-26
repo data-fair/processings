@@ -63,7 +63,7 @@ worker: {
   task: {
     maxHeapMB: 768,                 // env: WORKER_TASK_MAX_HEAP_MB
     memorySampleIntervalMs: 10000,  // env: WORKER_TASK_MEMORY_SAMPLE_INTERVAL_MS
-    memoryHeadroomWarnPct: 70       // env: WORKER_TASK_MEMORY_HEADROOM_WARN_PCT
+    memoryHeadroomWarnPct: 30       // env: WORKER_TASK_MEMORY_HEADROOM_WARN_PCT
   }
 }
 ```
@@ -75,9 +75,9 @@ worker: {
 - `memorySampleIntervalMs` controls both the stdout metrics tick and the
   debug-mode run-log tick (kept synchronised so the timeline matches).
 - `memoryHeadroomWarnPct` is the headroom percentage below which startup
-  emits a warning. Default 70 = warn when projected use exceeds 30%
-  of effective memory (i.e. headroom < 70%). Independent of `task` execution
-  but lives in the same config block for proximity.
+  emits a warning. Default 30 = warn when headroom drops below 30% of
+  effective memory (i.e. projected usage > 70%). Independent of `task`
+  execution but lives in the same config block for proximity.
 
 ### `memory-budget.ts`
 

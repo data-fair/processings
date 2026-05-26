@@ -66,9 +66,9 @@ export default {
       // when processing.debug is true, a debug entry in run.log.
       // Set to 0 to disable periodic sampling (exit-time sample still emitted).
       memorySampleIntervalMs: 10000,
-      // Startup sanity check warns when projected concurrency*maxHeapMB usage
-      // leaves less than (100 - warnPct)% headroom against effective memory.
-      memoryHeadroomWarnPct: 70
+      // Startup sanity check warns when projected concurrency*maxHeapMB heap
+      // leaves less than this percent of effective memory as headroom.
+      memoryHeadroomWarnPct: 30
     }
   },
   upgradeRoot: '/app/'
