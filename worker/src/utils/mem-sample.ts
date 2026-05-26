@@ -71,7 +71,7 @@ export const splitMemSampleLines = (chunk: string, residual: string): SplitResul
   return { samples, other, residual: newResidual }
 }
 
-const toMB = (bytes: number): string => (bytes / (1024 * 1024)).toFixed(1) + 'MB'
+export const toMB = (bytes: number): string => (bytes / (1024 * 1024)).toFixed(1) + 'MB'
 
 export const formatMem = (s: MemorySample): string =>
   `rss=${toMB(s.rss)} heapTotal=${toMB(s.heapTotal)} heapUsed=${toMB(s.heapUsed)} external=${toMB(s.external)} arrayBuffers=${toMB(s.arrayBuffers)}`

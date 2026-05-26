@@ -1,5 +1,5 @@
 import { buildErrorMessageFromStderr } from './worker-operations.ts'
-import { formatMem, type MemorySample } from './mem-sample.ts'
+import { toMB, type MemorySample } from './mem-sample.ts'
 
 export type ExitCategory =
   | 'success' | 'sigterm' | 'oom-heap' | 'oom-host'
@@ -19,7 +19,6 @@ export type DiagnoseContext = {
 
 const memLine = (lastMem: MemorySample | null, maxHeapMB: number): string => {
   if (!lastMem) return 'no memory sample was reported before exit'
-  const toMB = (b: number) => (b / (1024 * 1024)).toFixed(1) + 'MB'
   return `Last memory sample — heap used: ${toMB(lastMem.heapUsed)} / ${maxHeapMB}MB; RSS: ${toMB(lastMem.rss)}.`
 }
 
@@ -78,6 +77,3 @@ export const diagnoseExit = (
     logType: 'error'
   }
 }
-
-// Re-export for callers that already imported from this module historically
-export { formatMem }
