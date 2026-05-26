@@ -12,9 +12,10 @@ const runsMetrics = new Histogram({
 })
 
 // Process-level memory gauges, named to match prom-client defaults so a
-// standard Node.js Grafana dashboard recognises them. We don't call
-// collectDefaultMetrics() because that would re-register these names
-// without our labels.
+// standard Node.js Grafana dashboard recognises them. Registered on
+// servicePromRegistry (separate from the default register where
+// @data-fair/lib-node/observer.js already installs the unlabelled
+// collectDefaultMetrics versions).
 const rssGauge = new Gauge({
   name: 'process_resident_memory_bytes',
   help: 'Resident memory size in bytes',
@@ -57,6 +58,9 @@ const exitedCounter = new Counter({
   registers: [servicePromRegistry]
 })
 
+// Slots are reused across runs; when a task finishes we deliberately leave
+// the last sample in place (spec: stale gauges acceptable, reads as
+// "slot idle, last task ended at X heap"). Pair with setSlotState(false).
 export const updateTaskMemoryGauges = (slot: number, sample: MemorySample): void => {
   const labels = { kind: 'task', slot: String(slot) }
   rssGauge.set(labels, sample.rss)
@@ -67,7 +71,7 @@ export const updateTaskMemoryGauges = (slot: number, sample: MemorySample): void
 
 export const updateWorkerMemoryGauges = (): void => {
   const m = process.memoryUsage()
-  const labels = { kind: 'worker', slot: '' }
+  const labels = { kind: 'worker' }
   rssGauge.set(labels, m.rss)
   heapTotalGauge.set(labels, m.heapTotal)
   heapUsedGauge.set(labels, m.heapUsed)
