@@ -45,7 +45,7 @@ Keep the child-process execution model. Add five focused units:
    `success | sigterm | oom-heap | oom-host | plugin-error | unknown`,
    producing an English admin-facing message.
 4. `memory-reporter.ts` (runs inside the child) — emits
-   `process.memoryUsage()` snapshots to stdout, and (when
+   `process.memoryUsage()` samples to stdout, and (when
    `processing.debug`) directly writes mongo run-log entries.
 5. Worker stdout demux + Prometheus gauges keyed by task slot.
 
@@ -61,9 +61,9 @@ New block in `worker/config/default.mjs`, schema in
 worker: {
   // ...existing keys (concurrency, interval, killInterval, gracePeriod, etc.)
   task: {
-    maxHeapMB: 768,                   // env: WORKER_TASK_MAX_HEAP_MB
-    memorySnapshotIntervalMs: 10000,  // env: WORKER_TASK_MEMORY_SNAPSHOT_INTERVAL_MS
-    memoryHeadroomWarnPct: 70         // env: WORKER_TASK_MEMORY_HEADROOM_WARN_PCT
+    maxHeapMB: 768,                 // env: WORKER_TASK_MAX_HEAP_MB
+    memorySampleIntervalMs: 10000,  // env: WORKER_TASK_MEMORY_SAMPLE_INTERVAL_MS
+    memoryHeadroomWarnPct: 70       // env: WORKER_TASK_MEMORY_HEADROOM_WARN_PCT
   }
 }
 ```
@@ -72,7 +72,7 @@ worker: {
   argv (not `NODE_OPTIONS`) so it's visible in process listings.
 - 768 MB default leaves a 4 GB container comfortably fitting
   `concurrency=4 × 768 MB = 3 GB` of task heap plus worker baseline.
-- `memorySnapshotIntervalMs` controls both the stdout metrics tick and the
+- `memorySampleIntervalMs` controls both the stdout metrics tick and the
   debug-mode run-log tick (kept synchronised so the timeline matches).
 - `memoryHeadroomWarnPct` is the headroom percentage below which startup
   emits a warning. Default 70 = warn when projected use exceeds 30%
@@ -144,7 +144,7 @@ export const diagnoseExit = (
   code: number | null,
   signal: NodeJS.Signals | null,
   stderr: string,
-  lastMem: MemorySnapshot | null,
+  lastMem: MemorySample | null,
   context: {
     maxHeapMB: number
     concurrency: number
@@ -173,7 +173,7 @@ Admin messages (English):
 - `oom-heap`:
   ```
   Task exceeded the JavaScript heap limit (heap OOM, exit code 134).
-  Last memory snapshot — heap used: <X> MB / <maxHeapMB> MB; RSS: <Y> MB.
+  Last memory sample — heap used: <X> MB / <maxHeapMB> MB; RSS: <Y> MB.
   Concurrent tasks at exit: <n> / concurrency <c>.
   Configuration: WORKER_TASK_MAX_HEAP_MB=<maxHeapMB>.
   Mitigation: raise WORKER_TASK_MAX_HEAP_MB, lower WORKER_CONCURRENCY,
@@ -183,7 +183,7 @@ Admin messages (English):
 - `oom-host`:
   ```
   Task killed by the OS (SIGKILL, likely container OOM-killer).
-  Last memory snapshot — heap used: <X> MB / <maxHeapMB> MB; RSS: <Y> MB.
+  Last memory sample — heap used: <X> MB / <maxHeapMB> MB; RSS: <Y> MB.
   The container memory limit was probably exceeded.
   Mitigation: raise the container memory limit, or lower WORKER_CONCURRENCY.
   ```
@@ -195,7 +195,7 @@ Admin messages (English):
 - `unknown`: `Task ended unexpectedly (code=X, signal=Y).` plus any stderr.
 
 If `lastMem` is null: substitute
-`no memory snapshot was reported before exit` for the memory line.
+`no memory sample was reported before exit` for the memory line.
 
 Project convention is French for end-user-facing run log messages
 (`task.ts:85,112`). These admin diagnostics are explicitly English because
@@ -246,18 +246,18 @@ Wire format on stdout, line-delimited JSON with a `df-mem:` prefix:
 df-mem:{"t":1748256123456,"phase":"running","rss":124583936,"heapTotal":67108864,"heapUsed":48235104,"external":2103312,"arrayBuffers":1048576}
 ```
 
-- Periodic stdout snapshots: **always on**, drive parent-side Prometheus
+- Periodic stdout samples: **always on**, drive parent-side Prometheus
   gauges. Cost is ~120 B / interval / running task.
 - Periodic mongo run-log entries: **only when `processing.debug`**.
-  Independent of stdout snapshots, uses the existing `pushLog` path
+  Independent of stdout samples, uses the existing `pushLog` path
   (same as `log.debug`).
-- Exit snapshot: **always emitted synchronously**. The mongo write path
+- Exit sample: **always emitted synchronously**. The mongo write path
   cannot complete during `'exit'` (no event loop), but the synchronous
   `process.stdout.write` to an already-piped fd does land in the parent's
   buffer.
 
 Periodic mongo writes are async-but-not-awaited from the timer (`void
-emitToRunLog()`) so a slow mongo write doesn't drift the snapshot cadence;
+emitToRunLog()`) so a slow mongo write doesn't drift the sample cadence;
 order is preserved by mongo's per-document update serialisation.
 
 ### Worker stdout demux and Prometheus
@@ -294,7 +294,7 @@ on `close`.
 
 ```ts
 let stdoutResidual = ''
-let lastMem: MemorySnapshot | null = null
+let lastMem: MemorySample | null = null
 
 child.stdout.on('data', chunk => {
   const text = stdoutResidual + chunk.toString('utf8')
@@ -302,7 +302,7 @@ child.stdout.on('data', chunk => {
   stdoutResidual = lines.pop() ?? ''
   for (const line of lines) {
     if (line.startsWith('df-mem:')) {
-      const snap = parseMemSnapshot(line)
+      const snap = parseMemSample(line)
       if (snap) {
         lastMem = snap
         updateMemoryGauges(snap, { kind: 'task', slot: String(slotIndex) })
@@ -314,7 +314,7 @@ child.stdout.on('data', chunk => {
 })
 ```
 
-`parseMemSnapshot` returns `null` on malformed JSON; bad data is dropped
+`parseMemSample` returns `null` on malformed JSON; bad data is dropped
 silently (a plugin printing `df-mem:` text won't crash anything).
 
 #### Prometheus metrics
@@ -347,10 +347,10 @@ const exitedCounter = new Counter({
 Label conventions:
 
 - Worker parent: `kind="worker"`, no `slot` label. Updated on the same
-  `memorySnapshotIntervalMs` cadence from the worker's own
+  `memorySampleIntervalMs` cadence from the worker's own
   `process.memoryUsage()`.
 - Task children: `kind="task"`, `slot="<0..concurrency-1>"`. Updated from
-  parsed stdout snapshots.
+  parsed stdout samples.
 
 Cardinality is bounded: `concurrency + 1` time series per gauge. Slots are
 reused (no `.remove()` needed); stale gauge values between tasks reflect
@@ -400,7 +400,7 @@ spawn (argv: --max-old-space-size=N)
                                              slot allocator picks i
                                              slots[i] = { runId, child, ... }
 startMemoryReporter()
-  emit('startup') ──── df-mem:{...} ────►   parseMemSnapshot
+  emit('startup') ──── df-mem:{...} ────►   parseMemSample
                                              updateMemoryGauges(kind=task, slot=i)
 plugin runs ...
   (every Ns)
@@ -425,8 +425,8 @@ plugin throws / heap OOM / SIGKILL
 | Container OOM-killer | Signal SIGKILL → `oom-host` diagnosis |
 | Plugin throws | Existing `plugin-error` path, stderr filtered |
 | Plugin calls `process.exit(N)` with N ≠ 0 | `unknown` diagnosis with raw code |
-| Stdout snapshot has malformed JSON | Silently dropped; `lastMem` keeps prior value |
-| Child dies before emitting any snapshot | `lastMem` null; diagnostic message says "no memory snapshot was reported before exit" |
+| Stdout sample has malformed JSON | Silently dropped; `lastMem` keeps prior value |
+| Child dies before emitting any sample | `lastMem` null; diagnostic message says "no memory sample was reported before exit" |
 | Mongo write of debug log fails | `void emitToRunLog()` swallows the error; next tick retries |
 | cgroup file unreadable | `containerLimitMB = null`; startup report shows `container=unknown`, headroom calculated against host total |
 
@@ -509,6 +509,15 @@ re-evaluate the migration with evidence later.
 - Existing `worker/src/utils/metrics.ts` keeps its `df_processings_runs`
   histogram unchanged.
 - No changes to plugin API.
+- **`--optimize-for-size` policy**: the worker parent keeps the existing
+  `--optimize-for-size` flag (`Dockerfile:111`) — it's I/O-bound and
+  benefits from a smaller V8 baseline. Task child processes do **not**
+  inherit it (they're spawned with their own argv) and we deliberately
+  do not add it: plugin code is often CPU-bound (parsing, transforms),
+  and the flag slows JIT-optimised paths. Faster tasks finish slots
+  sooner, which reduces concurrent peak heap pressure — the opposite of
+  the optimisation's intent here. This is documented so the choice
+  isn't folklore.
 
 ## Open questions / follow-ups (not in this spec)
 
