@@ -3,7 +3,6 @@ import { existsSync, createReadStream, createWriteStream } from 'node:fs'
 import { readdir, readFile, stat, lstat, readlink, mkdtemp, rm } from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
-import { arch as hostArch } from 'node:process'
 import { createGzip } from 'node:zlib'
 import { pipeline } from 'node:stream/promises'
 import * as tarStream from 'tar-stream'
@@ -255,13 +254,13 @@ async function publishToRegistry (ax: AxiosInstance, pluginsDir: string, dir: st
   // what `processing.plugin` already references.
   const artefactId = dir
 
-  // Probe: skip if (artefactId, arch) already in registry. The registry
-  // stores per-arch tarball slots inside `tarballs` on the artefact doc.
+  // Probe: skip if the artefact already has a tarball uploaded. The
+  // registry uses a single flat `path` per npm artefact.
   const probe = await ax.get(`/api/v1/artefacts/${encodeURIComponent(artefactId)}`, {
     validateStatus: s => s === 200 || s === 404
   })
-  if (probe.status === 200 && probe.data?.tarballs?.[hostArch]) {
-    debug(`${dir}: ${artefactId} (${hostArch}) already published, skipping`)
+  if (probe.status === 200 && probe.data?.path) {
+    debug(`${dir}: ${artefactId} already published, skipping`)
     return
   }
 
@@ -281,13 +280,12 @@ async function publishToRegistry (ax: AxiosInstance, pluginsDir: string, dir: st
     await packLegacyPlugin(pluginDir, manifest, tarballPath)
 
     const form = new FormData()
-    form.append('architecture', hostArch)
     // Backfill the artefact category for legacy plugin tarballs whose
     // package.json predates the `registry.category` convention.
     form.append('category', 'processing')
     form.append('file', new Blob([await readFile(tarballPath)]), 'package.tgz')
 
-    debug(`${dir}: uploading ${name}@${version} as ${artefactId} (${hostArch}) to registry`)
+    debug(`${dir}: uploading ${name}@${version} as ${artefactId} to registry`)
     await ax.post(`/api/v1/artefacts/npm/${encodeURIComponent(artefactId)}`, form, {
       validateStatus: s => s === 201
     }).catch((err) => {
