@@ -16,9 +16,13 @@ import config from '#config'
 import mongo from '#mongo'
 import locks from '#locks'
 import limits from './utils/limits.ts'
-import { initMetrics } from './utils/metrics.ts'
+import { initMetrics, updateTaskMemoryGauges, updateWorkerMemoryGauges, setSlotState, recordExit } from './utils/metrics.ts'
 import { finish } from './utils/runs.ts'
 import { buildErrorMessageFromStderr } from './utils/worker-operations.ts'
+import { splitMemSampleLines, type MemorySample } from './utils/mem-sample.ts'
+import { diagnoseExit, type ExitDiagnosis } from './utils/exit-code.ts'
+import { computeBudget, detectContainerLimitMB, formatReport } from './utils/memory-budget.ts'
+import os from 'node:os'
 
 const debug = Debug('worker')
 const debugLoop = Debug('worker-loop')
@@ -51,6 +55,27 @@ export const start = async () => {
       await eventsQueue.start({ eventsUrl: config.privateEventsUrl, eventsSecret: config.secretKeys.events })
     }
   }
+
+  // Startup memory budget report
+  const containerLimitMB = detectContainerLimitMB()
+  const hostTotalMB = Math.round(os.totalmem() / (1024 * 1024))
+  const workerProcessRssMB = Math.round(process.memoryUsage().rss / (1024 * 1024))
+  const budget = computeBudget({
+    hostTotalMB,
+    containerLimitMB,
+    workerProcessRssMB,
+    concurrency: config.worker.concurrency,
+    taskMaxHeapMB: config.worker.task.maxHeapMB,
+    warnThresholdPct: config.worker.task.memoryHeadroomWarnPct
+  })
+  const report = formatReport(budget)
+  if (budget.status === 'ok') console.log(report)
+  else console.warn(report)
+
+  // Initialise the worker's own memory gauges and keep them fresh.
+  updateWorkerMemoryGauges()
+  const workerGaugeTimer = setInterval(updateWorkerMemoryGauges, config.worker.task.memorySampleIntervalMs)
+  workerGaugeTimer.unref()
 
   // initialize empty promise pool
   for (let i = 0; i < config.worker.concurrency; i++) {
@@ -113,7 +138,7 @@ async function mainLoop (lastActivity: number) {
 
       if (stopped) continue
 
-      const iterPromise = iter(run)
+      const iterPromise = iter(run, freeSlot)
       promisePool[freeSlot] = iterPromise
       // empty the slot after the promise is finished
       // do not catch failure, they should trigger a restart of the loop
@@ -184,8 +209,10 @@ async function killRun (run: Run) {
 /**
  * Manage a run
  */
-async function iter (run: Run) {
+async function iter (run: Run, freeSlot: number) {
   let stderr = ''
+  let stdoutResidual = ''
+  let lastMem: MemorySample | null = null
   const processing = await mongo.processings.findOne({ _id: run.processing._id })
 
   try {
@@ -209,14 +236,28 @@ async function iter (run: Run) {
     }
 
     // Run a task in a dedicated child process for extra resiliency to fatal memory exceptions
-    const child = spawn('node', ['--disable-warning=ExperimentalWarning', './src/task/index.ts', run._id, processing._id], {
+    const child = spawn('node', [
+      `--max-old-space-size=${config.worker.task.maxHeapMB}`,
+      '--disable-warning=ExperimentalWarning',
+      './src/task/index.ts', run._id, processing._id
+    ], {
       env: process.env,
       stdio: ['ignore', 'pipe', 'pipe']
     })
     child.stdout?.on('data', data => {
-      process.stdout.write(`[spawned task stdout] ${run.processing._id} / ${run._id}` + data)
-      if (data.includes('<running>')) {
-        // @test:spy("isRunning")
+      const text = data.toString('utf8')
+      const out = splitMemSampleLines(text, stdoutResidual)
+      stdoutResidual = out.residual
+      for (const sample of out.samples) {
+        lastMem = sample
+        updateTaskMemoryGauges(freeSlot, sample)
+      }
+      // Echo non-sample lines for ops visibility (preserving prior behaviour)
+      for (const line of out.other) {
+        process.stdout.write(`[spawned task stdout] ${run.processing._id} / ${run._id} ${line}\n`)
+        if (line.includes('<running>')) {
+          // @test:spy("isRunning")
+        }
       }
     })
     child.stderr?.on('data', data => {
@@ -229,12 +270,15 @@ async function iter (run: Run) {
       }
     })
     pids[run._id] = child.pid || -1
+    setSlotState(freeSlot, true)
     await new Promise<void>((resolve, reject) => {
-      child.on('close', (code) => {
-        if (code === 0) resolve()
+      child.on('close', (code, signal) => {
+        setSlotState(freeSlot, false)
+        if (code === 0 && signal === null) resolve()
         else {
-          const err: any = new Error(`child process exited with code ${code}`)
+          const err: any = new Error(`child process exited (code=${code}, signal=${signal ?? 'null'})`)
           err.code = code
+          err.signal = signal
           reject(err)
         }
       })
@@ -242,18 +286,27 @@ async function iter (run: Run) {
     })
     await finish(run)
   } catch (err: any) {
-    // Build back the original error message from the stderr of the child process
-    const errorMessage = buildErrorMessageFromStderr(stderr, err.message)
-
     if (run) {
-      // case of interruption by a SIGTERM
-      if (err.code === 143) {
+      const runningTasks = promisePool.filter(p => p !== null).length
+      const diag: ExitDiagnosis = diagnoseExit(
+        err.code ?? null,
+        (err.signal ?? null) as NodeJS.Signals | null,
+        stderr,
+        lastMem,
+        {
+          maxHeapMB: config.worker.task.maxHeapMB,
+          concurrency: config.worker.concurrency,
+          runningTasks
+        }
+      )
+      recordExit(diag.category)
+      if (diag.category === 'sigterm') {
         run.status = 'killed'
         await finish(run)
         // @test:spy("isKilled")
       } else {
-        console.warn(`failure ${processing?.title ?? run.processing.title} > ${run._id}`, errorMessage)
-        await finish(run, errorMessage)
+        console.warn(`failure ${processing?.title ?? run.processing.title} > ${run._id} [${diag.category}]`, diag.adminMessage || err.message)
+        await finish(run, diag.adminMessage || buildErrorMessageFromStderr(stderr, err.message), diag.logType)
         // @test:spy("isFailure")
       }
     } else {
