@@ -1,7 +1,7 @@
 import type { Processing } from '#api/types'
 import { formatMem, type MemorySamplePhase } from '../utils/mem-sample.ts'
 
-type DebugLog = (entry: { type: 'debug', msg: string, extra?: string }) => Promise<void>
+type DebugLog = (msg: string, extra?: string) => Promise<void>
 
 const writeStdoutSample = (phase: MemorySamplePhase): void => {
   const m = process.memoryUsage()
@@ -35,20 +35,17 @@ export const startMemoryReporter = (
       writeStdoutSample('running')
       if (processing.debug) {
         const m = process.memoryUsage()
+        const extra = formatMem({
+          t: Date.now(),
+          phase: 'running',
+          rss: m.rss,
+          heapTotal: m.heapTotal,
+          heapUsed: m.heapUsed,
+          external: m.external,
+          arrayBuffers: m.arrayBuffers
+        })
         // Best-effort: don't await; mongo serialises per-doc writes.
-        debug({
-          type: 'debug',
-          msg: 'memory',
-          extra: formatMem({
-            t: Date.now(),
-            phase: 'running',
-            rss: m.rss,
-            heapTotal: m.heapTotal,
-            heapUsed: m.heapUsed,
-            external: m.external,
-            arrayBuffers: m.arrayBuffers
-          })
-        }).catch(() => { /* best-effort debug log */ })
+        debug('memory', extra).catch(() => { /* best-effort */ })
       }
     }, intervalMs)
     timer.unref()

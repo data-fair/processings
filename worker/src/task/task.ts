@@ -84,7 +84,7 @@ export const run = async (mailTransport: any) => {
   // Start memory sampler: emits df-mem: lines on stdout for parent metrics,
   // and (when processing.debug) appends debug entries to run.log.
   const { startMemoryReporter } = await import('./memory-reporter.ts')
-  startMemoryReporter(processing, log.debug as unknown as Parameters<typeof startMemoryReporter>[1], config.worker.task.memorySampleIntervalMs)
+  startMemoryReporter(processing, log.debug, config.worker.task.memorySampleIntervalMs)
   if (run.status === 'running') {
     await log.step('Reprise après interruption.')
   }
