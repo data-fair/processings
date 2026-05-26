@@ -287,7 +287,11 @@ async function iter (run: Run, freeSlot: number) {
     await finish(run)
   } catch (err: any) {
     if (run) {
-      const runningTasks = promisePool.filter(p => p !== null).length
+      // Exclude this task's own slot (still in pool until iter resolves).
+      const runningTasks = promisePool.filter(p => p !== null).length - 1
+      // TODO(follow-up): SIGKILL from killRun (grace-period escalation) is currently
+      // categorised as 'oom-host'; pass a "we initiated kill" hint via pids[] so the
+      // diagnosis can differentiate it from a kernel OOM-killer SIGKILL.
       const diag: ExitDiagnosis = diagnoseExit(
         err.code ?? null,
         (err.signal ?? null) as NodeJS.Signals | null,
