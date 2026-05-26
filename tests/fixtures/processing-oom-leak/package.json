@@ -1,0 +1,8 @@
+{
+  "name": "@data-fair-tests/processing-oom-leak",
+  "version": "1.0.0",
+  "description": "Test plugin that intentionally allocates memory to trigger heap OOM.",
+  "main": "index.js",
+  "type": "module",
+  "files": ["index.js", "processing-config-schema.json"]
+}
