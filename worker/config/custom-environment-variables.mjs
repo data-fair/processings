@@ -39,6 +39,11 @@ export default {
     inactivityDelay: 'WORKER_INACTIVITY_DELAY',
     killInterval: 'WORKER_KILL_INTERVAL',
     concurrency: 'WORKER_CONCURRENCY',
-    gracePeriod: 'WORKER_GRACE_PERIOD'
+    gracePeriod: 'WORKER_GRACE_PERIOD',
+    task: {
+      maxHeapMB: 'WORKER_TASK_MAX_HEAP_MB',
+      memorySampleIntervalMs: 'WORKER_TASK_MEMORY_SAMPLE_INTERVAL_MS',
+      memoryHeadroomWarnPct: 'WORKER_TASK_MEMORY_HEADROOM_WARN_PCT'
+    }
   }
 }

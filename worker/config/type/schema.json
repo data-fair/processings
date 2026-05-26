@@ -137,26 +137,24 @@
         "inactivityDelay",
         "killInterval",
         "concurrency",
-        "gracePeriod"
+        "gracePeriod",
+        "task"
       ],
       "properties": {
-        "interval": {
-          "type": "number"
-        },
-        "inactiveInterval": {
-          "type": "number"
-        },
-        "inactivityDelay": {
-          "type": "number"
-        },
-        "killInterval": {
-          "type": "number"
-        },
-        "concurrency": {
-          "type": "number"
-        },
-        "gracePeriod": {
-          "type": "number"
+        "interval": { "type": "number" },
+        "inactiveInterval": { "type": "number" },
+        "inactivityDelay": { "type": "number" },
+        "killInterval": { "type": "number" },
+        "concurrency": { "type": "number" },
+        "gracePeriod": { "type": "number" },
+        "task": {
+          "type": "object",
+          "required": ["maxHeapMB", "memorySampleIntervalMs", "memoryHeadroomWarnPct"],
+          "properties": {
+            "maxHeapMB": { "type": "number", "minimum": 64 },
+            "memorySampleIntervalMs": { "type": "number", "minimum": 0 },
+            "memoryHeadroomWarnPct": { "type": "number", "minimum": 0, "maximum": 100 }
+          }
         }
       }
     },

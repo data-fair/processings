@@ -56,7 +56,20 @@ export default {
     // interval of the secondary loop that manages killing tasks
     killInterval: 20000,
     concurrency: 4,
-    gracePeriod: 20000
+    gracePeriod: 20000,
+    task: {
+      // max V8 old-generation heap for each task child process, in MB.
+      // Passed as --max-old-space-size to the spawned child.
+      maxHeapMB: 768,
+      // interval at which the child task samples process.memoryUsage()
+      // and writes both a df-mem: stdout line (parent updates gauges) and,
+      // when processing.debug is true, a debug entry in run.log.
+      // Set to 0 to disable periodic sampling (exit-time sample still emitted).
+      memorySampleIntervalMs: 10000,
+      // Startup sanity check warns when projected concurrency*maxHeapMB usage
+      // leaves less than (100 - warnPct)% headroom against effective memory.
+      memoryHeadroomWarnPct: 70
+    }
   },
   upgradeRoot: '/app/'
 }
