@@ -1,0 +1,7 @@
+{
+  "ignoreRoot": [],
+  "ignore": ["node_modules/", "../dev/", "../data/"],
+  "execMap": {
+    "ts": "node --env-file-if-exists=../.env"
+  }
+}

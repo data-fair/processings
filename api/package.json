@@ -3,7 +3,7 @@
   "main": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "NODE_ENV=development DEBUG=upgrade node --env-file-if-exists=../.env --watch index.ts"
+    "dev": "NODE_ENV=development DEBUG=upgrade nodemon -e js,ts,json index.ts"
   },
   "imports": {
     "#config": "./src/config.ts",
