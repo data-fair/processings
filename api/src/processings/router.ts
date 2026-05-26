@@ -55,7 +55,6 @@ async function ensurePluginAndReadSchema (processing: Pick<Processing, 'plugin' 
     secretKey: config.secretKeys.registry,
     artefactId: processing.plugin,
     cacheDir: registryCacheDir,
-    architecture: process.arch,
     account
   })
   const schemaPath = path.join(ensured.path, 'processing-config-schema.json')

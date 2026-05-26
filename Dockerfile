@@ -88,6 +88,8 @@ RUN mkdir -p /app/shared/node_modules
 # =============================
 FROM base AS worker
 
+RUN apk add --no-cache python3 make g++
+
 # install gdal for ogr2ogr
 RUN apk add --no-cache gmp gdal-tools
 RUN test -f /usr/bin/ogr2ogr
@@ -126,7 +128,6 @@ RUN mkdir -p /app/shared/node_modules
 # =============================
 FROM base AS main
 
-RUN apk add --no-cache python3 make g++
 COPY --from=api-installer /app/node_modules node_modules
 COPY api api
 COPY shared shared

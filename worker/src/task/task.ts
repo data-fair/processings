@@ -103,8 +103,8 @@ export const run = async (mailTransport: any) => {
       secretKey: config.secretKeys.registry,
       artefactId: processing.plugin,
       cacheDir: registryCacheDir,
-      architecture: process.arch,
-      account
+      account,
+      build: true
     })
   } catch (err) {
     const status = (err as any)?.status ?? (err as any)?.statusCode
