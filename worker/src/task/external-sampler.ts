@@ -16,22 +16,12 @@ type FactoryDeps = {
   logWarn?: (msg: string, err: unknown) => void
 }
 
-// Lazy default gauge updater — the import of metrics.ts is deferred to first
-// call so that unit tests (which inject updateGauge) never trigger the
-// config/mongo side-effects in metrics.ts.
-let _defaultUpdateGauge: ((slot: number, sample: ExternalSample) => void) | undefined
-const defaultUpdateGauge = async (slot: number, sample: ExternalSample): Promise<void> => {
-  if (!_defaultUpdateGauge) {
-    const { updateTaskExternalGauges } = await import('../utils/metrics.ts')
-    _defaultUpdateGauge = updateTaskExternalGauges
-  }
-  _defaultUpdateGauge(slot, sample)
-}
+const noopUpdateGauge = (_slot: number, _sample: ExternalSample): void => {}
 
 export const createExternalSamplerFactory = (deps: FactoryDeps = {}) => {
   const reader = deps.readProcStat ?? defaultReadProcStat
   const clockTicksPerSec = deps.clockTicksPerSec ?? CLOCK_TICKS_PER_SEC
-  const updateGauge = deps.updateGauge ?? ((slot, sample) => { defaultUpdateGauge(slot, sample).catch(() => {}) })
+  const updateGauge = deps.updateGauge ?? noopUpdateGauge
   const logWarn = deps.logWarn ?? ((msg, err) => console.warn(msg, err))
 
   return {
@@ -94,7 +84,3 @@ export const createExternalSamplerFactory = (deps: FactoryDeps = {}) => {
     }
   }
 }
-
-// Default singleton wired to the real proc-stat reader and gauges.
-const defaultFactory = createExternalSamplerFactory()
-export const startExternalSampler = defaultFactory.start
