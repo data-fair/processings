@@ -53,6 +53,12 @@ test('code 134 -> oom-heap with mention of max heap config', () => {
   expect(d.adminMessage).toContain('Concurrent tasks at exit: 3 / concurrency 4')
 })
 
+test('oom-heap reports lone-task case as 1 / concurrency N (inclusive count)', () => {
+  const lone = { maxHeapMB: 768, concurrency: 4, runningTasks: 1 }
+  const d = diagnoseExit(134, null, '', sample, lone)
+  expect(d.adminMessage).toContain('Concurrent tasks at exit: 1 / concurrency 4')
+})
+
 test('code 134 with empty stderr still oom-heap', () => {
   const d = diagnoseExit(134, null, '', sample, ctx)
   expect(d.category).toBe('oom-heap')

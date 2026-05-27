@@ -287,8 +287,10 @@ async function iter (run: Run, freeSlot: number) {
     await finish(run)
   } catch (err: any) {
     if (run) {
-      // Exclude this task's own slot (still in pool until iter resolves).
-      const runningTasks = promisePool.filter(p => p !== null).length - 1
+      // Includes this task's own slot (still in pool until iter resolves) —
+      // the count reflects concurrency right before exit, which is what an
+      // operator cares about for saturation diagnosis.
+      const runningTasks = promisePool.filter(p => p !== null).length
       // TODO(follow-up): SIGKILL from killRun (grace-period escalation) is currently
       // categorised as 'oom-host'; pass a "we initiated kill" hint via pids[] so the
       // diagnosis can differentiate it from a kernel OOM-killer SIGKILL.

@@ -89,8 +89,8 @@ The diagnostic message includes:
 
 - The last memory sample reported by the child via the `df-mem:` stdout
   protocol (heap used vs limit, RSS).
-- The number of OTHER concurrent tasks at the moment of failure
-  (excludes the task's own slot).
+- The number of tasks running at the moment of failure
+  (includes the failing task itself, so a lone-task OOM shows `1 / concurrency N`).
 - The configured `WORKER_TASK_MAX_HEAP_MB`.
 - A short mitigation hint.
 
@@ -99,7 +99,7 @@ Example `oom-heap` message:
 ```
 Task exceeded the JavaScript heap limit (heap OOM, exit code 134).
 Last memory sample — heap used: 24.3MB / 768MB; RSS: 115.0MB.
-Concurrent tasks at exit: 0 / concurrency 4.
+Concurrent tasks at exit: 1 / concurrency 4.
 Configuration: WORKER_TASK_MAX_HEAP_MB=768.
 Mitigation: raise WORKER_TASK_MAX_HEAP_MB, lower WORKER_CONCURRENCY,
 or inspect the plugin for a memory leak.
