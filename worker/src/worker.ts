@@ -321,9 +321,10 @@ async function iter (run: Run, freeSlot: number) {
         await finish(run)
         // @test:spy("isKilled")
       } else {
-        // Admin (English) → ops console; user (French) → run.log.
+        // Admin (English) → ops console; user (French) → run.log (debug level,
+        // matching the pre-existing convention for technical failure messages).
         console.warn(`failure ${processing?.title ?? run.processing.title} > ${run._id} [${diag.category}]`, diag.adminMessage || err.message)
-        await finish(run, diag.userMessage || buildErrorMessageFromStderr(stderr, err.message), diag.logType)
+        await finish(run, diag.userMessage || buildErrorMessageFromStderr(stderr, err.message))
         // @test:spy("isFailure")
       }
     } else {

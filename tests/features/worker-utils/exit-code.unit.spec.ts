@@ -35,7 +35,6 @@ test('code 143 alone is sigterm', () => {
 test('SIGKILL -> oom-host with English adminMessage and French userMessage', () => {
   const d = diagnoseExit(null, 'SIGKILL', '', sample, ctx)
   expect(d.category).toBe('oom-host')
-  expect(d.logType).toBe('error')
   // English ops message
   expect(d.adminMessage).toContain('Task killed by the OS')
   expect(d.adminMessage).toContain('SIGKILL')
@@ -67,7 +66,6 @@ test('code 137 with selfKilled=true -> sigterm category', () => {
 test('code 134 -> oom-heap with mention of max heap config (English admin + French user)', () => {
   const d = diagnoseExit(134, null, 'FATAL ERROR: JavaScript heap out of memory', sample, ctx)
   expect(d.category).toBe('oom-heap')
-  expect(d.logType).toBe('error')
   // English admin message
   expect(d.adminMessage).toContain('exit code 134')
   expect(d.adminMessage).toContain('WORKER_TASK_MAX_HEAP_MB=768')
@@ -101,7 +99,6 @@ test('null lastMem produces "no memory sample was reported before exit"', () => 
 test('code 1 -> plugin-error using stderr (same message both fields, plugin owns language)', () => {
   const d = diagnoseExit(1, null, 'TypeError: foo is not a function', null, ctx)
   expect(d.category).toBe('plugin-error')
-  expect(d.logType).toBe('error')
   expect(d.adminMessage).toContain('TypeError: foo')
   expect(d.userMessage).toContain('TypeError: foo')
 })
@@ -109,7 +106,6 @@ test('code 1 -> plugin-error using stderr (same message both fields, plugin owns
 test('unknown code 99 -> unknown', () => {
   const d = diagnoseExit(99, null, 'weird', null, ctx)
   expect(d.category).toBe('unknown')
-  expect(d.logType).toBe('error')
   expect(d.adminMessage).toContain('code=99')
   // French user message for unknown
   expect(d.userMessage).toMatch(/inattendue|inattendu/i)

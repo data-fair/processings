@@ -11,7 +11,6 @@ export type ExitDiagnosis = {
   adminMessage: string
   // French text written to run.log (user-facing). Empty for silent categories.
   userMessage: string
-  logType: 'info' | 'debug' | 'error'
 }
 
 export type DiagnoseContext = {
@@ -75,31 +74,29 @@ export const diagnoseExit = (
   ctx: DiagnoseContext
 ): ExitDiagnosis => {
   if (code === 0 && signal === null) {
-    return { category: 'success', adminMessage: '', userMessage: '', logType: 'info' }
+    return { category: 'success', adminMessage: '', userMessage: '' }
   }
   if (signal === 'SIGTERM' || code === 143) {
-    return { category: 'sigterm', adminMessage: '', userMessage: '', logType: 'info' }
+    return { category: 'sigterm', adminMessage: '', userMessage: '' }
   }
   // Worker-initiated forceful kill (grace-period escalation). Surface as
   // 'sigterm' so the run lands in status='killed' and we don't blame the
   // OOM-killer. killRun already logs the escalation on the worker side.
   if (ctx.selfKilled && (signal === 'SIGKILL' || code === 137)) {
-    return { category: 'sigterm', adminMessage: '', userMessage: '', logType: 'info' }
+    return { category: 'sigterm', adminMessage: '', userMessage: '' }
   }
   if (signal === 'SIGKILL' || code === 137) {
     return {
       category: 'oom-host',
       adminMessage: oomHostAdmin(lastMem, ctx),
-      userMessage: oomHostUser(lastMem, ctx),
-      logType: 'error'
+      userMessage: oomHostUser(lastMem, ctx)
     }
   }
   if (code === 134 || signal === 'SIGABRT') {
     return {
       category: 'oom-heap',
       adminMessage: oomHeapAdmin(lastMem, ctx),
-      userMessage: oomHeapUser(lastMem, ctx),
-      logType: 'error'
+      userMessage: oomHeapUser(lastMem, ctx)
     }
   }
   if (code === 1) {
@@ -110,14 +107,12 @@ export const diagnoseExit = (
     return {
       category: 'plugin-error',
       adminMessage: msg,
-      userMessage: msg,
-      logType: 'error'
+      userMessage: msg
     }
   }
   return {
     category: 'unknown',
     adminMessage: `Task ended unexpectedly (code=${code}, signal=${signal ?? 'null'}). ${buildErrorMessageFromStderr(stderr, '')}`.trim(),
-    userMessage: unknownUser(code, signal, stderr),
-    logType: 'error'
+    userMessage: unknownUser(code, signal, stderr)
   }
 }
