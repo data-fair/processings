@@ -84,7 +84,7 @@ export const run = async (mailTransport: any) => {
   log.warn = log.warning // for compatibility with old plugins
   // Start memory sampler: emits df-mem: lines on stdout for parent metrics,
   // and (when processing.debug) appends debug entries to run.log.
-  startMemoryReporter(processing, log.debug, config.worker.task.memorySampleIntervalMs)
+  const memReporter = startMemoryReporter(processing, log.debug, config.worker.task.memorySampleIntervalMs)
   if (run.status === 'running') {
     await log.step('Reprise après interruption.')
   }
@@ -196,6 +196,7 @@ export const run = async (mailTransport: any) => {
     }
     return err
   } finally {
+    await memReporter.stop()
     try {
       await tmpDir.cleanup()
     } catch (err) {
