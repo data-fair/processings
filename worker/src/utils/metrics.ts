@@ -3,6 +3,7 @@ import { servicePromRegistry } from '@data-fair/lib-node/observer.js'
 import mongo from '#mongo'
 import type { MemorySample } from './mem-sample.ts'
 import type { ExitCategory } from './exit-code.ts'
+import type { ExternalSample } from '../task/external-sampler.ts'
 
 const runsMetrics = new Histogram({
   name: 'df_processings_runs',
@@ -46,6 +47,20 @@ const slotStateGauge = new Gauge({
   labelNames: ['slot']
 })
 
+const cpuRatioGauge = new Gauge({
+  name: 'df_processings_process_cpu_usage_ratio',
+  help: 'Per-process CPU usage as a fraction of one core over the last sample window (1.0 = one full core)',
+  labelNames: ['kind', 'slot']
+})
+
+// Flipped to true at worker boot when the external sampler is active.
+// When true, the in-process df-mem writer skips rssGauge so the
+// external sampler is the sole RSS authority for kind="task".
+let externalRssActive = false
+export const setExternalRssActive = (active: boolean): void => {
+  externalRssActive = active
+}
+
 const exitedCounter = new Counter({
   name: 'df_processings_runs_exited_total',
   help: 'Task run exits by diagnostic category',
@@ -57,7 +72,9 @@ const exitedCounter = new Counter({
 // "slot idle, last task ended at X heap"). Pair with setSlotState(false).
 export const updateTaskMemoryGauges = (slot: number, sample: MemorySample): void => {
   const labels = { kind: 'task', slot: String(slot) }
-  rssGauge.set(labels, sample.rss)
+  // External sampler is the authoritative RSS writer when active; skip
+  // RSS here to avoid two writers thrashing on the same gauge.
+  if (!externalRssActive) rssGauge.set(labels, sample.rss)
   heapTotalGauge.set(labels, sample.heapTotal)
   heapUsedGauge.set(labels, sample.heapUsed)
   externalGauge.set(labels, sample.external)
@@ -74,6 +91,14 @@ export const updateWorkerMemoryGauges = (): void => {
 
 export const setSlotState = (slot: number, running: boolean): void => {
   slotStateGauge.set({ slot: String(slot) }, running ? 1 : 0)
+}
+
+export const updateTaskExternalGauges = (slot: number, ext: ExternalSample): void => {
+  const labels = { kind: 'task', slot: String(slot) }
+  rssGauge.set(labels, ext.rssBytes)
+  if (ext.cpuRatio !== null) {
+    cpuRatioGauge.set(labels, ext.cpuRatio)
+  }
 }
 
 export const recordExit = (category: ExitCategory): void => {
@@ -93,6 +118,3 @@ const initMetrics = async (): Promise<void> => {
 }
 
 export { initMetrics, runsMetrics }
-
-// TEMPORARY stub for Task 3 — replaced with the real implementation in Task 4.
-export const updateTaskExternalGauges = (_slot: number, _sample: { rssBytes: number; cpuRatio: number | null; readAt: number }): void => {}
