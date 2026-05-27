@@ -148,16 +148,15 @@ async function readPluginManifest (pluginsDir: string, dir: string, debug: (msg:
 }
 
 // Read the published plugin's own package.json (under
-// `node_modules/<name>/package.json`) for the description/license/homepage
-// fields the v5 wrapper package.json doesn't carry. Returns {} on any failure
-// — those fields are nice-to-have, not critical for registry validation.
-async function readRealPluginPkg (pluginDir: string, name: string): Promise<{ description?: string, license?: string, homepage?: string }> {
+// `node_modules/<name>/package.json`) for the description/homepage fields the
+// v5 wrapper package.json doesn't carry. Returns {} on any failure — those
+// fields are nice-to-have, not critical for registry validation.
+async function readRealPluginPkg (pluginDir: string, name: string): Promise<{ description?: string, homepage?: string }> {
   try {
     const realPkgPath = path.join(pluginDir, 'node_modules', ...name.split('/'), 'package.json')
     const realPkg = JSON.parse(await readFile(realPkgPath, 'utf-8'))
-    const out: { description?: string, license?: string, homepage?: string } = {}
+    const out: { description?: string, homepage?: string } = {}
     if (typeof realPkg.description === 'string') out.description = realPkg.description
-    if (typeof realPkg.license === 'string') out.license = realPkg.license
     if (typeof realPkg.homepage === 'string') out.homepage = realPkg.homepage
     return out
   } catch {
@@ -169,16 +168,19 @@ async function readRealPluginPkg (pluginDir: string, name: string): Promise<{ de
 //
 // Substitutes a synthesized `package/package.json` carrying the plugin's real
 // name+version (from plugin.json) and `registry.category: "processing"` so
-// the registry's extractManifest accepts the upload. The original wrapper
-// package.json is dropped; everything else (index.js, plugin.json,
-// node_modules/...) is streamed verbatim. Symlinks are preserved as symlinks.
+// the registry's extractManifest accepts the upload. The license is forced to
+// AGPL-3.0-only — v5 wrapper package.jsons typically had no license or carried
+// MIT inherited from a generator template; AGPL-3.0 is the canonical license
+// for data-fair plugins. The original wrapper package.json is dropped;
+// everything else (index.js, plugin.json, node_modules/...) is streamed
+// verbatim. Symlinks are preserved as symlinks.
 async function packLegacyPlugin (pluginDir: string, manifest: PluginManifest, tarballPath: string): Promise<void> {
   const realPkg = await readRealPluginPkg(pluginDir, manifest.name)
   const synthesizedPkg: Record<string, unknown> = {
     name: manifest.name,
     version: manifest.version,
     ...(realPkg.description ? { description: realPkg.description } : {}),
-    ...(realPkg.license ? { license: realPkg.license } : {}),
+    license: 'AGPL-3.0-only',
     ...(realPkg.homepage ? { homepage: realPkg.homepage } : {}),
     registry: { category: 'processing' }
   }
