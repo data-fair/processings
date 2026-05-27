@@ -1,6 +1,7 @@
 <template>
   <v-list-item
     class="py-4"
+    prepend-gap="32"
     :to="link ? `/processings/${run.processing._id}/runs/${run._id}` : ''"
   >
     <template #prepend>

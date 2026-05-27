@@ -2,6 +2,7 @@
   <v-list-item
     :prepend-avatar="avatarUrl"
     :title="ownerName"
+    prepend-gap="20"
   />
   <v-list-item
     v-if="processing.updated"
