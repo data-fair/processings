@@ -2,6 +2,9 @@
 // by reading /proc/<pid>/status (VmRSS) and /proc/<pid>/stat (utime/stime).
 // Linux only — isSupported() checks /proc/self/stat at module load.
 
+import { readFileSync, existsSync } from 'node:fs'
+import { execSync } from 'node:child_process'
+
 export type ProcStatSnapshot = {
   rssBytes: number
   utimeTicks: number
@@ -37,4 +40,64 @@ export const parseStatFields = (
   const stime = Number(fields[12])
   if (!Number.isFinite(utime) || !Number.isFinite(stime)) return null
   return { utimeTicks: utime, stimeTicks: stime }
+}
+
+const detectClockTicksPerSec = (): number => {
+  try {
+    const out = execSync('getconf CLK_TCK', { stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString('utf8')
+      .trim()
+    const n = Number(out)
+    if (Number.isFinite(n) && n > 0) return n
+  } catch {
+    // fall through
+  }
+  return 100
+}
+
+export const CLOCK_TICKS_PER_SEC = detectClockTicksPerSec()
+
+const supported = (() => {
+  try {
+    return existsSync('/proc/self/stat')
+  } catch {
+    return false
+  }
+})()
+
+export const isSupported = (): boolean => supported
+
+export const readProcStat = (pid: number): ProcStatSnapshot | null => {
+  if (!supported) return null
+  let statusText: string
+  let statText: string
+  try {
+    statusText = readFileSync(`/proc/${pid}/status`, 'utf8')
+    statText = readFileSync(`/proc/${pid}/stat`, 'utf8')
+  } catch (err: any) {
+    if (err?.code === 'ENOENT') return null
+    throw err
+  }
+  const rssBytes = parseStatusVmRss(statusText)
+  const ticks = parseStatFields(statText)
+  if (rssBytes === null || ticks === null) return null
+  return {
+    rssBytes,
+    utimeTicks: ticks.utimeTicks,
+    stimeTicks: ticks.stimeTicks,
+    readAt: Date.now()
+  }
+}
+
+export const computeCpuRatio = (
+  prev: Pick<ProcStatSnapshot, 'utimeTicks' | 'stimeTicks' | 'readAt'>,
+  curr: Pick<ProcStatSnapshot, 'utimeTicks' | 'stimeTicks' | 'readAt'>,
+  clockTicksPerSec: number
+): number => {
+  const dCpuTicks = (curr.utimeTicks + curr.stimeTicks) - (prev.utimeTicks + prev.stimeTicks)
+  const dWallMs = curr.readAt - prev.readAt
+  if (dCpuTicks < 0 || dWallMs <= 0) return 0
+  const cpuSeconds = dCpuTicks / clockTicksPerSec
+  const wallSeconds = dWallMs / 1000
+  return cpuSeconds / wallSeconds
 }
