@@ -149,11 +149,12 @@
         "gracePeriod": { "type": "number" },
         "task": {
           "type": "object",
-          "required": ["maxHeapMB", "memorySampleIntervalMs", "memoryHeadroomWarnPct"],
+          "required": ["maxHeapMB", "memorySampleIntervalMs", "memoryHeadroomWarnPct", "externalSamplerEnabled"],
           "properties": {
             "maxHeapMB": { "type": "number", "minimum": 64, "description": "Per-task V8 old-space heap cap in MB, passed as --max-old-space-size to the child. Defaults to V8's own heap_size_limit for the host." },
             "memorySampleIntervalMs": { "type": "number", "minimum": 0 },
-            "memoryHeadroomWarnPct": { "type": "number", "minimum": 0, "maximum": 100 }
+            "memoryHeadroomWarnPct": { "type": "number", "minimum": 0, "maximum": 100 },
+            "externalSamplerEnabled": { "type": "boolean", "description": "Enable parent-side /proc-based RSS/CPU sampler for each task child. Auto-disabled at boot on non-Linux platforms." }
           }
         }
       }

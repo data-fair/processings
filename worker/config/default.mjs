@@ -85,7 +85,12 @@ export default {
       memorySampleIntervalMs: 10000,
       // Startup sanity check warns when projected concurrency*maxHeapMB heap
       // leaves less than this percent of effective memory as headroom.
-      memoryHeadroomWarnPct: 30
+      memoryHeadroomWarnPct: 30,
+      // Parent-side resource sampler: reads /proc/<pid> at memorySampleIntervalMs
+      // for each task child. Becomes the authoritative writer for the per-slot
+      // RSS gauge (the in-process df-mem RSS write is suppressed). Auto-disabled
+      // at boot on non-Linux platforms.
+      externalSamplerEnabled: true
     }
   },
   upgradeRoot: '/app/'
