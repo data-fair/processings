@@ -94,6 +94,11 @@ test.describe('readProcStat', () => {
     if (process.platform !== 'linux') test.skip()
     expect(readProcStat(999999999)).toBeNull()
   })
+
+  test('returns null on non-Linux (isSupported is false)', () => {
+    if (process.platform === 'linux') test.skip()
+    expect(readProcStat(process.pid)).toBeNull()
+  })
 })
 
 test.describe('computeCpuRatio', () => {
@@ -133,6 +138,12 @@ test.describe('computeCpuRatio', () => {
     const prev = { utimeTicks: 100, stimeTicks: 100, readAt: 0 }
     const curr = { utimeTicks: 50, stimeTicks: 50, readAt: 1000 }
     expect(computeCpuRatio(prev, curr, ticksPerSec)).toBe(0)
+  })
+
+  test('zero clockTicksPerSec returns 0 (no divide-by-zero)', () => {
+    const prev = { utimeTicks: 0, stimeTicks: 0, readAt: 0 }
+    const curr = { utimeTicks: 100, stimeTicks: 0, readAt: 1000 }
+    expect(computeCpuRatio(prev, curr, 0)).toBe(0)
   })
 })
 

@@ -50,7 +50,7 @@ const detectClockTicksPerSec = (): number => {
     const n = Number(out)
     if (Number.isFinite(n) && n > 0) return n
   } catch {
-    // fall through
+    console.info('[proc-stat] getconf CLK_TCK failed, falling back to 100')
   }
   return 100
 }
@@ -96,7 +96,7 @@ export const computeCpuRatio = (
 ): number => {
   const dCpuTicks = (curr.utimeTicks + curr.stimeTicks) - (prev.utimeTicks + prev.stimeTicks)
   const dWallMs = curr.readAt - prev.readAt
-  if (dCpuTicks < 0 || dWallMs <= 0) return 0
+  if (dCpuTicks < 0 || dWallMs <= 0 || clockTicksPerSec <= 0) return 0
   const cpuSeconds = dCpuTicks / clockTicksPerSec
   const wallSeconds = dWallMs / 1000
   return cpuSeconds / wallSeconds
