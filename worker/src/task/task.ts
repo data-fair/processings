@@ -16,6 +16,7 @@ import { running } from '../utils/runs.ts'
 import config, { registryCacheDir } from '#config'
 import mongo from '#mongo'
 import { getAxiosInstance, getHttpErrorMessage, prepareAxiosError } from './axios.ts'
+import { startMemoryReporter } from './memory-reporter.ts'
 
 if (config.dataDir) fs.ensureDirSync(config.dataDir)
 fs.ensureDirSync(config.tmpDir)
@@ -81,6 +82,9 @@ export const run = async (mailTransport: any) => {
   const log = prepareLog(processing, run)
   // @ts-expect-error -> warn is deprecated
   log.warn = log.warning // for compatibility with old plugins
+  // Start memory sampler: emits df-mem: lines on stdout for parent metrics,
+  // and (when processing.debug) appends debug entries to run.log.
+  startMemoryReporter(processing, log.debug, config.worker.task.memorySampleIntervalMs)
   if (run.status === 'running') {
     await log.step('Reprise après interruption.')
   }

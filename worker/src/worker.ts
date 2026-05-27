@@ -2,6 +2,7 @@
 import type { Run } from '#api/types'
 
 import { spawn } from 'node:child_process'
+import os from 'node:os'
 import Debug from 'debug'
 import { existsSync } from 'fs'
 import resolvePath from 'resolve-path'
@@ -16,9 +17,12 @@ import config from '#config'
 import mongo from '#mongo'
 import locks from '#locks'
 import limits from './utils/limits.ts'
-import { initMetrics } from './utils/metrics.ts'
+import { initMetrics, updateTaskMemoryGauges, updateWorkerMemoryGauges, setSlotState, recordExit } from './utils/metrics.ts'
 import { finish } from './utils/runs.ts'
 import { buildErrorMessageFromStderr } from './utils/worker-operations.ts'
+import { splitMemSampleLines, type MemorySample } from './utils/mem-sample.ts'
+import { diagnoseExit, type ExitDiagnosis } from './utils/exit-code.ts'
+import { computeBudget, detectContainerLimitMB, formatReport } from './utils/memory-budget.ts'
 
 const debug = Debug('worker')
 const debugLoop = Debug('worker-loop')
@@ -26,6 +30,10 @@ const debugLoop = Debug('worker-loop')
 let stopped = false
 const promisePool: [Promise<void> | null] = [null]
 const pids: Record<string, number> = {}
+// Run IDs for which the worker has escalated to SIGKILL via killRun(). Used by
+// iter() to distinguish a worker-initiated forceful kill from a kernel/cgroup
+// OOM-killer SIGKILL. Cleared in iter()'s finally.
+const selfKilled: Set<string> = new Set()
 
 // Loop promises, resolved when stopped
 let mainLoopPromise: Promise<void>
@@ -50,6 +58,31 @@ export const start = async () => {
     } else {
       await eventsQueue.start({ eventsUrl: config.privateEventsUrl, eventsSecret: config.secretKeys.events })
     }
+  }
+
+  // Startup memory budget report
+  const containerLimitMB = detectContainerLimitMB()
+  const hostTotalMB = Math.round(os.totalmem() / (1024 * 1024))
+  const workerProcessRssMB = Math.round(process.memoryUsage().rss / (1024 * 1024))
+  const budget = computeBudget({
+    hostTotalMB,
+    containerLimitMB,
+    workerProcessRssMB,
+    concurrency: config.worker.concurrency,
+    taskMaxHeapMB: config.worker.task.maxHeapMB,
+    warnThresholdPct: config.worker.task.memoryHeadroomWarnPct
+  })
+  const report = formatReport(budget)
+  if (budget.status === 'ok') console.log(report)
+  else console.warn(report)
+
+  // Initialise the worker's own memory gauges and keep them fresh. A sample
+  // interval of 0 disables periodic sampling (see default.mjs comment); the
+  // single initial sample remains.
+  updateWorkerMemoryGauges()
+  if (config.worker.task.memorySampleIntervalMs > 0) {
+    const workerGaugeTimer = setInterval(updateWorkerMemoryGauges, config.worker.task.memorySampleIntervalMs)
+    workerGaugeTimer.unref()
   }
 
   // initialize empty promise pool
@@ -113,7 +146,7 @@ async function mainLoop (lastActivity: number) {
 
       if (stopped) continue
 
-      const iterPromise = iter(run)
+      const iterPromise = iter(run, freeSlot)
       promisePool[freeSlot] = iterPromise
       // empty the slot after the promise is finished
       // do not catch failure, they should trigger a restart of the loop
@@ -177,6 +210,10 @@ async function killRun (run: Run) {
   await new Promise(resolve => setTimeout(resolve, config.worker.gracePeriod * 1.2))
   if (pids[run._id]) {
     console.warn('send SIGKILL for forceful interruption of a task that did not stop properly', run.processing._id, run._id, pids[run._id])
+    // Mark as self-kill BEFORE delivering the signal — diagnoseExit reads
+    // this set in iter()'s catch handler, which can be entered as soon as the
+    // child observes the signal.
+    selfKilled.add(run._id)
     kill(pids[run._id], 'SIGKILL')
   }
 }
@@ -184,8 +221,10 @@ async function killRun (run: Run) {
 /**
  * Manage a run
  */
-async function iter (run: Run) {
+async function iter (run: Run, freeSlot: number) {
   let stderr = ''
+  let stdoutResidual = ''
+  let lastMem: MemorySample | null = null
   const processing = await mongo.processings.findOne({ _id: run.processing._id })
 
   try {
@@ -209,14 +248,28 @@ async function iter (run: Run) {
     }
 
     // Run a task in a dedicated child process for extra resiliency to fatal memory exceptions
-    const child = spawn('node', ['--disable-warning=ExperimentalWarning', './src/task/index.ts', run._id, processing._id], {
+    const child = spawn('node', [
+      `--max-old-space-size=${config.worker.task.maxHeapMB}`,
+      '--disable-warning=ExperimentalWarning',
+      './src/task/index.ts', run._id, processing._id
+    ], {
       env: process.env,
       stdio: ['ignore', 'pipe', 'pipe']
     })
     child.stdout?.on('data', data => {
-      process.stdout.write(`[spawned task stdout] ${run.processing._id} / ${run._id}` + data)
-      if (data.includes('<running>')) {
-        // @test:spy("isRunning")
+      const text = data.toString('utf8')
+      const out = splitMemSampleLines(text, stdoutResidual)
+      stdoutResidual = out.residual
+      for (const sample of out.samples) {
+        lastMem = sample
+        updateTaskMemoryGauges(freeSlot, sample)
+      }
+      // Echo non-sample lines for ops visibility (preserving prior behaviour)
+      for (const line of out.other) {
+        process.stdout.write(`[spawned task stdout] ${run.processing._id} / ${run._id} ${line}\n`)
+        if (line.includes('<running>')) {
+          // @test:spy("isRunning")
+        }
       }
     })
     child.stderr?.on('data', data => {
@@ -229,12 +282,15 @@ async function iter (run: Run) {
       }
     })
     pids[run._id] = child.pid || -1
+    setSlotState(freeSlot, true)
     await new Promise<void>((resolve, reject) => {
-      child.on('close', (code) => {
-        if (code === 0) resolve()
+      child.on('close', (code, signal) => {
+        setSlotState(freeSlot, false)
+        if (code === 0 && signal === null) resolve()
         else {
-          const err: any = new Error(`child process exited with code ${code}`)
+          const err: any = new Error(`child process exited (code=${code}, signal=${signal ?? 'null'})`)
           err.code = code
+          err.signal = signal
           reject(err)
         }
       })
@@ -242,18 +298,33 @@ async function iter (run: Run) {
     })
     await finish(run)
   } catch (err: any) {
-    // Build back the original error message from the stderr of the child process
-    const errorMessage = buildErrorMessageFromStderr(stderr, err.message)
-
     if (run) {
-      // case of interruption by a SIGTERM
-      if (err.code === 143) {
+      // Includes this task's own slot (still in pool until iter resolves) —
+      // the count reflects concurrency right before exit, which is what an
+      // operator cares about for saturation diagnosis.
+      const runningTasks = promisePool.filter(p => p !== null).length
+      const diag: ExitDiagnosis = diagnoseExit(
+        err.code ?? null,
+        (err.signal ?? null) as NodeJS.Signals | null,
+        stderr,
+        lastMem,
+        {
+          maxHeapMB: config.worker.task.maxHeapMB,
+          concurrency: config.worker.concurrency,
+          runningTasks,
+          selfKilled: selfKilled.has(run._id)
+        }
+      )
+      recordExit(diag.category)
+      if (diag.category === 'sigterm') {
         run.status = 'killed'
         await finish(run)
         // @test:spy("isKilled")
       } else {
-        console.warn(`failure ${processing?.title ?? run.processing.title} > ${run._id}`, errorMessage)
-        await finish(run, errorMessage)
+        // Admin (English) → ops console; user (French) → run.log (debug level,
+        // matching the pre-existing convention for technical failure messages).
+        console.warn(`failure ${processing?.title ?? run.processing.title} > ${run._id} [${diag.category}]`, diag.adminMessage || err.message)
+        await finish(run, diag.userMessage || buildErrorMessageFromStderr(stderr, err.message))
         // @test:spy("isFailure")
       }
     } else {
@@ -262,6 +333,7 @@ async function iter (run: Run) {
   } finally {
     if (run) {
       delete pids[run._id]
+      selfKilled.delete(run._id)
       await locks.release(run.processing._id)
     }
     if (processing) {
