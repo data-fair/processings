@@ -110,12 +110,13 @@ Prometheus counter (see below) — useful for alerting on `oom-heap` or
 `oom-host` rates without parsing logs.
 
 **Note on `oom-host` attribution**: a SIGKILL sent by the worker itself
-(in `killRun`, after the SIGTERM grace period expires) is currently
-indistinguishable from a kernel / container OOM-killer SIGKILL and will be
-categorised as `oom-host`. This is a known limitation tracked by a TODO
-in `worker/src/worker.ts` near the `diagnoseExit` call. In practice the
-run's `killed` status is still recorded separately, so the operator can
-cross-check against pending `kill` requests.
+(in `killRun`, after the SIGTERM grace period expires) would otherwise be
+indistinguishable from a kernel / container OOM-killer SIGKILL. To avoid
+mis-attributing a self-initiated forceful kill, `killRun` records the run
+ID in a `selfKilled` set before delivering SIGKILL, and `diagnoseExit`
+reads it via `DiagnoseContext.selfKilled`: when set, SIGKILL / code 137
+is categorised as `sigterm` (silent, run marked `killed`) rather than
+`oom-host`.
 
 ## Sampling cadence
 
@@ -202,10 +203,6 @@ This is documented to avoid the policy becoming folklore.
 
 ## Forward / open items
 
-- **SIGKILL attribution.** Distinguish "we sent it" (worker's own
-  graceful-kill escalation) from "kernel / container OOM-killer sent it" —
-  see TODO in `worker/src/worker.ts` near the `diagnoseExit` call. Today
-  both cases categorise as `oom-host`.
 - **Per-task peak-heap histogram.** Currently we expose per-slot gauges
   but no aggregated peak-heap-on-completion histogram. A histogram would
   let operators size `WORKER_TASK_MAX_HEAP_MB` from real run distributions
