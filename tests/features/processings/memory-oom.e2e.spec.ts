@@ -18,12 +18,8 @@ const buildOomLeakTarball = (): string => {
 // Dev worker exposes its prom-client registry on DEV_WORKER_OBSERVER_PORT
 // (see worker/config/development.mjs). Fall back to the production default
 // 9090 just in case a non-dev environment ever runs this spec.
-//
-// The `df_processings_runs_exited_total` counter is registered on
-// `servicePromRegistry` (see worker/src/utils/metrics.ts), which the observer
-// exposes on `/service-metrics` (NOT the default `/metrics` endpoint).
 const metricsPort = process.env.DEV_WORKER_OBSERVER_PORT ?? process.env.OBSERVER_PORT ?? '9090'
-const metricsUrl = `http://localhost:${metricsPort}/service-metrics`
+const metricsUrl = `http://localhost:${metricsPort}/metrics`
 
 const extractOomHeapCount = (metrics: string): number => {
   // Match df_processings_runs_exited_total{...category="oom-heap"...} <value>

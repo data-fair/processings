@@ -11,51 +11,45 @@ const runsMetrics = new Histogram({
   labelNames: ['status', 'owner']
 })
 
-// Process-level memory gauges, named to match prom-client defaults so a
-// standard Node.js Grafana dashboard recognises them. Registered on
-// servicePromRegistry (separate from the default register where
-// @data-fair/lib-node/observer.js already installs the unlabelled
-// collectDefaultMetrics versions).
+// Per-pod memory gauges for the worker process and each task slot. Named
+// with a df_processings_ prefix to avoid colliding with the unlabelled
+// process_*/nodejs_* gauges that collectDefaultMetrics installs on the
+// default register from @data-fair/lib-node/observer.js. Default register
+// → exposed on `GET /metrics` and scraped per replica.
 const rssGauge = new Gauge({
-  name: 'process_resident_memory_bytes',
+  name: 'df_processings_process_resident_memory_bytes',
   help: 'Resident memory size in bytes',
-  labelNames: ['kind', 'slot'],
-  registers: [servicePromRegistry]
+  labelNames: ['kind', 'slot']
 })
 
 const heapTotalGauge = new Gauge({
-  name: 'nodejs_heap_size_total_bytes',
+  name: 'df_processings_process_heap_size_total_bytes',
   help: 'Process heap size from Node.js in bytes',
-  labelNames: ['kind', 'slot'],
-  registers: [servicePromRegistry]
+  labelNames: ['kind', 'slot']
 })
 
 const heapUsedGauge = new Gauge({
-  name: 'nodejs_heap_size_used_bytes',
+  name: 'df_processings_process_heap_size_used_bytes',
   help: 'Process heap size used from Node.js in bytes',
-  labelNames: ['kind', 'slot'],
-  registers: [servicePromRegistry]
+  labelNames: ['kind', 'slot']
 })
 
 const externalGauge = new Gauge({
-  name: 'nodejs_external_memory_bytes',
+  name: 'df_processings_process_external_memory_bytes',
   help: 'Node.js external memory size in bytes',
-  labelNames: ['kind', 'slot'],
-  registers: [servicePromRegistry]
+  labelNames: ['kind', 'slot']
 })
 
 const slotStateGauge = new Gauge({
   name: 'df_processings_task_slot_state',
   help: 'Task slot state: 0 idle, 1 running',
-  labelNames: ['slot'],
-  registers: [servicePromRegistry]
+  labelNames: ['slot']
 })
 
 const exitedCounter = new Counter({
   name: 'df_processings_runs_exited_total',
   help: 'Task run exits by diagnostic category',
-  labelNames: ['category'],
-  registers: [servicePromRegistry]
+  labelNames: ['category']
 })
 
 // Slots are reused across runs; when a task finishes we deliberately leave

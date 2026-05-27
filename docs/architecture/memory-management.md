@@ -145,19 +145,19 @@ enough not to spam the log when `processing.debug` is enabled.
 
 ## Metrics
 
-The worker exposes prom-client gauges named to match the Node.js standard
-prom-client defaults so off-the-shelf Grafana dashboards work without
-bespoke wiring. The labelled per-slot metrics live on the
-`servicePromRegistry` from `@data-fair/lib-node/observer.js` and are exposed
-at **`GET /service-metrics`** (alias `GET /global-metrics`) on the observer
-port (default 9090; the dev worker uses `DEV_WORKER_OBSERVER_PORT`).
+The worker exposes per-pod prom-client gauges on the default register and
+they are scraped per replica from **`GET /metrics`** on the observer port
+(default 9090; the dev worker uses `DEV_WORKER_OBSERVER_PORT`). They sit
+alongside the unlabelled `process_*` / `nodejs_*` defaults that
+`@data-fair/lib-node/observer.js` registers via `collectDefaultMetrics()`,
+hence the `df_processings_process_*` prefix to avoid name collision.
 
 | Metric | Type | Labels |
 |---|---|---|
-| `process_resident_memory_bytes` | gauge | `kind`, `slot` |
-| `nodejs_heap_size_total_bytes` | gauge | `kind`, `slot` |
-| `nodejs_heap_size_used_bytes` | gauge | `kind`, `slot` |
-| `nodejs_external_memory_bytes` | gauge | `kind`, `slot` |
+| `df_processings_process_resident_memory_bytes` | gauge | `kind`, `slot` |
+| `df_processings_process_heap_size_total_bytes` | gauge | `kind`, `slot` |
+| `df_processings_process_heap_size_used_bytes` | gauge | `kind`, `slot` |
+| `df_processings_process_external_memory_bytes` | gauge | `kind`, `slot` |
 | `df_processings_task_slot_state` | gauge | `slot` (0 idle, 1 running) |
 | `df_processings_runs_exited_total` | counter | `category` |
 
@@ -175,16 +175,19 @@ the memory gauges on its first sample.
 `collectDefaultMetrics()` is **not** invoked from `worker/src/utils/metrics.ts`.
 The base Node.js process metrics (eventloop lag, GC histograms, default
 unlabelled memory gauges, etc.) are installed by
-`@data-fair/lib-node/observer.js` on the default `register` and served at
-**`GET /metrics`** on the same observer port. The labelled per-slot memory
-metrics defined in this feature live on `servicePromRegistry` so they
-don't collide with the unlabelled defaults.
+`@data-fair/lib-node/observer.js` on the default `register`. The labelled
+per-slot gauges defined in this feature use the `df_processings_process_*`
+prefix to coexist with them on the same register.
 
 In short, on a worker observer port you have two endpoints:
 
-- `GET /metrics` — process defaults (one row per gauge, no `slot` label).
-- `GET /service-metrics` — labelled per-slot worker/task gauges plus the
-  exit counter and the `df_processings_*` totals.
+- `GET /metrics` — per-pod metrics: the unlabelled `process_*` / `nodejs_*`
+  defaults plus the `df_processings_process_*` per-slot gauges, the slot
+  state gauge, and the `df_processings_runs_exited_total` counter. Scrape
+  per replica.
+- `GET /service-metrics` — service-wide gauges that read from shared state
+  (e.g. `df_processings_processings_total`, a mongo count). Scrape from a
+  single replica.
 
 ## V8 flags policy
 
