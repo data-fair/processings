@@ -43,7 +43,11 @@ export default {
     task: {
       maxHeapMB: 'WORKER_TASK_MAX_HEAP_MB',
       memorySampleIntervalMs: 'WORKER_TASK_MEMORY_SAMPLE_INTERVAL_MS',
-      memoryHeadroomWarnPct: 'WORKER_TASK_MEMORY_HEADROOM_WARN_PCT'
+      memoryHeadroomWarnPct: 'WORKER_TASK_MEMORY_HEADROOM_WARN_PCT',
+      externalSamplerEnabled: {
+        __name: 'WORKER_TASK_EXTERNAL_SAMPLER_ENABLED',
+        __format: 'json'
+      }
     }
   }
 }

@@ -13,6 +13,7 @@ budget.
 | `WORKER_TASK_MAX_HEAP_MB` | 768 | Per-task V8 old-generation heap limit (`--max-old-space-size`) |
 | `WORKER_TASK_MEMORY_SAMPLE_INTERVAL_MS` | 10000 | Cadence at which the child task samples `process.memoryUsage()` and emits stdout / debug-log entries (0 disables periodic sampling; an exit-time sample is still emitted on graceful exits) |
 | `WORKER_TASK_MEMORY_HEADROOM_WARN_PCT` | 30 | Headroom percent below which the startup sanity report logs a warning |
+| `WORKER_TASK_EXTERNAL_SAMPLER_ENABLED` | true | Parent-side /proc-based RSS/CPU sampler. Auto-disabled at boot when /proc is unavailable. |
 
 Operators should size `WORKER_TASK_MAX_HEAP_MB` so
 `WORKER_CONCURRENCY × WORKER_TASK_MAX_HEAP_MB` plus the worker baseline
@@ -143,6 +144,79 @@ governs how stale the heap reading can be at OOM time — set the interval
 low enough that operators get a useful "last seen heap" value, but high
 enough not to spam the log when `processing.debug` is enabled.
 
+## External sampler
+
+The in-process `df-mem` reporter described in [Sampling cadence](#sampling-cadence)
+shares its event loop with the plugin. A CPU-bound plugin can starve the
+sampler entirely — gauges go stale and the `lastMem` attached to an
+`oom-host` diagnostic may be many seconds old at the moment of the kernel
+kill.
+
+To resist this, the parent worker also runs a `/proc`-based sampler per
+slot. It is the **authoritative writer** for the per-slot RSS gauge
+`df_processings_process_resident_memory_bytes{kind="task"}`, and it
+writes a new CPU-ratio gauge
+`df_processings_process_cpu_usage_ratio{kind="task"}` (1.0 = one full
+core).
+
+The in-process `df-mem` reporter keeps writing the V8-internal counters
+(`heapTotal`, `heapUsed`, `external`, `arrayBuffers`) — those are not
+visible through `/proc`. When the external sampler is **disabled**
+(non-Linux dev environment or `WORKER_TASK_EXTERNAL_SAMPLER_ENABLED=false`),
+the in-process reporter re-takes RSS authority so dev environments don't
+lose RSS visibility entirely.
+
+### Reader
+
+`worker/src/utils/proc-stat.ts` reads:
+
+- `/proc/<pid>/status` — extracts `VmRSS` (kB → bytes).
+- `/proc/<pid>/stat` — extracts `utime` (field 14) and `stime` (field 15).
+  The parser slices from the **last** `)` to handle process names that
+  contain spaces, parens, or newlines.
+
+CPU usage is computed as a delta between the previous snapshot and the
+current one:
+
+```
+cpuSeconds  = ((Δutime + Δstime) / CLOCK_TICKS_PER_SEC)
+wallSeconds = Δreadat_ms / 1000
+ratio       = cpuSeconds / wallSeconds      // 1.0 = one core
+```
+
+`CLOCK_TICKS_PER_SEC` is detected once at worker boot via
+`getconf CLK_TCK` with a fallback to `100`.
+
+### Lifecycle
+
+Per-slot `setInterval` is created in `worker/src/worker.ts::iter()`
+right after `child.spawn()` and stopped in the `close` (and `error`)
+handlers — before `setSlotState(slot, false)` so no tick fires against
+an idle slot. The first sample is the baseline (RSS only, `cpuRatio: null`);
+subsequent ticks emit a fresh CPU ratio.
+
+### Failure modes
+
+- **PID disappears between ticks** (`ENOENT` from `/proc/<pid>/…`):
+  sampler stops silently. `child.on('close')` fires shortly after.
+- **Other `/proc` read error**: warn once for that slot, stop the timer.
+  Other slots keep going.
+- **Baseline read returns `null`** (child died between spawn and the
+  first tick — extremely rare): sampler returns a no-op handle. No
+  gauges written, diagnostic falls back to in-process `lastMem`.
+
+### Out of scope
+
+- Subprocesses spawned by the plugin (e.g. a Python helper) are **not**
+  walked — only the immediate Node child is sampled. The cgroup OOM-killer
+  remains the safety net for runaway subprocesses.
+- The external sampler is **observe-only**. There is no
+  `WORKER_TASK_MAX_RSS_MB` and no new `oom-rss` exit category — the
+  kernel/cgroup OOM-killer is still the only RSS-based enforcement path.
+- macOS / Windows: no `/proc`, so the sampler logs a one-line skip notice
+  at boot and stays disabled. The in-process `df-mem` reporter still
+  drives RSS in those environments.
+
 ## Metrics
 
 The worker exposes per-pod prom-client gauges on the default register and
@@ -158,8 +232,16 @@ hence the `df_processings_process_*` prefix to avoid name collision.
 | `df_processings_process_heap_size_total_bytes` | gauge | `kind`, `slot` |
 | `df_processings_process_heap_size_used_bytes` | gauge | `kind`, `slot` |
 | `df_processings_process_external_memory_bytes` | gauge | `kind`, `slot` |
+| `df_processings_process_cpu_usage_ratio` | gauge | `kind`, `slot` |
 | `df_processings_task_slot_state` | gauge | `slot` (0 idle, 1 running) |
 | `df_processings_runs_exited_total` | counter | `category` |
+
+For `kind="task"`, `df_processings_process_resident_memory_bytes` is
+**parent-observed** (read from `/proc/<pid>` in the worker) when the
+external sampler is active. It is child-reported otherwise. The other
+three memory gauges (`heap_size_total`, `heap_size_used`,
+`external_memory`) are always child-reported via the `df-mem:` stdout
+protocol — they expose V8 internal state that is not visible from `/proc`.
 
 `kind="worker"` represents the parent worker process (no meaningful `slot`).
 `kind="task"`, `slot="0".."N-1"` represents each concurrent task slot.

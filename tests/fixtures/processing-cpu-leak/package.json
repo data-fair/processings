@@ -1,0 +1,8 @@
+{
+  "name": "@data-fair-tests/processing-cpu-leak",
+  "version": "1.0.0",
+  "description": "Test plugin that busy-loops while allocating, to validate external sampling keeps reporting.",
+  "main": "index.js",
+  "type": "module",
+  "files": ["index.js", "processing-config-schema.json"]
+}
