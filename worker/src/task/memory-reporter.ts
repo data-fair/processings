@@ -3,6 +3,8 @@ import { formatMem, type MemorySample, type MemorySamplePhase } from '../utils/m
 
 type DebugLog = (msg: string, extra?: string) => Promise<void>
 
+const MEMORY_LOG_LABEL = 'Task process memory stats'
+
 const buildSample = (phase: MemorySamplePhase): MemorySample => {
   const m = process.memoryUsage()
   return {
@@ -22,7 +24,7 @@ const writeStdoutSample = (sample: MemorySample): void => {
 }
 
 export type MemoryReporterHandle = {
-  stop: () => void
+  stop: () => Promise<void>
 }
 
 export const startMemoryReporter = (
@@ -30,7 +32,11 @@ export const startMemoryReporter = (
   debug: DebugLog,
   intervalMs: number
 ): MemoryReporterHandle => {
-  writeStdoutSample(buildSample('startup'))
+  const startupSample = buildSample('startup')
+  writeStdoutSample(startupSample)
+  if (processing.debug) {
+    debug(`${MEMORY_LOG_LABEL} - ${formatMem(startupSample)}`).catch(() => { /* best-effort */ })
+  }
 
   let timer: NodeJS.Timeout | null = null
   if (intervalMs > 0) {
@@ -40,7 +46,7 @@ export const startMemoryReporter = (
       if (processing.debug) {
         // Skip building the debug string when debug is off
         // (log.debug also no-ops, but avoids formatMem cost).
-        debug('memory', formatMem(sample)).catch(() => { /* best-effort */ })
+        debug(`${MEMORY_LOG_LABEL} - ${formatMem(sample)}`).catch(() => { /* best-effort */ })
       }
     }, intervalMs)
     timer.unref()
@@ -53,9 +59,14 @@ export const startMemoryReporter = (
   process.on('exit', onExit)
 
   return {
-    stop: () => {
+    stop: async () => {
       if (timer) { clearInterval(timer); timer = null }
       process.off('exit', onExit)
+      const exitSample = buildSample('exit')
+      writeStdoutSample(exitSample)
+      if (processing.debug) {
+        await debug(`${MEMORY_LOG_LABEL} - ${formatMem(exitSample)}`).catch(() => { /* best-effort */ })
+      }
     }
   }
 }
