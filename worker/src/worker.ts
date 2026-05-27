@@ -30,6 +30,10 @@ const debugLoop = Debug('worker-loop')
 let stopped = false
 const promisePool: [Promise<void> | null] = [null]
 const pids: Record<string, number> = {}
+// Run IDs for which the worker has escalated to SIGKILL via killRun(). Used by
+// iter() to distinguish a worker-initiated forceful kill from a kernel/cgroup
+// OOM-killer SIGKILL. Cleared in iter()'s finally.
+const selfKilled: Set<string> = new Set()
 
 // Loop promises, resolved when stopped
 let mainLoopPromise: Promise<void>
@@ -72,10 +76,14 @@ export const start = async () => {
   if (budget.status === 'ok') console.log(report)
   else console.warn(report)
 
-  // Initialise the worker's own memory gauges and keep them fresh.
+  // Initialise the worker's own memory gauges and keep them fresh. A sample
+  // interval of 0 disables periodic sampling (see default.mjs comment); the
+  // single initial sample remains.
   updateWorkerMemoryGauges()
-  const workerGaugeTimer = setInterval(updateWorkerMemoryGauges, config.worker.task.memorySampleIntervalMs)
-  workerGaugeTimer.unref()
+  if (config.worker.task.memorySampleIntervalMs > 0) {
+    const workerGaugeTimer = setInterval(updateWorkerMemoryGauges, config.worker.task.memorySampleIntervalMs)
+    workerGaugeTimer.unref()
+  }
 
   // initialize empty promise pool
   for (let i = 0; i < config.worker.concurrency; i++) {
@@ -202,6 +210,10 @@ async function killRun (run: Run) {
   await new Promise(resolve => setTimeout(resolve, config.worker.gracePeriod * 1.2))
   if (pids[run._id]) {
     console.warn('send SIGKILL for forceful interruption of a task that did not stop properly', run.processing._id, run._id, pids[run._id])
+    // Mark as self-kill BEFORE delivering the signal — diagnoseExit reads
+    // this set in iter()'s catch handler, which can be entered as soon as the
+    // child observes the signal.
+    selfKilled.add(run._id)
     kill(pids[run._id], 'SIGKILL')
   }
 }
@@ -291,9 +303,6 @@ async function iter (run: Run, freeSlot: number) {
       // the count reflects concurrency right before exit, which is what an
       // operator cares about for saturation diagnosis.
       const runningTasks = promisePool.filter(p => p !== null).length
-      // TODO(follow-up): SIGKILL from killRun (grace-period escalation) is currently
-      // categorised as 'oom-host'; pass a "we initiated kill" hint via pids[] so the
-      // diagnosis can differentiate it from a kernel OOM-killer SIGKILL.
       const diag: ExitDiagnosis = diagnoseExit(
         err.code ?? null,
         (err.signal ?? null) as NodeJS.Signals | null,
@@ -302,7 +311,8 @@ async function iter (run: Run, freeSlot: number) {
         {
           maxHeapMB: config.worker.task.maxHeapMB,
           concurrency: config.worker.concurrency,
-          runningTasks
+          runningTasks,
+          selfKilled: selfKilled.has(run._id)
         }
       )
       recordExit(diag.category)
@@ -311,8 +321,9 @@ async function iter (run: Run, freeSlot: number) {
         await finish(run)
         // @test:spy("isKilled")
       } else {
+        // Admin (English) → ops console; user (French) → run.log.
         console.warn(`failure ${processing?.title ?? run.processing.title} > ${run._id} [${diag.category}]`, diag.adminMessage || err.message)
-        await finish(run, diag.adminMessage || buildErrorMessageFromStderr(stderr, err.message), diag.logType)
+        await finish(run, diag.userMessage || buildErrorMessageFromStderr(stderr, err.message), diag.logType)
         // @test:spy("isFailure")
       }
     } else {
@@ -321,6 +332,7 @@ async function iter (run: Run, freeSlot: number) {
   } finally {
     if (run) {
       delete pids[run._id]
+      selfKilled.delete(run._id)
       await locks.release(run.processing._id)
     }
     if (processing) {

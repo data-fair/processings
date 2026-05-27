@@ -29,6 +29,11 @@ export default {
   upgradeRoot: '../',
   worker: {
     killInterval: 2000,
-    gracePeriod: 3000
+    gracePeriod: 3000,
+    task: {
+      // Cap per-task heap in dev so the OOM e2e fixture trips quickly. Prod
+      // default is 0 (V8 host default) — see default.mjs.
+      maxHeapMB: 768
+    }
   }
 }

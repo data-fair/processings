@@ -75,11 +75,12 @@ test.describe('memory pressure diagnostics', () => {
     const finalRun = await waitForRunStatus(triggered._id, 'error', 90_000)
     expect(finalRun.status).toBe('error')
 
-    // The run log should carry the oom-heap admin message. The exit-code
-    // diagnosis emits the substring "heap OOM" / "exit code 134" /
-    // "JavaScript heap limit" — match on any of them.
+    // The run log carries the French user-facing OOM message. The English
+    // diagnostic ("heap OOM", "exit code 134") goes to the worker's stdout
+    // (ops), not the run log. Match on the French wording emitted by
+    // oomHeapUser() in worker/src/utils/exit-code.ts.
     const allMsgs = (finalRun.log ?? []).map((l: any) => l.msg).join('\n')
-    expect(allMsgs).toMatch(/heap OOM|exit code 134|JavaScript heap/i)
+    expect(allMsgs).toMatch(/limite de mémoire|tas JavaScript/i)
 
     // Prometheus counter incremented (best-effort; skip if endpoint unreachable
     // at baseline time).

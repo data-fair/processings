@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "pr-ready": {
+      "source": "data-fair/lib",
+      "sourceType": "github",
+      "skillPath": "skills/pr-ready/SKILL.md",
+      "computedHash": "dfc77038e14fdf15f02bef7341915e849b15695c1dcd6fb05a252b017115a406"
+    }
+  }
+}

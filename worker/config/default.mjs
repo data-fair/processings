@@ -1,3 +1,19 @@
+import v8 from 'node:v8'
+
+// Per-task heap default: V8's own heap_size_limit for this host (i.e. what
+// the child would get if we omitted --max-old-space-size). Fall back to
+// 768MB if V8 reports an implausible value. We always pass
+// --max-old-space-size explicitly to children so the limit is visible.
+const nodeDefaultTaskMaxHeapMB = (() => {
+  try {
+    const limit = v8.getHeapStatistics().heap_size_limit
+    if (!Number.isFinite(limit) || limit < 64 * 1024 * 1024) return 768
+    return Math.floor(limit / (1024 * 1024))
+  } catch {
+    return 768
+  }
+})()
+
 export default {
   cipherPassword: undefined,
   // Optional. When set, the legacy plugins volume at <dataDir>/plugins is read
@@ -58,9 +74,10 @@ export default {
     concurrency: 4,
     gracePeriod: 20000,
     task: {
-      // max V8 old-generation heap for each task child process, in MB.
-      // Passed as --max-old-space-size to the spawned child.
-      maxHeapMB: 768,
+      // Max V8 old-generation heap for each task child process, in MB.
+      // Passed as --max-old-space-size to the spawned child. Defaults to
+      // V8's own default for this host (see nodeDefaultTaskMaxHeapMB above).
+      maxHeapMB: nodeDefaultTaskMaxHeapMB,
       // interval at which the child task samples process.memoryUsage()
       // and writes both a df-mem: stdout line (parent updates gauges) and,
       // when processing.debug is true, a debug entry in run.log.
