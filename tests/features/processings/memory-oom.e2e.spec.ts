@@ -15,6 +15,34 @@ const buildOomLeakTarball = (): string => {
   return path.join(outDir, tarball)
 }
 
+const extractTaskRssBytes = (metrics: string, slot: number): number | null => {
+  // df_processings_process_resident_memory_bytes{kind="task",slot="0"} 12345
+  const re = new RegExp(
+    `^df_processings_process_resident_memory_bytes\\{[^}]*kind="task"[^}]*slot="${slot}"[^}]*\\}\\s+(\\d+(?:\\.\\d+)?)`,
+    'm'
+  )
+  const m = metrics.match(re)
+  return m ? Number(m[1]) : null
+}
+
+const extractTaskCpuRatio = (metrics: string, slot: number): number | null => {
+  const re = new RegExp(
+    `^df_processings_process_cpu_usage_ratio\\{[^}]*kind="task"[^}]*slot="${slot}"[^}]*\\}\\s+(\\d+(?:\\.\\d+)?)`,
+    'm'
+  )
+  const m = metrics.match(re)
+  return m ? Number(m[1]) : null
+}
+
+const buildCpuLeakTarball = (): string => {
+  const fixtureDir = path.resolve(import.meta.dirname, '../../fixtures/processing-cpu-leak')
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cpu-leak-pack-'))
+  execSync('npm pack --pack-destination ' + outDir, { cwd: fixtureDir, stdio: 'pipe' })
+  const tarball = fs.readdirSync(outDir).find(f => f.endsWith('.tgz'))
+  if (!tarball) throw new Error('npm pack did not produce a tarball')
+  return path.join(outDir, tarball)
+}
+
 // Dev worker exposes its prom-client registry on DEV_WORKER_OBSERVER_PORT
 // (see worker/config/development.mjs). Fall back to the production default
 // 9090 just in case a non-dev environment ever runs this spec.
@@ -85,5 +113,58 @@ test.describe('memory pressure diagnostics', () => {
       const currentCount = extractOomHeapCount(metrics)
       expect(currentCount).toBeGreaterThan(baselineExits)
     }
+  })
+
+  test('CPU-saturated task still reports RSS via external sampler', async () => {
+    test.skip(process.platform !== 'linux', 'external sampler is Linux-only')
+    test.setTimeout(120_000)
+
+    const superadmin = await axiosAuth('test_superadmin@test.com')
+
+    // Snapshot the metrics for all 4 slots before triggering. We need a
+    // "moved" assertion that's robust whichever slot picks up the run.
+    const baselineMetrics = (await anonymousAx.get(metricsUrl)).data as string
+    const baselineRss: Array<number | null> = [0, 1, 2, 3].map(s => extractTaskRssBytes(baselineMetrics, s))
+
+    const tarballPath = buildCpuLeakTarball()
+    const plugin = await publishFixturePlugin({
+      name: '@data-fair-tests/processing-cpu-leak',
+      version: '1.0.0',
+      tarballPath
+    })
+    const processing = (await superadmin.post('/api/v1/processings', {
+      title: 'CPU leak test',
+      plugin: plugin.pluginId,
+      owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' },
+      active: true,
+      config: {}
+    })).data
+    const triggered = (await superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)).data
+    const finalRun = await waitForRunStatus(triggered._id, 'finished', 90_000)
+    expect(finalRun.status).toBe('finished')
+
+    // The cpu-leak fixture runs ~25 s. With the default 10 s sample
+    // interval the external sampler will fire its baseline tick AND at
+    // least one running tick — so at least one slot's CPU ratio gauge
+    // should be populated with a non-trivial value. We use a permissive
+    // OR-assertion so the test isn't sensitive to which slot the run
+    // picked or to small RSS oscillations during the run.
+    const finalMetrics = (await anonymousAx.get(metricsUrl)).data as string
+    let observedExternal = false
+    let observationDetails = ''
+    for (const slot of [0, 1, 2, 3]) {
+      const rss = extractTaskRssBytes(finalMetrics, slot)
+      const cpu = extractTaskCpuRatio(finalMetrics, slot)
+      observationDetails += ` slot${slot}={rss:${rss},cpu:${cpu}}`
+      if (cpu !== null && cpu > 0.1) {
+        observedExternal = true
+        break
+      }
+      if (rss !== null && rss > 50 * 1024 * 1024 && rss !== (baselineRss[slot] ?? null)) {
+        observedExternal = true
+        break
+      }
+    }
+    expect(observedExternal, `no slot showed external-sampler activity:${observationDetails}`).toBe(true)
   })
 })
