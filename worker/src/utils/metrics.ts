@@ -93,3 +93,6 @@ const initMetrics = async (): Promise<void> => {
 }
 
 export { initMetrics, runsMetrics }
+
+// TEMPORARY stub for Task 3 — replaced with the real implementation in Task 4.
+export const updateTaskExternalGauges = (_slot: number, _sample: { rssBytes: number; cpuRatio: number | null; readAt: number }): void => {}
