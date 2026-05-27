@@ -16,9 +16,7 @@ export const parseStatusVmRss = (text: string): number | null => {
     // Expect "<integer> kB"
     const m = /^(\d+)\s+kB$/.exec(rest)
     if (!m) return null
-    const kB = Number(m[1])
-    if (!Number.isFinite(kB)) return null
-    return kB * 1024
+    return Number(m[1]) * 1024
   }
   return null
 }

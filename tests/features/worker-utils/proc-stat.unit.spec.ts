@@ -57,4 +57,8 @@ test.describe('parseStatFields', () => {
     const stat = '1234 (node) S 5678 1234 1234 0 -1 4194304 100 0 0 0 x y 0 0 20 0 1 0 999'
     expect(parseStatFields(stat)).toBeNull()
   })
+
+  test('returns null when stat line has too few fields after closing paren', () => {
+    expect(parseStatFields('1234 (node) S 5678')).toBeNull()
+  })
 })
