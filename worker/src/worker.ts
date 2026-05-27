@@ -17,11 +17,13 @@ import config from '#config'
 import mongo from '#mongo'
 import locks from '#locks'
 import limits from './utils/limits.ts'
-import { initMetrics, updateTaskMemoryGauges, updateWorkerMemoryGauges, setSlotState, recordExit } from './utils/metrics.ts'
+import { initMetrics, updateTaskMemoryGauges, updateWorkerMemoryGauges, setSlotState, recordExit, setExternalRssActive, updateTaskExternalGauges } from './utils/metrics.ts'
 import { finish } from './utils/runs.ts'
 import { buildErrorMessageFromStderr } from './utils/worker-operations.ts'
 import { splitMemSampleLines, type MemorySample } from './utils/mem-sample.ts'
 import { diagnoseExit, type ExitDiagnosis } from './utils/exit-code.ts'
+import { createExternalSamplerFactory, type ExternalSample, type ExternalSamplerHandle } from './task/external-sampler.ts'
+import { isSupported as procStatIsSupported } from './utils/proc-stat.ts'
 import { computeBudget, detectContainerLimitMB, formatReport } from './utils/memory-budget.ts'
 
 const debug = Debug('worker')
@@ -34,6 +36,9 @@ const pids: Record<string, number> = {}
 // iter() to distinguish a worker-initiated forceful kill from a kernel/cgroup
 // OOM-killer SIGKILL. Cleared in iter()'s finally.
 const selfKilled: Set<string> = new Set()
+
+let externalSamplerActive = false
+let externalSamplerFactory: ReturnType<typeof createExternalSamplerFactory> | null = null
 
 // Loop promises, resolved when stopped
 let mainLoopPromise: Promise<void>
@@ -75,6 +80,15 @@ export const start = async () => {
   const report = formatReport(budget)
   if (budget.status === 'ok') console.log(report)
   else console.warn(report)
+
+  externalSamplerActive = config.worker.task.externalSamplerEnabled && procStatIsSupported()
+  setExternalRssActive(externalSamplerActive)
+  if (externalSamplerActive) {
+    externalSamplerFactory = createExternalSamplerFactory({ updateGauge: updateTaskExternalGauges })
+    console.log('[external-sampler] enabled: per-slot RSS/CPU sampled from /proc')
+  } else if (config.worker.task.externalSamplerEnabled && !procStatIsSupported()) {
+    console.warn('[external-sampler] disabled: /proc is not available on this platform')
+  }
 
   // Initialise the worker's own memory gauges and keep them fresh. A sample
   // interval of 0 disables periodic sampling (see default.mjs comment); the
@@ -225,6 +239,7 @@ async function iter (run: Run, freeSlot: number) {
   let stderr = ''
   let stdoutResidual = ''
   let lastMem: MemorySample | null = null
+  let lastExt: ExternalSample | null = null
   const processing = await mongo.processings.findOne({ _id: run.processing._id })
 
   try {
@@ -283,8 +298,14 @@ async function iter (run: Run, freeSlot: number) {
     })
     pids[run._id] = child.pid || -1
     setSlotState(freeSlot, true)
+
+    const sampler: ExternalSamplerHandle | null = (child.pid && externalSamplerActive && externalSamplerFactory)
+      ? externalSamplerFactory.start(freeSlot, child.pid, config.worker.task.memorySampleIntervalMs, (ext) => { lastExt = ext })
+      : null
+
     await new Promise<void>((resolve, reject) => {
       child.on('close', (code, signal) => {
+        sampler?.stop()
         setSlotState(freeSlot, false)
         if (code === 0 && signal === null) resolve()
         else {
@@ -294,7 +315,10 @@ async function iter (run: Run, freeSlot: number) {
           reject(err)
         }
       })
-      child.on('error', reject)
+      child.on('error', (err) => {
+        sampler?.stop()
+        reject(err)
+      })
     })
     await finish(run)
   } catch (err: any) {
@@ -308,6 +332,7 @@ async function iter (run: Run, freeSlot: number) {
         (err.signal ?? null) as NodeJS.Signals | null,
         stderr,
         lastMem,
+        lastExt,
         {
           maxHeapMB: config.worker.task.maxHeapMB,
           concurrency: config.worker.concurrency,
