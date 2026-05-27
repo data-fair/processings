@@ -18,7 +18,7 @@
     </span>
     <span
       v-else-if="['warning', 'info', 'debug'].includes(log.type)"
-      :class="log.type === 'warning' ? 'text-info' : ''"
+      :class="logTextClass(log)"
     >
       {{ log.msg }}
     </span>
@@ -63,6 +63,12 @@ defineProps({
 const taskColor = (log: LogEntry) => {
   if (log.progress && log.progress === log.total) return 'success'
   return 'primary'
+}
+
+const logTextClass = (log: LogEntry) => {
+  if (log.type === 'warning') return 'text-warning'
+  if (log.type === 'debug') return 'text-medium-emphasis'
+  return ''
 }
 
 const formatDate = (date: string) => dayjs(date).format('lll')
