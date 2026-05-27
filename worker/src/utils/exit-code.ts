@@ -70,16 +70,16 @@ const oomHeapUser = (lastMem: MemorySample | null, lastExt: ExternalSample | nul
 
 const oomHostAdmin = (lastMem: MemorySample | null, lastExt: ExternalSample | null, ctx: DiagnoseContext): string => [
   'Task killed by the OS (SIGKILL, likely container OOM-killer).',
-  memLine(lastMem, ctx.maxHeapMB),
   ...extLines(lastExt),
+  memLine(lastMem, ctx.maxHeapMB),
   'The container memory limit was probably exceeded.',
   'Mitigation: raise the container memory limit, or lower WORKER_CONCURRENCY.'
 ].join('\n')
 
 const oomHostUser = (lastMem: MemorySample | null, lastExt: ExternalSample | null, ctx: DiagnoseContext): string => [
   'Le traitement a été terminé par le système (signal SIGKILL), vraisemblablement à cause d\'un dépassement de la mémoire allouée au conteneur.',
-  memLineFr(lastMem, ctx.maxHeapMB),
   ...extLinesFr(lastExt),
+  memLineFr(lastMem, ctx.maxHeapMB),
   'Contactez un administrateur pour augmenter la limite mémoire du conteneur ou réduire la concurrence.'
 ].join('\n')
 

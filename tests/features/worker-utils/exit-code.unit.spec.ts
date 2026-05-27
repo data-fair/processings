@@ -170,3 +170,12 @@ test('lastExt with null cpuRatio omits CPU usage line from French userMessage', 
   expect(d.userMessage).toMatch(/Dernier RSS observé \(parent\)/)
   expect(d.userMessage).not.toMatch(/Utilisation CPU/)
 })
+
+test('oom-host renders external RSS BEFORE in-process memLine (external is primary)', () => {
+  const d = diagnoseExit(null, 'SIGKILL', '', sample, ext, ctx)
+  const extIdx = d.adminMessage.indexOf('Last seen RSS (external)')
+  const memIdx = d.adminMessage.indexOf('Last memory sample')
+  expect(extIdx).toBeGreaterThan(0)
+  expect(memIdx).toBeGreaterThan(0)
+  expect(extIdx).toBeLessThan(memIdx)
+})

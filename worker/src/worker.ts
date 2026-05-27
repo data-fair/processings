@@ -88,6 +88,8 @@ export const start = async () => {
     console.log('[external-sampler] enabled: per-slot RSS/CPU sampled from /proc')
   } else if (config.worker.task.externalSamplerEnabled && !procStatIsSupported()) {
     console.warn('[external-sampler] disabled: /proc is not available on this platform')
+  } else {
+    console.log('[external-sampler] disabled by configuration (WORKER_TASK_EXTERNAL_SAMPLER_ENABLED=false)')
   }
 
   // Initialise the worker's own memory gauges and keep them fresh. A sample
