@@ -32,7 +32,7 @@ export default {
     gracePeriod: 3000,
     task: {
       // Cap per-task heap in dev so the OOM e2e fixture trips quickly. Prod
-      // default is 0 (V8 host default) — see default.mjs.
+      // default is V8's host heap_size_limit in MB — see default.mjs.
       maxHeapMB: 768
     }
   }

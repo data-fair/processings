@@ -2,6 +2,7 @@
 import type { Run } from '#api/types'
 
 import { spawn } from 'node:child_process'
+import os from 'node:os'
 import Debug from 'debug'
 import { existsSync } from 'fs'
 import resolvePath from 'resolve-path'
@@ -22,7 +23,6 @@ import { buildErrorMessageFromStderr } from './utils/worker-operations.ts'
 import { splitMemSampleLines, type MemorySample } from './utils/mem-sample.ts'
 import { diagnoseExit, type ExitDiagnosis } from './utils/exit-code.ts'
 import { computeBudget, detectContainerLimitMB, formatReport } from './utils/memory-budget.ts'
-import os from 'node:os'
 
 const debug = Debug('worker')
 const debugLoop = Debug('worker-loop')
