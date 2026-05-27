@@ -124,9 +124,9 @@ export const diagnoseExit = (
     }
   }
   if (code === 1) {
-    // Plugin error: the stderr text is the plugin's own error message, which
-    // is language-agnostic (we don't translate plugin error text). Pass it
-    // through to both fields.
+    // Plugin error: the stderr text is the plugin's own error message — keep it
+    // verbatim in both fields (plugin owns its language). Append external
+    // resource metrics in the appropriate language for each field.
     const base = buildErrorMessageFromStderr(stderr, 'child process exited with code 1')
     const adminMsg = [base, ...extLines(lastExt)].filter(Boolean).join('\n')
     const userMsg = [base, ...extLinesFr(lastExt)].filter(Boolean).join('\n')
@@ -141,7 +141,7 @@ export const diagnoseExit = (
     adminMessage: [
       `Task ended unexpectedly (code=${code}, signal=${signal ?? 'null'}). ${buildErrorMessageFromStderr(stderr, '')}`.trim(),
       ...extLines(lastExt)
-    ].join('\n'),
-    userMessage: [unknownUser(code, signal, stderr), ...extLinesFr(lastExt)].join('\n')
+    ].filter(Boolean).join('\n'),
+    userMessage: [unknownUser(code, signal, stderr), ...extLinesFr(lastExt)].filter(Boolean).join('\n')
   }
 }

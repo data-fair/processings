@@ -158,3 +158,15 @@ test('lastExt with null cpuRatio omits CPU usage line', () => {
   expect(d.adminMessage).toMatch(/Last seen RSS \(external\):\s*815\.0MB/)
   expect(d.adminMessage).not.toMatch(/CPU usage/)
 })
+
+test('oom-host with lastExt includes French external RSS and CPU usage in userMessage', () => {
+  const d = diagnoseExit(null, 'SIGKILL', '', sample, ext, ctx)
+  expect(d.userMessage).toMatch(/Dernier RSS observé \(parent\)\s*:\s*815\.0MB/)
+  expect(d.userMessage).toMatch(/Utilisation CPU \(parent\)\s*:\s*0\.92/)
+})
+
+test('lastExt with null cpuRatio omits CPU usage line from French userMessage', () => {
+  const d = diagnoseExit(null, 'SIGKILL', '', sample, { ...ext, cpuRatio: null }, ctx)
+  expect(d.userMessage).toMatch(/Dernier RSS observé \(parent\)/)
+  expect(d.userMessage).not.toMatch(/Utilisation CPU/)
+})
