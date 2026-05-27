@@ -96,9 +96,10 @@ export const setSlotState = (slot: number, running: boolean): void => {
 export const updateTaskExternalGauges = (slot: number, ext: ExternalSample): void => {
   const labels = { kind: 'task', slot: String(slot) }
   rssGauge.set(labels, ext.rssBytes)
-  if (ext.cpuRatio !== null) {
-    cpuRatioGauge.set(labels, ext.cpuRatio)
-  }
+  // Reset CPU ratio to 0 on the baseline tick (cpuRatio === null) so a
+  // reused slot doesn't surface the previous run's CPU% until the first
+  // running tick fires.
+  cpuRatioGauge.set(labels, ext.cpuRatio ?? 0)
 }
 
 export const recordExit = (category: ExitCategory): void => {
