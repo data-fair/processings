@@ -29,8 +29,10 @@ import permissions from '../misc/utils/permissions.ts'
 const router = Router()
 export default router
 
+// addUsedSchema: false keeps compile() from registering schemas in the
+// instance, so two plugin majors that share a $id can both validate.
 // @ts-ignore
-const ajv = ajvFormats(new Ajv({ strict: false }))
+const ajv = ajvFormats(new Ajv({ strict: false, addUsedSchema: false }))
 
 /**
  * Ensure the plugin tarball is in the API's local cache (downloads on miss).
