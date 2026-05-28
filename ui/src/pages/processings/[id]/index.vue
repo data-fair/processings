@@ -168,8 +168,17 @@ const configSchemaFetch = useFetch<Record<string, unknown>>(
   computed(() => processing.value?.plugin
     ? `${$apiPath}/processings/${processingId}/plugin-config-schema`
     : null),
+  // We handle notifications ourselves below — useFetch's built-in toast
+  // would also fire on the legitimate "plugin ships no schema" 404.
   { notifError: false }
 )
+const { sendUiNotif } = useUiNotif()
+watch(() => configSchemaFetch.error.value, (err) => {
+  if (!err) return
+  const status = err.statusCode ?? err.status
+  if (status === 404) return // legitimate "plugin ships no schema"
+  sendUiNotif({ msg: t('configSchemaFetchError'), error: err })
+})
 const configSchema = computed<Record<string, unknown> | null>(() => {
   const err = configSchemaFetch.error.value
   // The endpoint returns 404 to mean "this plugin doesn't ship a schema"; we
@@ -326,6 +335,7 @@ const timezoneLabel = (timeZone: string) => {
     updateError: Error while updating the processing
     pluginUnavailableTitle: Plugin unavailable
     pluginUnavailableBody: This processing's plugin has been removed or its access revoked. You can no longer edit or run this processing, but you can still view its run history and delete it.
+    configSchemaFetchError: Failed to load the plugin's configuration schema
 
   fr:
     frequency:
@@ -340,6 +350,7 @@ const timezoneLabel = (timeZone: string) => {
     updateError: Erreur lors de la mise à jour du traitement
     pluginUnavailableTitle: Plugin indisponible
     pluginUnavailableBody: Le plugin de ce traitement a été supprimé ou son accès retiré. Vous ne pouvez plus modifier ni exécuter ce traitement, mais vous pouvez consulter son historique et le supprimer.
+    configSchemaFetchError: Échec du chargement du schéma de configuration du plugin
 
 </i18n>
 

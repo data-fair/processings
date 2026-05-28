@@ -38,8 +38,11 @@ const ajv = ajvFormats(new Ajv({ strict: false }))
  * here surfaces directly to the caller.
  *
  * The plugin's processing config schema is read from the conventional
- * `processing-config-schema.json` shipped alongside the plugin (same convention
- * as v5). Returns `undefined` when the plugin doesn't ship one.
+ * `processing-config-schema.json` shipped alongside the plugin (v6 convention),
+ * falling back to `plugin.json#processingConfigSchema` for legacy v5 plugins
+ * whose tarballs were packed verbatim by the registry migration and never had
+ * the schema extracted into a standalone file. Returns `undefined` when
+ * neither source carries one.
  */
 async function ensurePluginAndReadSchema (processing: Pick<Processing, 'plugin' | 'owner'>) {
   const account = {
@@ -61,6 +64,12 @@ async function ensurePluginAndReadSchema (processing: Pick<Processing, 'plugin' 
   let processingConfigSchema: Record<string, unknown> | undefined
   if (await fs.pathExists(schemaPath)) {
     processingConfigSchema = await fs.readJson(schemaPath)
+  } else {
+    const pluginJsonPath = path.join(ensured.path, 'plugin.json')
+    if (await fs.pathExists(pluginJsonPath)) {
+      const pluginJson = await fs.readJson(pluginJsonPath)
+      if (pluginJson?.processingConfigSchema) processingConfigSchema = pluginJson.processingConfigSchema
+    }
   }
   return { ensured, processingConfigSchema }
 }
@@ -425,7 +434,11 @@ router.get('/:id/plugin-config-schema', async (req, res, next) => {
     if (!processing) return res.status(404).send()
     if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState) ?? '')) return res.status(403).send()
     const { processingConfigSchema } = await ensurePluginAndReadSchema(processing)
-    if (!processingConfigSchema) return res.status(404).send()
+    if (!processingConfigSchema) {
+      return res.status(404).type('text/plain').send(
+        `Plugin "${processing.plugin}" ships no processing config schema (no processing-config-schema.json in tarball and no processingConfigSchema field in plugin.json).`
+      )
+    }
     res.status(200).json(processingConfigSchema)
   } catch (err) { next(err) }
 })
