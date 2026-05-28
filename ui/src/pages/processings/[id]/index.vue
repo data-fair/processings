@@ -54,6 +54,10 @@
             {{ timezoneLabel(node.data.timeZone) }}
           </template>
         </vjsf>
+        <v-skeleton-loader
+          v-else-if="pluginFetchPending && !pluginBroken"
+          type="heading, list-item-three-line, list-item-three-line, list-item-two-line, actions"
+        />
       </v-form>
     </v-defaults-provider>
     <processing-runs
@@ -81,13 +85,14 @@
 
 <script setup lang="ts">
 import type { Processing } from '#api/types'
-import type { RegistryArtefact } from '~/composables/use-plugin-fetch'
 
-import { ofetch } from 'ofetch'
 import cronstrue from 'cronstrue'
 import 'cronstrue/locales/en'
 import 'cronstrue/locales/fr'
 
+import type { RegistryArtefact } from '~/composables/use-plugin-fetch'
+
+import useFetch from '@data-fair/lib-vue/fetch.js'
 import { resolvedSchema as contractProcessing } from '#api/types/processing/index.ts'
 import timeZones from 'timezones.json'
 import Vjsf, { type Options as VjsfOptions } from '@koumoul/vjsf'
@@ -111,9 +116,6 @@ const valid = ref(false)
 const edited = ref(false)
 const editProcessing: Ref<Processing | null> = ref(null)
 const processing: Ref<Processing | null> = ref(null)
-const plugin: Ref<RegistryArtefact | null> = ref(null)
-const pluginBroken = ref(false)
-const configSchema: Ref<Record<string, unknown> | null> = ref(null)
 const runs: Ref<Record<string, any>> = ref([])
 
 /*
@@ -128,51 +130,58 @@ onMounted(async () => {
   }, {
     text: processing.value?.title || ''
   }])
-  await fetchPlugin()
 })
 
 async function fetchProcessing () {
   processing.value = await $fetch(`/processings/${processingId}`)
   if (processing.value) editProcessing.value = { ...processing.value }
 }
-async function fetchPlugin () {
-  pluginBroken.value = false
-  if (!processing.value?.plugin) return
-  // Display metadata comes from registry — `processing.plugin` is the artefact id.
-  // The config schema is read out of the cached package.json by the
-  // processings API — registry doesn't know or care what's inside packages.
-  //
-  // Registry returns 404 when the plugin has been deleted, 403 when the
-  // owner has lost access. We collapse both into pluginBroken=true and
-  // render a banner; the config-schema fetch's 404 (no schema for this
-  // plugin) is a separate, narrower state that does NOT trigger the banner.
-  //
-  // Hit the registry with the bare `ofetch` — not the app's `$fetch`, whose
-  // `/processings/api/v1` baseURL would rewrite this to
-  // `/processings/api/v1/registry/...` and 404. Registry is mounted at
-  // `/registry` of the current domain (same convention as use-plugin-fetch).
-  const artefactResult = await ofetch<RegistryArtefact>(
-    `/registry/api/v1/artefacts/${encodeURIComponent(processing.value.plugin)}`
-  ).then(
-    (data) => ({ ok: true as const, data }),
-    (err) => {
-      const status = err?.statusCode ?? err?.status
-      if (status === 404 || status === 403) return { ok: false as const }
-      throw err
-    }
-  )
-  if (!artefactResult.ok) {
-    pluginBroken.value = true
-    return
-  }
-  plugin.value = artefactResult.data
-  configSchema.value = await $fetch<Record<string, unknown>>(
-    `/processings/${processingId}/plugin-config-schema`
-  ).catch(err => {
-    if (err?.statusCode === 404 || err?.status === 404) return null
-    throw err
-  })
-}
+
+/*
+  Plugin metadata + config schema fetches.
+
+  Both kick off in parallel as soon as `processing` resolves — useFetch
+  watches its reactive URL and waits while it's null.
+
+  - pluginBroken: 404 (deleted) or 403 (access revoked) on the artefact.
+    Surfaces the banner and suppresses the form.
+  - configSchema null: legitimate "this plugin ships no schema" — distinct
+    from a registry error and does NOT trigger the banner.
+
+  Same-domain assumption: registry is mounted at `/registry` of the current
+  domain, so an absolute path bypasses `$fetch`'s `/processings/api/v1`
+  baseURL (which would rewrite `/registry/...` to a 404).
+*/
+const pluginFetch = useFetch<RegistryArtefact>(
+  computed(() => processing.value?.plugin
+    ? `/registry/api/v1/artefacts/${encodeURIComponent(processing.value.plugin)}`
+    : null),
+  { notifError: false }
+)
+const plugin = computed(() => pluginFetch.data.value)
+const pluginBroken = computed(() => {
+  const status = pluginFetch.error.value?.statusCode
+  return status === 404 || status === 403
+})
+
+const configSchemaFetch = useFetch<Record<string, unknown>>(
+  computed(() => processing.value?.plugin
+    ? `${$apiPath}/processings/${processingId}/plugin-config-schema`
+    : null),
+  { notifError: false }
+)
+const configSchema = computed<Record<string, unknown> | null>(() => {
+  const err = configSchemaFetch.error.value
+  // The endpoint returns 404 to mean "this plugin doesn't ship a schema"; we
+  // collapse that to null so the page degrades gracefully (no form, no
+  // banner). Other errors are left to surface through the data binding.
+  if (err && (err.statusCode === 404 || err.status === 404)) return null
+  return configSchemaFetch.data.value
+})
+
+const pluginFetchPending = computed(() =>
+  pluginFetch.loading.value || configSchemaFetch.loading.value
+)
 
 /*
   Permissions
