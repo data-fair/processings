@@ -112,7 +112,7 @@ services:
   registry:
     profiles:
       - dev
-    image: ghcr.io/data-fair/registry:feat-npm-noarch
+    image: ghcr.io/data-fair/registry:main
     network_mode: host
     depends_on:
       - mongo
