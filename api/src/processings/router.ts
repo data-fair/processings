@@ -35,7 +35,7 @@ const ajv = ajvFormats(new Ajv({ strict: false }))
 /**
  * Ensure the plugin tarball is in the API's local cache (downloads on miss).
  * Registry enforces that `processing.owner` has access to the artefact; a 403
- * here surfaces directly to the caller.
+ * here surfaces directly to the caller as a user-facing French message.
  *
  * The plugin's processing config schema is read from the conventional
  * `processing-config-schema.json` shipped alongside the plugin (v6 convention),
@@ -53,13 +53,29 @@ async function ensurePluginAndReadSchema (processing: Pick<Processing, 'plugin' 
   // `processing.plugin` is the registry artefact id, passed through as-is.
   // lib-node downloads + extracts the tarball into registryCacheDir on cache
   // miss; the cache is invalidated when the artefact's dataUpdatedAt bumps.
-  const ensured = await ensureArtefact({
-    registryUrl: config.privateRegistryUrl,
-    secretKey: config.secretKeys.registry,
-    artefactId: processing.plugin,
-    cacheDir: registryCacheDir,
-    account
-  })
+  //
+  // Axios errors carry `status` but `lib-express/error-handler.js` collapses
+  // every AxiosRequestError to 500 — so we translate at the boundary here.
+  let ensured
+  try {
+    ensured = await ensureArtefact({
+      registryUrl: config.privateRegistryUrl,
+      secretKey: config.secretKeys.registry,
+      artefactId: processing.plugin,
+      cacheDir: registryCacheDir,
+      account
+    })
+  } catch (err: any) {
+    const status = err?.status ?? err?.statusCode
+    const ownerLabel = processing.owner.name ?? processing.owner.id
+    if (status === 403) {
+      throw httpError(403, `Le compte ${ownerLabel} n'a pas accès au plugin ${processing.plugin}.`)
+    }
+    if (status === 404) {
+      throw httpError(404, `Le plugin ${processing.plugin} est introuvable dans le registre.`)
+    }
+    throw httpError(502, 'Le registre des plugins est temporairement indisponible.')
+  }
   const schemaPath = path.join(ensured.path, 'processing-config-schema.json')
   let processingConfigSchema: Record<string, unknown> | undefined
   if (await fs.pathExists(schemaPath)) {
@@ -110,9 +126,8 @@ const sendProcessingEvent = (
  * - validate the config against the plugin's processingConfigSchema (read
  *   from the cached package.json#registry block, downloaded on cache miss)
  *
- * Errors from registry (404 unknown artefact, 403 owner has no access) bubble
- * up as the corresponding HTTP errors and replace the explicit access check
- * that used to live in the create/update endpoints.
+ * Skipped entirely when the processing has no config. Registry errors are
+ * translated to user-facing French messages inside ensurePluginAndReadSchema.
  */
 async function validateFullProcessing (processing: any): Promise<Processing> {
   (await import('#types/processing/index.ts')).returnValid(processing)
@@ -127,7 +142,12 @@ async function validateFullProcessing (processing: any): Promise<Processing> {
 }
 
 const prepareProcessing = async (processing: Processing) => {
-  // Get the plugin file and execute the prepare function if it exists.
+  // `prepare` operates on the user-supplied config (e.g. exchanging OAuth
+  // refresh tokens for ciphered secrets). With no config there's nothing to
+  // prepare — and skipping the registry fetch lets a processing be created
+  // even when the owner has no access to the plugin yet. The same broken
+  // state is what the UI banner already shows for deleted plugins.
+  if (!processing.config) return
   const { ensured } = await ensurePluginAndReadSchema(processing)
   const plugin = await importPluginModule<{ prepare?: PrepareFunction }>(ensured.path, { cacheBust: true })
   if (!(plugin.prepare && typeof plugin.prepare === 'function')) return
@@ -345,9 +365,10 @@ router.post('', async (req, res) => {
     date: new Date().toISOString()
   }
 
-  // Plugin access check is delegated to registry: validateFullProcessing
-  // calls ensureArtefact with owner=body.owner, and registry returns 403 if
-  // the artefact is private and the owner has no privateAccess entry.
+  // Plugin access is only checked when actually needed: validateFullProcessing
+  // and prepareProcessing both short-circuit when `body.config` is absent. A
+  // processing created without config lands in the same "plugin not loaded"
+  // state that existed for deleted/revoked plugins — see ui pluginBroken.
   const processing = await validateFullProcessing(body)
   Object.assign(processing, await prepareProcessing(processing))
   await mongo.processings.insertOne(processing)

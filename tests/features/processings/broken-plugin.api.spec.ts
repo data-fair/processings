@@ -38,21 +38,30 @@ test.describe('processing with unavailable plugin', () => {
     expect(res.data.plugin).toBe('@test-never-existed-1')
   })
 
-  test('PATCH /processings/:id surfaces the registry error', async () => {
+  test('PATCH /processings/:id with no config field succeeds even when the plugin is gone', async () => {
+    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const id = await createBrokenProcessing(superadmin)
+
+    // Renaming/changing scheduling on a broken-plugin processing must work —
+    // ensurePluginAndReadSchema is only invoked when there's a config to
+    // validate or prepare. Lets users fix metadata, switch owner, or delete.
+    const res = await superadmin.patch(`/api/v1/processings/${id}`, { title: 'New title' })
+    expect(res.status).toBe(200)
+    expect(res.data.title).toBe('New title')
+  })
+
+  test('PATCH /processings/:id with a config field surfaces a 404 with the plugin id', async () => {
     const superadmin = await axiosAuth('test_superadmin@test.com')
     const id = await createBrokenProcessing(superadmin)
 
     const res = await superadmin.patch(
       `/api/v1/processings/${id}`,
-      { title: 'New title' },
+      { config: { message: 'hello' } },
       { validateStatus: () => true }
     )
-    // Registry returns 404 for an unknown artefact. In the current
-    // implementation ensurePluginAndReadSchema does NOT forward the registry
-    // status — the unhandled AxiosRequestError propagates and Express returns
-    // 500. We include 403/404 in the set so the test also passes if the
-    // forwarding behaviour is improved in a future refactor.
-    expect([403, 404, 500]).toContain(res.status)
+    expect(res.status).toBe(404)
+    expect(typeof res.data === 'string' ? res.data : JSON.stringify(res.data))
+      .toContain('@test-never-existed-1')
   })
 
   test('DELETE /processings/:id returns 204', async () => {
