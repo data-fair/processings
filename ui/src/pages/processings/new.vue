@@ -27,17 +27,17 @@
         />
       </v-stepper-header>
 
-      <v-stepper-window>
+      <v-stepper-window class="mt-2">
         <v-stepper-window-item value="1">
           <v-text-field
             v-model="search"
             :label="t('searchPlugin')"
+            :prepend-inner-icon="mdiMagnify"
             density="compact"
             variant="outlined"
             clearable
-            class="mb-4"
+            class="my-4"
             hide-details
-            prepend-inner-icon="mdi-magnify"
           />
           <div
             v-for="group in orderedGroups"
@@ -62,7 +62,10 @@
                     @click="pickPlugin(artefact)"
                   >
                     <template #title>
-                      <span :class="!isPicked(artefact) ? 'text-primary' : ''">
+                      <span
+                        :title="artefactDisplayName(artefact)"
+                        :class="!isPicked(artefact) ? 'text-primary' : ''"
+                      >
                         {{ artefactDisplayName(artefact) }}
                       </span>
                     </template>
@@ -210,9 +213,18 @@ const artefactDisplayDescription = (a: RegistryArtefact) =>
 const artefactGroup = (a: RegistryArtefact) =>
   a.group?.[locale.value as 'fr' | 'en'] ?? a.group?.fr ?? a.group?.en ?? t('otherGroup')
 
-// Configured group order, with a trailing fallback bucket for ungrouped or
-// unknown groups. Empty buckets are hidden by the template.
-const orderedGroups = computed(() => [...$uiConfig.pluginCategories, t('otherGroup')])
+// Configured groups define the leading display order. Any registry group not
+// listed in the config is appended (alphabetically) after the configured ones,
+// just before the trailing fallback bucket — so plugins are never hidden simply
+// because their group is unconfigured. Empty buckets are hidden by the template.
+const orderedGroups = computed(() => {
+  const configured = $uiConfig.pluginCategories
+  const otherGroup = t('otherGroup')
+  const extra = [...new Set(filteredArtefacts.value.map(artefactGroup))]
+    .filter(group => group !== otherGroup && !configured.includes(group))
+    .sort((a, b) => a.localeCompare(b))
+  return [...configured, ...extra, otherGroup]
+})
 const groupedArtefacts = computed(() => {
   const buckets: Record<string, RegistryArtefact[]> = {}
   for (const group of orderedGroups.value) buckets[group] = []
@@ -266,14 +278,14 @@ onMounted(() => {
 
 <i18n lang="yaml">
   en:
-    selectPluginType: Processing type selection
+    selectPluginType: Plugin selection
     information: Information
     title: Title
     previous: Previous
     create: Create
     noPermission: You do not have permission to create a processing
     searchPlugin: Search for a plugin
-    noPlugins: No processing plugins are available for this account.
+    noPlugins: No plugins are available for your account.
     noMatch: No plugin matches your search.
     createSuccess: Processing created!
     createError: Error while creating processing
@@ -282,14 +294,14 @@ onMounted(() => {
     otherGroup: Other
 
   fr:
-    selectPluginType: Sélection du type de traitement
+    selectPluginType: Sélection du plugin
     information: Informations
     title: Titre
     previous: Précédent
     create: Créer
     noPermission: Vous n'avez pas les droits pour créer un traitement
     searchPlugin: Rechercher un plugin
-    noPlugins: Aucun plugin de traitement n'est disponible pour ce compte.
+    noPlugins: Aucun plugin n'est disponible pour votre compte.
     noMatch: Aucun plugin ne correspond à votre recherche.
     createSuccess: Traitement créé !
     createError: Erreur lors de la création du traitement
