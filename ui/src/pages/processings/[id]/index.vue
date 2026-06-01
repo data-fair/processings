@@ -148,13 +148,15 @@ async function fetchProcessing () {
   - configSchema null: legitimate "this plugin ships no schema" — distinct
     from a registry error and does NOT trigger the banner.
 
-  Same-domain assumption: registry is mounted at `/registry` of the current
-  domain, so an absolute path bypasses `$fetch`'s `/processings/api/v1`
-  baseURL (which would rewrite `/registry/...` to a 404).
+  Plugin metadata now flows through the processings API
+  (`/processings/:id/plugin`) rather than a direct same-origin `/registry`
+  call: the API gates on the caller's processing permission, then fetches the
+  artefact as the owner. This lets individually-permitted viewers see the
+  plugin without their own registry grant.
 */
 const pluginFetch = useFetch<RegistryArtefact>(
   computed(() => processing.value?.plugin
-    ? `/registry/api/v1/artefacts/${encodeURIComponent(processing.value.plugin)}`
+    ? `${$apiPath}/processings/${processingId}/plugin`
     : null),
   { notifError: false }
 )
