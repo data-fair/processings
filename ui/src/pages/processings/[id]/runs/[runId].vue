@@ -21,7 +21,7 @@
         />
         <v-expansion-panels
           v-else
-          :model-value="[steps.length - 1]"
+          v-model="openPanels"
           variant="accordion"
           multiple
           static
@@ -61,6 +61,7 @@
 
 <script setup lang="ts">
 import type { Run } from '#api/types'
+import { useFollowBottom } from '~/composables/use-follow-bottom'
 
 const { t } = useI18n()
 const route = useRoute<'/processings/[id]/runs/[runId]'>()
@@ -97,6 +98,20 @@ const steps = computed(() => {
   }
   return steps
 })
+
+const { following } = useFollowBottom(
+  () => run.value?.log.length ?? 0,
+  () => run.value?.status === 'running'
+)
+
+// While following the tail keep only the latest step open; otherwise preserve the
+// user's selection. Recomputed only when the step count changes, not on every log.
+const openPanels = ref<number[]>([])
+watch(() => steps.value.length, (stepCount) => {
+  if (stepCount <= 0) openPanels.value = []
+  else if (following.value) openPanels.value = [stepCount - 1]
+  else openPanels.value = openPanels.value.filter((i) => i < stepCount)
+}, { immediate: true })
 
 function getColor (step: Record<string, any>) {
   let color = 'success'
