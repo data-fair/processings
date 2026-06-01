@@ -43,6 +43,7 @@
       "type": "string"
     },
     "pluginCategories": {
+      "description": "Ordered list of plugin group labels, used only to control the display order of groups in the plugin picker. A group found on the registry but absent from this list is shown after the configured ones, just before the trailing \"other\" fallback group.",
       "type": "array",
       "items": {
         "type": "string"
