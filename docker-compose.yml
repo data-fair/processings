@@ -55,7 +55,7 @@ services:
   data-fair:
     profiles:
       - dev
-    image: ghcr.io/data-fair/data-fair:5
+    image: ghcr.io/data-fair/data-fair:6
     restart: on-failure:10
     network_mode: host
     depends_on:
