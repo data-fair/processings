@@ -12,6 +12,11 @@ export type ExitDiagnosis = {
   adminMessage: string
   // French text written to run.log (user-facing). Empty for silent categories.
   userMessage: string
+  // Resource metrics (RSS / CPU / heap), kept separate from the human-readable
+  // cause so the worker can log them as an independent (debug) entry instead of
+  // appending them to the error message. Empty when no sample is available.
+  adminMetrics: string
+  userMetrics: string
 }
 
 export type DiagnoseContext = {
@@ -52,36 +57,40 @@ const extLinesFr = (lastExt: ExternalSample | null): string[] => {
   return out
 }
 
-const oomHeapAdmin = (lastMem: MemorySample | null, lastExt: ExternalSample | null, ctx: DiagnoseContext): string => [
+const oomHeapAdmin = (ctx: DiagnoseContext): string => [
   'Task exceeded the JavaScript heap limit (heap OOM, exit code 134).',
-  memLine(lastMem, ctx.maxHeapMB),
-  ...extLines(lastExt),
   `Concurrent tasks at exit: ${ctx.runningTasks} / concurrency ${ctx.concurrency}.`,
   `Configuration: WORKER_TASK_MAX_HEAP_MB=${ctx.maxHeapMB}.`,
   'Mitigation: raise WORKER_TASK_MAX_HEAP_MB, lower WORKER_CONCURRENCY, or inspect the plugin for a memory leak.'
 ].join('\n')
 
-const oomHeapUser = (lastMem: MemorySample | null, lastExt: ExternalSample | null, ctx: DiagnoseContext): string => [
+const oomHeapUser = (ctx: DiagnoseContext): string => [
   `Le traitement a dépassé la limite de mémoire (tas JavaScript) allouée à la tâche (${ctx.maxHeapMB}MB).`,
-  memLineFr(lastMem, ctx.maxHeapMB),
-  ...extLinesFr(lastExt),
   'Contactez un administrateur pour augmenter la limite ou réduire la concurrence.'
 ].join('\n')
 
-const oomHostAdmin = (lastMem: MemorySample | null, lastExt: ExternalSample | null, ctx: DiagnoseContext): string => [
+const oomHostAdmin = (): string => [
   'Task killed by the OS (SIGKILL, likely container OOM-killer).',
-  ...extLines(lastExt),
-  memLine(lastMem, ctx.maxHeapMB),
   'The container memory limit was probably exceeded.',
   'Mitigation: raise the container memory limit, or lower WORKER_CONCURRENCY.'
 ].join('\n')
 
-const oomHostUser = (lastMem: MemorySample | null, lastExt: ExternalSample | null, ctx: DiagnoseContext): string => [
+const oomHostUser = (): string => [
   'Le traitement a été terminé par le système (signal SIGKILL), vraisemblablement à cause d\'un dépassement de la mémoire allouée au conteneur.',
-  ...extLinesFr(lastExt),
-  memLineFr(lastMem, ctx.maxHeapMB),
   'Contactez un administrateur pour augmenter la limite mémoire du conteneur ou réduire la concurrence.'
 ].join('\n')
+
+// heap OOM: child-reported heap is primary, external RSS secondary.
+const oomHeapMetricsAdmin = (lastMem: MemorySample | null, lastExt: ExternalSample | null, ctx: DiagnoseContext): string =>
+  [memLine(lastMem, ctx.maxHeapMB), ...extLines(lastExt)].join('\n')
+const oomHeapMetricsUser = (lastMem: MemorySample | null, lastExt: ExternalSample | null, ctx: DiagnoseContext): string =>
+  [memLineFr(lastMem, ctx.maxHeapMB), ...extLinesFr(lastExt)].join('\n')
+
+// host OOM: external (parent-observed) RSS is primary, child sample secondary.
+const oomHostMetricsAdmin = (lastMem: MemorySample | null, lastExt: ExternalSample | null, ctx: DiagnoseContext): string =>
+  [...extLines(lastExt), memLine(lastMem, ctx.maxHeapMB)].join('\n')
+const oomHostMetricsUser = (lastMem: MemorySample | null, lastExt: ExternalSample | null, ctx: DiagnoseContext): string =>
+  [...extLinesFr(lastExt), memLineFr(lastMem, ctx.maxHeapMB)].join('\n')
 
 const unknownUser = (code: number | null, signal: NodeJS.Signals | null, stderr: string): string => {
   const tail = buildErrorMessageFromStderr(stderr, '')
@@ -98,50 +107,53 @@ export const diagnoseExit = (
   ctx: DiagnoseContext
 ): ExitDiagnosis => {
   if (code === 0 && signal === null) {
-    return { category: 'success', adminMessage: '', userMessage: '' }
+    return { category: 'success', adminMessage: '', userMessage: '', adminMetrics: '', userMetrics: '' }
   }
   if (signal === 'SIGTERM' || code === 143) {
-    return { category: 'sigterm', adminMessage: '', userMessage: '' }
+    return { category: 'sigterm', adminMessage: '', userMessage: '', adminMetrics: '', userMetrics: '' }
   }
   // Worker-initiated forceful kill (grace-period escalation). Surface as
   // 'sigterm' so the run lands in status='killed' and we don't blame the
   // OOM-killer. killRun already logs the escalation on the worker side.
   if (ctx.selfKilled && (signal === 'SIGKILL' || code === 137)) {
-    return { category: 'sigterm', adminMessage: '', userMessage: '' }
+    return { category: 'sigterm', adminMessage: '', userMessage: '', adminMetrics: '', userMetrics: '' }
   }
   if (signal === 'SIGKILL' || code === 137) {
     return {
       category: 'oom-host',
-      adminMessage: oomHostAdmin(lastMem, lastExt, ctx),
-      userMessage: oomHostUser(lastMem, lastExt, ctx)
+      adminMessage: oomHostAdmin(),
+      userMessage: oomHostUser(),
+      adminMetrics: oomHostMetricsAdmin(lastMem, lastExt, ctx),
+      userMetrics: oomHostMetricsUser(lastMem, lastExt, ctx)
     }
   }
   if (code === 134 || signal === 'SIGABRT') {
     return {
       category: 'oom-heap',
-      adminMessage: oomHeapAdmin(lastMem, lastExt, ctx),
-      userMessage: oomHeapUser(lastMem, lastExt, ctx)
+      adminMessage: oomHeapAdmin(ctx),
+      userMessage: oomHeapUser(ctx),
+      adminMetrics: oomHeapMetricsAdmin(lastMem, lastExt, ctx),
+      userMetrics: oomHeapMetricsUser(lastMem, lastExt, ctx)
     }
   }
   if (code === 1) {
     // Plugin error: the stderr text is the plugin's own error message — keep it
-    // verbatim in both fields (plugin owns its language). Append external
-    // resource metrics in the appropriate language for each field.
+    // verbatim in both fields (plugin owns its language). Resource metrics are
+    // reported separately so they don't pollute the plugin's own message.
     const base = buildErrorMessageFromStderr(stderr, 'child process exited with code 1')
-    const adminMsg = [base, ...extLines(lastExt)].filter(Boolean).join('\n')
-    const userMsg = [base, ...extLinesFr(lastExt)].filter(Boolean).join('\n')
     return {
       category: 'plugin-error',
-      adminMessage: adminMsg,
-      userMessage: userMsg
+      adminMessage: base,
+      userMessage: base,
+      adminMetrics: extLines(lastExt).join('\n'),
+      userMetrics: extLinesFr(lastExt).join('\n')
     }
   }
   return {
     category: 'unknown',
-    adminMessage: [
-      `Task ended unexpectedly (code=${code}, signal=${signal ?? 'null'}). ${buildErrorMessageFromStderr(stderr, '')}`.trim(),
-      ...extLines(lastExt)
-    ].filter(Boolean).join('\n'),
-    userMessage: [unknownUser(code, signal, stderr), ...extLinesFr(lastExt)].filter(Boolean).join('\n')
+    adminMessage: `Task ended unexpectedly (code=${code}, signal=${signal ?? 'null'}). ${buildErrorMessageFromStderr(stderr, '')}`.trim(),
+    userMessage: unknownUser(code, signal, stderr),
+    adminMetrics: extLines(lastExt).join('\n'),
+    userMetrics: extLinesFr(lastExt).join('\n')
   }
 }

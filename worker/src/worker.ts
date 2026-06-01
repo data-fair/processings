@@ -350,8 +350,10 @@ async function iter (run: Run, freeSlot: number) {
       } else {
         // Admin (English) → ops console; user (French) → run.log (debug level,
         // matching the pre-existing convention for technical failure messages).
-        console.warn(`failure ${processing?.title ?? run.processing.title} > ${run._id} [${diag.category}]`, diag.adminMessage || err.message)
-        await finish(run, diag.userMessage || buildErrorMessageFromStderr(stderr, err.message))
+        // Resource metrics (RSS/CPU/heap) are kept as a separate log entry so
+        // they don't get appended to the human-readable error.
+        console.warn(`failure ${processing?.title ?? run.processing.title} > ${run._id} [${diag.category}]`, [diag.adminMessage || err.message, diag.adminMetrics].filter(Boolean).join('\n'))
+        await finish(run, diag.userMessage || buildErrorMessageFromStderr(stderr, err.message), 'debug', diag.userMetrics || undefined)
         // @test:spy("isFailure")
       }
     } else {
