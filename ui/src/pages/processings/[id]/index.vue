@@ -54,10 +54,19 @@
             {{ timezoneLabel(node.data.timeZone) }}
           </template>
         </vjsf>
-        <v-skeleton-loader
-          v-else-if="pluginFetchPending && !pluginBroken"
-          type="heading, list-item-three-line, list-item-three-line, list-item-two-line, actions"
-        />
+
+        <!-- VJSF Skeleton Loader -->
+        <div v-else-if="pluginFetchPending && !pluginBroken">
+          <v-row class="mb-4">
+            <v-col md="8">
+              <v-skeleton-loader type="heading, text, text" />
+            </v-col>
+            <v-col md="4">
+              <v-skeleton-loader type="list-item-avatar, list-item-avatar-two-line" />
+            </v-col>
+          </v-row>
+          <v-skeleton-loader type="heading, text@2" />
+        </div>
       </v-form>
     </v-defaults-provider>
     <processing-runs
@@ -74,7 +83,6 @@
         :can-admin="canAdminProcessing"
         :can-exec="canExecProcessing"
         :edited="edited"
-        :is-small="false"
         :documentation="plugin?.documentation"
         :plugin-broken="pluginBroken"
         @triggered="runs && runs.refresh()"
