@@ -65,7 +65,6 @@
         :admin-mode="!!session.state.user?.adminMode"
         :can-admin="canAdmin"
         :facets="processingsFetch.data.value.facets"
-        :is-small="true"
         :owner-filter="ownerFilter"
         :processings="displayProcessings"
       />

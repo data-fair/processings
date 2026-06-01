@@ -7,7 +7,7 @@
     <template v-if="runs">
       <v-list class="py-0">
         <template
-          v-for="run in runs.data.value?.results"
+          v-for="run in displayRuns"
           :key="run._id"
         >
           <v-divider />
@@ -44,19 +44,6 @@ const props = defineProps({
 const ws = useWS('/processings/api/')
 const wsChannel = computed(() => `processings/${props.processing._id}/run-patch`)
 
-function onRunPatch (runPatch: { _id: string, patch: Record<string, any> }) {
-  console.log('message from', wsChannel.value, runPatch)
-  if (!runs.data.value) return
-  const matchingRun = runs.data.value.results.find(run => run._id === runPatch._id)
-  if (!matchingRun) {
-    console.log('received info from WS about an unknown run, refresh list')
-    return runs.refresh()
-  }
-  for (const key of Object.keys(runPatch.patch)) {
-    matchingRun[key] = runPatch.patch[key]
-  }
-}
-
 const size = 10
 const page = ref(1)
 
@@ -73,6 +60,17 @@ const runs = useFetch<{
   })),
   watch: false
 })
+
+const displayRuns = ref<Run[]>([])
+watch(() => runs.data.value?.results, (results) => {
+  displayRuns.value = results ?? []
+}, { immediate: true })
+
+function onRunPatch (runPatch: { _id: string, patch: Record<string, any> }) {
+  const matchingRun = displayRuns.value.find(run => run._id === runPatch._id)
+  if (!matchingRun) return runs.refresh()
+  Object.assign(matchingRun, runPatch.patch)
+}
 
 onMounted(async () => {
   ws?.subscribe(wsChannel.value, onRunPatch)
