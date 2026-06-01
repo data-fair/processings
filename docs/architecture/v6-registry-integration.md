@@ -187,6 +187,29 @@ For v6.0, list plugins flat with a search box. No sub-categories.
 
 Same-domain deployment: registry sits on the same host at `/registry`, so the browser call to `/registry/api/v1/artefacts?...` is same-origin. No CORS configuration is required and the existing SimpleDirectory session cookie is naturally sent. The dev environment must mirror this — see E.1.
 
+#### C.x Plugin metadata under processing permission
+
+The picker above (a creation flow for owners/admins) keeps its direct
+same-origin `/registry/api/v1/artefacts` list call. But **viewing an existing
+processing** must not require the viewer to have their own registry grant: a
+user can hold an individual `read`/`exec` permission on a processing they don't
+own. So plugin **metadata** for an existing processing is fetched through the
+processings API, not directly from `/registry`:
+
+- `GET /api/v1/processings/:id/plugin` — gates on the caller's processing
+  permission (`getUserResourceProfile` ∈ `{admin, exec, read}`), then fetches
+  `GET /api/v1/artefacts/:pluginId` from the private registry with
+  `x-account: <processing.owner>`. Registry access is therefore evaluated
+  against the **owner**, mirroring `/:id/plugin-config-schema`. Registry
+  403/404 are translated and passed through (the UI shows its "plugin broken"
+  banner on those); other failures become 502.
+- UI: `pages/processings/[id]/index.vue` and `usePluginFetch`
+  (`processing-card.vue`) call this endpoint instead of `/registry/...`.
+
+Thumbnails are still only rendered in the picker (`new.vue`), so no
+processing-scoped thumbnail proxy exists yet; if a thumbnail is ever shown on a
+permitted-but-ungranted viewer's card/detail it would need the same treatment.
+
 #### C.2 Drop admin pages and nav
 - Delete `ui/src/pages/admin/plugins.vue` and matching route in `ui/src/router/`.
 - Drop the `/admin/plugins` nav entry.
