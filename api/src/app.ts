@@ -35,20 +35,14 @@ if (process.env.NODE_ENV === 'development') {
   app.use('/api/v1/test-env', (await import('./misc/routers/test-env.ts')).default)
 }
 
-if (process.env.NODE_ENV !== 'development') {
-  // in development the UI is served by the Vite dev server through nginx
-  const cspDirectives = { ...defaultNonceCSPDirectives }
-  // necessary to use vjsf without pre-compilation
-  cspDirectives['script-src'] = "'unsafe-eval' " + defaultNonceCSPDirectives['script-src']
-  // necessary for vjsf to fetch remote services
-  cspDirectives['connect-src'] = "'self' https:"
-  app.use(await createSpaMiddleware(resolve(import.meta.dirname, '../../ui/dist'), uiConfig, {
-    csp: {
-      nonce: true,
-      header: cspDirectives
-    },
-    privateDirectoryUrl: config.privateDirectoryUrl
-  }))
-}
+const cspDirectives = { ...defaultNonceCSPDirectives }
+// necessary to use vjsf without pre-compilation
+cspDirectives['script-src'] = "'unsafe-eval' " + defaultNonceCSPDirectives['script-src']
+// necessary for vjsf to fetch remote services
+cspDirectives['connect-src'] = "'self' https:"
+app.use(await createSpaMiddleware(resolve(import.meta.dirname, '../../ui/dist'), uiConfig, {
+  csp: { nonce: true, header: cspDirectives },
+  privateDirectoryUrl: config.privateDirectoryUrl
+}))
 
 app.use(errorHandler)
