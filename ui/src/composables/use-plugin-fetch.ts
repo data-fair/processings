@@ -1,5 +1,7 @@
+import { $apiPath } from '../context'
+
 // Subset of registry's Artefact shape that the UI uses. The artefact `_id` is
-// exactly what we store on `processing.plugin`, so we fetch the artefact by that.
+// exactly what we store on `processing.plugin`.
 export interface RegistryArtefact {
   _id: string
   name: string
@@ -16,24 +18,24 @@ export interface RegistryArtefact {
 const fetches: Record<string, ReturnType<typeof useFetch<RegistryArtefact>>> = {}
 
 /**
- * Fetch artefact metadata from the registry for a processing's `plugin`
- * (the registry artefact id).
+ * Fetch a processing's plugin metadata through the processings API
+ * (`GET /processings/:id/plugin`). The API checks the caller's permission on
+ * the processing, then fetches the artefact from the registry as the owner —
+ * so a user with only an individual permission still sees the plugin even
+ * without a personal registry grant.
  *
  * Errors (404 deleted, 403 no access) are NOT broadcast as a global ui
- * notification — callers read `error.value` and render their own inline
- * state. See processing-card.vue and pages/processings/[id]/index.vue.
- *
- * Same-domain assumption: registry is always mounted at `/registry` of the
- * current domain. The session cookie is sent automatically.
+ * notification — callers read `error.value` and render their own inline state.
+ * See processing-card.vue and pages/processings/[id]/index.vue.
  */
-export const usePluginFetch = (pluginId: string) => {
-  if (!fetches[pluginId]) {
-    fetches[pluginId] = useFetch<RegistryArtefact>(
-      `/registry/api/v1/artefacts/${encodeURIComponent(pluginId)}`,
+export const usePluginFetch = (processingId: string) => {
+  if (!fetches[processingId]) {
+    fetches[processingId] = useFetch<RegistryArtefact>(
+      `${$apiPath}/processings/${encodeURIComponent(processingId)}/plugin`,
       { notifError: false }
     )
   }
-  return fetches[pluginId]
+  return fetches[processingId]
 }
 
 export default usePluginFetch

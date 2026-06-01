@@ -14,6 +14,7 @@ import eventsQueue from '@data-fair/lib-node/events-queue.js'
 import { reqOrigin, session } from '@data-fair/lib-express/index.js'
 import { ensureArtefact } from '@data-fair/lib-node-registry'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
+import { axiosBuilder } from '@data-fair/lib-node/axios.js'
 import { createNext } from '@data-fair/processings-shared/runs.ts'
 import { importPluginModule } from '@data-fair/processings-shared/plugin-load.ts'
 import { applyProcessing, deleteProcessing } from '../runs/service.ts'
@@ -46,18 +47,36 @@ const ajv = ajvFormats(new Ajv({ strict: false, addUsedSchema: false }))
  * the schema extracted into a standalone file. Returns `undefined` when
  * neither source carries one.
  */
+/**
+ * The registry evaluates artefact access against an `x-account` header. For a
+ * processing that is always the OWNER — anyone allowed to see the processing
+ * inherits the owner's plugin access transitively.
+ */
+const registryAccount = (owner: Processing['owner']) => ({
+  type: owner.type,
+  id: owner.id,
+  ...(owner.department ? { department: owner.department } : {})
+})
+
+/**
+ * `lib-express/error-handler.js` collapses every AxiosRequestError to 500, so
+ * we translate registry failures into user-facing French messages at the
+ * boundary. 403/404 keep their status (the UI relies on them to show its
+ * "plugin broken" banner); anything else is a registry outage → 502.
+ */
+const translateRegistryError = (err: any, processing: Pick<Processing, 'plugin' | 'owner'>) => {
+  const status = err?.status ?? err?.statusCode
+  const ownerLabel = processing.owner.name ?? processing.owner.id
+  if (status === 403) return httpError(403, `Le compte ${ownerLabel} n'a pas accès au plugin ${processing.plugin}.`)
+  if (status === 404) return httpError(404, `Le plugin ${processing.plugin} est introuvable dans le registre.`)
+  return httpError(502, 'Le registre des plugins est temporairement indisponible.')
+}
+
 async function ensurePluginAndReadSchema (processing: Pick<Processing, 'plugin' | 'owner'>) {
-  const account = {
-    type: processing.owner.type,
-    id: processing.owner.id,
-    ...(processing.owner.department ? { department: processing.owner.department } : {})
-  }
+  const account = registryAccount(processing.owner)
   // `processing.plugin` is the registry artefact id, passed through as-is.
   // lib-node downloads + extracts the tarball into registryCacheDir on cache
   // miss; the cache is invalidated when the artefact's dataUpdatedAt bumps.
-  //
-  // Axios errors carry `status` but `lib-express/error-handler.js` collapses
-  // every AxiosRequestError to 500 — so we translate at the boundary here.
   let ensured
   try {
     ensured = await ensureArtefact({
@@ -68,15 +87,7 @@ async function ensurePluginAndReadSchema (processing: Pick<Processing, 'plugin' 
       account
     })
   } catch (err: any) {
-    const status = err?.status ?? err?.statusCode
-    const ownerLabel = processing.owner.name ?? processing.owner.id
-    if (status === 403) {
-      throw httpError(403, `Le compte ${ownerLabel} n'a pas accès au plugin ${processing.plugin}.`)
-    }
-    if (status === 404) {
-      throw httpError(404, `Le plugin ${processing.plugin} est introuvable dans le registre.`)
-    }
-    throw httpError(502, 'Le registre des plugins est temporairement indisponible.')
+    throw translateRegistryError(err, processing)
   }
   const schemaPath = path.join(ensured.path, 'processing-config-schema.json')
   let processingConfigSchema: Record<string, unknown> | undefined
@@ -90,6 +101,28 @@ async function ensurePluginAndReadSchema (processing: Pick<Processing, 'plugin' 
     }
   }
   return { ensured, processingConfigSchema }
+}
+
+/**
+ * Fetch plugin artefact METADATA (title, description, thumbnail ref, ...) from
+ * the registry on behalf of the processing's owner. Lightweight — unlike
+ * `ensureArtefact` it does not download the tarball. Used by the `/:id/plugin`
+ * endpoint so individually-permitted viewers don't need their own plugin grant.
+ */
+async function fetchPluginArtefact (processing: Pick<Processing, 'plugin' | 'owner'>) {
+  const ax = axiosBuilder({
+    baseURL: config.privateRegistryUrl,
+    headers: {
+      'x-secret-key': config.secretKeys.registry,
+      'x-account': JSON.stringify(registryAccount(processing.owner))
+    }
+  })
+  try {
+    const res = await ax.get(`/api/v1/artefacts/${encodeURIComponent(processing.plugin)}`)
+    return res.data
+  } catch (err) {
+    throw translateRegistryError(err, processing)
+  }
 }
 
 const sensitiveParts = ['permissions', 'webhookKey', 'config']
@@ -463,6 +496,20 @@ router.get('/:id/plugin-config-schema', async (req, res, next) => {
       )
     }
     res.status(200).json(processingConfigSchema)
+  } catch (err) { next(err) }
+})
+
+// Get the plugin's registry metadata for this processing. Permission is checked
+// against the requesting user; the registry fetch runs as the owner so a viewer
+// with only an individual permission inherits the owner's plugin access.
+router.get('/:id/plugin', async (req, res, next) => {
+  try {
+    const sessionState = await session.reqAuthenticated(req)
+    const processing = await mongo.processings.findOne({ _id: req.params.id })
+    if (!processing) return res.status(404).send()
+    if (!['admin', 'exec', 'read'].includes(permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState) ?? '')) return res.status(403).send()
+    const artefact = await fetchPluginArtefact(processing)
+    res.status(200).json(artefact)
   } catch (err) { next(err) }
 })
 

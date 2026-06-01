@@ -191,7 +191,7 @@ const props = defineProps({
   showOwner: Boolean
 })
 
-const pluginFetch = usePluginFetch(props.processing.plugin)
+const pluginFetch = usePluginFetch(props.processing._id)
 
 </script>
 
