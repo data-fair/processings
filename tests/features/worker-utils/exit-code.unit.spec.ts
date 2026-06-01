@@ -42,11 +42,11 @@ test('code 143 alone is sigterm', () => {
 test('SIGKILL -> oom-host with English adminMessage and French userMessage', () => {
   const d = diagnoseExit(null, 'SIGKILL', '', sample, null, ctx)
   expect(d.category).toBe('oom-host')
-  // English ops message
+  // English ops message (cause only, metrics live in adminMetrics)
   expect(d.adminMessage).toContain('Task killed by the OS')
   expect(d.adminMessage).toContain('SIGKILL')
-  expect(d.adminMessage).toContain('heap used: 723.0MB')
-  expect(d.adminMessage).toContain('RSS: 812.0MB')
+  expect(d.adminMetrics).toContain('heap used: 723.0MB')
+  expect(d.adminMetrics).toContain('RSS: 812.0MB')
   // French user-facing message in run log
   expect(d.userMessage).toMatch(/tué|terminé par le système/i)
   expect(d.userMessage).toContain('SIGKILL')
@@ -73,7 +73,7 @@ test('code 137 with selfKilled=true -> sigterm category', () => {
 test('code 134 -> oom-heap with mention of max heap config (English admin + French user)', () => {
   const d = diagnoseExit(134, null, 'FATAL ERROR: JavaScript heap out of memory', sample, null, ctx)
   expect(d.category).toBe('oom-heap')
-  // English admin message
+  // English admin message (cause + mitigation)
   expect(d.adminMessage).toContain('exit code 134')
   expect(d.adminMessage).toContain('WORKER_TASK_MAX_HEAP_MB=768')
   expect(d.adminMessage).toContain('Concurrent tasks at exit: 3 / concurrency 4')
@@ -100,7 +100,7 @@ test('SIGABRT -> oom-heap', () => {
 
 test('null lastMem produces "no memory sample was reported before exit"', () => {
   const d = diagnoseExit(134, null, '', null, null, ctx)
-  expect(d.adminMessage).toContain('no memory sample was reported before exit')
+  expect(d.adminMetrics).toContain('no memory sample was reported before exit')
 })
 
 test('code 1 -> plugin-error using stderr (same message both fields, plugin owns language)', () => {
@@ -123,59 +123,59 @@ test('null code, null signal -> unknown', () => {
   expect(d.category).toBe('unknown')
 })
 
-test('oom-host with lastExt includes external RSS and CPU ratio in admin', () => {
+test('oom-host with lastExt includes external RSS and CPU ratio in adminMetrics', () => {
   const d = diagnoseExit(null, 'SIGKILL', '', sample, ext, ctx)
   expect(d.category).toBe('oom-host')
-  expect(d.adminMessage).toMatch(/Last seen RSS \(external\):\s*815\.0MB/)
-  expect(d.adminMessage).toMatch(/CPU usage \(external\):\s*0\.92/)
+  expect(d.adminMetrics).toMatch(/Last seen RSS \(external\):\s*815\.0MB/)
+  expect(d.adminMetrics).toMatch(/CPU usage \(external\):\s*0\.92/)
 })
 
-test('oom-host without lastExt falls back to legacy message', () => {
+test('oom-host without lastExt keeps cause clean and reports child RSS in metrics', () => {
   const d = diagnoseExit(null, 'SIGKILL', '', sample, null, ctx)
   expect(d.category).toBe('oom-host')
-  expect(d.adminMessage).not.toContain('external')
   expect(d.adminMessage).toContain('Task killed by the OS')
-  expect(d.adminMessage).toContain('RSS: 812.0MB')
+  expect(d.adminMetrics).toContain('RSS: 812.0MB')
 })
 
-test('oom-heap with both lastMem and lastExt renders heap primary, external secondary', () => {
+test('oom-heap with both lastMem and lastExt renders heap primary, external secondary in metrics', () => {
   const d = diagnoseExit(134, 'SIGABRT', '', sample, ext, ctx)
   expect(d.category).toBe('oom-heap')
   // Primary: child-reported heap (V8-internal)
-  expect(d.adminMessage).toContain('heap used: 723.0MB')
+  expect(d.adminMetrics).toContain('heap used: 723.0MB')
   // Secondary: external RSS line
-  expect(d.adminMessage).toMatch(/Last seen RSS \(external\):\s*815\.0MB/)
+  expect(d.adminMetrics).toMatch(/Last seen RSS \(external\):\s*815\.0MB/)
 })
 
-test('plugin-error with lastExt appends external line', () => {
+test('plugin-error reports stderr as message and external line in metrics', () => {
   const d = diagnoseExit(1, null, 'EACCES: permission denied', null, ext, ctx)
   expect(d.category).toBe('plugin-error')
-  expect(d.adminMessage).toMatch(/Last seen RSS \(external\):\s*815\.0MB/)
+  expect(d.adminMessage).toContain('EACCES: permission denied')
+  expect(d.adminMetrics).toMatch(/Last seen RSS \(external\):\s*815\.0MB/)
 })
 
 test('lastExt with null cpuRatio omits CPU usage line', () => {
   const d = diagnoseExit(null, 'SIGKILL', '', sample, { ...ext, cpuRatio: null }, ctx)
-  expect(d.adminMessage).toMatch(/Last seen RSS \(external\):\s*815\.0MB/)
-  expect(d.adminMessage).not.toMatch(/CPU usage/)
+  expect(d.adminMetrics).toMatch(/Last seen RSS \(external\):\s*815\.0MB/)
+  expect(d.adminMetrics).not.toMatch(/CPU usage/)
 })
 
-test('oom-host with lastExt includes French external RSS and CPU usage in userMessage', () => {
+test('oom-host with lastExt includes French external RSS and CPU usage in userMetrics', () => {
   const d = diagnoseExit(null, 'SIGKILL', '', sample, ext, ctx)
-  expect(d.userMessage).toMatch(/Dernier RSS observé \(parent\)\s*:\s*815\.0MB/)
-  expect(d.userMessage).toMatch(/Utilisation CPU \(parent\)\s*:\s*0\.92/)
+  expect(d.userMetrics).toMatch(/Dernier RSS observé \(parent\)\s*:\s*815\.0MB/)
+  expect(d.userMetrics).toMatch(/Utilisation CPU \(parent\)\s*:\s*0\.92/)
 })
 
-test('lastExt with null cpuRatio omits CPU usage line from French userMessage', () => {
+test('lastExt with null cpuRatio omits CPU usage line from French userMetrics', () => {
   const d = diagnoseExit(null, 'SIGKILL', '', sample, { ...ext, cpuRatio: null }, ctx)
-  expect(d.userMessage).toMatch(/Dernier RSS observé \(parent\)/)
-  expect(d.userMessage).not.toMatch(/Utilisation CPU/)
+  expect(d.userMetrics).toMatch(/Dernier RSS observé \(parent\)/)
+  expect(d.userMetrics).not.toMatch(/Utilisation CPU/)
 })
 
-test('oom-host renders external RSS BEFORE in-process memLine (external is primary)', () => {
+test('oom-host renders external RSS BEFORE in-process memLine in metrics (external is primary)', () => {
   const d = diagnoseExit(null, 'SIGKILL', '', sample, ext, ctx)
-  const extIdx = d.adminMessage.indexOf('Last seen RSS (external)')
-  const memIdx = d.adminMessage.indexOf('Last memory sample')
-  expect(extIdx).toBeGreaterThan(0)
+  const extIdx = d.adminMetrics.indexOf('Last seen RSS (external)')
+  const memIdx = d.adminMetrics.indexOf('Last memory sample')
+  expect(extIdx).toBeGreaterThanOrEqual(0)
   expect(memIdx).toBeGreaterThan(0)
   expect(extIdx).toBeLessThan(memIdx)
 })

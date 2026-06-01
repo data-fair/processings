@@ -57,7 +57,7 @@ export const running = async (run: Run) => {
 /**
  * Update the database when a run is finished (edit status, log, duration, etc.)
  */
-export const finish = async (run: Run, errorMessage: string | undefined = undefined, errorLogType: string = 'debug') => {
+export const finish = async (run: Run, errorMessage: string | undefined = undefined, errorLogType: string = 'debug', metricsMessage: string | undefined = undefined) => {
   const query: Record<string, any> = {
     $set: {
       status: 'finished',
@@ -67,7 +67,13 @@ export const finish = async (run: Run, errorMessage: string | undefined = undefi
   if (run.status === 'killed') query.$set.status = 'killed'
   else if (errorMessage) {
     query.$set.status = 'error'
-    query.$push = { log: { type: errorLogType, msg: errorMessage, date: new Date().toISOString() } }
+    const now = Date.now()
+    // The optional metrics line is pushed as a distinct (debug) entry so it
+    // stays independent from the error message. Offset its date by 1ms so the
+    // two entries keep distinct keys (the UI keys log entries by date).
+    const logs = [{ type: errorLogType, msg: errorMessage, date: new Date(now).toISOString() }]
+    if (metricsMessage) logs.push({ type: 'debug', msg: metricsMessage, date: new Date(now + 1).toISOString() })
+    query.$push = { log: { $each: logs } }
   }
   let lastRun = (await mongo.runs.findOneAndUpdate(
     { _id: run._id },
