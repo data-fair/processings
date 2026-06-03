@@ -184,7 +184,7 @@ const prepareProcessing = async (processing: Processing) => {
   // state is what the UI banner already shows for deleted plugins.
   if (!processing.config) return
   const { ensured } = await ensurePluginAndReadSchema(processing)
-  const plugin = await importPluginModule<{ prepare?: PrepareFunction }>(ensured.path, { cacheBust: true })
+  const plugin = await importPluginModule<{ prepare?: PrepareFunction }>(ensured.path)
   if (!(plugin.prepare && typeof plugin.prepare === 'function')) return
 
   // Decipher the actuals secrets if they are present

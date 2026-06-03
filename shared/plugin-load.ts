@@ -8,13 +8,12 @@ import fs from 'fs-extra'
  * type-stripping (main: "index.ts"). Either way, callers should not hard-code
  * an extension — read main and trust it.
  *
- * `cacheBust` appends a query string so the same module path can be re-imported
- * fresh in the same process (used by the API's `prepare` flow, which may run
- * twice in one save).
+ * No cache-busting is needed: lib-node-registry (>=0.7.0) extracts each plugin
+ * version into its own directory, so an updated plugin resolves to a fresh URL
+ * and Node's module registry reloads the whole graph naturally.
  */
 export const importPluginModule = async <T = unknown>(
-  pluginDir: string,
-  opts: { cacheBust?: boolean } = {}
+  pluginDir: string
 ): Promise<T> => {
   const pkg = await fs.readJson(path.join(pluginDir, 'package.json'))
   const mainRel = typeof pkg.main === 'string' && pkg.main.length > 0 ? pkg.main : 'index.js'
@@ -22,6 +21,5 @@ export const importPluginModule = async <T = unknown>(
   if (!(await fs.pathExists(mainAbs))) {
     throw new Error(`fichier source manquant : ${mainAbs}`)
   }
-  const url = opts.cacheBust ? `${mainAbs}?imported=${Date.now()}` : mainAbs
-  return (await import(url)) as T
+  return (await import(mainAbs)) as T
 }
