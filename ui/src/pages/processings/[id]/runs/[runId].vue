@@ -61,7 +61,7 @@
 
 <script setup lang="ts">
 import type { Run } from '#api/types'
-import { useFollowBottom } from '~/composables/use-follow-bottom'
+import { useAutoScrollBottom } from '@data-fair/lib-vue/auto-scroll-bottom.js'
 
 const { t } = useI18n()
 const route = useRoute<'/processings/[id]/runs/[runId]'>()
@@ -99,7 +99,8 @@ const steps = computed(() => {
   return steps
 })
 
-const { following } = useFollowBottom(
+const { following } = useAutoScrollBottom(
+  window,
   () => run.value?.log.length ?? 0,
   () => run.value?.status === 'running'
 )
