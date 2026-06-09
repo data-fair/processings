@@ -251,6 +251,7 @@ const processingSchema = computed(() => {
     delete schema.properties.permissions
     delete schema.properties.config
     delete schema.required
+    if (!processing.value.scheduling?.length) delete schema.properties.scheduling
   } else {
     schema.required = ['title', 'scheduling', 'config', 'permissions']
     schema.properties.config.required = schema.properties.config.required?.filter((s: any) => s !== 'datasetMode')
