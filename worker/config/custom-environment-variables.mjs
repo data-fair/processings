@@ -8,7 +8,6 @@ export default {
   defaultLimits: {
     processingsSeconds: 'DEFAULT_LIMITS_PROCESSINGS_SECONDS'
   },
-  getFromPrivateDataFairUrl: 'GET_FROM_PRIVATE_DATA_FAIR_URL',
   mails: {
     transport: {
       __name: 'MAILS_TRANSPORT',
