@@ -267,7 +267,10 @@ async function iter (run: Run, freeSlot: number) {
     // Run a task in a dedicated child process for extra resiliency to fatal memory exceptions
     const child = spawn('node', [
       `--max-old-space-size=${config.worker.task.maxHeapMB}`,
-      '--disable-warning=ExperimentalWarning',
+      // suppress all Node warnings in task subprocesses: their stderr is surfaced to
+      // processing admins in run logs, where Node warnings (typeless package.json,
+      // experimental features, etc.) are never actionable and only add noise
+      '--no-warnings',
       './src/task/index.ts', run._id, processing._id
     ], {
       env: process.env,

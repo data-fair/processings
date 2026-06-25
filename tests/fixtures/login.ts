@@ -10,6 +10,13 @@ async function performLogin (page: any, context: any, baseUrl: string, url: stri
   await page.getByLabel('Adresse mail').fill(`${user}@test.com`)
   await page.getByLabel('Mot de passe').fill(password)
   await page.getByRole('button', { name: 'Se connecter' }).click()
+  // Superadmin logins hit a simple-directory "Mode administration" interstitial
+  // asking whether to enable admin mode for the session. e2e specs never request
+  // admin mode (goToWithAuth takes no adminMode flag), so choose a normal session
+  // to let the redirect to fullUrl proceed.
+  if (user === 'test_superadmin') {
+    await page.getByRole('button', { name: 'Session Normale' }).click()
+  }
   await page.waitForURL(fullUrl, { timeout: 10000 })
   const cookies = await context.cookies()
   cookieCache.set(user, cookies)
