@@ -104,6 +104,7 @@ import '@data-fair/frame/lib/d-frame.js'
 
 const { t } = useI18n()
 const router = useRouter()
+const session = useSessionAuthenticated()
 const processingsProps = defineProps<{
   adminMode: boolean,
   canAdmin: boolean,
@@ -151,8 +152,15 @@ const eventsSubscribeUrl = computed(() => {
     { key: 'processings:processing-log-error', title: t('topicLogError') },
     { key: 'processings:processing-disabled', title: t('topicDisabled') }
   ]
+  // Department-scoped accounts only subscribe to their own department, while
+  // root org accounts use the :* wildcard to receive events from every
+  // department of the org (root + departments), avoiding cross-department leakage.
+  const { type, id, department } = session.state.account
+  let sender = `${type}:${id}`
+  if (department) sender += ':' + department
+  else if (type === 'organization') sender += ':*'
   const urlTemplate = window.parent.location.origin + '/data-fair/processings/{processingId}'
-  return `/events/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false`
+  return `/events/embed/subscribe?key=${encodeURIComponent(topics.map(t => t.key).join(','))}&title=${encodeURIComponent(topics.map(t => t.title).join(','))}&url-template=${encodeURIComponent(urlTemplate)}&register=false&sender=${encodeURIComponent(topics.map(() => sender).join(','))}`
 })
 
 const statusesItems = computed(() => {
