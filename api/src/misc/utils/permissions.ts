@@ -51,10 +51,17 @@ const getOwnerPermissionFilter = (sessionState: SessionStateAuthenticated, owner
   }
   if (owner.department) filter['owner.department'] = owner.department
   if (sessionState.user.adminMode || ['admin', 'contrib'].includes(getOwnerRole(sessionState, owner) || '')) return filter
-  const or: Array<{ [key: string]: any }> = [{ 'target.type': 'userEmail', 'target.email': sessionState.user.email }]
+  const or: Array<{ [key: string]: any }> = []
+  // Only match by email when the session actually has one: a non-human identity / api key can
+  // have an absent email, which the mongo driver (ignoreUndefined: true) would drop, collapsing
+  // this clause to { 'target.type': 'userEmail' } — matching every email-targeted permission.
+  if (sessionState.user.email) or.push({ 'target.type': 'userEmail', 'target.email': sessionState.user.email })
   if (sessionState.account.type === 'organization') {
     or.push({ 'target.type': 'partner', 'target.organization.id': sessionState.account.id, 'target.roles': sessionState.accountRole })
   }
+  // no email and no org partner role: matches no individual permission. Keep a never-matching
+  // clause so $or is never empty (mongo rejects an empty $or) and the filter excludes everything.
+  if (!or.length) or.push({ 'target.type': '__no_match__' })
   filter.permissions = {
     $elemMatch: {
       profile: { $in: ['read', 'exec'] },
@@ -65,7 +72,7 @@ const getOwnerPermissionFilter = (sessionState: SessionStateAuthenticated, owner
 }
 
 const matchPermissionTarget = (target: any, sessionState: SessionStateAuthenticated): boolean => {
-  if (target.type === 'userEmail' && target.email === sessionState.user.email) return true
+  if (target.type === 'userEmail' && sessionState.user.email && target.email === sessionState.user.email) return true
   if (target.type === 'partner' && sessionState.account.type === 'organization' && sessionState.account.id === target.organization.id && target.roles.includes(sessionState.accountRole)) return true
   return false
 }

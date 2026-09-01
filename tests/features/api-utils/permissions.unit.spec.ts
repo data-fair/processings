@@ -138,3 +138,30 @@ test.describe('getOwnerPermissionFilter', () => {
     })
   })
 })
+
+test.describe('emailless principal (nhi / api key) guardrails', () => {
+  // an absent email must never produce an unconstrained { 'target.type': 'userEmail' } branch:
+  // the mongo driver (ignoreUndefined) would drop the undefined email and match every
+  // email-targeted permission.
+  test('emailless personal-account session emits no userEmail branch and a non-empty $or', () => {
+    const s = session({ account: { type: 'user', id: 'u2' }, user: { id: 'u2', adminMode: false, organizations: [] } })
+    const filter = permissions.getOwnerPermissionFilter(s, ownerUser) as any
+    const or = filter.permissions.$elemMatch.$or
+    expect(or.length).toBeGreaterThan(0) // mongo rejects an empty $or
+    for (const branch of or) expect(branch['target.type']).not.toBe('userEmail')
+  })
+
+  test('emailless org session keeps only the partner branch', () => {
+    const s = session({ account: { type: 'organization', id: 'org1' }, accountRole: 'user', user: { id: 'svc1', nhi: 1, adminMode: false, organizations: [{ id: 'org1', role: 'user' }] } })
+    const filter = permissions.getOwnerPermissionFilter(s, ownerOrg) as any
+    const types = filter.permissions.$elemMatch.$or.map((b: any) => b['target.type'])
+    expect(types).not.toContain('userEmail')
+    expect(types).toContain('partner')
+  })
+
+  test('emailless session does not match a userEmail permission whose email is absent', () => {
+    const s = session({ account: { type: 'user', id: 'u2' }, user: { id: 'u2', adminMode: false, organizations: [] } })
+    const perms = [{ profile: 'exec', target: { type: 'userEmail' } }] as any
+    expect(permissions.getUserResourceProfile(ownerUser, perms, s)).toBeUndefined()
+  })
+})
