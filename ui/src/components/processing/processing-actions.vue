@@ -1,4 +1,33 @@
 <template>
+  <!-- Save / cancel unsaved changes -->
+  <template v-if="canAdmin && hasDiff">
+    <v-list-item>
+      <v-btn
+        width="100%"
+        color="accent"
+        variant="flat"
+        :prepend-icon="mdiContentSave"
+        :disabled="!valid"
+        :loading="saving"
+        @click="emit('save')"
+      >
+        {{ t('save') }}
+      </v-btn>
+    </v-list-item>
+    <v-list-item>
+      <v-btn
+        width="100%"
+        color="warning"
+        variant="tonal"
+        :prepend-icon="mdiCancel"
+        :disabled="saving"
+        @click="emit('cancel')"
+      >
+        {{ t('cancel') }}
+      </v-btn>
+    </v-list-item>
+  </template>
+
   <!-- Navigation -->
   <template v-if="linkedDatasets.length">
     <v-list-subheader class="text-uppercase">
@@ -39,7 +68,7 @@
       <v-list-item
         v-if="processingSchema !== null"
         v-bind="props"
-        :disabled="!processing?.active || edited"
+        :disabled="!processing?.active || hasDiff"
         rounded
       >
         <template #prepend>
@@ -50,11 +79,6 @@
         </template>
         <span>{{ t('execute') }}</span>
       </v-list-item>
-      <v-progress-linear
-        v-if="edited"
-        indeterminate
-        color="primary"
-      />
     </template>
     <v-card
       :title="t('executionTitle')"
@@ -327,15 +351,17 @@ import OwnerPick from '@data-fair/lib-vuetify/owner-pick.vue'
 import { Account } from '@data-fair/lib-vue/session'
 import '@data-fair/frame/lib/d-frame.js'
 
-const emit = defineEmits(['triggered'])
+const emit = defineEmits(['triggered', 'save', 'cancel'])
 
-const { canAdmin, canExec, edited, documentation, processing, processingSchema, pluginBroken } = defineProps<{
+const { canAdmin, canExec, hasDiff, valid, saving, documentation, processing, processingSchema, pluginBroken } = defineProps<{
   canAdmin: boolean,
   canExec: boolean,
-  edited: boolean,
+  hasDiff: boolean,
+  valid: boolean | null,
+  saving: boolean,
   documentation?: string,
   processing: Record<string, any>,
-  processingSchema: Record<string, any>,
+  processingSchema?: Record<string, any>,
   pluginBroken?: boolean,
 }>()
 
@@ -378,7 +404,7 @@ const linkedDatasets = computed(() => {
 
 const hasActions = computed(() =>
   canAdmin || canExec ||
-  !!metadata?.documentation ||
+  !!documentation ||
   !!session.state.user?.adminMode ||
   (!!eventsSubscribeUrl.value && canSubscribeNotif.value)
 )
@@ -486,6 +512,7 @@ en:
   webhookDescription: "You can trigger an execution without being connected to the platform by sending an HTTP POST request to this secure URL:"
   delayLabel: Apply a delay in seconds
   cancel: Cancel
+  save: Save
   triggerManually: Trigger manually
   duplicate: Duplicate
   duplicateTitle: Processing duplication
@@ -524,6 +551,7 @@ fr:
   webhookDescription: "Vous pouvez déclencher une exécution sans être connecté à la plateforme en envoyant une requête HTTP POST à cette URL sécurisée :"
   delayLabel: Appliquer un délai en secondes
   cancel: Annuler
+  save: Enregistrer
   triggerManually: Déclencher manuellement
   duplicate: Dupliquer
   duplicateTitle: Duplication du traitement

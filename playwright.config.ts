@@ -37,9 +37,19 @@ export default defineConfig({
       dependencies: ['state-setup'],
     },
     {
+      // Walks the heavy UI routes once so Vite finishes optimizing its lazy
+      // deps before the specs run — a mid-test re-optimization forces a full
+      // page reload and fails a random spec on a timeout.
+      name: 'e2e-warmup',
+      testMatch: /e2e-warmup\.ts/,
+      dependencies: ['state-setup'],
+      timeout: 180_000,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
       name: 'e2e',
       testMatch: /.*\.e2e\.spec\.ts/,
-      dependencies: ['state-setup'],
+      dependencies: ['e2e-warmup'],
       use: { ...devices['Desktop Chrome'] },
     },
   ],
