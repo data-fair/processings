@@ -40,11 +40,11 @@
           v-model="editProcessing"
           :schema="processingSchema"
           :options="vjsfOptions"
-          @update:model-value="patch.execute()"
+          @update:model-value="onEditUpdate"
         >
           <template #activity>
             <processing-activity
-              :processing="Object.assign(processing, editProcessing)"
+              :processing="{ ...processing, ...editProcessing }"
               :plugin-title="plugin?.title?.fr ?? plugin?.title?.en ?? plugin?.name"
             />
           </template>
@@ -82,9 +82,13 @@
         :processing-schema="processingSchema"
         :can-admin="canAdminProcessing"
         :can-exec="canExecProcessing"
-        :edited="edited"
+        :has-diff="hasDiff"
+        :valid="valid"
+        :saving="save.loading.value"
         :documentation="plugin?.documentation"
         :plugin-broken="pluginBroken"
+        @save="save.execute()"
+        @cancel="resetEdit"
         @triggered="runs && runs.refresh()"
       />
     </navigation-right>
@@ -107,6 +111,8 @@ import Vjsf, { type Options as VjsfOptions } from '@koumoul/vjsf'
 import { v2compat } from '@koumoul/vjsf/compat/v2'
 import { toCRON } from '@data-fair/processings-shared/runs.ts'
 import NavigationRight from '@data-fair/lib-vuetify/navigation-right.vue'
+import clone from '@data-fair/lib-utils/clone.js'
+import equal from 'fast-deep-equal'
 
 const { t } = useI18n()
 const route = useRoute<'/processings/[id]/'>()
@@ -121,8 +127,10 @@ for (const tz of timeZones) {
 }
 
 const valid = ref(false)
-const edited = ref(false)
 const editProcessing: Ref<Processing | null> = ref(null)
+// snapshot of the last saved state, as normalized by vjsf (readOnly and
+// additional properties removed), null until vjsf emitted it
+const savedEdit: Ref<Processing | null> = ref(null)
 const processing: Ref<Processing | null> = ref(null)
 const runs: Ref<Record<string, any>> = ref([])
 
@@ -142,7 +150,11 @@ onMounted(async () => {
 
 async function fetchProcessing () {
   processing.value = await $fetch(`/processings/${processingId}`)
-  if (processing.value) editProcessing.value = { ...processing.value }
+  // preserve unsaved edits on server-side refreshes
+  if (processing.value && !hasDiff.value) {
+    savedEdit.value = null
+    editProcessing.value = { ...processing.value }
+  }
 }
 
 /*
@@ -281,20 +293,33 @@ const vjsfOptions = computed<VjsfOptions>(() => ({
   xI18n: true
 }))
 
-let initialPatch = true
-const patch = useAsyncAction(
-  async () => {
-    // the first patch is always triggered because of removed additional properties
-    if (initialPatch) {
-      initialPatch = false
-      return
-    }
+/*
+  Explicit save: edits are kept locally until the user clicks save
+*/
 
+// vjsf always emits once after the model is set, because of removed
+// readOnly/additional properties: that first emit is our saved reference
+const onEditUpdate = () => {
+  if (!savedEdit.value) savedEdit.value = clone(editProcessing.value)
+}
+
+const hasDiff = computed(() => {
+  if (!savedEdit.value || !editProcessing.value) return false
+  return !equal(editProcessing.value, savedEdit.value)
+})
+
+const resetEdit = () => {
+  if (savedEdit.value) editProcessing.value = clone(savedEdit.value)
+}
+
+useLeaveGuard(hasDiff, { locale: session.lang })
+
+const save = useAsyncAction(
+  async () => {
+    if (!canAdminProcessing.value || !hasDiff.value) return
     // TODO: some problem in vjsf makes it necessary to wait when adding a permission for validity to be correct
     await new Promise(resolve => setTimeout(resolve, 1))
-
-    if (!valid.value || !canAdminProcessing.value) return
-    edited.value = true
+    if (!valid.value) return
 
     await $fetch(`/processings/${processingId}`, {
       method: 'PATCH',
@@ -302,10 +327,10 @@ const patch = useAsyncAction(
     })
 
     if (processing.value) Object.assign(processing.value, editProcessing.value)
-
-    edited.value = false
+    savedEdit.value = clone(editProcessing.value)
   },
   {
+    success: t('updateSuccess'),
     error: t('updateError'),
   }
 )
@@ -344,6 +369,7 @@ const timezoneLabel = (timeZone: string) => {
     search: 'Search...'
     timezone: 'Timezone:'
     updateError: Error while updating the processing
+    updateSuccess: Processing saved!
     pluginUnavailableTitle: Plugin unavailable
     pluginUnavailableBody: This processing's plugin has been removed or its access revoked. You can no longer edit or run this processing, but you can still view its run history and delete it.
     configSchemaFetchError: Failed to load the plugin's configuration schema
@@ -359,6 +385,7 @@ const timezoneLabel = (timeZone: string) => {
     search: 'Rechercher...'
     timezone: 'Fuseau horaire :'
     updateError: Erreur lors de la mise à jour du traitement
+    updateSuccess: Traitement enregistré !
     pluginUnavailableTitle: Plugin indisponible
     pluginUnavailableBody: Le plugin de ce traitement a été supprimé ou son accès retiré. Vous ne pouvez plus modifier ni exécuter ce traitement, mais vous pouvez consulter son historique et le supprimer.
     configSchemaFetchError: Échec du chargement du schéma de configuration du plugin

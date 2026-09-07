@@ -42,13 +42,13 @@
     "node": "v24"
   },
   "dependencies": {
-    "@data-fair/lib-types-builder": "^1.11.6"
+    "@data-fair/lib-types-builder": "^1.14.3"
   },
   "devDependencies": {
     "@commitlint/config-conventional": "^20.5.0",
-    "@data-fair/lib-common-types": "^1.10.6",
-    "@data-fair/lib-node": "^2.12.1",
-    "@data-fair/lib-utils": "^1.10.1",
+    "@data-fair/lib-common-types": "^1.23.0",
+    "@data-fair/lib-node": "^2.13.3",
+    "@data-fair/lib-utils": "^1.13.1",
     "@playwright/test": "^1.52.0",
     "@types/config": "^3.3.5",
     "@types/debug": "^4.1.12",
@@ -59,7 +59,7 @@
     "eslint": "^9.35.0",
     "eslint-plugin-vue": "^10.4.0",
     "eslint-plugin-vuetify": "^2.7.2",
-    "form-data": "^4.0.0",
+    "form-data": "^4.0.6",
     "husky": "^9.1.7",
     "neostandard": "^0.12.2",
     "nodemon": "^3.1.14",

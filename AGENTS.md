@@ -94,6 +94,13 @@ Tests are organized under `tests/features/<topic>/<name>.{unit,api,e2e}.spec.ts`
 The `state-setup` project pings `/api/v1/test-env/pending-tasks` and tails the dev API
 and worker logs into the test reporter output.
 
+The `e2e` project depends on `e2e-warmup` (`tests/e2e-warmup.ts`), which walks the list
+and edit routes once before the specs run. Vite discovers dependencies lazily in dev: the
+first page mounting the vjsf form or an action menu makes it re-optimize and force a full
+page reload, which breaks whatever assertion was in flight. Running an e2e spec alone
+still goes through the warmup, so a cold Vite cache costs a few seconds once instead of a
+random timeout failure.
+
 The full test suite is long — when iterating on changes always run only the related
 test cases. The full suite runs on `git push` via husky.
 
