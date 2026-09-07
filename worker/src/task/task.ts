@@ -12,7 +12,6 @@ import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import { ensureArtefact } from '@data-fair/lib-node-registry'
 import { decipher } from '@data-fair/processings-shared/cipher.ts'
 import { importPluginModule } from '@data-fair/processings-shared/plugin-load.ts'
-import { applyConfigPatch } from '../utils/config-patch.ts'
 import { running } from '../utils/runs.ts'
 import config, { registryCacheDir } from '#config'
 import mongo from '#mongo'
@@ -157,7 +156,10 @@ export const run = async (mailTransport: any) => {
     ws: wsInstance(log, processing.owner),
     async patchConfig (patch) {
       await log.debug('patch config', patch)
-      applyConfigPatch(processingConfig, patch)
+      for (const [key, val] of Object.entries(patch)) {
+        if (val === null || val === undefined) delete processingConfig[key]
+        else processingConfig[key] = val
+      }
       mongo.processings.updateOne({ _id: processing._id }, { $set: { config: processingConfig } })
       await wsEmitter.emit(`processings/${processing._id}/patch-config`, { patch })
     },
