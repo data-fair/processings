@@ -10,6 +10,9 @@ import axios, { type AxiosInstance } from 'axios'
 import * as mdi from '@mdi/js'
 import config from '../../worker/src/config.ts'
 
+// tar-stream ships its own types since 3.2.1 but does not export the entry header argument type
+type TarHeader = Partial<tarStream.Header> & Pick<tarStream.Header, 'name'>
+
 // Convert a legacy v5 mdi icon name (e.g. `mdi-database`, `mdiDatabase`,
 // `database`) into its @mdi/js export name `mdiDatabase`. Returns null if
 // the input doesn't resolve to a known icon.
@@ -185,7 +188,7 @@ async function packLegacyPlugin (pluginDir: string, manifest: PluginManifest, ta
   const pack = tarStream.pack()
   const writeDone = pipeline(pack, createGzip(), createWriteStream(tarballPath))
 
-  const addEntry = (header: tarStream.Headers, body?: string | Buffer): Promise<void> =>
+  const addEntry = (header: TarHeader, body?: string | Buffer): Promise<void> =>
     new Promise<void>((resolve, reject) => {
       const cb = (err?: Error | null) => err ? reject(err) : resolve()
       if (body !== undefined) {
@@ -197,7 +200,8 @@ async function packLegacyPlugin (pluginDir: string, manifest: PluginManifest, ta
       // throws "No body allowed for this entry" the moment any byte is written
       // into it, so we must not pipe a file stream in.
       if (header.type && header.type !== 'file' && header.type !== 'contiguous-file') {
-        pack.entry(header, cb).end()
+        // streamx types end() as requiring an argument; undefined is its no-data case
+        pack.entry(header, cb).end(undefined)
         return
       }
       const entry = pack.entry(header, cb)
