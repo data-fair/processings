@@ -156,7 +156,10 @@ export const run = async (mailTransport: any) => {
     ws: wsInstance(log, processing.owner),
     async patchConfig (patch) {
       await log.debug('patch config', patch)
-      Object.assign(processingConfig, patch)
+      for (const [key, val] of Object.entries(patch)) {
+        if (val === null || val === undefined) delete processingConfig[key]
+        else processingConfig[key] = val
+      }
       mongo.processings.updateOne({ _id: processing._id }, { $set: { config: processingConfig } })
       await wsEmitter.emit(`processings/${processing._id}/patch-config`, { patch })
     },
