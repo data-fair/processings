@@ -1,7 +1,10 @@
 # =============================
 # Base Node image
 # =============================
-FROM node:24.11.1-alpine3.22 AS base
+FROM node:24.20.0-alpine3.23 AS base
+
+# pick up alpine security fixes published after the base image was built
+RUN apk upgrade --no-cache
 
 WORKDIR /app
 ENV NODE_ENV=production

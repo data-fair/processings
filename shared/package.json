@@ -6,6 +6,10 @@
     "@data-fair/lib-utils": "^1.13.1",
     "croner": "^9.1.0",
     "dayjs": "^1.11.13",
-    "nanoid": "^5.1.16"
+    "fs-extra": "^11.3.0",
+    "nanoid": "^6.0.1"
+  },
+  "devDependencies": {
+    "mongodb": "^6.17.0"
   }
 }
