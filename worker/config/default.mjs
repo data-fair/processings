@@ -30,7 +30,6 @@ export default {
     processingsSeconds: -1
   },
   privateDataFairUrl: null,
-  getFromPrivateDataFairUrl: false,
   mails: {
     // transport is a full configuration object for createTransport of nodemailer
     // cf https://nodemailer.com/smtp/

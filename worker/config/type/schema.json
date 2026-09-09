@@ -57,9 +57,6 @@
         }
       }
     },
-    "getFromPrivateDataFairUrl": {
-      "type": "boolean"
-    },
     "mails": {
       "type": "object",
       "properties": {

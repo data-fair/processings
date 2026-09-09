@@ -26,7 +26,6 @@ export const getAxiosInstance = (processing: Processing, log: LogFunctions) => {
     if (account.departmentName) account.departmentName = encodeURIComponent(account.departmentName)
     privateHeaders['x-account'] = JSON.stringify(account)
   }
-  privateHeaders['x-processing'] = JSON.stringify({ _id: processing._id, title: encodeURIComponent(processing.title) })
 
   const axiosInstance = axios.create({
     // this is necessary to prevent excessive memory usage during large file uploads, see https://github.com/axios/axios/issues/1045
@@ -45,15 +44,9 @@ export const getAxiosInstance = (processing: Processing, log: LogFunctions) => {
     const isDataFairUrl = cfg.url.startsWith(config.dataFairUrl)
     if (isDataFairUrl) Object.assign(cfg.headers, privateHeaders)
 
-    // use private data fair url if specified to prevent leaving internal infrastructure
-    // except from GET requests so that they still appear in metrics
-    // except if config.getFromPrivateDataFairUrl is set to true, then all requests are sent to the private url
-    const usePrivate =
-      config.privateDataFairUrl &&
-      isDataFairUrl &&
-      (config.getFromPrivateDataFairUrl || ['post', 'put', 'delete', 'patch'].includes(cfg.method || ''))
-    if (usePrivate) {
-      cfg.url = cfg.url.replace(config.dataFairUrl, config.privateDataFairUrl!)
+    // always route data-fair requests through the private url to stay within internal infrastructure
+    if (isDataFairUrl && config.privateDataFairUrl) {
+      cfg.url = cfg.url.replace(config.dataFairUrl, config.privateDataFairUrl)
       cfg.headers.host = new URL(config.dataFairUrl).host
     }
     return cfg
