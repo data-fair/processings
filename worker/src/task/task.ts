@@ -12,7 +12,8 @@ import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import { ensureArtefact } from '@data-fair/lib-node-registry'
 import { decipher } from '@data-fair/processings-shared/cipher.ts'
 import { importPluginModule } from '@data-fair/processings-shared/plugin-load.ts'
-import { running } from '../utils/runs.ts'
+import { running, truncateLog } from '../utils/runs.ts'
+import { isDocumentTooLargeError, truncateLogValue } from '../utils/runs-operations.ts'
 import config, { registryCacheDir } from '#config'
 import mongo from '#mongo'
 import { getAxiosInstance, getHttpErrorMessage, prepareAxiosError } from './axios.ts'
@@ -44,9 +45,29 @@ const wsInstance = (log: LogFunctions, owner: Account): DataFairWsClient => {
  * Prepare log functions.
  */
 const prepareLog = (processing: Processing, run: Run): LogFunctions => {
+  const { maxLogEntryLength } = config.worker.task
+  let overflowed = false
   const pushLog = async (log: any) => {
+    // the task is failing because of its log, drop what it writes on the way out
+    if (overflowed) return
+    log.msg = truncateLogValue(log.msg, maxLogEntryLength)
+    log.extra = truncateLogValue(log.extra, maxLogEntryLength)
     log.date = new Date().toISOString()
-    await mongo.runs.updateOne({ _id: run._id }, { $push: { log } })
+    try {
+      await mongo.runs.updateOne({ _id: run._id }, { $push: { log } })
+    } catch (err) {
+      if (!isDocumentTooLargeError(err)) throw err
+      // The whole log lives in the run document and it reached mongo's 16MB
+      // limit. Make room so the run can still be finished, leave an explicit
+      // error and fail the task.
+      overflowed = true
+      const msg = 'Le journal d\'exécution a atteint la taille maximale autorisée, l\'exécution est interrompue. Le traitement produit trop de messages, réduisez sa verbosité.'
+      await truncateLog(run._id)
+      const errorLog: any = { type: 'error', msg, extra: '', date: log.date }
+      await mongo.runs.updateOne({ _id: run._id }, { $push: { log: errorLog } })
+      await wsEmitter.emit(`processings/${processing._id}/run-log`, { _id: run._id, log: errorLog })
+      throw new Error(msg)
+    }
     await wsEmitter.emit(`processings/${processing._id}/run-log`, { _id: run._id, log })
   }
 
@@ -185,13 +206,9 @@ export const run = async (mailTransport: any) => {
     const httpMessage = getHttpErrorMessage(err)
 
     if (httpMessage) {
-      let errStr = util.inspect(err, { depth: 5 })
-      if (errStr.length > 10000) {
-        errStr = errStr.slice(0, 10000) + '...'
-      }
       console.error(httpMessage)
       await log.error(httpMessage)
-      await log.debug('axios error', errStr)
+      await log.debug('axios error', util.inspect(err, { depth: 5 }))
     } else {
       console.error(err.message || err)
       await log.error(err.message)
