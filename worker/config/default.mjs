@@ -89,7 +89,10 @@ export default {
       // for each task child. Becomes the authoritative writer for the per-slot
       // RSS gauge (the in-process df-mem RSS write is suppressed). Auto-disabled
       // at boot on non-Linux platforms.
-      externalSamplerEnabled: true
+      externalSamplerEnabled: true,
+      // Max length (chars) of the msg / extra of a single run log entry,
+      // longer values are truncated.
+      maxLogEntryLength: 10000
     }
   },
   upgradeRoot: '/app/'
