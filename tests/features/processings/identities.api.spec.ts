@@ -47,8 +47,8 @@ test.describe('identity webhooks', () => {
 
   test('should rename a department and forget the name of a deleted one', async () => {
     const plugin = await publishFixturePlugin({ name: '@data-fair/processing-hello-world', version: '1.2.2' })
-    const admin = await axiosAuth({ email: 'test_admin1@test.com', org: 'test_org1', dep: 'dep1' })
-    const processing = (await admin.post('/api/v1/processings', { title: 'Department processing', plugin: plugin.pluginId })).data
+    const depAdmin = await axiosAuth({ email: 'test_dep_admin@test.com', org: 'test_org1', dep: 'dep1' })
+    const processing = (await depAdmin.post('/api/v1/processings', { title: 'Department processing', plugin: plugin.pluginId })).data
     expect(processing.owner.department).toBe('dep1')
 
     await axIdentities.post('/api/identities/organization/test_org1', { name: 'Test Org 1', departments: [{ id: 'dep1', name: 'Renamed Department' }] })
