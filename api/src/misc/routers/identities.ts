@@ -62,6 +62,12 @@ export default createIdentitiesRouter(
         )
       )
       await Promise.all(departmentUpdates)
+      // the directory sends the complete list of departments: a department missing from it was
+      // deleted, its resources keep the id (still reachable by the organization admins) but not the name
+      await updateAllCollections(
+        { 'owner.type': type, 'owner.id': id, 'owner.department': { $exists: true, $nin: identity.departments.map(d => d.id) } },
+        { $unset: { 'owner.departmentName': 1 } }
+      )
     }
   },
 
@@ -91,6 +97,5 @@ export default createIdentitiesRouter(
         updateAllCollections({ 'updated.id': id }, { $unset: { 'updated.name': 1 } })
       ])
     }
-    // When departments are deleted, do nothing
   }
 )
