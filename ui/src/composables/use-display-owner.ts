@@ -4,18 +4,18 @@ import { useI18n } from 'vue-i18n'
 
 type Owner = { department?: string, departmentName?: string, [key: string]: unknown }
 
+// plain strings: the runtime-only vue-i18n build used in production cannot compile inline messages
+const formerDepartment: Record<string, string> = {
+  fr: 'Ancien département',
+  en: 'Former department'
+}
+
 export const useDisplayOwner = () => {
-  const { t } = useI18n({
-    useScope: 'local',
-    messages: {
-      fr: { formerDepartment: 'Ancien département - {id}' },
-      en: { formerDepartment: 'Former department - {id}' }
-    }
-  })
+  const { locale } = useI18n()
 
   const departmentLabel = (department?: string, departmentName?: string) => {
     if (!department) return undefined
-    return departmentName || t('formerDepartment', { id: department })
+    return departmentName || `${formerDepartment[locale.value] ?? formerDepartment.en} - ${department}`
   }
 
   const displayOwner = <T extends Owner>(owner: T): T => {
