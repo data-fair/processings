@@ -103,6 +103,7 @@ import SearchField from '@data-fair/lib-vuetify/search-field.vue'
 import '@data-fair/frame/lib/d-frame.js'
 
 const { t } = useI18n()
+const { departmentLabel } = useDisplayOwner()
 const router = useRouter()
 const session = useSessionAuthenticated()
 const processingsProps = defineProps<{
@@ -206,7 +207,7 @@ const ownersItems = computed(() => {
         owner.departments.forEach(department => {
           // Ajout d'un élément pour chaque département
           items.push({
-            display: `${owner.name} - ${department.departmentName || department.department} (${department.count})`,
+            display: `${owner.name} - ${departmentLabel(department.department, department.departmentName)} (${department.count})`,
             ownerKey: `organization:${owner.id}:${department.department}`
           })
         })
