@@ -34,6 +34,10 @@
     "worker",
     "shared"
   ],
+  "relativeDependencies": {
+    "@data-fair/lib-vue": "../lib/packages/vue",
+    "@data-fair/lib-vuetify": "../lib/packages/vuetify"
+  },
   "bugs": {
     "url": "https://github.com/data-fair/processings/issues"
   },

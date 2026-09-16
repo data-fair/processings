@@ -18,7 +18,7 @@
       <template #append>
         <owner-avatar
           v-if="showOwner"
-          :owner="displayOwner(processing.owner)"
+          :owner="processing.owner"
         />
       </template>
     </v-card-item>
@@ -177,7 +177,6 @@
 <script setup lang="ts">
 import ownerAvatar from '@data-fair/lib-vuetify/owner-avatar.vue'
 const { t } = useI18n()
-const { displayOwner } = useDisplayOwner()
 const { dayjs } = useLocaleDayjs()
 
 const props = defineProps({
