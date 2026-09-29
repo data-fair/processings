@@ -36,7 +36,7 @@
     "http-terminator": "^3.2.0",
     "memoizee": "^0.4.17",
     "mongodb": "^6.17.0",
-    "multer": "^2.3.0",
+    "multer": "^2.4.0",
     "nanoid": "^6.0.1",
     "resolve-path": "^1.4.0",
     "semver": "^7.7.4",
