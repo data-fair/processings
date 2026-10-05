@@ -20,7 +20,8 @@ process.on('SIGTERM', function onSigterm () {
 })
 
 await mongo.init()
-const mailTransport = nodemailer.createTransport(config.mails.transport)
+// plugins compose the whole message: forbid attachments and contents read from local files or fetched from URLs
+const mailTransport = nodemailer.createTransport({ ...config.mails.transport, disableFileAccess: true, disableUrlAccess: true })
 await wsEmitter.init(mongo.db)
 
 const err = await run(mailTransport)
