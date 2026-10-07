@@ -48,9 +48,9 @@ export default {
     created: {
       type: 'object',
       additionalProperties: false,
+      // no name once the user is deleted from the directory
       required: [
         'id',
-        'name',
         'date'
       ],
       readOnly: true,
@@ -128,7 +128,6 @@ export default {
       readOnly: true,
       required: [
         'id',
-        'name',
         'date'
       ],
       properties: {

@@ -18,8 +18,8 @@
   "dependencies": {
     "@data-fair/frame": "^0.18.4",
     "@data-fair/lib-utils": "^1.13.1",
-    "@data-fair/lib-vue": "^1.30.1",
-    "@data-fair/lib-vuetify": "^2.4.3",
+    "@data-fair/lib-vue": "^1.31.1",
+    "@data-fair/lib-vuetify": "^2.5.1",
     "@data-fair/processings-shared": "*",
     "@intlify/unplugin-vue-i18n": "^11.0.7",
     "@koumoul/vjsf": "^4.2.0",
