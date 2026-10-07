@@ -6,7 +6,6 @@ import util from 'node:util'
 import fs from 'fs-extra'
 import path from 'path'
 import resolvePath from 'resolve-path'
-import tmp from 'tmp-promise'
 import { DataFairWsClient } from '@data-fair/lib-node/ws-client.js'
 import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import { ensureArtefact } from '@data-fair/lib-node-registry'
@@ -20,8 +19,6 @@ import { startMemoryReporter } from './memory-reporter.ts'
 
 if (config.dataDir) fs.ensureDirSync(config.dataDir)
 fs.ensureDirSync(config.tmpDir)
-
-tmp.setGracefulCleanup()
 
 let pluginModule: { run: (context: ProcessingContext) => Promise<{ deleteOnComplete?: boolean } | void>, stop?: () => Promise<void> }
 let _stopped: boolean
@@ -132,7 +129,10 @@ export const run = async (mailTransport: any) => {
   }
   const dir = resolvePath(processingsDir, processing._id)
   await fs.ensureDir(dir)
-  const tmpDir = await tmp.dir({ unsafeCleanup: true, tmpdir: config.tmpDir, prefix: `processing-run-${processing._id}-${run._id}` })
+  const tmpDir = await fs.mkdtemp(path.join(config.tmpDir, `processing-run-${processing._id}-${run._id}-`))
+  // a SIGTERM outlasting the grace period exits the process without reaching the finally block below
+  const removeTmpDirOnExit = () => fs.rmSync(tmpDir, { recursive: true, force: true })
+  process.on('exit', removeTmpDirOnExit)
   const processingConfig = processing.config || {}
 
   const axiosInstance = getAxiosInstance(processing, log)
@@ -150,7 +150,7 @@ export const run = async (mailTransport: any) => {
     secrets,
     processingId: processing._id,
     dir,
-    tmpDir: tmpDir.path,
+    tmpDir,
     log,
     axios: axiosInstance,
     ws: wsInstance(log, processing.owner),
@@ -201,7 +201,8 @@ export const run = async (mailTransport: any) => {
   } finally {
     await memReporter.stop()
     try {
-      await tmpDir.cleanup()
+      await fs.remove(tmpDir)
+      process.off('exit', removeTmpDirOnExit)
     } catch (err) {
       console.error('[task-tmp-cleanup]', err, { processingId: processing._id, runId: run._id })
     }
