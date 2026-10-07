@@ -12,7 +12,7 @@
     "#types": "./src/types.ts"
   },
   "devDependencies": {
-    "@data-fair/lib-express": "~1.25.0",
+    "@data-fair/lib-express": "~1.26.0",
     "@types/nodemailer": "^8.0.1",
     "@types/resolve-path": "^1.4.3"
   },

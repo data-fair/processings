@@ -39,6 +39,8 @@ services:
       - CONTACT=contact@test.com
       - ADMINS=["superadmin@test.com","test_superadmin@test.com"]
       - PUBLIC_URL=http://${DEV_HOST}:${NGINX_PORT1}/simple-directory
+      # in dev simple-directory only notifies this service, directly (the shared identities router refuses calls through the proxy)
+      - IDENTITIES_WEBHOOKS=[{"base":"http://localhost:${DEV_API_PORT}/api/identities","key":"secret-identities"}]
       - MAILDEV_ACTIVE=true
       - MONGO_URL=mongodb://localhost:${MONGO_PORT}/simple-directory
       - STORAGE_TYPE=file
