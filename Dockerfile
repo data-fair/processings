@@ -1,10 +1,13 @@
 # =============================
 # Base Node image
 # =============================
-FROM node:24.20.0-alpine3.23 AS base
+FROM node:24.21.0-alpine3.24 AS base
 
 # pick up alpine security fixes published after the base image was built
 RUN apk upgrade --no-cache
+# the npm bundled with node lags behind on its own dependencies' security fixes,
+# it cannot be removed as lib-node-registry runs "npm rebuild" on plugins with native modules
+RUN npm install -g npm@11.21.0 && npm cache clean --force
 
 WORKDIR /app
 ENV NODE_ENV=production
@@ -94,7 +97,8 @@ FROM base AS worker
 RUN apk add --no-cache python3 make g++
 
 # install gdal for ogr2ogr
-RUN apk add --no-cache gmp gdal-tools
+# since alpine 3.24 the adbc and avif drivers are split out of the gdal package, keep them for plugins that relied on them
+RUN apk add --no-cache gmp gdal-tools gdal-driver-adbc gdal-driver-avif
 RUN test -f /usr/bin/ogr2ogr
 RUN ln -s /usr/lib/libproj.so.25 /usr/lib/libproj.so
 RUN test -f /usr/lib/libproj.so
