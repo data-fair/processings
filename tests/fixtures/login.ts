@@ -8,7 +8,7 @@ async function performLogin (page: any, context: any, baseUrl: string, url: stri
   const loginUrl = `${baseUrl}/simple-directory/login?redirect=${encodeURIComponent(fullUrl)}`
   await page.goto(loginUrl)
   await page.getByLabel('Adresse mail').fill(`${user}@test.com`)
-  await page.getByLabel('Mot de passe').fill(password)
+  await page.getByLabel('Mot de passe', { exact: true }).fill(password)
   await page.getByRole('button', { name: 'Se connecter' }).click()
   // Superadmin logins hit a simple-directory "Mode administration" interstitial
   // asking whether to enable admin mode for the session. e2e specs never request
