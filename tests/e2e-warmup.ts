@@ -45,8 +45,11 @@ setup('Warmup heavy dev routes', async ({ page, goToWithAuth }) => {
   // other two don't already pull in.
   for (const label of ['Dupliquer', 'Supprimer']) {
     await page.locator('.v-list-item:not(.v-list-item--disabled)').filter({ hasText: label }).first().click()
-    await expect(page.getByRole('button', { name: /Annuler|Non/ }).first()).toBeVisible({ timeout: 30_000 })
-    await page.keyboard.press('Escape')
+    const cancel = page.getByRole('button', { name: /Annuler|Non/ }).first()
+    await expect(cancel).toBeVisible({ timeout: 30_000 })
+    // not Escape: vuetify only honors it once the overlay is flagged top of its stack, which it
+    // does in a setTimeout after opening, so an early keypress is silently ignored
+    await cancel.click()
     // Wait for the overlay to be gone, it would swallow the next menu click.
     await expect(page.locator('.v-overlay--active')).toHaveCount(0, { timeout: 10_000 })
   }
