@@ -14,17 +14,17 @@
     "#types/*": "./types/*"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/fs-extra": "^11.0.4",
-    "@types/memoizee": "^0.4.11",
-    "@types/multer": "^2.2.0",
     "@types/resolve-path": "^1.4.3",
     "@types/ws": "^8.5.12"
   },
   "dependencies": {
-    "@data-fair/lib-express": "^1.26.0",
-    "@data-fair/lib-node": "^2.13.3",
-    "@data-fair/lib-node-registry": "^0.7.1",
+    "@data-fair/lib-express": "~1.26.0",
+    "@data-fair/lib-node": "~2.13.3",
+    "@data-fair/lib-node-registry": "0.7.1",
     "@data-fair/lib-utils": "^1.13.1",
+    "@data-fair/lib-validation": "^1.0.2",
     "@data-fair/processings-shared": "*",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
@@ -34,13 +34,9 @@
     "express": "^5.2.0",
     "fs-extra": "^11.3.0",
     "http-terminator": "^3.2.0",
-    "memoizee": "^0.4.17",
     "mongodb": "^6.17.0",
-    "multer": "^2.3.0",
     "nanoid": "^6.0.1",
     "resolve-path": "^1.4.0",
-    "semver": "^7.7.4",
-    "tmp-promise": "^3.0.3",
     "ws": "^8.18.2"
   }
 }
