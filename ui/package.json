@@ -42,6 +42,6 @@
     "vuetify": "^4.0.3"
   },
   "devDependencies": {
-    "@data-fair/lib-express": "~1.26.0"
+    "@data-fair/lib-express": "~1.28.1"
   }
 }

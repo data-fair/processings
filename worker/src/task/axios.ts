@@ -1,10 +1,11 @@
-import { httpAgent, httpsAgent } from '@data-fair/lib-node/http-agents.js'
+import { httpAgent, httpsAgent, privateHttpAgent, privateHttpsAgent } from '@data-fair/lib-node/http-agents.js'
 import axios from 'axios'
 import axiosRetry from 'axios-retry'
 import config from '#config'
 import type { Processing } from '#api/types'
 import type { LogFunctions } from '@data-fair/lib-common-types/processings.js'
 import { prepareAxiosError, getHttpErrorMessage as getHttpErrorMessageBase } from './axios-errors.ts'
+import { resolveDataFairUrl } from './data-fair-url.ts'
 
 export { prepareAxiosError } from './axios-errors.ts'
 
@@ -30,6 +31,7 @@ export const getAxiosInstance = (processing: Processing, log: LogFunctions) => {
   const axiosInstance = axios.create({
     // this is necessary to prevent excessive memory usage during large file uploads, see https://github.com/axios/axios/issues/1045
     maxRedirects: 0,
+    // public agents: they refuse non public addresses (SSRF protection), the URLs come from processing configs
     httpAgent,
     httpsAgent
   })
@@ -41,13 +43,19 @@ export const getAxiosInstance = (processing: Processing, log: LogFunctions) => {
       if (cfg.url.startsWith('/')) cfg.url = config.dataFairUrl + cfg.url
       else cfg.url = config.dataFairUrl + '/' + cfg.url
     }
-    const isDataFairUrl = cfg.url.startsWith(config.dataFairUrl)
-    if (isDataFairUrl) Object.assign(cfg.headers, privateHeaders)
-
-    // always route data-fair requests through the private url to stay within internal infrastructure
-    if (isDataFairUrl && config.privateDataFairUrl) {
-      cfg.url = cfg.url.replace(config.dataFairUrl, config.privateDataFairUrl)
-      cfg.headers.host = new URL(config.dataFairUrl).host
+    const dataFairUrl = resolveDataFairUrl(cfg.url, config.dataFairUrl, config.privateDataFairUrl)
+    if (dataFairUrl) {
+      Object.assign(cfg.headers, privateHeaders)
+      // data-fair is a service of our own infrastructure, it can be reached on a private address
+      cfg.httpAgent = privateHttpAgent
+      cfg.httpsAgent = privateHttpsAgent
+      // a redirection would keep the private agents (and the api key) towards any host
+      cfg.maxRedirects = 0
+      // always route data-fair requests through the private url to stay within internal infrastructure
+      if (config.privateDataFairUrl) {
+        cfg.url = dataFairUrl
+        cfg.headers.host = new URL(config.dataFairUrl).host
+      }
     }
     return cfg
   }, error => Promise.reject(error))

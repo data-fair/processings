@@ -15,6 +15,7 @@ import { reqOrigin, session } from '@data-fair/lib-express/index.js'
 import { ensureArtefact } from '@data-fair/lib-node-registry'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import { axiosBuilder } from '@data-fair/lib-node/axios.js'
+import { privateHttpAgent, privateHttpsAgent } from '@data-fair/lib-node/http-agents.js'
 import { createNext } from '@data-fair/processings-shared/runs.ts'
 import { importPluginModule } from '@data-fair/processings-shared/plugin-load.ts'
 import { applyProcessing, deleteProcessing } from '../runs/service.ts'
@@ -112,6 +113,9 @@ async function ensurePluginAndReadSchema (processing: Pick<Processing, 'plugin' 
 async function fetchPluginArtefact (processing: Pick<Processing, 'plugin' | 'owner'>) {
   const ax = axiosBuilder({
     baseURL: config.privateRegistryUrl,
+    // the registry is a service of our own infrastructure
+    httpAgent: privateHttpAgent,
+    httpsAgent: privateHttpsAgent,
     headers: {
       'x-secret-key': config.secretKeys.registry,
       'x-account': JSON.stringify(registryAccount(processing.owner))
