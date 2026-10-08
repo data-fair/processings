@@ -7,7 +7,7 @@ import eventsQueue from '@data-fair/lib-node/events-queue.js'
 import config from '#config'
 import mongo from '#mongo'
 import { internalError } from '@data-fair/lib-node/observer.js'
-import { shouldDisableForFailures } from './runs-operations.ts'
+import { isDocumentTooLargeError, shouldDisableForFailures } from './runs-operations.ts'
 
 const sendProcessingEvent = (
   run: Run,
@@ -55,6 +55,15 @@ export const running = async (run: Run) => {
 }
 
 /**
+ * Keep only the tail of a run log. Used when the run document reached mongo's
+ * 16MB limit and can not be updated anymore.
+ */
+export const truncateLog = async (runId: string, keep = 100) => {
+  const truncate: Record<string, any> = { $push: { log: { $each: [], $slice: -keep } } }
+  await mongo.runs.updateOne({ _id: runId }, truncate)
+}
+
+/**
  * Update the database when a run is finished (edit status, log, duration, etc.)
  */
 export const finish = async (run: Run, errorMessage: string | undefined = undefined, errorLogType: string = 'debug', metricsMessage: string | undefined = undefined) => {
@@ -75,11 +84,25 @@ export const finish = async (run: Run, errorMessage: string | undefined = undefi
     if (metricsMessage) logs.push({ type: 'debug', msg: metricsMessage, date: new Date(now + 1).toISOString() })
     query.$push = { log: { $each: logs } }
   }
-  let lastRun = (await mongo.runs.findOneAndUpdate(
-    { _id: run._id },
-    query,
-    { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
-  ))
+  let lastRun
+  try {
+    lastRun = await mongo.runs.findOneAndUpdate(
+      { _id: run._id },
+      query,
+      { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
+    )
+  } catch (err) {
+    if (!isDocumentTooLargeError(err)) throw err
+    // A run whose log filled the document would otherwise be impossible to
+    // finish or kill, and the kill loop would retry it forever.
+    console.warn('run document too large to be finished, truncating its log', run._id)
+    await truncateLog(run._id)
+    lastRun = await mongo.runs.findOneAndUpdate(
+      { _id: run._id },
+      query,
+      { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
+    )
+  }
   if (!lastRun) return internalError('processing-worker', 'Last run not found after finish update')
   if (!lastRun.startedAt) {
     lastRun = (await mongo.runs.findOneAndUpdate(

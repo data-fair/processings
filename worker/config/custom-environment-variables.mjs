@@ -46,7 +46,8 @@ export default {
       externalSamplerEnabled: {
         __name: 'WORKER_TASK_EXTERNAL_SAMPLER_ENABLED',
         __format: 'json'
-      }
+      },
+      maxLogEntryLength: 'WORKER_TASK_MAX_LOG_ENTRY_LENGTH'
     }
   }
 }
