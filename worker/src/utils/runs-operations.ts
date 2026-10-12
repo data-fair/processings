@@ -36,3 +36,20 @@ export const buildFinishStatusPatch = (
   if (errorMessage) return { status: 'error', finishedAt }
   return { status: 'finished', finishedAt }
 }
+
+/**
+ * Whether a mongo error means the updated document would exceed the 16MB limit
+ * ("Resulting document after update is larger than 16777216").
+ */
+export const isDocumentTooLargeError = (err: any): boolean =>
+  err?.code === 17419 || /larger than \d+/.test(err?.message ?? '')
+
+/**
+ * Cap a log msg/extra at `maxLength` chars. A non-string value that is too
+ * long once serialized is replaced by its truncated serialization.
+ */
+export const truncateLogValue = (value: any, maxLength: number): any => {
+  const str = typeof value === 'string' ? value : JSON.stringify(value)
+  if (!str || str.length <= maxLength) return value
+  return str.slice(0, maxLength) + '...'
+}

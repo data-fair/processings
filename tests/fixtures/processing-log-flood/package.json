@@ -1,0 +1,8 @@
+{
+  "name": "@data-fair-tests/processing-log-flood",
+  "version": "1.0.0",
+  "description": "Test plugin that floods the run log to trigger the worker log size guard.",
+  "main": "index.js",
+  "type": "module",
+  "files": ["index.js", "processing-config-schema.json"]
+}

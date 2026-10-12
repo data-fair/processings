@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { shouldDisableForFailures, buildFinishStatusPatch } from '../../../worker/src/utils/runs-operations.ts'
+import { shouldDisableForFailures, buildFinishStatusPatch, isDocumentTooLargeError, truncateLogValue } from '../../../worker/src/utils/runs-operations.ts'
 
 test.describe('shouldDisableForFailures', () => {
   const maxFailures = 3
@@ -57,5 +57,35 @@ test.describe('buildFinishStatusPatch', () => {
 
   test('no errorMessage and not killed -> finished', () => {
     expect(buildFinishStatusPatch('running', undefined, finishedAt)).toEqual({ status: 'finished', finishedAt })
+  })
+})
+
+test.describe('isDocumentTooLargeError', () => {
+  test('matches the mongo error of an update overflowing the document limit', () => {
+    expect(isDocumentTooLargeError(new Error('Plan executor error during findAndModify :: caused by :: Resulting document after update is larger than 16777216'))).toBe(true)
+    expect(isDocumentTooLargeError(Object.assign(new Error('BSONObjectTooLarge'), { code: 17419 }))).toBe(true)
+  })
+
+  test('ignores other errors', () => {
+    expect(isDocumentTooLargeError(new Error('Run not found'))).toBe(false)
+    expect(isDocumentTooLargeError(undefined)).toBe(false)
+  })
+})
+
+test.describe('truncateLogValue', () => {
+  test('leaves short values untouched', () => {
+    expect(truncateLogValue('hello', 100)).toBe('hello')
+    expect(truncateLogValue({ a: 1 }, 100)).toEqual({ a: 1 })
+    expect(truncateLogValue(undefined, 100)).toBeUndefined()
+    expect(truncateLogValue('', 100)).toBe('')
+  })
+
+  test('truncates a long string', () => {
+    expect(truncateLogValue('a'.repeat(50), 10)).toBe('a'.repeat(10) + '...')
+  })
+
+  test('serializes then truncates a long non-string value', () => {
+    const value = { items: new Array(100).fill('x') }
+    expect(truncateLogValue(value, 10)).toBe(JSON.stringify(value).slice(0, 10) + '...')
   })
 })
