@@ -12,9 +12,9 @@ import { axiosAuth as _axiosAuth } from '@data-fair/lib-node/axios-auth.js'
  * Loaded by simple-directory (STORAGE_TYPE=file in docker-compose.yml).
  */
 
-export const directoryUrl = `http://${process.env.DEV_HOST}:${process.env.NGINX_PORT1}/simple-directory`
+export const directoryUrl = `http://${process.env.DEV_HOST}:${process.env.NGINX_PORT}/simple-directory`
 export const apiUrl = `http://localhost:${process.env.DEV_API_PORT}`
-export const baseURL = `http://${process.env.DEV_HOST}:${process.env.NGINX_PORT1}/processings`
+export const baseURL = `http://${process.env.DEV_HOST}:${process.env.NGINX_PORT}/processings`
 
 const axiosOpts = { baseURL }
 

@@ -261,7 +261,7 @@ registry:
     - PORT=${REGISTRY_PORT}
     - MONGO_URL=mongodb://localhost:${MONGO_PORT}/data-fair-registry
     - PRIVATE_DIRECTORY_URL=http://localhost:${SD_PORT}
-    - PUBLIC_URL=http://${DEV_HOST}:${NGINX_PORT1}/registry
+    - PUBLIC_URL=http://${DEV_HOST}:${NGINX_PORT}/registry
     - SECRET_INTERNAL_SERVICES=secret-registry-internal
     - OBSERVER_ACTIVE=false
     - STORAGE_TYPE=fs

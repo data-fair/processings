@@ -8,55 +8,36 @@
 
 ## Install dependencies
 
-1) Install npm dependencies for all workspaces :
-
 ```sh
-npm i
+npm ci
+npx --no df-dev setup     # .env with free ports (kept if it exists, --force to redraw), types, UI build
+docker compose pull       # at first and then once in a while
 ```
 
-2) Pull images at first and then once in a while :
+## Start the development environment
 
 ```sh
-docker compose pull
+npm run dev-zellij                                        # core containers + ui, api, worker
+npm run dev-zellij -- --services events,openapi-viewer    # with the optional containers
 ```
 
-3) Then run the containers :
+This opens a [zellij](https://zellij.dev/) (>= 0.44) session named after the checkout directory, or attaches to it if it runs. Start it from a shell on the `.nvmrc` Node version. The dev URL is in the footer. From another terminal: `npx --no df-dev status`, `npx --no df-dev logs <pane>`, `npx --no df-dev restart <pane>`, `npx --no df-dev up <service>`.
 
-```sh
-npm run dev-deps
-```
+## Stop the development environment
 
-*Stop the containers with this command :*
+Quit zellij, then:
 
 ```sh
 npm run stop-dev-deps
 ```
 
-## Working on @data-fair/processings/api
+## Worktrees
 
-The API is a small [Express](https://expressjs.com) server.  
-Run a development server (access it at http://localhost:8082/api/) :
-
-```sh
-npm run dev-api
-```
-
-## Working on @data-fair/processings/ui
-
-The UI is a [Vue 3](https://vuejs.org/) project that uses [Vuetify 3](https://vuetifyjs.com/).  
-Run a development server (access it at http://localhost:3039/) :
+Each checkout has its own `.env` with random ports, so you can run multiple worktrees side by side :
 
 ```sh
-npm run dev-ui
-```
-
-## Working on @data-fair/processings/worker
-
-The worker is a small [Node.js](https://nodejs.org) process that runs periodically the processings.  
-Run a development process :
-
-```sh
-npm run dev-worker
+npx --no df-worktree feat-xyz          # from the main checkout: ../processings_feat-xyz, installed and built
+npx --no df-worktree-delete feat-xyz   # its containers, volumes and zellij session, then the worktree
 ```
 
 ## Working on types
@@ -83,42 +64,3 @@ Run the test suite :
 ```sh
 npm run test
 ```
-
----
-
-## All-in-one development
-
-You can run all services at once thanks to Zellij.
-
-<details>
-<summary>First time instructions</summary>
-
-1) Install Rust's Cargo
-```sh
-curl https://sh.rustup.rs -sSf | sh
-# choose 1 when prompted
-```
-2) Install Zellij
-```sh
-cargo install --locked zellij
-```
-3) Install NVM
-```sh
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash
-# in processings
-nvm install
-```
-</details>
-
-Run the Zellij command :
-
-```sh
-npm run dev-zellij
-```
-
-Access the running services at https://localhost:5600/
-
-*Tips :*
-- Use <kbd>Ctrl</kbd> + <kbd>Q</kbd> to quit Zellij. It'll also stop the containers.
-- Click on a panel, then use <kbd>Ctrl</kbd> + <kbd>C</kbd> then <kbd>Esc</kbd> to stop a terminal and regain access of the panel.
-- The logs of the `dev-deps` panel are stored on the host in the `logs` directory.

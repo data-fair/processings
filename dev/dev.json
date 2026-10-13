@@ -1,0 +1,38 @@
+{
+  "ports": [
+    "NGINX_PORT",
+    "DEV_API_PORT",
+    "DEV_UI_PORT",
+    "DEV_UI_HMR_PORT",
+    "DEV_API_OBSERVER_PORT",
+    "DEV_WORKER_OBSERVER_PORT",
+    "MONGO_PORT",
+    "ES_PORT",
+    "SD_PORT",
+    "EVENTS_PORT",
+    "OAV_PORT",
+    "DF_PORT",
+    "REGISTRY_PORT",
+    "MAILDEV_UI_PORT",
+    "MAILDEV_SMTP_PORT"
+  ],
+  "panes": {
+    "api": {
+      "ready": "http://localhost:${DEV_API_PORT}/api/v1/_ping"
+    },
+    "ui": {
+      "ready": "http://localhost:${DEV_UI_PORT}/processings/"
+    },
+    "worker": {
+      "ready": "http://localhost:${DEV_WORKER_OBSERVER_PORT}/metrics"
+    }
+  },
+  "urls": {
+    "Processings": "http://${DEV_HOST}:${NGINX_PORT}/processings/dev"
+  },
+  "optional": {
+    "events": {
+      "privateEventsUrl": ""
+    }
+  }
+}

@@ -6,20 +6,16 @@
   "scripts": {
     "build-types": "df-build-types ./",
     "check-types": "tsc",
-    "dev-api": "mkdir -p dev/logs && npm -w api run dev 2>&1 | tee dev/logs/dev-api.log",
-    "dev-deps": "mkdir -p dev/logs && docker compose --profile dev up -d --wait && docker compose --profile dev logs -f 2>&1 | tee dev/logs/docker-compose.log",
-    "dev-ui": "mkdir -p dev/logs && npm -w ui run dev 2>&1 | tee dev/logs/dev-ui.log",
-    "dev-worker": "mkdir -p dev/logs && npm -w worker run dev 2>&1 | tee dev/logs/dev-worker.log",
-    "dev-zellij": "export DEV_SHELL=$(basename \"$SHELL\") && dotenv -- zellij --layout .zellij.kdl",
+    "dev-zellij": "df-dev zellij",
     "lint": "eslint . && npm -w ui run lint",
     "lint-fix": "eslint --fix . && npm -w ui run lint-fix",
     "prepare": "husky || true",
-    "stop-dev-deps": "docker compose --profile dev stop",
+    "stop-dev-deps": "docker compose --profile '*' stop",
     "test": "playwright test --max-failures=1",
     "test-unit": "playwright test --project unit --max-failures=1",
     "test-api": "playwright test --project api --max-failures=1",
     "test-e2e": "playwright test --project e2e --max-failures=1",
-    "test-images": "docker compose --profile dev --profile testImages up -d --build --wait",
+    "test-images": "docker compose --profile events --profile openapi-viewer --profile testImages up -d --build --wait",
     "quality": "npm run lint && npm run build-types && npm run check-types && npm -w ui run build && npm test && npm audit --omit=dev --audit-level=critical"
   },
   "repository": {
@@ -51,6 +47,7 @@
   "devDependencies": {
     "@commitlint/config-conventional": "^21.2.3",
     "@data-fair/lib-common-types": "^1.23.0",
+    "@data-fair/lib-dev": "file:../lib_feat-dev-env/packages/dev",
     "@data-fair/lib-node": "~2.15.0",
     "@data-fair/lib-utils": "^1.13.1",
     "@playwright/test": "^1.52.0",

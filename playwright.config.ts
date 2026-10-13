@@ -12,7 +12,7 @@ export default defineConfig({
   expect: { timeout: 5_000 },
 
   use: {
-    baseURL: `http://${process.env.DEV_HOST}:${process.env.NGINX_PORT1}/processings`,
+    baseURL: `http://${process.env.DEV_HOST}:${process.env.NGINX_PORT}/processings`,
     actionTimeout: 5_000,
     navigationTimeout: 5_000,
   },
@@ -21,11 +21,6 @@ export default defineConfig({
     {
       name: 'state-setup',
       testMatch: /state-setup\.ts/,
-      teardown: 'state-teardown'
-    },
-    {
-      name: 'state-teardown',
-      testMatch: /state-teardown\.ts/,
     },
     {
       name: 'unit',

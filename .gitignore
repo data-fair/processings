@@ -1,5 +1,4 @@
 data/
-dev/logs/
 node_modules/
 **/config/local-*
 .config/

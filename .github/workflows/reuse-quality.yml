@@ -31,19 +31,19 @@ jobs:
       run: npm -w ui run build
 
     - name: Init .env
-      run: ./dev/init-env.sh
+      run: ./node_modules/.bin/df-dev init-env # local bin only: a bare npx would fetch an unrelated "df-dev" from the registry if the dependency were missing
 
     - name: Use localhost as DEV_HOST in CI
       run: sed -i 's/^DEV_HOST=.*/DEV_HOST=localhost/' .env
 
-    - name: Start docker compose services
-      run: docker compose --profile dev up -d --wait
+    - name: Start the core docker compose services (optional ones stay off, like a default dev env)
+      run: docker compose up -d --wait
 
     - name: Start dev API
-      run: npx dotenv -- npm run dev-api &
+      run: NODE_CONFIG="$(./node_modules/.bin/df-dev absent-config)" ./node_modules/.bin/dotenv -- npm -w api run dev &
 
     - name: Start dev worker
-      run: npx dotenv -- npm run dev-worker &
+      run: NODE_CONFIG="$(./node_modules/.bin/df-dev absent-config)" ./node_modules/.bin/dotenv -- npm -w worker run dev &
 
     - name: Wait for dev API to be ready
       run: |
@@ -63,8 +63,8 @@ jobs:
 
     - name: Docker compose logs on failure
       if: failure()
-      run: docker compose --profile dev logs
+      run: docker compose --profile '*' logs
 
     - name: Stop docker compose services
       if: always()
-      run: docker compose --profile dev down
+      run: docker compose --profile '*' down
