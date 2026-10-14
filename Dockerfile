@@ -8,6 +8,8 @@ RUN apk upgrade --no-cache
 # the npm bundled with node lags behind on its own dependencies' security fixes,
 # it cannot be removed as lib-node-registry runs "npm rebuild" on plugins with native modules
 RUN npm install -g npm@11.21.0 && npm cache clean --force
+# corepack and yarn are never used
+RUN rm -rf /usr/local/lib/node_modules/corepack /usr/local/bin/corepack /opt/yarn-* /usr/local/bin/yarn /usr/local/bin/yarnpkg
 
 WORKDIR /app
 ENV NODE_ENV=production

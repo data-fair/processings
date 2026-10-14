@@ -15,7 +15,6 @@
     "test-unit": "playwright test --project unit --max-failures=1",
     "test-api": "playwright test --project api --max-failures=1",
     "test-e2e": "playwright test --project e2e --max-failures=1",
-    "test-images": "docker compose --profile events --profile openapi-viewer --profile testImages up -d --build --wait",
     "quality": "npm run lint && npm run build-types && npm -w ui run build && npm run check-types && npm test && npm audit --omit=dev --audit-level=critical"
   },
   "repository": {

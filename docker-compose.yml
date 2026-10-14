@@ -214,48 +214,7 @@ services:
       start_period: 3m
       start_interval: 2s
 
-  #####
-  # Api and worker in docker mode
-  #####
-
-  main:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: main
-      args:
-        NODE_ENV: development
-    depends_on:
-      - data-fair
-    profiles:
-      - testImages
-    image: datafair/processings/main:dev
-    network_mode: host
-    environment:
-      - NODE_ENV=development
-    volumes:
-      - processings-data:/app/data
-
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: worker
-      args:
-        NODE_ENV: development
-    depends_on:
-      - data-fair
-    profiles:
-      - testImages
-    image: datafair/processings/worker:dev
-    network_mode: host
-    environment:
-      - NODE_ENV=development
-    volumes:
-      - processings-data:/app/data
-
 volumes:
   elasticsearch-data:
   mongo-data:
-  processings-data:
   data-fair-data:
