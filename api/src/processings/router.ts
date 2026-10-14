@@ -144,8 +144,6 @@ const sendProcessingEvent = (
   topicAction: string,
   sessionState?: SessionStateAuthenticated
 ) => {
-  if (!config.privateEventsUrl && !config.secretKeys.events) return
-
   eventsQueue.pushEvent({
     title: `Le traitement ${processing.title} ${actionText}`,
     topic: { key: `processings:processing-${topicAction}:${processing._id}` },
@@ -468,9 +466,7 @@ router.patch('/:id', async (req, res) => {
   await mongo.processings.updateOne({ _id: req.params.id }, patch)
   await mongo.runs.updateMany({ 'processing._id': processing._id }, { $set: { permissions: patchedProcessing.permissions || [] } })
   await applyProcessing(mongo, patchedProcessing)
-  if (config.privateEventsUrl && config.secretKeys.events) {
-    sendProcessingEvent(patchedProcessing, 'a été modifié', 'patch', sessionState)
-  }
+  sendProcessingEvent(patchedProcessing, 'a été modifié', 'patch', sessionState)
   res.status(200).json(cleanProcessing(patchedProcessing, sessionState))
 })
 

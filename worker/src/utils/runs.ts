@@ -16,8 +16,6 @@ const sendProcessingEvent = (
   body?: string
 ) => {
   // @test:spy("pushEvent", `processings:processing-${statusKey}:${run.processing._id}`)
-  if (!config.privateEventsUrl && !config.secretKeys.events) return
-
   eventsQueue.pushEvent({
     title: `Le traitement ${run.processing.title} ${statusText}.`,
     topic: { key: `processings:processing-${statusKey}:${run.processing._id}` },
