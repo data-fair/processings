@@ -1,60 +1,55 @@
-import { test as base, expect } from '@playwright/test'
+import { test as base, expect, request, type BrowserContext } from '@playwright/test'
 
-const cookieCache = new Map<string, Awaited<ReturnType<import('@playwright/test').BrowserContext['cookies']>>>()
+const baseUrl = `http://${process.env.DEV_HOST}:${process.env.NGINX_PORT}`
+const directoryUrl = `${baseUrl}/simple-directory`
 
-async function performLogin (page: any, context: any, baseUrl: string, url: string, user: string) {
-  const fullUrl = `${baseUrl}${url}`
-  const password = user === 'test_superadmin' ? 'superpasswd' : 'passwd'
-  const loginUrl = `${baseUrl}/simple-directory/login?redirect=${encodeURIComponent(fullUrl)}`
-  await page.goto(loginUrl)
-  await page.getByLabel('Adresse mail').fill(`${user}@test.com`)
-  await page.getByLabel('Mot de passe', { exact: true }).fill(password)
-  await page.getByRole('button', { name: 'Se connecter' }).click()
-  // Superadmin logins hit a simple-directory "Mode administration" interstitial
-  // asking whether to enable admin mode for the session. e2e specs never request
-  // admin mode (goToWithAuth takes no adminMode flag), so choose a normal session
-  // to let the redirect to fullUrl proceed.
-  if (user === 'test_superadmin') {
-    await page.getByRole('button', { name: 'Session Normale' }).click()
+type Cookies = Awaited<ReturnType<BrowserContext['cookies']>>
+
+// One API login per user and worker process. id_token lives 15 min: log in again after 10.
+const sessions = new Map<string, { cookies: Cookies, at: number }>()
+const maxAge = 10 * 60 * 1000
+
+const apiLogin = async (user: string): Promise<Cookies> => {
+  const cached = sessions.get(user)
+  if (cached && Date.now() - cached.at < maxAge) return cached.cookies
+  const ctx = await request.newContext()
+  try {
+    // no adminMode: e2e specs browse with a normal session, superadmin included
+    const res = await ctx.post(`${directoryUrl}/api/auth/password`, {
+      params: { redirect: directoryUrl },
+      data: { email: `${user}@test.com`, password: user === 'test_superadmin' ? 'superpasswd' : 'passwd' }
+    })
+    if (!res.ok()) throw new Error(`login of ${user} failed: ${res.status()} ${await res.text()}`)
+    // the callback sets the session cookies (id_token, id_token_sign, id_token_ex) and redirects
+    const callback = await ctx.get(await res.text(), { maxRedirects: 0 })
+    if (callback.status() !== 302) throw new Error(`login callback of ${user} answered ${callback.status()}`)
+    const { cookies } = await ctx.storageState()
+    sessions.set(user, { cookies, at: Date.now() })
+    return cookies
+  } finally {
+    await ctx.dispose()
   }
-  await page.waitForURL(fullUrl, { timeout: 10000 })
-  const cookies = await context.cookies()
-  cookieCache.set(user, cookies)
 }
 
 export const test = base.extend<{
   goToWithAuth: (url: string, user: string) => Promise<void>
 }>({
   page: async ({ page }, use) => {
-    const baseUrl = `http://${process.env.DEV_HOST}:${process.env.NGINX_PORT}`
-    await page.context().addCookies([{
-      name: 'i18n_lang',
-      value: 'fr',
-      url: baseUrl
-    }, {
-      name: 'cache_bypass',
-      value: '1',
-      url: baseUrl
-    }])
+    await page.context().addCookies([
+      { name: 'i18n_lang', value: 'fr', url: baseUrl },
+      { name: 'cache_bypass', value: '1', url: baseUrl }
+    ])
+    // lib-vue skips its keepalive while this timestamp is recent: a future one turns it off, so the
+    // browser never rotates the single-use exchange token that every test of this worker shares
+    await page.addInitScript(() => window.localStorage.setItem('sd-keepalive', String(Date.now() + 365 * 86400e3)))
     await use(page)
   },
 
   goToWithAuth: async ({ page, context }, use) => {
-    const baseUrl = `http://${process.env.DEV_HOST}:${process.env.NGINX_PORT}`
-    const goToWithAuth = async (url: string, user: string) => {
-      const cached = cookieCache.get(user)
-      if (cached) {
-        await context.addCookies(cached)
-        await page.goto(url)
-        if (page.url().includes('/simple-directory/login')) {
-          cookieCache.delete(user)
-          await performLogin(page, context, baseUrl, url, user)
-        }
-      } else {
-        await performLogin(page, context, baseUrl, url, user)
-      }
-    }
-    await use(goToWithAuth)
+    await use(async (url: string, user: string) => {
+      await context.addCookies(await apiLogin(user))
+      await page.goto(url)
+    })
   }
 })
 

@@ -31,12 +31,16 @@ export const axiosAuth = (opts: string | Omit<AxiosAuthOptions, 'directoryUrl' |
 
 export const waitForWorkerIdle = async (timeoutMs = 10_000): Promise<void> => {
   const start = Date.now()
+  let pending: any[] = []
   while (Date.now() - start < timeoutMs) {
     const res = await anonymousAx.get(`${apiUrl}/api/v1/test-env/pending-tasks`)
-    if (res.data.triggered.length === 0 && res.data.running.length === 0) return
+    pending = [...res.data.triggered, ...res.data.running]
+    if (pending.length === 0) return
     await new Promise(resolve => setTimeout(resolve, 200))
   }
-  throw new Error(`worker still has pending tasks after ${timeoutMs}ms`)
+  // a run left over by an earlier test: name it, the culprit is the test that started it
+  const list = pending.map(r => `${r.status} run ${r._id} of "${r.processing?.title}" (${r.processing?._id})`).join(', ')
+  throw new Error(`worker still busy after ${timeoutMs}ms: ${list}`)
 }
 
 export const clean = async () => {

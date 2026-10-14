@@ -2,17 +2,12 @@ name: Quality checks
 
 # The full gate: static checks and builds in one job, then the whole test suite (unit, api,
 # e2e) in a second job that reuses the generated types and the UI build as an artifact.
-# Used by pull requests, releases and the nightly check of master; the pre-push hook only
+# Used by pull requests and releases; the pre-push hook only
 # runs a light subset (dev/pre-push.sh). No shards: the suite takes a few minutes on one
 # worker, less than the setup a second runner would pay again.
 
 on:
   workflow_call:
-    inputs:
-      retries:
-        description: playwright retries per failed test (the nightly run uses 0 to expose flaky tests)
-        type: number
-        default: 1
 
 jobs:
   static:
@@ -60,9 +55,6 @@ jobs:
   tests:
     needs: static
     runs-on: ubuntu-latest
-    env:
-      # empty on a direct call, where playwright.config.ts falls back to 1
-      TEST_RETRIES: ${{ inputs.retries }}
     steps:
     - name: Checkout git repository
       uses: actions/checkout@v5

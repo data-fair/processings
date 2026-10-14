@@ -72,26 +72,49 @@ These endpoints are used by the Playwright support helpers in `tests/support/axi
 ### Testing
 
 ```bash
-npm test                          # all tests
+npm test                          # all tests (no --max-failures: one flake must not hide the rest)
 npm run test-unit                 # unit tests only
 npm run test-api                  # API tests only
+npm run test-api-fast             # API tests, stop at the first failure (iteration)
 npm run test-e2e                  # e2e tests only
 npx playwright test path/to/file  # specific file
 ```
 
+The run writes per-test durations to `dev/logs/test-timings.json`, and keeps a trace and a
+screenshot of each failing test in `test-results/` (`npx playwright show-trace <zip>`).
+Timeout: 30 s per test, hooks included; specs that run plugins through the worker call
+`test.slow()` instead of raising it. `clean()` fails, naming the runs, when the worker is
+still busy after 10 s: the culprit is the test that left them.
+
+e2e specs log in through the simple-directory API (`tests/fixtures/login.ts`, one login per
+user and worker, renewed after 10 min) and turn off lib-vue's keepalive with a future
+`sd-keepalive` localStorage timestamp, so no page ever rotates the shared exchange token.
+
 Tests are organized under `tests/features/<topic>/<name>.{unit,api,e2e}.spec.ts`.
-The `state-setup` project pings `/api/v1/test-env/pending-tasks` and tails the dev API
-and worker logs into the test reporter output.
+The `state-setup` project pings `/api/v1/test-env/pending-tasks` and seeds the data-fair API
+key of the worker. Pure logic goes to unit specs; api specs cover the HTTP contract and the
+worker; e2e specs only cover user flows and what only a browser can check.
 
 The `e2e` project depends on `e2e-warmup` (`tests/e2e-warmup.ts`), which walks the list
-and edit routes once before the specs run. Vite discovers dependencies lazily in dev: the
-first page mounting the vjsf form or an action menu makes it re-optimize and force a full
-page reload, which breaks whatever assertion was in flight. Running an e2e spec alone
-still goes through the warmup, so a cold Vite cache costs a few seconds once instead of a
-random timeout failure.
+and edit routes once before the specs run, so a cold Vite transforms them first. Dependency
+discovery is off: a blank page there with a module named in the console means a commonjs
+dependency is missing from `optimizeDeps.include` in `ui/vite.config.ts` (use the exact import
+specifier). Running an e2e spec alone still goes through the warmup.
 
-The full test suite is long — when iterating on changes always run only the related
-test cases. The full suite runs on `git push` via husky.
+When iterating on changes always run only the related test cases.
+
+Quality gates:
+
+| When | Where | What |
+|---|---|---|
+| commit | `.husky/pre-commit` | `npm run lint` |
+| push | `.husky/pre-push` → `dev/pre-push.sh` | type check, all unit tests, the `@smoke` api/e2e set, and the api/e2e spec files changed since `origin/master` |
+| pull request | `pull-requests.yml` → `reuse-quality.yml` | lint, builds, type check, audit, then the whole unit/api/e2e suite (1 retry) |
+| release tag | `releases.yml` → `reuse-quality.yml` | the same, before building the images |
+
+`npm run quality` still runs the whole gate locally. A test joins the `@smoke` set
+(`test('...', { tag: '@smoke' }, ...)`) only if it is fast and covers a core flow (create,
+permissions, run, edit form); check its duration in `dev/logs/test-timings.json`.
 
 ### Linting & Type Checking
 
