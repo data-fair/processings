@@ -1,8 +1,18 @@
-data/
+# dependencies and generated code
 node_modules/
-**/config/local-*
-.config/
 .type/
+
+# local environment and data
 .env
-playwright-report/
+**/config/local-*
+data/
+dev/logs/
+
+# test output
 test-results/
+playwright-report/
+
+# agent working files
+docs/superpowers/
+.superpowers/
+.playwright-mcp/

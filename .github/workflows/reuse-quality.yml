@@ -1,10 +1,21 @@
 name: Quality checks
 
+# The full gate: static checks and builds in one job, then the whole test suite (unit, api,
+# e2e) in a second job that reuses the generated types and the UI build as an artifact.
+# Used by pull requests, releases and the nightly check of master; the pre-push hook only
+# runs a light subset (dev/pre-push.sh). No shards: the suite takes a few minutes on one
+# worker, less than the setup a second runner would pay again.
+
 on:
   workflow_call:
+    inputs:
+      retries:
+        description: playwright retries per failed test (the nightly run uses 0 to expose flaky tests)
+        type: number
+        default: 1
 
 jobs:
-  quality:
+  static:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout git repository
@@ -12,7 +23,7 @@ jobs:
 
     - uses: actions/setup-node@v5
       with:
-        node-version: 24
+        node-version-file: .nvmrc
         cache: 'npm'
 
     - name: Install dependencies
@@ -24,11 +35,70 @@ jobs:
     - name: Build types
       run: npm run build-types
 
+    - name: Build UI (generates the ui/dts files vue-tsc needs)
+      run: npm -w ui run build
+
     - name: Type check
       run: npm run check-types
 
-    - name: Build UI
-      run: npm -w ui run build
+    - name: Audit
+      run: npm audit --omit=dev --audit-level=critical
+
+    # the API imports the generated .type modules and serves ui/dist/index.html at startup
+    - name: Upload generated types and UI build
+      uses: actions/upload-artifact@v4
+      with:
+        name: build
+        include-hidden-files: true
+        path: |
+          api/**/.type/
+          worker/**/.type/
+          ui/dist/
+          ui/dts/
+        retention-days: 1
+
+  tests:
+    needs: static
+    runs-on: ubuntu-latest
+    env:
+      # empty on a direct call, where playwright.config.ts falls back to 1
+      TEST_RETRIES: ${{ inputs.retries }}
+    steps:
+    - name: Checkout git repository
+      uses: actions/checkout@v5
+
+    - uses: actions/setup-node@v5
+      with:
+        node-version-file: .nvmrc
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Download generated types and UI build
+      uses: actions/download-artifact@v4
+      with:
+        name: build
+
+    # only the browser binaries are cached, keyed on the playwright version; never test state
+    - name: Read the Playwright version
+      id: playwright
+      run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+    - name: Cache the Playwright browser
+      id: playwright-cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+    - name: Install the Playwright browser
+      if: steps.playwright-cache.outputs.cache-hit != 'true'
+      run: npx playwright install --with-deps chromium
+
+    - name: Install the Playwright browser system dependencies
+      if: steps.playwright-cache.outputs.cache-hit == 'true'
+      run: npx playwright install-deps chromium
 
     - name: Init .env
       run: ./node_modules/.bin/df-dev init-env # local bin only: a bare npx would fetch an unrelated "df-dev" from the registry if the dependency were missing
@@ -45,21 +115,35 @@ jobs:
     - name: Start dev worker
       run: NODE_CONFIG="$(./node_modules/.bin/df-dev absent-config)" ./node_modules/.bin/dotenv -- npm -w worker run dev &
 
-    - name: Wait for dev API to be ready
+    - name: Start dev UI
+      run: ./node_modules/.bin/dotenv -- npm -w ui run dev &
+
+    - name: Wait for the dev API, worker and UI to be ready
       run: |
         set -a; source .env; set +a
         for i in {1..30}; do
-          curl -sf "http://localhost:${DEV_API_PORT}/api/v1/_ping" && exit 0
+          if curl -sf "http://localhost:${DEV_API_PORT}/api/v1/_ping" >/dev/null \
+            && curl -sf "http://localhost:${DEV_WORKER_OBSERVER_PORT}/metrics" >/dev/null \
+            && curl -sf "http://localhost:${DEV_UI_PORT}/processings/" >/dev/null; then
+            exit 0
+          fi
           sleep 2
         done
-        echo "dev API did not become ready" >&2
+        echo "dev API, worker or UI did not become ready" >&2
         exit 1
 
     - name: Run tests
-      run: npm run test-unit && npm run test-api
+      run: npm test
 
-    - name: Audit
-      run: npm audit --omit=dev --audit-level=critical
+    - name: Upload test results on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: |
+          test-results/
+          dev/logs/test-timings.json
+        retention-days: 7
 
     - name: Docker compose logs on failure
       if: failure()

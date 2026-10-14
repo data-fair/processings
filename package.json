@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build-types": "df-build-types ./",
-    "check-types": "tsc",
+    "check-types": "tsc && npm -w ui run check-types",
     "dev-zellij": "df-dev zellij",
     "lint": "eslint . && npm -w ui run lint",
     "lint-fix": "eslint --fix . && npm -w ui run lint-fix",
@@ -16,7 +16,7 @@
     "test-api": "playwright test --project api --max-failures=1",
     "test-e2e": "playwright test --project e2e --max-failures=1",
     "test-images": "docker compose --profile events --profile openapi-viewer --profile testImages up -d --build --wait",
-    "quality": "npm run lint && npm run build-types && npm run check-types && npm -w ui run build && npm test && npm audit --omit=dev --audit-level=critical"
+    "quality": "npm run lint && npm run build-types && npm -w ui run build && npm run check-types && npm test && npm audit --omit=dev --audit-level=critical"
   },
   "repository": {
     "type": "git",
@@ -45,23 +45,23 @@
     "@data-fair/lib-types-builder": "^1.14.3"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
     "@data-fair/lib-common-types": "^1.23.0",
     "@data-fair/lib-dev": "file:../lib_feat-dev-env/packages/dev",
     "@data-fair/lib-node": "~2.15.0",
-    "@data-fair/lib-utils": "^1.13.1",
+    "@data-fair/lib-utils": "^1.14.0",
     "@playwright/test": "^1.52.0",
     "@types/config": "^3.3.5",
     "@types/debug": "^4.1.12",
-    "commitlint": "^21.2.3",
     "dotenv": "^16.4.5",
     "dotenv-cli": "^7.4.4",
-    "eslint": "^9.35.0",
-    "eslint-plugin-vue": "^10.4.0",
-    "eslint-plugin-vuetify": "^2.7.2",
+    "eslint": "^10.12.0",
+    "eslint-plugin-vue": "^10.11.1",
+    "eslint-plugin-vuetify": "^2.7.3",
     "form-data": "^4.0.6",
     "husky": "^9.1.7",
-    "neostandard": "^0.12.2",
+    "neostandard": "^0.14.1",
     "nodemon": "^3.1.14",
     "tough-cookie": "^5.0.0",
     "typescript": "^6.0.3"
