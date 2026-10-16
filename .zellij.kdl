@@ -17,7 +17,7 @@ layout {
       args "-c" "./node_modules/.bin/df-dev wait-deps && export NODE_CONFIG=$(./node_modules/.bin/df-dev absent-config) && cd worker && FORCE_COLOR=1 NODE_ENV=development DEBUG='worker,upgrade*' exec ../node_modules/.bin/nodemon -e js,ts,json index.ts"
     }
   }
-  pane name="urls" size=1 borderless=true command="bash" {
+  pane name="url" size=1 borderless=true command="bash" {
     args "-c" "echo -n -e \"Dev server available at \\e[1;96mhttp://$DEV_HOST:$NGINX_PORT/processings/dev\\e[0m\"; exec sleep infinity"
   }
 }
