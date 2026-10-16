@@ -27,9 +27,7 @@
       "ready": "http://localhost:${DEV_WORKER_OBSERVER_PORT}/metrics"
     }
   },
-  "urls": {
-    "Processings": "http://${DEV_HOST}:${NGINX_PORT}/processings/dev"
-  },
+  "url": "http://${DEV_HOST}:${NGINX_PORT}/processings/dev",
   "optional": {
     "events": {
       "privateEventsUrl": ""
