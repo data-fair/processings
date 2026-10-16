@@ -42,14 +42,14 @@
     "node": "v24"
   },
   "dependencies": {
-    "@data-fair/lib-types-builder": "^1.14.3"
+    "@data-fair/lib-types-builder": "^1.14.5"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
     "@data-fair/lib-common-types": "^1.23.0",
     "@data-fair/lib-dev": "file:../lib_feat-dev-env/packages/dev",
-    "@data-fair/lib-node": "~2.15.0",
+    "@data-fair/lib-node": "^2.16.1",
     "@data-fair/lib-utils": "^1.14.0",
     "@playwright/test": "^1.52.0",
     "@types/config": "^3.3.5",
