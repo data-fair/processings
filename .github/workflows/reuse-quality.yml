@@ -101,14 +101,15 @@ jobs:
     - name: Start the core docker compose services (optional ones stay off, like a default dev env)
       run: docker compose up -d --wait
 
+    # logs in dev/logs, uploaded on failure
     - name: Start dev API
-      run: NODE_CONFIG="$(./node_modules/.bin/df-dev absent-config)" ./node_modules/.bin/dotenv -- npm -w api run dev &
+      run: mkdir -p dev/logs && NODE_CONFIG="$(./node_modules/.bin/df-dev absent-config)" ./node_modules/.bin/dotenv -- npm -w api run dev > dev/logs/api.log 2>&1 &
 
     - name: Start dev worker
-      run: NODE_CONFIG="$(./node_modules/.bin/df-dev absent-config)" ./node_modules/.bin/dotenv -- npm -w worker run dev &
+      run: NODE_CONFIG="$(./node_modules/.bin/df-dev absent-config)" ./node_modules/.bin/dotenv -- npm -w worker run dev > dev/logs/worker.log 2>&1 &
 
     - name: Start dev UI
-      run: ./node_modules/.bin/dotenv -- npm -w ui run dev &
+      run: ./node_modules/.bin/dotenv -- npm -w ui run dev > dev/logs/ui.log 2>&1 &
 
     - name: Wait for the dev API, worker and UI to be ready
       run: |
@@ -122,6 +123,7 @@ jobs:
           sleep 2
         done
         echo "dev API, worker or UI did not become ready" >&2
+        tail -n 50 dev/logs/*.log
         exit 1
 
     - name: Run tests
@@ -134,7 +136,7 @@ jobs:
         name: test-results
         path: |
           test-results/
-          dev/logs/test-timings.json
+          dev/logs/
         retention-days: 7
 
     - name: Docker compose logs on failure

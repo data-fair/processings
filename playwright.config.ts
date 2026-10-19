@@ -46,7 +46,7 @@ export default defineConfig({
       testMatch: /e2e-warmup\.ts/,
       dependencies: ['state-setup'],
       timeout: 180_000,
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], navigationTimeout: 60_000 },
     },
     {
       name: 'e2e',
