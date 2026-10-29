@@ -11,13 +11,35 @@ import { VueRouterAutoImports } from 'vue-router/unplugin'
 import { autoImports, settingsPath } from '@data-fair/lib-vuetify/vite.js'
 import { commonjsDeps } from '@koumoul/vjsf/utils/build.js'
 
+// dev ports come from .env (declared in dev/dev.json), checked so a missing variable never becomes NaN
+const envPort = (name: string) => {
+  const port = Number(process.env[name])
+  if (!Number.isInteger(port) || port <= 0) throw new Error(`${name} must be set to a port number, run "npx --no df-dev init-env"`)
+  return port
+}
+
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ command, isPreview }) => ({
   base: '/processings',
-  optimizeDeps: { include: ['debug', 'fast-deep-equal', ...commonjsDeps] },
+  optimizeDeps: {
+    // no discovery: a dependency found while browsing reloads the page, which breaks cold e2e runs;
+    // ESM dependencies are served as is, only the commonjs ones must be listed here, with the
+    // exact import specifier
+    noDiscovery: true,
+    include: [
+      'cronstrue',
+      'cronstrue/locales/en',
+      'cronstrue/locales/fr',
+      'dayjs',
+      'timezones.json',
+      'ajv-i18n/localize/en/index.js',
+      'ajv-i18n/localize/fr/index.js',
+      ...commonjsDeps
+    ]
+  },
   resolve: {
     alias: {
-      '~': path.resolve(__dirname, 'src/')
+      '~': path.resolve(import.meta.dirname, 'src/')
     },
   },
   html: {
@@ -25,8 +47,9 @@ export default defineConfig({
   },
   plugins: [
     VueRouter({
-      dts: './dts/route-map.d.ts',
-      exclude: process.env.NODE_ENV === 'development' ? [] : ['src/pages/dev.vue']
+      dts: './dts/typed-router.d.ts',
+      // by the vite command, not NODE_ENV that a build can inherit by mistake
+      exclude: command === 'build' ? ['src/pages/dev.vue', 'src/pages/dev/**'] : []
     }),
     Vue({ template: { compilerOptions: { isCustomElement: (tag) => ['d-frame'].includes(tag) } } }),
     VueI18nPlugin(),
@@ -96,5 +119,8 @@ export default defineConfig({
       return { relative: true }
     }
   },
-  server: { hmr: { port: parseInt(process.env.DEV_UI_HMR_PORT!) } }
-})
+  // vite preview runs with command 'serve' too, it needs no dev port
+  server: command === 'serve' && !isPreview
+    ? { port: envPort('DEV_UI_PORT'), strictPort: true, hmr: { port: envPort('DEV_UI_HMR_PORT') } }
+    : undefined
+}))

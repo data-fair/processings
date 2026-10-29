@@ -4,21 +4,18 @@ services:
   # reverse proxy for the whole environment
   #####
   nginx:
-    profiles:
-      - dev
     image: nginx:1.29.4-alpine
     network_mode: host
     environment:
       - DEV_HOST=${DEV_HOST}
-      - NGINX_PORT1=${NGINX_PORT1}
-      - NGINX_PORT2=${NGINX_PORT2}
+      - NGINX_PORT=${NGINX_PORT}
       - DEV_API_PORT=${DEV_API_PORT}
       - DEV_UI_PORT=${DEV_UI_PORT}
       - SD_PORT=${SD_PORT}
       - DF_PORT=${DF_PORT}
       - EVENTS_PORT=${EVENTS_PORT}
-      - OAV_PORT=${OAV_PORT}
       - REGISTRY_PORT=${REGISTRY_PORT}
+      - OAV_PORT=${OAV_PORT}
     volumes:
       - ./dev/resources/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
 
@@ -27,93 +24,107 @@ services:
   #####
 
   simple-directory:
-    profiles:
-      - dev
-    image: ghcr.io/data-fair/simple-directory:8
+    image: ghcr.io/data-fair/simple-directory:master
     network_mode: host
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     environment:
-      - DEBUG=session
       - PORT=${SD_PORT}
+      - PUBLIC_URL=http://${DEV_HOST}:${NGINX_PORT}/simple-directory
+      - MONGO_URL=mongodb://localhost:${MONGO_PORT}/simple-directory
+      - OBSERVER_ACTIVE=false
+      - CIPHER_PASSWORD=dev-cipher-password-0123456789abcdef
+      - STORAGE_TYPE=file
+      - ADMINS=["test_superadmin@test.com","superadmin@test.com","alban.mouton@koumoul.com"]
       - CONTACT=contact@test.com
-      - ADMINS=["superadmin@test.com","test_superadmin@test.com"]
-      - PUBLIC_URL=http://${DEV_HOST}:${NGINX_PORT1}/simple-directory
       # in dev simple-directory only notifies this service, directly (the shared identities router refuses calls through the proxy)
       - IDENTITIES_WEBHOOKS=[{"base":"http://localhost:${DEV_API_PORT}/api/identities","key":"secret-identities"}]
-      - MAILDEV_ACTIVE=true
-      - MONGO_URL=mongodb://localhost:${MONGO_PORT}/simple-directory
-      - STORAGE_TYPE=file
-      - AUTHRATELIMIT_ATTEMPTS=500
-      - AUTHRATELIMIT_DURATION=30
-      - OBSERVER_ACTIVE=false
-      - MANAGE_PARTNERS=true
+      # tests log in through the API many times per minute
+      - AUTHRATELIMIT_ATTEMPTS=200
+      - AUTHRATELIMIT_DURATION=1
       - MANAGE_DEPARTMENTS=true
-      - CIPHER_PASSWORD=dev
+      - MANAGE_PARTNERS=true
+      - MANAGE_SITES=true
+      - SECRET_SITES=secret-sites
+      - SECRET_EVENTS=secret-events
+      - SECRET_SENDMAILS=secret-sendmails
+      - MAILDEV_ACTIVE=true
+      - MAILDEV_URL=http://localhost:${MAILDEV_UI_PORT}
+      - MAILS_TRANSPORT={"host":"localhost","port":${MAILDEV_SMTP_PORT},"ignoreTLS":true}
+      # per recipient, stored in mongo: repeated test runs would stop the mails silently
+      - MAILSRATELIMIT_POINTS=100000
     volumes:
       - ./dev/resources/users.json:/app/data/users.json
       - ./dev/resources/organizations.json:/app/data/organizations.json
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "${SD_PORT}"]
+      interval: 2s
+      timeout: 2s
+      retries: 60
 
   data-fair:
-    profiles:
-      - dev
-    image: ghcr.io/data-fair/data-fair:6
+    image: ghcr.io/data-fair/data-fair:master
+    # it can start before its dependencies answer
     restart: on-failure:10
     network_mode: host
     depends_on:
       mongo:
-        condition: service_started
+        condition: service_healthy
       elasticsearch:
         condition: service_healthy
     environment:
       - PORT=${DF_PORT}
+      - PUBLIC_URL=http://${DEV_HOST}:${NGINX_PORT}/data-fair
+      - WS_PUBLIC_URL=ws://${DEV_HOST}:${NGINX_PORT}/data-fair
+      - DIRECTORY_URL=http://${DEV_HOST}:${NGINX_PORT}/simple-directory
+      - PRIVATE_DIRECTORY_URL=http://localhost:${SD_PORT}
+      - PRIVATE_EVENTS_URL=http://localhost:${EVENTS_PORT}
       - MONGO_URL=mongodb://localhost:${MONGO_PORT}/data-fair
       - ES_HOST=http://localhost:${ES_PORT}
-      - DIRECTORY_URL=http://${DEV_HOST}:${NGINX_PORT1}/simple-directory
-      - PRIVATE_EVENTS_URL=http://localhost:${EVENTS_PORT}
-      - PRIVATE_DIRECTORY_URL=http://localhost:${SD_PORT}
-      - PUBLIC_URL=http://${DEV_HOST}:${NGINX_PORT1}/data-fair
-      - WS_PUBLIC_URL=ws://${DEV_HOST}:${NGINX_PORT1}/data-fair
+      # single node: with replicas the cluster stays yellow and /ping answers 500
+      - ES_NB_REPLICAS=0
       - OBSERVER_ACTIVE=false
-      - PRIVATE_PROCESSINGS_URL=http://localhost:${DEV_API_PORT}
+      # default: 3 koumoul.com remote services fetched at boot, extensions would call production
+      - REMOTE_SERVICES=[]
+      - CACHE_PUBLIC_MAX_AGE=1
+      # one IP for every test and the portal SSR: the per-IP / per-user limits answer 429
+      - DEFAULT_LIMITS_API_RATE_ANONYMOUS_NB=100000
+      - DEFAULT_LIMITS_API_RATE_USER_NB=100000
+      - DEFAULT_LIMITS_API_RATE_ANONYMOUS_COMPUTE_MS=0
+      - DEFAULT_LIMITS_API_RATE_USER_COMPUTE_MS=0
+      - DEFAULT_LIMITS_API_RATE_ANONYMOUS_BANDWIDTH_DYNAMIC=100000000
+      - DEFAULT_LIMITS_API_RATE_USER_BANDWIDTH_DYNAMIC=100000000
+      - WORKER_BASE_CONCURRENCY=1
+      # tile cache capped collection, 2 GB by default
+      - CACHE_MONGO_SIZE=200
       - SECRET_EVENTS=secret-events
-      - EXTRA_ADMIN_NAV_ITEMS=[{"id":"processingsAdminDoc","href":"http://${DEV_HOST}:${NGINX_PORT1}/openapi-viewer?urlType=processingsAdmin","icon":"mdi-cog-transfer-outline","title":"API Traitements périodiques"}]
-      - OPENAPI_VIEWER_URL=http://${DEV_HOST}:${NGINX_PORT1}/openapi-viewer/
+      - PRIVATE_PROCESSINGS_URL=http://localhost:${DEV_API_PORT}
+      - EXTRA_ADMIN_NAV_ITEMS=[{"id":"processingsAdminDoc","href":"http://${DEV_HOST}:${NGINX_PORT}/openapi-viewer?urlType=processingsAdmin","icon":"mdi-cog-transfer-outline","title":"API Traitements périodiques"}]
+      - OPENAPI_VIEWER_URL=http://${DEV_HOST}:${NGINX_PORT}/openapi-viewer/
       - OPENAPI_VIEWER_V2=true
-
-  #####
-  # optional services
-  #####
+    volumes:
+      # the image declares an anonymous /data: datasets files would vanish on recreate while mongo keeps them
+      - data-fair-data:/data
 
   events:
     profiles:
-      - dev
+      - events
     image: ghcr.io/data-fair/events:main
     network_mode: host
+    depends_on:
+      - mongo
     environment:
       - PORT=${EVENTS_PORT}
+      - PRIVATE_DIRECTORY_URL=http://localhost:${SD_PORT}
       - MONGO_URL=mongodb://localhost:${MONGO_PORT}/data-fair-events
-      - PRIVATE_DIRECTORY_URL=http://${DEV_HOST}:${NGINX_PORT1}/simple-directory
+      - OBSERVER_ACTIVE=false
       - SECRET_IDENTITIES=secret-identities
       - SECRET_EVENTS=secret-events
       - SECRET_SENDMAILS=secret-sendmails
-      - OBSERVER_ACTIVE=false
 
-  openapi-viewer:
-    profiles:
-      - dev
-    image: ghcr.io/data-fair/openapi-viewer:master
-    network_mode: host
-    environment:
-      - PORT=${OAV_PORT}
-      - USE_SIMPLE_DIRECTORY=true
-      - ALLOWED_URLS={"processings":"http://${DEV_HOST}:${NGINX_PORT1}/processings/api/v1/api-docs.json","processingsId":"http://${DEV_HOST}:${NGINX_PORT1}/processings/api/v1/processings/{id}/api-docs.json","processingsAdmin":"http://${DEV_HOST}:${NGINX_PORT1}/processings/api/v1/admin/api-docs.json"}
-
-  # registry-side dev container — same domain as processings under /registry
-  # so the UI can hit it directly with the SimpleDirectory session cookie.
+  # same domain as processings under /registry so the UI can hit it directly with the simple-directory session cookie
   registry:
-    profiles:
-      - dev
     image: ghcr.io/data-fair/registry:main
     network_mode: host
     depends_on:
@@ -121,94 +132,97 @@ services:
       - simple-directory
     environment:
       - PORT=${REGISTRY_PORT}
-      - MONGO_URL=mongodb://localhost:${MONGO_PORT}/data-fair-registry
+      - PUBLIC_URL=http://${DEV_HOST}:${NGINX_PORT}/registry
       - PRIVATE_DIRECTORY_URL=http://localhost:${SD_PORT}
-      - PUBLIC_URL=http://${DEV_HOST}:${NGINX_PORT1}/registry
-      - SECRET_INTERNAL_SERVICES=secret-registry-internal
-      - CIPHER_PASSWORD=1234567890123456789012345678901234567890
-      - API_KEYS_SALT=1234567890123456789012345678901234567890
+      - MONGO_URL=mongodb://localhost:${MONGO_PORT}/data-fair-registry
       - OBSERVER_ACTIVE=false
+      - CIPHER_PASSWORD=dev-cipher-password-0123456789abcdef
+      - API_KEYS_SALT=dev-api-keys-salt-0123456789abcdef01
+      - SECRET_INTERNAL_SERVICES=secret-registry-internal
       - FILES_STORAGE=fs
-      # /tmp is world-writable in the registry image; the container runs as
-      # uid 1000 ("node") and can't write to a docker-managed volume on /app/data
-      # without an init step. Tarballs are throwaway in dev/test so we just keep
-      # them inside the container and drop the named volume.
+      # the container runs as uid 1000 and cannot write to a docker-managed volume on /app/data; tarballs are throwaway in dev
       - DATA_DIR=/tmp/registry-data
+
+  #####
+  # tools
+  #####
+
+  openapi-viewer:
+    profiles:
+      - openapi-viewer
+    image: ghcr.io/data-fair/openapi-viewer:master
+    network_mode: host
+    environment:
+      - PORT=${OAV_PORT}
+      - USE_SIMPLE_DIRECTORY=true
+      - ALLOWED_URLS={"processings":"http://${DEV_HOST}:${NGINX_PORT}/processings/api/v1/api-docs.json","processingsId":"http://${DEV_HOST}:${NGINX_PORT}/processings/api/v1/processings/{id}/api-docs.json","processingsAdmin":"http://${DEV_HOST}:${NGINX_PORT}/processings/api/v1/admin/api-docs.json"}
+
+  # catches the mails of simple-directory and of the worker's own transport (plugins' sendMail)
+  maildev:
+    profiles:
+      - maildev
+    image: maildev/maildev:2.1.0
+    ports:
+      - ${MAILDEV_UI_PORT}:1080
+      - ${MAILDEV_SMTP_PORT}:1025
+    # https://github.com/maildev/maildev/issues/484
+    healthcheck:
+      test: 'wget -O - http://127.0.0.1:$${MAILDEV_WEB_PORT}$${MAILDEV_BASE_PATHNAME}/healthz || exit 1'
 
   #####
   # db and search engine
   #####
 
   elasticsearch:
-    profiles:
-      - dev
-    image: ghcr.io/data-fair/elasticsearch:7.x
+    image: ghcr.io/data-fair/elasticsearch:8.19.9
     ports:
       - ${ES_PORT}:9200
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - ES_HEAP_SIZE=128m
-      - "ES_JAVA_OPTS=-Xms128m -Xmx128m -server"
+      - ingest.geoip.downloader.enabled=false
+      # features the services never use, skipped to lighten the boot
+      - xpack.ml.enabled=false
+      - xpack.watcher.enabled=false
+      - stack.templates.enabled=false
+      - cluster.deprecation_indexing.enabled=false
+      # heap starts at 64m and grows up to 512m (pre-touching a fixed 512m cost ~360m per idle stack)
+      - ES_JAVA_OPTS=-Xms64m -Xmx512m
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9200"]
-      start_period: 10s
-      timeout: 5s
-      interval: 2s
-      retries: 50
+      # 2 s probes while starting (df-dev wait-deps gives up after 3 min), then one per minute
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 3m
+      start_interval: 2s
+    mem_limit: 2g
+    # no swap: an idle ES got 1.7 GB swapped out
+    memswap_limit: 2g
+    # halves the boot CPU burst (ES sizes its thread pools, GC and JIT threads to the quota)
+    cpus: 2
 
   mongo:
-    profiles:
-      - dev
-    image: mongo:4.2
+    # production version; later 8.0 patches refuse Ubuntu 7.0 kernels (https://jira.mongodb.org/browse/SERVER-136848)
+    image: mongo:8.0.17
     ports:
       - ${MONGO_PORT}:27017
+    # wiredTiger takes half the machine's RAM by default
+    command: ["--wiredTigerCacheSizeGB", "0.25"]
     volumes:
       - mongo-data:/data/db
-
-  #####
-  # Api and worker in docker mode
-  #####
-
-  main:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: main
-      args:
-        NODE_ENV: development
-    depends_on:
-      - data-fair
-    profiles:
-      - testImages
-    image: datafair/processings/main:dev
-    network_mode: host
-    environment:
-      - NODE_ENV=development
-    volumes:
-      - processings-data:/app/data
-
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: worker
-      args:
-        NODE_ENV: development
-    depends_on:
-      - data-fair
-    profiles:
-      - testImages
-    image: datafair/processings/worker:dev
-    network_mode: host
-    environment:
-      - NODE_ENV=development
-    volumes:
-      - processings-data:/app/data
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      # 2 s probes while starting, then one per minute: a mongosh probe costs ~1.3 s of CPU
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 3m
+      start_interval: 2s
 
 volumes:
   elasticsearch-data:
   mongo-data:
-  processings-data:
+  data-fair-data:

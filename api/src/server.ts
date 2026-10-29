@@ -5,7 +5,7 @@ import { session, assertAuthenticated } from '@data-fair/lib-express/index.js'
 import * as wsServer from '@data-fair/lib-express/ws-server.js'
 import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import eventsQueue from '@data-fair/lib-node/events-queue.js'
-import { startObserver, stopObserver, internalError } from '@data-fair/lib-node/observer.js'
+import { startObserver, stopObserver } from '@data-fair/lib-node/observer.js'
 import { createHttpTerminator } from 'http-terminator'
 import { exec as execCallback } from 'child_process'
 import { promisify } from 'util'
@@ -33,13 +33,8 @@ export const start = async () => {
   session.init(config.privateDirectoryUrl)
   await mongo.init()
   await locks.start(mongo.db)
-  if (config.privateEventsUrl) {
-    if (!config.secretKeys.events) {
-      internalError('processings', 'Missing secretKeys.events in config')
-    } else {
-      await eventsQueue.start({ eventsUrl: config.privateEventsUrl, eventsSecret: config.secretKeys.events })
-    }
-  }
+  // without the events service (optional) the queue is inactive and pushEvent is a no-op
+  await eventsQueue.start({ eventsUrl: config.privateEventsUrl, eventsSecret: config.secretKeys.events })
 
   await wsServer.start(server, mongo.db, async (channel, sessionState) => {
     assertAuthenticated(sessionState)

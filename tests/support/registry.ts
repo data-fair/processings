@@ -15,7 +15,7 @@ import { axiosBuilder } from '@data-fair/lib-node/axios.js'
  */
 
 // Through nginx for browser-visible reads (matches what the UI does in dev).
-export const registryBaseUrl = `http://${process.env.DEV_HOST}:${process.env.NGINX_PORT1}/registry`
+export const registryBaseUrl = `http://${process.env.DEV_HOST}:${process.env.NGINX_PORT}/registry`
 // Direct to the registry container for internal-secret writes — the registry
 // only honours x-secret-key when reqIsInternal is true, which checks for the
 // absence of x-forwarded-host. nginx adds that header, so internal calls have

@@ -116,7 +116,6 @@ test.describe('memory pressure diagnostics', () => {
   })
 
   test('CPU-saturated task still reports RSS via external sampler', async () => {
-    test.skip(process.platform !== 'linux', 'external sampler is Linux-only')
     test.setTimeout(120_000)
 
     const superadmin = await axiosAuth('test_superadmin@test.com')

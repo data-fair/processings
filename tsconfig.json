@@ -9,6 +9,8 @@
     "allowJs": true,
     "checkJs": true,
     "skipLibCheck": true,
+    "erasableSyntaxOnly": true,
+    "types": ["node"],
     "paths": {
       "#api/types": ["./api/types/index.ts"],
       "#api/type/*": ["./api/types/*"]

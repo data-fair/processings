@@ -3,18 +3,17 @@ import { axiosAuth, clean } from './support/axios.ts'
 import { publishFixturePlugin } from './support/registry.ts'
 
 /**
- * Vite serves the UI in dev mode, and discovers dependencies lazily: the first
- * page that mounts the vjsf form or opens an action menu pulls in Vuetify
- * components that were not in the optimized bundle yet. Vite then re-optimizes
- * and forces a full page reload — which wipes whatever assertion was running,
- * and makes a random e2e spec fail on a timeout at every cold start.
+ * Vite serves the UI in dev mode and transforms each route's modules on its
+ * first visit, slower than the e2e timeouts on a cold start. Dependency
+ * discovery is off (`optimizeDeps.noDiscovery` in ui/vite.config.ts: no page
+ * reload), so this run also fails fast on a commonjs dependency missing from
+ * `optimizeDeps.include` (blank page, the module named in the console).
  *
- * This project runs before the e2e ones and walks the heavy routes so all the
- * lazy deps are optimized once, up front.
+ * This project runs before the e2e ones and walks the heavy routes once.
  */
-setup('Warmup heavy dev routes', async ({ page, goToWithAuth }) => {
+setup('Warmup heavy dev routes', async ({ page, goToWithAuth }, testInfo) => {
   const start = Date.now()
-  const stamp = (label: string) => console.log(`[warmup] ${label}: ${((Date.now() - start) / 1000).toFixed(1)}s`)
+  const stamp = (label: string) => testInfo.annotations.push({ type: 'warmup', description: `${label}: ${((Date.now() - start) / 1000).toFixed(1)}s` })
 
   await clean()
   const superadmin = await axiosAuth('test_superadmin@test.com')

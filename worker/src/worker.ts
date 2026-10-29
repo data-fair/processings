@@ -57,13 +57,8 @@ export const start = async () => {
     await initMetrics()
     await startObserver(config.observer.port)
   }
-  if (config.privateEventsUrl) {
-    if (!config.secretKeys.events) {
-      internalError('processings', 'Missing secretKeys.events in config')
-    } else {
-      await eventsQueue.start({ eventsUrl: config.privateEventsUrl, eventsSecret: config.secretKeys.events })
-    }
-  }
+  // without the events service (optional) the queue is inactive and pushEvent is a no-op
+  await eventsQueue.start({ eventsUrl: config.privateEventsUrl, eventsSecret: config.secretKeys.events })
 
   // Startup memory budget report
   const containerLimitMB = detectContainerLimitMB()
