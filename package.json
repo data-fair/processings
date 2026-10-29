@@ -39,7 +39,7 @@
   },
   "homepage": "https://github.com/data-fair/processings#readme",
   "engines": {
-    "node": "v24"
+    "node": ">=24.22.1"
   },
   "dependencies": {
     "@data-fair/lib-types-builder": "^1.14.5"
