@@ -60,14 +60,14 @@
         class="overflow-auto"
         max-height="300"
       >
-      <v-btn
-        :prepend-icon="mdiContentCopy"
-        variant="text"
-        size="small"
-        @click="copyExtra(log.extra)"
-      >
-        {{ t('copy') }}
-      </v-btn>
+        <v-btn
+          :prepend-icon="mdiContentCopy"
+          variant="text"
+          size="small"
+          @click="copyExtra(log.extra)"
+        >
+          {{ t('copy') }}
+        </v-btn>
         <v-card-text class="pt-0">
           <pre
             class="text-body-small"

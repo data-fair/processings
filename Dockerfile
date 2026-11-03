@@ -1,13 +1,15 @@
 # =============================
 # Base Node image
 # =============================
-FROM node:24.21.0-alpine3.24 AS base
+FROM node:24.22.1-alpine3.24@sha256:1200d815de24f8dcca745fbf7651d166034a35adbcad8860a8538ffff44f1420 AS base
 
 # pick up alpine security fixes published after the base image was built
 RUN apk upgrade --no-cache
 # the npm bundled with node lags behind on its own dependencies' security fixes,
 # it cannot be removed as lib-node-registry runs "npm rebuild" on plugins with native modules
 RUN npm install -g npm@11.21.0 && npm cache clean --force
+# corepack and yarn are never used
+RUN rm -rf /usr/local/lib/node_modules/corepack /usr/local/bin/corepack /opt/yarn-* /usr/local/bin/yarn /usr/local/bin/yarnpkg
 
 WORKDIR /app
 ENV NODE_ENV=production

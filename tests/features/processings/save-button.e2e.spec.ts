@@ -25,10 +25,13 @@ test.describe('processing edit page — explicit save', () => {
     return { superadmin, id: processing._id as string }
   }
 
-  test('save button appears on edit, cancel restores, save persists', async ({ page, goToWithAuth }) => {
+  test('save button appears on edit, cancel restores, save persists', { tag: '@smoke' }, async ({ page, goToWithAuth }) => {
     const { superadmin, id } = await setup()
     await goToWithAuth(`/processings/processings/${id}`, 'test_superadmin')
     await expect(page.locator('.vjsf')).toBeVisible({ timeout: 20000 })
+    // an available plugin: the form renders and no broken-plugin banner shows (regression: the
+    // registry artefact was fetched under the API base URL, 404, every processing looked broken)
+    await expect(page.getByText(/Plugin indisponible/)).toHaveCount(0)
     // first "Titre" field is the processing title, the plugin config has one too
     const titleField = page.getByLabel('Titre', { exact: true }).first()
     await expect(titleField).toHaveValue('Save e2e processing')
@@ -67,7 +70,8 @@ test.describe('processing edit page — explicit save', () => {
     // router navigation (the breadcrumbs live in the parent frame).
     await goToWithAuth('/processings/processings', 'test_superadmin')
     await page.getByText('Save e2e processing').first().click()
-    await page.waitForURL(new RegExp(`/processings/processings/${id}$`))
+    // an in-app navigation: web-first assertion on the URL, no wait for a load event
+    await expect(page).toHaveURL(new RegExp(`/processings/processings/${id}$`), { timeout: 20_000 })
     await expect(page.locator('.vjsf')).toBeVisible({ timeout: 20000 })
     // first "Titre" field is the processing title, the plugin config has one too
     const titleField = page.getByLabel('Titre', { exact: true }).first()

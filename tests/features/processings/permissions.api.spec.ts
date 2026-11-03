@@ -11,7 +11,7 @@ test.describe('processing permissions', () => {
   test.beforeEach(clean)
   test.afterAll(clean)
 
-  test('should create a processing and check permissions across roles', async () => {
+  test('should create a processing and check permissions across roles', { tag: '@smoke' }, async () => {
     const plugin = await installTestPlugin()
 
     const adminTestOrg1 = await axiosAuth({ email: 'test_admin1@test.com', org: 'test_org1' })

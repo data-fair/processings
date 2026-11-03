@@ -45,7 +45,7 @@
             class="mb-4"
           >
             <template v-if="groupedArtefacts[group]?.length">
-              <h3 class="text-h6 mb-2">
+              <h3 class="text-headline-small mb-2">
                 {{ group }}
               </h3>
               <v-row class="d-flex align-stretch">

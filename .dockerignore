@@ -1,4 +1,9 @@
-node_modules
-.nuxt
-.output
+**/node_modules
+**/dist
+ui/dts
+.env
 data
+dev/logs
+test-results
+playwright-report
+.git

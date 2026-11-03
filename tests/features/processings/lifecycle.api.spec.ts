@@ -13,10 +13,12 @@ const installTestPlugin = async () => publishFixturePlugin({
 })
 
 test.describe('processing', () => {
+  // every test here runs the plugin through the worker (up to ~60 s measured, two runs)
+  test.beforeEach(() => { test.slow() })
   test.beforeEach(clean)
   test.afterAll(clean)
 
-  test('should create a new processing, activate it and run it', async () => {
+  test('should create a new processing, activate it and run it', { tag: '@smoke' }, async () => {
     const superadmin = await axiosAuth('test_superadmin@test.com')
     const plugin = await installTestPlugin()
 

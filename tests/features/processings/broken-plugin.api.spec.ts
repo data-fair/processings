@@ -50,7 +50,7 @@ test.describe('processing with unavailable plugin', () => {
     expect(res.data.title).toBe('New title')
   })
 
-  test('PATCH /processings/:id with a config field surfaces a 404 with the plugin id', async () => {
+  test('PATCH /processings/:id with a config field surfaces a 404 with the plugin id', { tag: '@smoke' }, async () => {
     const superadmin = await axiosAuth('test_superadmin@test.com')
     const id = await createBrokenProcessing(superadmin)
 

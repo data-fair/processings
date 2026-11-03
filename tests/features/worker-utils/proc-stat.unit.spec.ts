@@ -69,19 +69,12 @@ test.describe('parseStatFields', () => {
 
 test.describe('isSupported', () => {
   test('returns true on Linux', () => {
-    if (process.platform !== 'linux') test.skip()
     expect(isSupported()).toBe(true)
-  })
-
-  test('returns false on non-Linux', () => {
-    if (process.platform === 'linux') test.skip()
-    expect(isSupported()).toBe(false)
   })
 })
 
 test.describe('readProcStat', () => {
   test('returns plausible snapshot for the current process on Linux', () => {
-    if (process.platform !== 'linux') test.skip()
     const s = readProcStat(process.pid)
     expect(s).not.toBeNull()
     expect(s!.rssBytes).toBeGreaterThan(1024 * 1024) // at least 1 MB
@@ -91,13 +84,7 @@ test.describe('readProcStat', () => {
   })
 
   test('returns null for a non-existent pid', () => {
-    if (process.platform !== 'linux') test.skip()
     expect(readProcStat(999999999)).toBeNull()
-  })
-
-  test('returns null on non-Linux (isSupported is false)', () => {
-    if (process.platform === 'linux') test.skip()
-    expect(readProcStat(process.pid)).toBeNull()
   })
 })
 

@@ -6,7 +6,7 @@ const registryPort = process.env.REGISTRY_PORT ?? '8085'
 const observerPort = parseInt(process.env.DEV_API_OBSERVER_PORT ?? '9092')
 
 export default {
-  cipherPassword: 'dev',
+  cipherPassword: 'dev-cipher-password-0123456789abcdef',
   dataDir: '../data/development',
   mongoUrl: `mongodb://localhost:${mongoPort}/data-fair-processings-development`,
   observer: {
