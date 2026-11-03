@@ -98,8 +98,8 @@ jobs:
     - name: Use localhost as DEV_HOST in CI
       run: sed -i 's/^DEV_HOST=.*/DEV_HOST=localhost/' .env
 
-    - name: Start the core docker compose services (optional ones stay off, like a default dev env)
-      run: docker compose up -d --wait
+    - name: Start every docker compose service, optional profiles included
+      run: docker compose --profile '*' up -d --wait
 
     # logs in dev/logs, uploaded on failure
     - name: Start dev API
