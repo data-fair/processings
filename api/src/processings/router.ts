@@ -250,6 +250,7 @@ router.get('', requireOperationScope('listProcessings'), async (req, res) => {
     mongo.processings.countDocuments(query)
   ])
 
+  // statuses is read by the dashboard of data-fair (facets.statuses.error with size=0): changing it needs a coordinated release
   const aggregationPipeline = [
     {
       $facet: {
