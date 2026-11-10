@@ -45,6 +45,9 @@ services:
       - AUTHRATELIMIT_DURATION=1
       - MANAGE_DEPARTMENTS=true
       - MANAGE_PARTNERS=true
+      # the test non-human identity of dev/resources/users.json (tests/features/scopes)
+      - MANAGE_NHIS=true
+      - NHIS_ALLOW_INSECURE_ISSUERS=true
       - MANAGE_SITES=true
       - SECRET_SITES=secret-sites
       - SECRET_EVENTS=secret-events

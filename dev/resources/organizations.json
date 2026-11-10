@@ -193,6 +193,7 @@
     ],
     "members": [
       { "id": "test_admin1", "role": "admin" },
+      { "id": "test_scope_nhi", "role": "admin" },
       { "id": "test_user1", "role": "user" },
       { "id": "test_contrib1", "role": "contrib" },
       { "id": "test_dep_admin", "role": "admin", "department": "dep1" },

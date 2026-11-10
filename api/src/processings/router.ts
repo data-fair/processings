@@ -11,7 +11,7 @@ import path from 'path'
 import { nanoid } from 'nanoid'
 
 import eventsQueue from '@data-fair/lib-node/events-queue.js'
-import { reqOrigin, session } from '@data-fair/lib-express/index.js'
+import { assertReqScope, reqOrigin, session } from '@data-fair/lib-express/index.js'
 import { ensureArtefact } from '@data-fair/lib-node-registry'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import { axiosBuilder } from '@data-fair/lib-node/axios.js'
@@ -28,6 +28,7 @@ import getApiDoc from '../misc/utils/api-docs.ts'
 import findUtils from '../misc/utils/find.ts'
 import permissions from '../misc/utils/permissions.ts'
 import { translateRegistryError } from './operations.ts'
+import { acceptedScopes, requireOperationScope } from '../scopes.ts'
 
 const router = Router()
 export default router
@@ -215,7 +216,7 @@ const cleanProcessing = (processing: Processing, sessionState: SessionStateAuthe
 }
 
 // Get the list of processings
-router.get('', async (req, res) => {
+router.get('', requireOperationScope('listProcessings'), async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const params = (await import('#doc/processings/get-req/index.ts')).returnValid(req.query)
   const sort = findUtils.sort(params.sort)
@@ -375,7 +376,7 @@ router.get('', async (req, res) => {
   res.json({ results: results.map((p) => cleanProcessing(p as Processing, sessionState)), facets, count })
 })
 
-router.post('', async (req, res) => {
+router.post('', requireOperationScope('postProcessing'), async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const body = { ...req.body }
   body._id = nanoid()
@@ -402,7 +403,7 @@ router.post('', async (req, res) => {
 })
 
 // Patch some of the attributes of a processing
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', requireOperationScope('patchProcessing'), async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
@@ -458,7 +459,7 @@ router.patch('/:id', async (req, res) => {
 })
 
 // Get a processing
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireOperationScope('getProcessing'), async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
@@ -470,7 +471,7 @@ router.get('/:id', async (req, res) => {
 // Registry only stores tarballs and ignores their inner shape; the schema
 // ships as `processing-config-schema.json` next to the plugin and is read
 // on demand from the API's local cache.
-router.get('/:id/plugin-config-schema', async (req, res, next) => {
+router.get('/:id/plugin-config-schema', requireOperationScope('getPluginConfigSchema'), async (req, res, next) => {
   try {
     const sessionState = await session.reqAuthenticated(req)
     const processing = await mongo.processings.findOne({ _id: req.params.id })
@@ -489,7 +490,7 @@ router.get('/:id/plugin-config-schema', async (req, res, next) => {
 // Get the plugin's registry metadata for this processing. Permission is checked
 // against the requesting user; the registry fetch runs as the owner so a viewer
 // with only an individual permission inherits the owner's plugin access.
-router.get('/:id/plugin', async (req, res, next) => {
+router.get('/:id/plugin', requireOperationScope('getProcessingPlugin'), async (req, res, next) => {
   try {
     const sessionState = await session.reqAuthenticated(req)
     const processing = await mongo.processings.findOne({ _id: req.params.id })
@@ -501,7 +502,7 @@ router.get('/:id/plugin', async (req, res, next) => {
 })
 
 // Delete a processing
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireOperationScope('deleteProcessing'), async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
@@ -512,7 +513,7 @@ router.delete('/:id', async (req, res) => {
   res.sendStatus(204)
 })
 
-router.get('/:id/webhook-key', async (req, res) => {
+router.get('/:id/webhook-key', requireOperationScope('getProcessingWebhookKey'), async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
@@ -520,7 +521,7 @@ router.get('/:id/webhook-key', async (req, res) => {
   res.send(processing.webhookKey)
 })
 
-router.delete('/:id/webhook-key', async (req, res) => {
+router.delete('/:id/webhook-key', requireOperationScope('deleteProcessingWebhookKey'), async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
@@ -540,6 +541,8 @@ router.post('/:id/_trigger', async (req, res) => {
     if (req.query.key !== processing.webhookKey) return res.status(403).send('Mauvaise clé de déclenchement')
     sendProcessingEvent(processing, 'a été déclenché par webhook', 'trigger')
   } else {
+    // the webhook key path reads no session, so the scope is checked here rather than by a middleware
+    assertReqScope(req, acceptedScopes('processings', 'write'))
     const sessionState = await session.reqAuthenticated(req)
     if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState) ?? '')) return res.status(403).send()
     sendProcessingEvent(processing, 'a été déclenché manuellement', 'trigger', sessionState)

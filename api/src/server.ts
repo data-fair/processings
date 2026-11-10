@@ -30,7 +30,7 @@ export const start = async () => {
     throw new Error(`Data directory ${resolvePath(config.dataDir)} was not mounted`)
   }
   if (config.observer.active) await startObserver(config.observer.port)
-  session.init(config.privateDirectoryUrl)
+  session.init(config.privateDirectoryUrl, undefined, undefined, { scopeAware: true })
   await mongo.init()
   await locks.start(mongo.db)
   // without the events service (optional) the queue is inactive and pushEvent is a no-op

@@ -6,6 +6,7 @@ import { session } from '@data-fair/lib-express/index.js'
 import { getLimits } from '@data-fair/processings-shared/limits.ts'
 import mongo from '#mongo'
 import config from '#config'
+import { requireOperationScope } from '../scopes.ts'
 
 const router = Router()
 export default router
@@ -50,7 +51,7 @@ router.post('/:type/:id', async (req, res) => {
 })
 
 // A user can get limits information for himself only
-router.get('/:type/:id', isAccountMember, async (req, res) => {
+router.get('/:type/:id', requireOperationScope('getAccountLimits'), isAccountMember, async (req, res) => {
   const consumer = { type: req.params.type as 'organization' | 'user', id: req.params.id as string, name: req.params.id as string, department: '' }
   const limits = await getLimits(mongo.db, consumer)
   if (!limits) return res.status(404).send()
