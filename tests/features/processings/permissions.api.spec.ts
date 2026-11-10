@@ -178,4 +178,16 @@ test.describe('processing permissions', () => {
       }
     })).rejects.toMatchObject({ status: 403 })
   })
+
+  test('an org admin cannot patch the read-only parts of a processing', async () => {
+    const plugin = await installTestPlugin()
+    const adminTestOrg1 = await axiosAuth({ email: 'test_admin1@test.com', org: 'test_org1' })
+    const processing = (await adminTestOrg1.post('/api/v1/processings', { title: 'Hello processing', plugin: plugin.pluginId })).data
+    const status = { validateStatus: () => true }
+    let res = await adminTestOrg1.patch(`/api/v1/processings/${processing._id}`, { webhookKey: 'x' }, status)
+    expect(res.status).toBe(400)
+    expect(res.data).toBe('Unsupported patch part webhookKey')
+    res = await adminTestOrg1.patch(`/api/v1/processings/${processing._id}`, { plugin: 'other-plugin' }, status)
+    expect(res.status).toBe(400)
+  })
 })

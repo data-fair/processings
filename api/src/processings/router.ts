@@ -23,12 +23,12 @@ import { cipher, decipher } from '@data-fair/processings-shared/cipher.ts'
 import mongo from '#mongo'
 import config, { registryCacheDir } from '#config'
 import locks from '#locks'
-import { resolvedSchema as processingSchema } from '#types/processing/index.ts'
 import getApiDoc from '../misc/utils/api-docs.ts'
 import findUtils from '../misc/utils/find.ts'
 import permissions from '../misc/utils/permissions.ts'
 import { translateRegistryError } from './operations.ts'
 import { acceptedScopes, requireOperationScope } from '../scopes.ts'
+import { patchableFields, processingPatchFields } from './patch-fields.ts'
 
 const router = Router()
 export default router
@@ -410,10 +410,14 @@ router.patch('/:id', requireOperationScope('patchProcessing'), async (req, res) 
   if (permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState) !== 'admin') return res.status(403).send()
 
   // Restrict the parts of the processing that can be edited by API
-  const acceptedParts = Object.keys(processingSchema.properties)
-    .filter(k => sessionState.user.adminMode || !(processingSchema.properties)[k].readOnly || 'owner')
+  const acceptedParts = patchableFields(!!sessionState.user.adminMode)
   for (const key in req.body) {
     if (!acceptedParts.includes(key)) return res.status(400).send('Unsupported patch part ' + key)
+  }
+  if (Object.keys(req.body).some(key => (processingPatchFields.admin as readonly string[]).includes(key))) {
+    assertReqScope(req, acceptedScopes('processings', 'admin'))
+  }
+  for (const key in req.body) {
     if (key === 'owner') {
       // check if the user has the right to change to this owner
       const isAdmin =

@@ -71,4 +71,14 @@ test.describe('scopes', () => {
     const { admin, processing } = await createProcessing()
     expect((await admin.get(`/api/v1/processings/${processing._id}`, status)).status).toBe(200)
   })
+
+  test('patching the admin parts needs the admin tier, and nothing is saved without it', async () => {
+    const { processing } = await createProcessing()
+    const write = (await nhiSession('processings:write')).bearerAx
+    expect((await write.patch(`/api/v1/processings/${processing._id}`, { permissions: [] }, status)).status).toBe(403)
+    expect((await write.patch(`/api/v1/processings/${processing._id}`, { title: 'a', permissions: [] }, status)).status).toBe(403)
+    expect((await write.get(`/api/v1/processings/${processing._id}`)).data.title).toBe('Scoped processing')
+    const admin = (await nhiSession('processings:admin')).bearerAx
+    expect((await admin.patch(`/api/v1/processings/${processing._id}`, { permissions: [] }, status)).status).toBe(200)
+  })
 })
