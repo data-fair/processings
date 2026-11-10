@@ -39,7 +39,7 @@
     </span>
     <!-- List of catalogs -->
     <template v-else>
-      <v-row class="d-flex align-stretch">
+      <v-row class="d-flex align-stretch df-card-grid">
         <v-col
           v-for="processing in displayProcessings"
           :key="processing._id"
@@ -121,7 +121,7 @@ const processingsParams = computed(() => {
     size: '10000',
     showAll: showAll.value,
     sort: 'updated.date:-1',
-    select: '_id,title,plugin,lastRun,nextRun,owner,active,config'
+    select: '_id,title,plugin,lastRun,nextRun,owner,active,config,scheduling'
   }
   if (plugins.value.length) params.plugins = plugins.value.join(',')
   if (statuses.value.length) params.statuses = statuses.value.join(',')

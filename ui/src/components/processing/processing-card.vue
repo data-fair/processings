@@ -1,182 +1,98 @@
 <template>
-  <v-card
-    class="h-100"
+  <card-shell
+    :title="processing.title"
     :to="`/processings/${processing._id}`"
+    :owner="showOwner ? processing.owner : undefined"
   >
-    <v-card-item class="text-primary">
-      <!-- Processing title -->
-      <template #title>
-        <span
-          :title="processing.title"
-          class="font-weight-bold"
-        >
-          {{ processing.title }}
-        </span>
+    <!-- Plugin name -->
+    <card-meta-line
+      v-if="pluginFetch.error.value?.statusCode"
+      :icon="mdiPowerPlug"
+      color="error"
+      :text="t('pluginUnavailable') + ' — ' + processing.plugin"
+    >
+      <template #help>
+        {{ t('pluginUnavailableHint') }}
       </template>
+    </card-meta-line>
+    <card-meta-line
+      v-else
+      :icon="mdiPowerPlug"
+      icon-color="primary"
+      :text="pluginFetch.data.value?.title?.fr ?? pluginFetch.data.value?.title?.en ?? pluginFetch.data.value?.name ?? processing.plugin"
+    />
 
-      <!-- Owner -->
-      <template #append>
-        <owner-avatar
-          v-if="showOwner"
-          :owner="processing.owner"
-        />
-      </template>
-    </v-card-item>
-    <v-divider />
-    <v-card-text class="pa-0">
-      <v-list
-        density="compact"
-        style="background-color: inherit;"
+    <!-- Linked dataset -->
+    <card-meta-line
+      v-if="processing.config?.dataset?.id"
+      :icon="mdiDatabase"
+      icon-color="primary"
+      :text="processing.config.dataset.title || processing.config.dataset.id"
+    />
+
+    <!-- Next run -->
+    <card-meta-line
+      v-if="processing.nextRun?.status === 'scheduled'"
+      :icon="mdiClockOutline"
+      icon-color="primary"
+      :text="t('nextRunScheduled') + ' ' + dayjs(processing.nextRun.scheduledAt).fromNow()"
+    >
+      <template
+        v-if="processing.scheduling?.length"
+        #help
       >
-        <!-- Plugin name -->
-        <v-list-item v-if="pluginFetch.loading.value">
-          <v-progress-circular
-            indeterminate
-            color="primary"
-            size="small"
-            width="3"
-          />
-        </v-list-item>
-        <v-list-item
-          v-else-if="pluginFetch.error.value?.statusCode"
-          :title="t('pluginUnavailableHint')"
+        <div
+          v-for="(scheduling, i) in processing.scheduling"
+          :key="i"
         >
-          <template #prepend>
-            <v-icon
-              :icon="mdiPowerPlug"
-              color="error"
-            />
-          </template>
-          <span class="text-error">
-            {{ t('pluginUnavailable') + ' — ' + processing.plugin }}
-          </span>
-        </v-list-item>
-        <v-list-item v-else>
-          <template #prepend>
-            <v-icon :icon="mdiPowerPlug" />
-          </template>
-          {{ pluginFetch.data.value?.title?.fr ?? pluginFetch.data.value?.title?.en ?? pluginFetch.data.value?.name ?? processing.plugin }}
-        </v-list-item>
+          {{ t(`frequency.${scheduling.type}`) }}
+          {{ cronstrue.toString(toCRON(scheduling), { locale: locale }) }}
+        </div>
+      </template>
+    </card-meta-line>
+    <card-meta-line
+      v-else-if="processing.nextRun?.status === 'triggered'"
+      :icon="mdiPlayCircle"
+      icon-color="primary"
+      :text="t('nextRunTriggered') + ' ' + dayjs(processing.nextRun.createdAt).fromNow()"
+    />
 
-        <!-- Linked dataset -->
-        <v-list-item
-          v-if="processing.config?.dataset?.id"
-        >
-          <template #prepend>
-            <v-icon
-              color="primary"
-              :icon="mdiDatabase"
-            />
-          </template>
-          {{ processing.config.dataset.title || processing.config.dataset.id }}
-        </v-list-item>
-
-        <!-- Last run -->
-        <template v-if="processing.lastRun">
-          <v-list-item
-            v-if="processing.lastRun.status === 'running'"
-            prepend-gap="28"
-          >
-            <template #prepend>
-              <v-progress-circular
-                indeterminate
-                color="primary"
-                size="small"
-              />
-            </template>
-            {{ t('runStarted') }} {{ dayjs(processing.lastRun.startedAt).fromNow() }}
-          </v-list-item>
-
-          <v-list-item v-if="processing.lastRun.status === 'finished'">
-            <template #prepend>
-              <v-icon
-                color="success"
-                :icon="mdiCheckCircle"
-              />
-            </template>
-            {{ t('lastRunFinished') }} {{ dayjs(processing.lastRun.finishedAt).fromNow() }}
-            <br>{{ t('duration') }} {{ dayjs(processing.lastRun.finishedAt).from(processing.lastRun.startedAt, true) }}
-          </v-list-item>
-
-          <v-list-item v-if="processing.lastRun.status === 'error'">
-            <template #prepend>
-              <v-icon
-                color="error"
-                :icon="mdiAlert"
-              />
-            </template>
-            {{ t('lastRunError') }} {{ dayjs(processing.lastRun.finishedAt).fromNow() }}
-            <br>{{ t('duration') }} {{ dayjs(processing.lastRun.finishedAt).from(processing.lastRun.startedAt, true) }}
-          </v-list-item>
-
-          <v-list-item v-if="processing.lastRun.status === 'kill' || processing.lastRun.status === 'killed'">
-            <template #prepend>
-              <v-icon
-                color="accent"
-                :icon="mdiStop"
-              />
-            </template>
-            <span>{{ t('lastRunKilled') }} {{ dayjs(processing.lastRun.finishedAt).fromNow() }}</span>
-          </v-list-item>
+    <template #footer>
+      <!-- Active or inactive -->
+      <card-hover-info
+        :title="processing.active ? t('active') : t('inactive')"
+        :icon="processing.active ? mdiToggleSwitch : mdiToggleSwitchOff"
+        :icon-color="processing.active ? 'success' : 'error'"
+      >
+        <v-icon
+          :icon="processing.active ? mdiToggleSwitch : mdiToggleSwitchOff"
+          :color="processing.active ? 'success' : 'error'"
+          size="18"
+        />
+        <span class="d-sr-only">{{ processing.active ? t('active') : t('inactive') }}</span>
+        <template #help>
+          {{ processing.active ? t('activeHelp') : t('inactiveHelp') }}
         </template>
-        <v-list-item v-else>
-          <template #prepend>
-            <v-icon
-              color="primary"
-              :icon="mdiInformation"
-            />
-          </template>
-          <span>{{ t('noRuns') }}</span>
-        </v-list-item>
-
-        <!-- Next run -->
-        <template v-if="processing.nextRun">
-          <v-list-item v-if="processing.nextRun.status === 'scheduled'">
-            <template #prepend>
-              <v-icon
-                color="primary"
-                :icon="mdiClock"
-              />
-            </template>
-            <span>{{ t('nextRunScheduled') }} {{ dayjs(processing.nextRun.scheduledAt).fromNow() }}</span>
-          </v-list-item>
-
-          <v-list-item v-if="processing.nextRun.status === 'triggered'">
-            <template #prepend>
-              <v-icon
-                color="primary"
-                :icon="mdiPlayCircle"
-              />
-            </template>
-            <span>
-              {{ t('nextRunTriggered') }} {{ dayjs(processing.nextRun.createdAt).fromNow()
-              }}
-              <template
-                v-if="processing.nextRun.scheduledAt && processing.nextRun.scheduledAt !== processing.nextRun.createdAt"
-              >
-                - {{ t('scheduled') }} {{ dayjs(processing.nextRun.scheduledAt).fromNow() }}
-              </template>
-            </span>
-          </v-list-item>
-        </template>
-
-        <v-list-item>
-          <template #prepend>
-            <v-icon
-              :color="processing.active ? 'success' : 'error'"
-              :icon="processing.active ? mdiToggleSwitch : mdiToggleSwitchOff"
-            />
-          </template>
-          {{ processing.active ? t('active') : t('inactive') }}
-        </v-list-item>
-      </v-list>
-    </v-card-text>
-  </v-card>
+      </card-hover-info>
+      <!-- Last run status, on the right -->
+      <v-spacer />
+      <card-state-info v-bind="state" />
+    </template>
+  </card-shell>
 </template>
 
 <script setup lang="ts">
-import ownerAvatar from '@data-fair/lib-vuetify/owner-avatar.vue'
-const { t } = useI18n()
+import { mdiClockOutline } from '@mdi/js'
+import cronstrue from 'cronstrue'
+import 'cronstrue/locales/en'
+import 'cronstrue/locales/fr'
+import { toCRON } from '@data-fair/processings-shared/runs.ts'
+import cardShell from '~/components/card/card-shell.vue'
+import cardMetaLine from '~/components/card/card-meta-line.vue'
+import cardHoverInfo from '~/components/card/card-hover-info.vue'
+import cardStateInfo from '~/components/card/card-state-info.vue'
+
+const { t, locale } = useI18n()
 const { dayjs } = useLocaleDayjs()
 
 const props = defineProps({
@@ -193,37 +109,75 @@ const props = defineProps({
 
 const pluginFetch = usePluginFetch(props.processing._id)
 
+const state = computed(() => {
+  const run = props.processing.lastRun
+  if (!run) return { icon: mdiInformation, text: t('noRuns'), help: t('noRunsHelp') }
+  const when = dayjs(run.finishedAt ?? run.startedAt).fromNow()
+  const duration = run.startedAt && run.finishedAt ? dayjs(run.finishedAt).from(run.startedAt, true) : null
+  const withDuration = (text: string) => duration ? `${text} · ${t('duration')} ${duration}` : text
+  if (run.status === 'finished') return { icon: mdiCheckCircle, color: 'success', text: when, title: t('lastRunFinished'), help: withDuration(`${t('finished')} ${when}`) }
+  if (run.status === 'error') return { icon: mdiAlert, color: 'error', text: `${t('failed')} ${when}`, title: t('lastRunError'), help: withDuration(`${t('failedHelp')} ${when}`), strong: true }
+  if (run.status === 'running') return { icon: mdiCheckCircle, color: 'primary', text: t('running'), title: t('runRunning'), help: `${t('runStarted')} ${dayjs(run.startedAt).fromNow()}`, loading: true }
+  if (run.status === 'kill' || run.status === 'killed') return { icon: mdiStop, color: 'accent', text: `${t('killed')} ${when}`, title: t('lastRunKilled'), help: `${t('killed')} ${when}` }
+  return { icon: mdiInformation, text: t('noRuns'), help: t('noRunsHelp') }
+})
 </script>
 
 <i18n lang="yaml">
   en:
     pluginUnavailable: Plugin unavailable
     pluginUnavailableHint: This processing's plugin has been removed or its access revoked. You can no longer edit or run it, but you can view its history and delete it.
-    runStarted: Run started
+    runStarted: Started
+    runRunning: Run in progress
+    running: Running
     lastRunFinished: Last run finished
-    duration: "Duration:"
+    finished: Finished
+    duration: duration
     lastRunError: Last run failed
+    failed: Failed
+    failedHelp: Failed
     lastRunKilled: Last run interrupted
-    noRuns: No runs in history
-    nextRunScheduled: Next run scheduled
-    nextRunTriggered: Next run triggered manually
-    scheduled: scheduled
+    killed: Interrupted
+    noRuns: Never run
+    noRunsHelp: No runs in history
+    nextRunScheduled: Next run
+    nextRunTriggered: Run triggered manually
+    frequency:
+      daily: Every day,
+      hours: ''
+      monthly: Every month,
+      weekly: Every week,
     active: Active
     inactive: Inactive
+    activeHelp: The processing runs according to its schedule.
+    inactiveHelp: The processing does not run until it is reactivated.
 
   fr:
     pluginUnavailable: Plugin indisponible
     pluginUnavailableHint: Le plugin de ce traitement a été supprimé ou son accès retiré. Vous ne pouvez plus le modifier ni l'exécuter, mais vous pouvez consulter son historique et le supprimer.
-    runStarted: Exécution commencée
+    runStarted: Commencée
+    runRunning: Exécution en cours
+    running: En cours
     lastRunFinished: Dernière exécution terminée
-    duration: "Durée :"
+    finished: Terminée
+    duration: durée
     lastRunError: Dernière exécution en échec
+    failed: Échec
+    failedHelp: En échec
     lastRunKilled: Dernière exécution interrompue
-    noRuns: Aucune exécution dans l'historique
-    nextRunScheduled: Prochaine exécution planifiée
-    nextRunTriggered: Prochaine exécution déclenchée manuellement
-    scheduled: planifiée
+    killed: Interrompue
+    noRuns: Jamais exécuté
+    noRunsHelp: Aucune exécution dans l'historique
+    nextRunScheduled: Prochaine exécution
+    nextRunTriggered: Exécution déclenchée manuellement
+    frequency:
+      daily: Tous les jours,
+      hours: ''
+      monthly: Tous les mois,
+      weekly: Toutes les semaines,
     active: Actif
     inactive: Inactif
+    activeHelp: Le traitement s'exécute selon sa planification.
+    inactiveHelp: Le traitement ne s'exécute pas tant qu'il n'est pas réactivé.
 
 </i18n>
