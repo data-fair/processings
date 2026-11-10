@@ -402,6 +402,39 @@ router.post('', requireOperationScope('postProcessing'), async (req, res) => {
   res.status(200).json(cleanProcessing(processing, sessionState))
 })
 
+// Save a validated patch of a processing (null values unset their part): validation against the
+// plugin schema, prepare, runs permissions, scheduling and event. Shared by PATCH and PUT config.
+const saveProcessingPatch = async (processing: Processing, body: Record<string, any>, sessionState: SessionStateAuthenticated) => {
+  body = { ...body }
+  body.updated = {
+    id: sessionState.user.id,
+    name: sessionState.user.name,
+    date: new Date().toISOString()
+  }
+
+  const patch: Record<string, any> = { $set: {} }
+  for (const key in body) {
+    if (body[key] === null) {
+      patch.$unset = patch.$unset || {}
+      patch.$unset[key] = true
+      delete body[key]
+    } else {
+      patch.$set = patch.$set || {}
+      patch.$set[key] = body[key]
+    }
+  }
+  const patchedProcessing = await validateFullProcessing({ ...processing, ...body })
+  const preparedProcessing = await prepareProcessing(patchedProcessing)
+  Object.assign(patch.$set, preparedProcessing)
+  Object.assign(patchedProcessing, preparedProcessing)
+
+  await mongo.processings.updateOne({ _id: processing._id }, patch)
+  await mongo.runs.updateMany({ 'processing._id': processing._id }, { $set: { permissions: patchedProcessing.permissions || [] } })
+  await applyProcessing(mongo, patchedProcessing)
+  sendProcessingEvent(patchedProcessing, 'a été modifié', 'patch', sessionState)
+  return patchedProcessing
+}
+
 // Patch some of the attributes of a processing
 router.patch('/:id', requireOperationScope('patchProcessing'), async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
@@ -433,33 +466,28 @@ router.patch('/:id', requireOperationScope('patchProcessing'), async (req, res) 
       await mongo.runs.updateMany({ 'processing._id': processing._id }, { $set: { owner: req.body.owner } })
     }
   }
-  req.body.updated = {
-    id: sessionState.user.id,
-    name: sessionState.user.name,
-    date: new Date().toISOString()
-  }
-
-  const patch: Record<string, any> = { $set: {} }
-  for (const key in req.body) {
-    if (req.body[key] === null) {
-      patch.$unset = patch.$unset || {}
-      patch.$unset[key] = true
-      delete req.body[key]
-    } else {
-      patch.$set = patch.$set || {}
-      patch.$set[key] = req.body[key]
-    }
-  }
-  const patchedProcessing = await validateFullProcessing({ ...processing, ...req.body })
-  const preparedProcessing = await prepareProcessing(patchedProcessing)
-  Object.assign(patch.$set, preparedProcessing)
-  Object.assign(patchedProcessing, preparedProcessing)
-
-  await mongo.processings.updateOne({ _id: req.params.id }, patch)
-  await mongo.runs.updateMany({ 'processing._id': processing._id }, { $set: { permissions: patchedProcessing.permissions || [] } })
-  await applyProcessing(mongo, patchedProcessing)
-  sendProcessingEvent(patchedProcessing, 'a été modifié', 'patch', sessionState)
+  const patchedProcessing = await saveProcessingPatch(processing, req.body, sessionState)
   res.status(200).json(cleanProcessing(patchedProcessing, sessionState))
+})
+
+// Read the config of a processing (a sensitive part, admin profile only)
+router.get('/:id/config', requireOperationScope('getProcessingConfig'), async (req, res) => {
+  const sessionState = await session.reqAuthenticated(req)
+  const processing = await mongo.processings.findOne({ _id: req.params.id })
+  if (!processing) return res.status(404).send()
+  if (permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState) !== 'admin') return res.status(403).send()
+  res.json(processing.config ?? {})
+})
+
+// Replace the whole config of a processing, as a PATCH of its config part
+router.put('/:id/config', requireOperationScope('putProcessingConfig'), async (req, res) => {
+  const sessionState = await session.reqAuthenticated(req)
+  const processing = await mongo.processings.findOne({ _id: req.params.id })
+  if (!processing) return res.status(404).send()
+  if (permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState) !== 'admin') return res.status(403).send()
+  if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) return res.status(400).send('The config must be an object')
+  const patchedProcessing = await saveProcessingPatch(processing, { config: req.body }, sessionState)
+  res.status(200).json(patchedProcessing.config ?? {})
 })
 
 // Get a processing
