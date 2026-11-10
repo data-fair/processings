@@ -19,6 +19,7 @@ import processingsGetReq from '../doc/processings/get-req/schema.json' with { ty
 import runsGetReq from '../doc/runs/get-req/schema.json' with { type: 'json' }
 import { vocabulary, acceptedScopes, scopedOperations, type ScopedOperationId } from '../src/scopes.ts'
 import { processingPatchFields } from '../src/processings/patch-fields.ts'
+import { root, operations as agentOperations } from './x-agent.ts'
 
 // the resolved schemas as OpenAPI components: no $id, no build annotations, no vjsf layout
 const stripExports = (value: any): any => {
@@ -33,11 +34,15 @@ const component = (schema: Record<string, any>) => {
   return rest
 }
 
+const ref = (name: string) => ({ $ref: `#/components/schemas/${name}` })
+
 const processingComponent = component(processingSchema)
 // the config follows the schema of the processing's plugin, read with getPluginConfigSchema
 processingComponent.properties.config = { type: 'object', description: 'The config of the plugin, its schema is returned by getPluginConfigSchema.' }
+// written by the worker, not part of the stored schema
+processingComponent.properties.lastRun = { ...ref('run'), readOnly: true, description: 'The last run of the processing.' }
+processingComponent.properties.nextRun = { ...ref('run'), readOnly: true, description: 'The next scheduled run of the processing.' }
 
-const ref = (name: string) => ({ $ref: `#/components/schemas/${name}` })
 const json = (description: string, schema: Record<string, any>) => ({ description, content: { 'application/json': { schema } } })
 const idParam = (description: string) => ({ in: 'path', name: 'id', required: true, description, schema: { type: 'string' } })
 
@@ -218,7 +223,8 @@ export default (locale: ScopeLocale = 'fr') => {
       operationId,
       ...operation,
       tags: operation.tags.map(tag => tagTitles[tag as keyof typeof tagTitles][locale]),
-      security: operationSecurity(operationId as ScopedOperationId)
+      security: operationSecurity(operationId as ScopedOperationId),
+      ...(operationId in agentOperations ? { 'x-agent': agentOperations[operationId as keyof typeof agentOperations] } : {})
     }
   }
   return {
@@ -229,6 +235,7 @@ export default (locale: ScopeLocale = 'fr') => {
       version: '1.0.0'
     },
     // no request origin: data-fair fetches this document over a private url and prefixes the paths itself
+    'x-agent': root,
     servers: [{ url: '/processings/api/v1' }],
     components: {
       securitySchemes: {

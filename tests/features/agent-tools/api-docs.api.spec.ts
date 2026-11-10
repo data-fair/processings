@@ -57,4 +57,12 @@ test.describe('api docs', () => {
     expect(perProcessing.status).toBe(200)
     expect(Object.keys(perProcessing.data.paths).sort()).toEqual(['/', '/_trigger', '/api-docs.json', '/webhook-key'])
   })
+
+  test('the skill bodies are served anonymously', async () => {
+    const res = await anonymousAx.get('/api/v1/agents/skills/workflow.md')
+    expect(res.status).toBe(200)
+    expect(res.headers['content-type']).toContain('text/markdown')
+    expect(res.data).toMatch(/^# Setting up and following processings/)
+    expect((await anonymousAx.get('/api/v1/agents/skills/unknown.md', status)).status).toBe(404)
+  })
 })
