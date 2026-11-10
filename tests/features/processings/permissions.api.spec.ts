@@ -190,4 +190,15 @@ test.describe('processing permissions', () => {
     res = await adminTestOrg1.patch(`/api/v1/processings/${processing._id}`, { plugin: 'other-plugin' }, status)
     expect(res.status).toBe(400)
   })
+
+  test('an org admin cannot create a processing with its read-only parts', async () => {
+    const plugin = await installTestPlugin()
+    const adminTestOrg1 = await axiosAuth({ email: 'test_admin1@test.com', org: 'test_org1' })
+    const status = { validateStatus: () => true }
+    for (const part of [{ secrets: { a: 'b' } }, { debug: true }, { userProfile: 'admin' }]) {
+      const res = await adminTestOrg1.post('/api/v1/processings', { title: 'Hello processing', plugin: plugin.pluginId, ...part }, status)
+      expect(res.status).toBe(400)
+      expect(res.data).toBe('Unsupported part ' + Object.keys(part)[0])
+    }
+  })
 })

@@ -13,3 +13,6 @@ const properties: Record<string, { readOnly?: boolean }> = processingSchema.prop
 // every property in admin mode
 export const patchableFields = (adminMode: boolean): string[] => Object.keys(properties)
   .filter(k => adminMode || !properties[k].readOnly || k === 'owner')
+
+// the parts a POST may set: the plugin and the patchable ones; every property in admin mode
+export const creatableFields = (adminMode: boolean): string[] => adminMode ? Object.keys(properties) : ['plugin', ...patchableFields(false)]

@@ -81,4 +81,14 @@ test.describe('scopes', () => {
     const admin = (await nhiSession('processings:admin')).bearerAx
     expect((await admin.patch(`/api/v1/processings/${processing._id}`, { permissions: [] }, status)).status).toBe(200)
   })
+
+  test('creating a processing with permissions needs the admin tier', async () => {
+    const { admin, plugin } = await createProcessing()
+    const permissions = [{ profile: 'read', target: { type: 'userEmail', email: 'test_alone@test.com' } }]
+    const write = (await nhiSession('processings:write')).bearerAx
+    expect((await write.post('/api/v1/processings', { title: 'shared', plugin: plugin.pluginId, owner, permissions }, status)).status).toBe(403)
+    expect((await admin.get('/api/v1/processings', { params: { q: 'shared' } })).data.count).toBe(0)
+    const adminTier = (await nhiSession('processings:admin')).bearerAx
+    expect((await adminTier.post('/api/v1/processings', { title: 'shared', plugin: plugin.pluginId, owner, permissions }, status)).status).toBe(200)
+  })
 })

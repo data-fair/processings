@@ -28,7 +28,7 @@ import findUtils from '../misc/utils/find.ts'
 import permissions from '../misc/utils/permissions.ts'
 import { translateRegistryError } from './operations.ts'
 import { acceptedScopes, requireOperationScope } from '../scopes.ts'
-import { patchableFields, processingPatchFields } from './patch-fields.ts'
+import { creatableFields, patchableFields, processingPatchFields } from './patch-fields.ts'
 import { agentConfigSchema } from './agent-config-schema.ts'
 
 const router = Router()
@@ -379,6 +379,14 @@ router.get('', requireOperationScope('listProcessings'), async (req, res) => {
 
 router.post('', requireOperationScope('postProcessing'), async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
+  const acceptedParts = creatableFields(!!sessionState.user.adminMode)
+  for (const key in req.body) {
+    if (!acceptedParts.includes(key)) return res.status(400).send('Unsupported part ' + key)
+  }
+  if (Object.keys(req.body).some(key => key !== 'owner' && (processingPatchFields.admin as readonly string[]).includes(key))) {
+    // choosing the owner of a new processing is part of creating it, opening it to others is not
+    assertReqScope(req, acceptedScopes('processings', 'admin'))
+  }
   const body = { ...req.body }
   body._id = nanoid()
   body.owner = body.owner ?? sessionState.account
