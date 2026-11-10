@@ -103,7 +103,7 @@ services:
       - CACHE_MONGO_SIZE=200
       - SECRET_EVENTS=secret-events
       - PRIVATE_PROCESSINGS_URL=http://localhost:${DEV_API_PORT}
-      - EXTRA_ADMIN_NAV_ITEMS=[{"id":"processingsAdminDoc","href":"http://${DEV_HOST}:${NGINX_PORT}/openapi-viewer?urlType=processingsAdmin","icon":"mdi-cog-transfer-outline","title":"API Traitements périodiques"}]
+      - EXTRA_ADMIN_NAV_ITEMS=[{"id":"processingsAdminDoc","href":"http://${DEV_HOST}:${NGINX_PORT}/openapi-viewer?urlType=processings","icon":"mdi-cog-transfer-outline","title":"API Traitements périodiques"}]
       - OPENAPI_VIEWER_URL=http://${DEV_HOST}:${NGINX_PORT}/openapi-viewer/
       - OPENAPI_VIEWER_V2=true
     volumes:
@@ -158,7 +158,7 @@ services:
     environment:
       - PORT=${OAV_PORT}
       - USE_SIMPLE_DIRECTORY=true
-      - ALLOWED_URLS={"processings":"http://${DEV_HOST}:${NGINX_PORT}/processings/api/v1/api-docs.json","processingsId":"http://${DEV_HOST}:${NGINX_PORT}/processings/api/v1/processings/{id}/api-docs.json","processingsAdmin":"http://${DEV_HOST}:${NGINX_PORT}/processings/api/v1/admin/api-docs.json"}
+      - ALLOWED_URLS={"processings":"http://${DEV_HOST}:${NGINX_PORT}/processings/api/v1/api-docs.json","processingsId":"http://${DEV_HOST}:${NGINX_PORT}/processings/api/v1/processings/{id}/api-docs.json"}
 
   # catches the mails of simple-directory and of the worker's own transport (plugins' sendMail)
   maildev:
