@@ -29,6 +29,7 @@ import permissions from '../misc/utils/permissions.ts'
 import { translateRegistryError } from './operations.ts'
 import { acceptedScopes, requireOperationScope } from '../scopes.ts'
 import { patchableFields, processingPatchFields } from './patch-fields.ts'
+import { agentConfigSchema } from './agent-config-schema.ts'
 
 const router = Router()
 export default router
@@ -515,7 +516,8 @@ router.get('/:id/plugin-config-schema', requireOperationScope('getPluginConfigSc
         `Plugin "${processing.plugin}" ships no processing config schema (no processing-config-schema.json in tarball and no processingConfigSchema field in plugin.json).`
       )
     }
-    res.status(200).json(processingConfigSchema)
+    // agent=true: the schema as the agent config editor consumes it (v3 syntax, context resolved)
+    res.status(200).json(req.query.agent === 'true' ? agentConfigSchema(processingConfigSchema, processing) : processingConfigSchema)
   } catch (err) { next(err) }
 })
 

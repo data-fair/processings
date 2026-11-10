@@ -44,4 +44,15 @@ test.describe('processing config', () => {
     expect((await admin.get('/api/v1/processings/unknown/config', status)).status).toBe(404)
     expect((await admin.put('/api/v1/processings/unknown/config', helloConfig, status)).status).toBe(404)
   })
+
+  test('the agent flag resolves the context of the plugin config schema', async () => {
+    const plugin = await publishFixturePlugin({ name: '@data-fair/processing-hello-world', version: '1.2.2' })
+    const admin = await axiosAuth({ email: 'test_admin1@test.com', org: 'test_org1' })
+    const processing = (await admin.post('/api/v1/processings', { title: 'Schema processing', plugin: plugin.pluginId })).data
+    const raw = (await admin.get(`/api/v1/processings/${processing._id}/plugin-config-schema`)).data
+    expect(JSON.stringify(raw)).toContain('{context.')
+    const agent = (await admin.get(`/api/v1/processings/${processing._id}/plugin-config-schema`, { params: { agent: true } })).data
+    expect(JSON.stringify(agent)).not.toContain('{context.')
+    expect(JSON.stringify(agent)).toContain('owner=organization:test_org1')
+  })
 })
