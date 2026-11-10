@@ -7,6 +7,7 @@ import { Router } from 'express'
 import mongo from '#mongo'
 import findUtils from '../misc/utils/find.ts'
 import permissions from '../misc/utils/permissions.ts'
+import { requireOperationScope } from '../scopes.ts'
 
 const router = Router()
 export default router
@@ -29,7 +30,7 @@ const cleanRun = (run: Run, sessionState: SessionStateAuthenticated): Run => {
 }
 
 // Get the list of runs (without logs)
-router.get('', async (req, res) => {
+router.get('', requireOperationScope('listRuns'), async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const params = (await import('#doc/runs/get-req/index.ts')).returnValid(req.query)
   const sort = findUtils.sort(params.sort)
@@ -46,7 +47,7 @@ router.get('', async (req, res) => {
 })
 
 // Get a run (with logs, without secrets)
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireOperationScope('getRun'), async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const run = await mongo.runs.findOne({ _id: req.params.id }) as Run
   if (!run) return res.status(404).send()
@@ -56,7 +57,7 @@ router.get('/:id', async (req, res) => {
 })
 
 // Kill a run
-router.post('/:id/_kill', async (req, res) => {
+router.post('/:id/_kill', requireOperationScope('killRun'), async (req, res) => {
   const sessionState = await session.reqAuthenticated(req)
   const run = await mongo.runs.findOne({ _id: req.params.id })
   if (!run) return res.status(404).send()

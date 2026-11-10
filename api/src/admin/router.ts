@@ -1,9 +1,8 @@
 import { resolve } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { Router } from 'express'
-import { reqOrigin, session } from '@data-fair/lib-express'
+import { session } from '@data-fair/lib-express'
 import { getStatus } from './status.ts'
-import getApiDoc from '../misc/utils/api-docs.ts'
 
 const router = Router()
 export default router
@@ -30,9 +29,4 @@ router.get('/info', (req, res) => {
 router.get('/status', async (req, res) => {
   const status = await getStatus(req)
   res.send(status)
-})
-
-// Get the full API documentation of the service
-router.get('/api-docs.json', async (req, res) => {
-  res.json(getApiDoc(reqOrigin(req)))
 })

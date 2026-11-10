@@ -2,7 +2,8 @@ export default {
   $id: 'https://github.com/data-fair/processings/run',
   'x-exports': [
     'types',
-    'validate'
+    'validate',
+    'resolvedSchema'
   ],
   title: 'run',
   type: 'object',

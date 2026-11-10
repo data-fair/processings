@@ -6,6 +6,8 @@ import limitsRouter from './limits/router.ts'
 import processingsRouter from './processings/router.ts'
 import runsRouter from './runs/router.ts'
 import adminRouter from './admin/router.ts'
+import apiDocs from '../contract/api-docs.ts'
+import { readAgentSkill } from '../contract/skills.ts'
 import config, { uiConfig } from '#config'
 
 export const app = express()
@@ -23,6 +25,21 @@ app.use(express.urlencoded({ extended: true }))
 
 app.get('/api/v1/_ping', (req, res) => {
   res.send('ok')
+})
+
+// public, read by data-fair (private url, no forwarded headers) to merge it into its platform document
+app.get('/api/v1/api-docs.json', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=300')
+  res.vary('Accept-Language')
+  res.json(apiDocs(req.acceptsLanguages('fr', 'en') === 'en' ? 'en' : 'fr'))
+})
+
+// the bodies of the document's skills, linked from its x-agent.skills; public like the document
+app.get('/api/v1/agents/skills/:file', (req, res) => {
+  const body = req.params.file.endsWith('.md') ? readAgentSkill(req.params.file.slice(0, -3)) : undefined
+  if (!body) return res.status(404).send('unknown skill')
+  res.set('Cache-Control', 'public, max-age=300')
+  res.type('text/markdown').send(body)
 })
 
 app.use('/api/identities', identitiesRouter)

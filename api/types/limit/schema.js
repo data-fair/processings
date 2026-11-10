@@ -2,7 +2,8 @@ export default {
   $id: 'https://github.com/data-fair/processings/limit',
   'x-exports': [
     'types',
-    'validate'
+    'validate',
+    'resolvedSchema'
   ],
   title: 'limit',
   type: 'object',
