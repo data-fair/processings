@@ -9,17 +9,24 @@ import mongo from '#mongo'
 import { internalError } from '@data-fair/lib-node/observer.js'
 import { isDocumentTooLargeError, shouldDisableForFailures } from './runs-operations.ts'
 
+const runTitles = {
+  'log-error': (title: string) => ({ en: `The processing ${title} finished but its log contains errors`, fr: `Le traitement ${title} s'est terminé mais son journal contient des erreurs` }),
+  'finish-ok': (title: string) => ({ en: `The processing ${title} finished without errors`, fr: `Le traitement ${title} s'est terminé sans erreur` }),
+  'finish-error': (title: string) => ({ en: `The processing ${title} failed`, fr: `Le traitement ${title} a échoué` }),
+  disabled: (title: string) => ({ en: `The processing ${title} was disabled after failing ${config.maxFailures} times in a row`, fr: `Le traitement ${title} a été désactivé après ${config.maxFailures} échecs consécutifs` })
+}
+
 const sendProcessingEvent = (
   run: Run,
-  statusText: string,
-  statusKey: string,
+  action: keyof typeof runTitles,
   body?: string
 ) => {
-  // @test:spy("pushEvent", `processings:processing-${statusKey}:${run.processing._id}`)
+  // @test:spy("pushEvent", `processings:processing-${action}:${run.processing._id}`)
   eventsQueue.pushEvent({
-    title: `Le traitement ${run.processing.title} ${statusText}.`,
-    topic: { key: `processings:processing-${statusKey}:${run.processing._id}` },
+    title: runTitles[action](run.processing.title),
+    topic: { key: `processings:processing-${action}:${run.processing._id}` },
     sender: run.owner,
+    // the run's own error messages, not translated
     body,
     visibility: 'private' as const,
     urlParams: {
@@ -28,7 +35,7 @@ const sendProcessingEvent = (
     resource: {
       type: 'processing',
       id: run.processing._id,
-      title: 'Traitement associé : ' + run.processing.title,
+      title: run.processing.title,
     },
     originator: {
       internalProcess: {
@@ -118,17 +125,12 @@ export const finish = async (run: Run, errorMessage: string | undefined = undefi
   if (lastRun.status === 'finished') {
     const errorLogs = lastRun.log.filter((l) => l.type === 'error')
     if (errorLogs.length) {
-      sendProcessingEvent(
-        run,
-        's\'est terminé correctement mais son journal contient des erreurs',
-        'log-error',
-        errorLogs.map((l) => l.msg).join('\n --- \n')
-      )
+      sendProcessingEvent(run, 'log-error', errorLogs.map((l) => l.msg).join('\n --- \n'))
     } else {
-      sendProcessingEvent(run, 's\'est terminé sans erreurs', 'finish-ok')
+      sendProcessingEvent(run, 'finish-ok')
     }
   } else if (lastRun.status === 'error') {
-    sendProcessingEvent(run, 'a échoué', 'finish-error', errorMessage)
+    sendProcessingEvent(run, 'finish-error', errorMessage)
 
     const raw = (await mongo.runs.aggregate([
       { $match: { 'processing._id': run.processing._id } },
@@ -167,7 +169,7 @@ export const finish = async (run: Run, errorMessage: string | undefined = undefi
         { _id: run.processing._id },
         { $set: { active: false } }
       )
-      sendProcessingEvent(run, `a été désactivé car il a échoué ${config.maxFailures} fois de suite`, 'disabled')
+      sendProcessingEvent(run, 'disabled')
     }
   }
 

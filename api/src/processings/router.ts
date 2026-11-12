@@ -120,21 +120,27 @@ async function fetchPluginArtefact (processing: Pick<Processing, 'plugin' | 'own
 
 const sensitiveParts = ['permissions', 'webhookKey', 'config']
 
+const processingTitles = {
+  create: (title: string) => ({ en: `The processing ${title} was created`, fr: `Le traitement ${title} a été créé` }),
+  patch: (title: string) => ({ en: `The processing ${title} was updated`, fr: `Le traitement ${title} a été modifié` }),
+  delete: (title: string) => ({ en: `The processing ${title} was deleted`, fr: `Le traitement ${title} a été supprimé` }),
+  'trigger-manual': (title: string) => ({ en: `The processing ${title} was triggered manually`, fr: `Le traitement ${title} a été déclenché manuellement` }),
+  'trigger-webhook': (title: string) => ({ en: `The processing ${title} was triggered by a webhook`, fr: `Le traitement ${title} a été déclenché par webhook` })
+}
+
 /**
- * Helper function to send events related to processings
- * @param processing The processing object
- * @param actionText The text describing the action (e.g. "a été créé")
- * @param topicAction The action part of the topic key (e.g. "create", "delete")
- * @param sessionState Optional session state for authentication
+ * Send an event about a processing.
+ * @param topicAction The action part of the topic key
+ * @param textAction The text of the title, when it is more precise than the topic action
  */
 const sendProcessingEvent = (
   processing: Processing,
-  actionText: string,
-  topicAction: string,
-  sessionState?: SessionStateAuthenticated
+  topicAction: 'create' | 'patch' | 'delete' | 'trigger',
+  sessionState?: SessionStateAuthenticated,
+  textAction: keyof typeof processingTitles = topicAction === 'trigger' ? 'trigger-manual' : topicAction
 ) => {
   eventsQueue.pushEvent({
-    title: `Le traitement ${processing.title} ${actionText}`,
+    title: processingTitles[textAction](processing.title),
     topic: { key: `processings:processing-${topicAction}:${processing._id}` },
     sender: processing.owner,
     resource: {
@@ -407,7 +413,7 @@ router.post('', requireOperationScope('postProcessing'), async (req, res) => {
   Object.assign(processing, await prepareProcessing(processing))
   await mongo.processings.insertOne(processing)
 
-  sendProcessingEvent(processing, 'a été créé', 'create', sessionState)
+  sendProcessingEvent(processing, 'create', sessionState)
   res.status(200).json(cleanProcessing(processing, sessionState))
 })
 
@@ -440,7 +446,7 @@ const saveProcessingPatch = async (processing: Processing, body: Record<string, 
   await mongo.processings.updateOne({ _id: processing._id }, patch)
   await mongo.runs.updateMany({ 'processing._id': processing._id }, { $set: { permissions: patchedProcessing.permissions || [] } })
   await applyProcessing(mongo, patchedProcessing)
-  sendProcessingEvent(patchedProcessing, 'a été modifié', 'patch', sessionState)
+  sendProcessingEvent(patchedProcessing, 'patch', sessionState)
   return patchedProcessing
 }
 
@@ -551,7 +557,7 @@ router.delete('/:id', requireOperationScope('deleteProcessing'), async (req, res
   if (permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState) !== 'admin') return res.status(403).send()
   await mongo.processings.deleteOne({ _id: req.params.id })
   if (processing) await deleteProcessing(mongo, processing)
-  sendProcessingEvent(processing, 'a été supprimé', 'delete', sessionState)
+  sendProcessingEvent(processing, 'delete', sessionState)
   res.sendStatus(204)
 })
 
@@ -581,13 +587,13 @@ router.post('/:id/_trigger', async (req, res) => {
   if (!processing) return res.status(404).send()
   if (req.query.key) {
     if (req.query.key !== processing.webhookKey) return res.status(403).send('Mauvaise clé de déclenchement')
-    sendProcessingEvent(processing, 'a été déclenché par webhook', 'trigger')
+    sendProcessingEvent(processing, 'trigger', undefined, 'trigger-webhook')
   } else {
     // the webhook key path reads no session, so the scope is checked here rather than by a middleware
     assertReqScope(req, acceptedScopes('processings', 'write'))
     const sessionState = await session.reqAuthenticated(req)
     if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState) ?? '')) return res.status(403).send()
-    sendProcessingEvent(processing, 'a été déclenché manuellement', 'trigger', sessionState)
+    sendProcessingEvent(processing, 'trigger', sessionState, 'trigger-manual')
   }
   if (!processing.active) return res.status(409).send('Le traitement n\'est pas actif')
   res.send(await createNext(mongo.db, locks, processing, true, req.query.delay ? Number(req.query.delay) : 0))
