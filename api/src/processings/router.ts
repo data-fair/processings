@@ -124,7 +124,7 @@ const processingTitles = {
   create: (title: string) => ({ en: `The processing ${title} was created`, fr: `Le traitement ${title} a été créé` }),
   patch: (title: string) => ({ en: `The processing ${title} was updated`, fr: `Le traitement ${title} a été modifié` }),
   delete: (title: string) => ({ en: `The processing ${title} was deleted`, fr: `Le traitement ${title} a été supprimé` }),
-  'trigger-manual': (title: string) => ({ en: `The processing ${title} was triggered manually`, fr: `Le traitement ${title} a été déclenché manuellement` }),
+  trigger: (title: string) => ({ en: `The processing ${title} was triggered manually`, fr: `Le traitement ${title} a été déclenché manuellement` }),
   'trigger-webhook': (title: string) => ({ en: `The processing ${title} was triggered by a webhook`, fr: `Le traitement ${title} a été déclenché par webhook` })
 }
 
@@ -137,7 +137,7 @@ const sendProcessingEvent = (
   processing: Processing,
   topicAction: 'create' | 'patch' | 'delete' | 'trigger',
   sessionState?: SessionStateAuthenticated,
-  textAction: keyof typeof processingTitles = topicAction === 'trigger' ? 'trigger-manual' : topicAction
+  textAction: keyof typeof processingTitles = topicAction
 ) => {
   eventsQueue.pushEvent({
     title: processingTitles[textAction](processing.title),
@@ -593,7 +593,7 @@ router.post('/:id/_trigger', async (req, res) => {
     assertReqScope(req, acceptedScopes('processings', 'write'))
     const sessionState = await session.reqAuthenticated(req)
     if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState) ?? '')) return res.status(403).send()
-    sendProcessingEvent(processing, 'trigger', sessionState, 'trigger-manual')
+    sendProcessingEvent(processing, 'trigger', sessionState)
   }
   if (!processing.active) return res.status(409).send('Le traitement n\'est pas actif')
   res.send(await createNext(mongo.db, locks, processing, true, req.query.delay ? Number(req.query.delay) : 0))
