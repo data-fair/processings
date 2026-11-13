@@ -40,7 +40,7 @@ const sendProcessingEvent = (
     originator: {
       internalProcess: {
         id: 'processings-worker',
-        name: 'Processings Worker'
+        title: 'Processings Worker'
       }
     }
   })
