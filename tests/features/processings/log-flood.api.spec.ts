@@ -52,7 +52,7 @@ test.describe('run log size guard', () => {
     expect(flooding.length).toBeGreaterThan(0)
     for (const entry of flooding) expect(entry.msg).toBe('x'.repeat(maxLogEntryLength) + '...')
     // the document filled up, the log was truncated to make room for the guard message and finish()
-    expect(log.some(l => l.type === 'error' && /taille maximale/.test(l.msg))).toBe(true)
+    expect(log.some(l => l.type === 'error' && /maximum allowed size/.test(l.msg))).toBe(true)
     expect(Buffer.byteLength(JSON.stringify(log))).toBeLessThan(mongoDocumentLimit / 4)
     expect(log[log.length - 1].type).toBe('debug') // finish() could still add its entry
   })

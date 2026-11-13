@@ -8,7 +8,7 @@ import { publishFixturePlugin } from '../../support/registry.ts'
  * picked plugin is private and the owner is not on `privateAccess`, the
  * registry's /:id/download route returns 403 (no longer 404, since the
  * caller already knows the id). The processings API translates that into
- * a French user-facing message and routes the response status correctly.
+ * a user-facing message and routes the response status correctly.
  *
  * The owner used here is `test_user1` because the default fixture grants only
  * include `test_superadmin` + the two orgs — a plain user account is the
@@ -47,7 +47,7 @@ test.describe('processing creation with restricted plugin access', () => {
     // the owner. Pre-rebuild registry image hides the artefact behind 404;
     // post-rebuild it returns 403 (since the caller already knows the id and
     // we want to distinguish "no access" from "doesn't exist"). Either way
-    // the processings API translates to a French message containing the
+    // the processings API translates to a message containing the
     // plugin id, NOT the previous opaque 500.
     const schema = await superadmin.get(
       `/api/v1/processings/${res.data._id}/plugin-config-schema`,

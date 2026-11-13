@@ -42,7 +42,7 @@ const ajv = ajvFormats(new Ajv({ strict: false, addUsedSchema: false }))
 /**
  * Ensure the plugin tarball is in the API's local cache (downloads on miss).
  * Registry enforces that `processing.owner` has access to the artefact; a 403
- * here surfaces directly to the caller as a user-facing French message.
+ * here surfaces directly to the caller as a user-facing message.
  *
  * The plugin's processing config schema is read from the conventional
  * `processing-config-schema.json` shipped alongside the plugin (v6 convention),
@@ -159,7 +159,7 @@ const sendProcessingEvent = (
  *   from the cached package.json#registry block, downloaded on cache miss)
  *
  * Skipped entirely when the processing has no config. Registry errors are
- * translated to user-facing French messages inside ensurePluginAndReadSchema.
+ * translated to user-facing messages inside ensurePluginAndReadSchema.
  */
 async function validateFullProcessing (processing: any): Promise<Processing> {
   (await import('#types/processing/index.ts')).returnValid(processing)
