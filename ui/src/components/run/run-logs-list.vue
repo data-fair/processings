@@ -10,7 +10,7 @@
       >
         <template v-if="log.msg.status">
           <template v-if="typeof log.msg.data === 'string'">{{ log.msg.data }}</template>
-          <template v-else>{{ log.msg.statusText || 'Erreur HTTP' }} - {{ log.msg.status }}</template>
+          <template v-else>{{ log.msg.statusText || t('httpError') }} - {{ log.msg.status }}</template>
         </template>
         <template v-else>
           {{ log.msg }}
@@ -135,11 +135,13 @@ const formatDate = (date: string) => dayjs(date).format('lll')
     viewExtra: View extra
     copy: Copy
     extraCopied: Extra copied to clipboard
+    httpError: HTTP error
 
   fr:
     viewExtra: Voir l'extra
     copy: Copier
     extraCopied: Extra copié dans le presse-papier
+    httpError: Erreur HTTP
 </i18n>
 
 <style scoped>
