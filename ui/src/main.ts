@@ -24,7 +24,7 @@ import App from './App.vue'
     ...vuetifySessionOptions(session, $cspNonce),
     icons: { defaultSet: 'mdi', aliases, sets: { mdi, } },
   })
-  const i18n = createI18n({ locale: session.state.lang })
+  const i18n = createI18n({ legacy: false, locale: session.state.lang, fallbackLocale: 'en' })
 
   createApp(App)
     .use(router)

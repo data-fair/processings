@@ -45,7 +45,7 @@
           <template #activity>
             <processing-activity
               :processing="{ ...processing, ...editProcessing }"
-              :plugin-title="plugin?.title?.fr ?? plugin?.title?.en ?? plugin?.name"
+              :plugin-title="localizedText(plugin?.title, locale) ?? plugin?.name"
             />
           </template>
           <template #scheduling-summary="{ node }">
@@ -114,7 +114,7 @@ import NavigationRight from '@data-fair/lib-vuetify/navigation-right.vue'
 import clone from '@data-fair/lib-utils/clone.js'
 import equal from 'fast-deep-equal'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute<'/processings/[id]/'>()
 const session = useSession()
 
@@ -238,7 +238,7 @@ const processingSchema = computed(() => {
   const schema = JSON.parse(JSON.stringify(contractProcessing))
   schema.properties.config = {
     ...v2compat(pluginConfigSchema),
-    title: 'Plugin ' + (plugin.value.title?.fr ?? plugin.value.title?.en ?? plugin.value.name)
+    title: t('pluginTitle', { title: localizedText(plugin.value.title, locale.value) ?? plugin.value.name })
   }
 
   // merge processingConfigSchema $defs and definitions into the global Processing schema
@@ -370,6 +370,7 @@ const timezoneLabel = (timeZone: string) => {
     timezone: 'Timezone:'
     updateError: Error while updating the processing
     updateSuccess: Processing saved!
+    pluginTitle: 'Plugin {title}'
     pluginUnavailableTitle: Plugin unavailable
     pluginUnavailableBody: This processing's plugin has been removed or its access revoked. You can no longer edit or run this processing, but you can still view its run history and delete it.
     configSchemaFetchError: Failed to load the plugin's configuration schema
@@ -386,6 +387,7 @@ const timezoneLabel = (timeZone: string) => {
     timezone: 'Fuseau horaire :'
     updateError: Erreur lors de la mise à jour du traitement
     updateSuccess: Traitement enregistré !
+    pluginTitle: 'Plugin {title}'
     pluginUnavailableTitle: Plugin indisponible
     pluginUnavailableBody: Le plugin de ce traitement a été supprimé ou son accès retiré. Vous ne pouvez plus modifier ni exécuter ce traitement, mais vous pouvez consulter son historique et le supprimer.
     configSchemaFetchError: Échec du chargement du schéma de configuration du plugin

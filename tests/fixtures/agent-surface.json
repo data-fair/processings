@@ -95,7 +95,10 @@
         "properties": {
           "title": {
             "type": "string",
-            "title": "Titre"
+            "title": "Title",
+            "x-i18n-title": {
+              "fr": "Titre"
+            }
           },
           "plugin": {
             "type": "string",
@@ -318,10 +321,16 @@
           },
           "title": {
             "type": "string",
-            "title": "Titre"
+            "title": "Title",
+            "x-i18n-title": {
+              "fr": "Titre"
+            }
           },
           "active": {
-            "title": "Actif",
+            "title": "Active",
+            "x-i18n-title": {
+              "fr": "Actif"
+            },
             "type": "boolean",
             "default": false,
             "layout": {
@@ -341,10 +350,16 @@
           },
           "scheduling": {
             "type": "array",
-            "title": "Planification du traitement",
+            "title": "Processing scheduling",
+            "x-i18n-title": {
+              "fr": "Planification du traitement"
+            },
             "layout": {
               "messages": {
-                "addItem": "Ajouter une règle de planification"
+                "addItem": "Add a scheduling rule",
+                "x-i18n-addItem": {
+                  "fr": "Ajouter une règle de planification"
+                }
               },
               "cols": 6
             },
@@ -817,7 +832,10 @@
             "title": "Permissions",
             "layout": {
               "messages": {
-                "addItem": "Ajouter une permission"
+                "addItem": "Add a permission",
+                "x-i18n-addItem": {
+                  "fr": "Ajouter une permission"
+                }
               },
               "cols": 6
             },
@@ -832,27 +850,45 @@
               "properties": {
                 "profile": {
                   "type": "string",
-                  "title": "profil",
+                  "title": "Profile",
+                  "x-i18n-title": {
+                    "fr": "Profil"
+                  },
                   "default": "read",
                   "oneOf": [
                     {
                       "const": "read",
-                      "title": "lecture - permet d'accéder aux informations essentielles du traitement dont les logs, mais pas aux informations sensibles"
+                      "title": "Read profile",
+                      "x-i18n-title": {
+                        "en": "Read - gives access to the essential information of the processing, logs included, but not to the sensitive information",
+                        "fr": "Lecture - permet d'accéder aux informations essentielles du traitement dont les logs, mais pas aux informations sensibles"
+                      }
                     },
                     {
                       "const": "exec",
-                      "title": "exécution - permet d'accéder aux informations essentielles du traitement et de déclencher le traitement"
+                      "title": "Exec profile",
+                      "x-i18n-title": {
+                        "en": "Execution - gives access to the essential information of the processing and allows to trigger it",
+                        "fr": "Exécution - permet d'accéder aux informations essentielles du traitement et de déclencher le traitement"
+                      }
                     }
                   ]
                 },
                 "target": {
                   "type": "object",
                   "oneOfLayout": {
-                    "label": "type de cible"
+                    "label": "Target type",
+                    "x-i18n-label": {
+                      "fr": "Type de cible"
+                    }
                   },
                   "oneOf": [
                     {
-                      "title": "utilisateur désigné par son email",
+                      "title": "User email",
+                      "x-i18n-title": {
+                        "en": "User designated by their email",
+                        "fr": "Utilisateur désigné par son email"
+                      },
                       "required": [
                         "email"
                       ],
@@ -862,12 +898,18 @@
                         },
                         "email": {
                           "type": "string",
-                          "title": "email"
+                          "title": "Email",
+                          "x-i18n-title": {
+                            "fr": "Email"
+                          }
                         }
                       }
                     },
                     {
-                      "title": "organisation partenaire",
+                      "title": "Partner organization",
+                      "x-i18n-title": {
+                        "fr": "Organisation partenaire"
+                      },
                       "required": [
                         "organization",
                         "roles"
@@ -878,7 +920,10 @@
                         },
                         "organization": {
                           "type": "object",
-                          "title": "organisation",
+                          "title": "Organization",
+                          "x-i18n-title": {
+                            "fr": "Organisation"
+                          },
                           "additionalProperties": true,
                           "layout": {
                             "cols": 8,
@@ -900,7 +945,10 @@
                         },
                         "roles": {
                           "type": "array",
-                          "title": "rôles",
+                          "title": "Roles",
+                          "x-i18n-title": {
+                            "fr": "Rôles"
+                          },
                           "default": [
                             "admin"
                           ],

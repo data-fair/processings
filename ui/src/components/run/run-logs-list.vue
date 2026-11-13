@@ -27,8 +27,8 @@
         :class="`${taskColor(log)}--text`"
       >
         {{ log.msg }}
-        <span v-if="log.progress && !log.total">({{ log.progress.toLocaleString() }})</span>
-        <span v-if="log.total">({{ (log.progress || 0).toLocaleString() }} / {{ log.total.toLocaleString() }})</span>
+        <span v-if="log.progress && !log.total">({{ log.progress.toLocaleString(locale) }})</span>
+        <span v-if="log.total">({{ (log.progress || 0).toLocaleString(locale) }} / {{ log.total.toLocaleString(locale) }})</span>
         <v-progress-linear
           rounded
           :color="taskColor(log)"
@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { dayjs } = useLocaleDayjs()
 const session = useSession()
 const { sendUiNotif } = useUiNotif()

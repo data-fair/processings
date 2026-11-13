@@ -96,7 +96,7 @@ const props = defineProps({
 })
 
 const fromNow = (date: string) => dayjs(date).fromNow()
-const formatDate = (date: string) => dayjs(date).format('DD/MM/YYYY HH:mm')
+const formatDate = (date: string) => dayjs(date).format('L LT')
 const duration = (start: string, end: string) => dayjs(end).from(dayjs(start), true)
 
 const kill = async () => {

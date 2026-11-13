@@ -14,21 +14,38 @@ export default {
   properties: {
     profile: {
       type: 'string',
-      title: 'profil',
+      title: 'Profile',
+      'x-i18n-title': { fr: 'Profil' },
       default: 'read',
       oneOf: [
-        { const: 'read', title: "lecture - permet d'accéder aux informations essentielles du traitement dont les logs, mais pas aux informations sensibles" },
-        { const: 'exec', title: "exécution - permet d'accéder aux informations essentielles du traitement et de déclencher le traitement" }
+        {
+          const: 'read',
+          title: 'Read profile',
+          'x-i18n-title': {
+            en: 'Read - gives access to the essential information of the processing, logs included, but not to the sensitive information',
+            fr: "Lecture - permet d'accéder aux informations essentielles du traitement dont les logs, mais pas aux informations sensibles"
+          }
+        },
+        {
+          const: 'exec',
+          title: 'Exec profile',
+          'x-i18n-title': {
+            en: 'Execution - gives access to the essential information of the processing and allows to trigger it',
+            fr: "Exécution - permet d'accéder aux informations essentielles du traitement et de déclencher le traitement"
+          }
+        }
       ]
     },
     target: {
       type: 'object',
       oneOfLayout: {
-        label: 'type de cible'
+        label: 'Target type',
+        'x-i18n-label': { fr: 'Type de cible' }
       },
       oneOf: [
         {
-          title: 'utilisateur désigné par son email',
+          title: 'User email',
+          'x-i18n-title': { en: 'User designated by their email', fr: 'Utilisateur désigné par son email' },
           required: ['email'],
           properties: {
             type: {
@@ -36,12 +53,14 @@ export default {
             },
             email: {
               type: 'string',
-              title: 'email'
+              title: 'Email',
+              'x-i18n-title': { fr: 'Email' }
             }
           }
         },
         {
-          title: 'organisation partenaire',
+          title: 'Partner organization',
+          'x-i18n-title': { fr: 'Organisation partenaire' },
           required: ['organization', 'roles'],
           properties: {
             type: {
@@ -49,7 +68,8 @@ export default {
             },
             organization: {
               type: 'object',
-              title: 'organisation',
+              title: 'Organization',
+              'x-i18n-title': { fr: 'Organisation' },
               additionalProperties: true,
               layout: {
                 cols: 8,
@@ -72,7 +92,8 @@ export default {
             },
             roles: {
               type: 'array',
-              title: 'rôles',
+              title: 'Roles',
+              'x-i18n-title': { fr: 'Rôles' },
               default: ['admin'],
               layout: { cols: 4 },
               items: {
