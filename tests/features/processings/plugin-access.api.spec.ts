@@ -57,7 +57,7 @@ test.describe('processing creation with restricted plugin access', () => {
     const body = typeof schema.data === 'string' ? schema.data : JSON.stringify(schema.data)
     expect(body).toContain(fixture.pluginId)
     // Post-rebuild only: the message names the owner. Skip if the registry
-    // still returns 404 — that's just "Le plugin … est introuvable".
+    // still returns 404 — that's just "The plugin … was not found".
     if (schema.status === 403) expect(body).toContain('Test User 1')
   })
 

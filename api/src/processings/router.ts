@@ -364,14 +364,14 @@ router.get('', requireOperationScope('listProcessings'), async (req, res) => {
             $filter: {
               input: '$departments',
               as: 'dept',
-              cond: { $ne: ['$$dept.department', null] } // Filtrer les départements null
+              cond: { $ne: ['$$dept.department', null] } // filter out null departments
             }
           }
         }
       }
     ]
 
-    // Ajout des `owners` dans le résultat final
+    // add the `owners` to the final result
     aggregationPipeline[1].$replaceRoot.newRoot.owners = { $ifNull: ['$owners', []] }
   } else {
     aggregationPipeline.unshift({ $match: query })
@@ -586,7 +586,7 @@ router.post('/:id/_trigger', async (req, res) => {
   const processing = await mongo.processings.findOne({ _id: req.params.id })
   if (!processing) return res.status(404).send()
   if (req.query.key) {
-    if (req.query.key !== processing.webhookKey) return res.status(403).send('Mauvaise clé de déclenchement')
+    if (req.query.key !== processing.webhookKey) return res.status(403).send('Wrong trigger key')
     sendProcessingEvent(processing, 'trigger', undefined, 'trigger-webhook')
   } else {
     // the webhook key path reads no session, so the scope is checked here rather than by a middleware
@@ -595,7 +595,7 @@ router.post('/:id/_trigger', async (req, res) => {
     if (!['admin', 'exec'].includes(permissions.getUserResourceProfile(processing.owner, processing.permissions, sessionState) ?? '')) return res.status(403).send()
     sendProcessingEvent(processing, 'trigger', sessionState)
   }
-  if (!processing.active) return res.status(409).send('Le traitement n\'est pas actif')
+  if (!processing.active) return res.status(409).send('The processing is not active')
   res.send(await createNext(mongo.db, locks, processing, true, req.query.delay ? Number(req.query.delay) : 0))
 })
 
