@@ -209,9 +209,9 @@ const operations: Record<ScopedOperationId, Operation> = {
 }
 
 const tagTitles = {
-  processings: { fr: 'Traitements', en: 'Processings' },
-  runs: { fr: 'Exécutions', en: 'Runs' },
-  limits: { fr: 'Limites', en: 'Limits' }
+  processings: { en: 'Processings', fr: 'Traitements' },
+  runs: { en: 'Runs', fr: 'Exécutions' },
+  limits: { en: 'Limits', fr: 'Limites' }
 }
 
 export default (locale: ScopeLocale = 'fr') => {

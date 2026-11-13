@@ -67,7 +67,7 @@ export const getAxiosInstance = (processing: Processing, log: LogFunctions) => {
     onRetry: (retryCount, _err, requestConfig) => {
       const err = prepareAxiosError(_err)
       const message = getHttpErrorMessage(err) || err.message || err
-      log.warning(`tentative ${retryCount} de requête ${requestConfig.method} ${requestConfig.url} : ${message}`)
+      log.warning(`attempt ${retryCount} of request ${requestConfig.method} ${requestConfig.url}: ${message}`)
     }
   })
 

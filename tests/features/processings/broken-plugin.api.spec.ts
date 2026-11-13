@@ -79,7 +79,7 @@ test.describe('processing with unavailable plugin', () => {
     expect(after.status).toBe(404)
   })
 
-  test('worker logs a friendly French message when the plugin is unavailable', async () => {
+  test('worker logs a friendly message when the plugin is unavailable', async () => {
     const superadmin = await axiosAuth('test_superadmin@test.com')
     const id = await createBrokenProcessing(superadmin)
 
@@ -97,7 +97,7 @@ test.describe('processing with unavailable plugin', () => {
 
     const run = (await superadmin.get(`/api/v1/runs/${triggeredRunId}`)).data
     expect(
-      run.log.some((l: any) => l.type === 'error' && l.msg.includes("n'est plus disponible"))
+      run.log.some((l: any) => l.type === 'error' && l.msg.includes('is no longer available'))
     ).toBe(true)
   })
 })

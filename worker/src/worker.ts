@@ -246,7 +246,7 @@ async function iter (run: Run, freeSlot: number) {
       return
     }
     if (!processing.active) {
-      await finish(run, 'le traitement a été désactivé', 'error')
+      await finish(run, 'the processing was disabled', 'error')
       return
     }
 
@@ -254,7 +254,7 @@ async function iter (run: Run, freeSlot: number) {
 
     const remaining = await limits.remaining(processing.owner)
     if (remaining.processingsSeconds === 0) {
-      await finish(run, 'le temps de traitement autorisé est épuisé', 'error')
+      await finish(run, 'the allowed processing time is exhausted', 'error')
       // @test:spy("processingsSecondsExceeded")
       return
     }
@@ -346,7 +346,7 @@ async function iter (run: Run, freeSlot: number) {
         await finish(run)
         // @test:spy("isKilled")
       } else {
-        // Admin (English) → ops console; user (French) → run.log (debug level,
+        // Admin message → ops console; user message → run.log (debug level,
         // matching the pre-existing convention for technical failure messages).
         // Resource metrics (RSS/CPU/heap) are kept as a separate log entry so
         // they don't get appended to the human-readable error.
@@ -415,7 +415,7 @@ async function acquireNext (): Promise<Run | undefined> {
       if (run.status === 'running') {
         try {
           console.warn('we had to close a run that was stuck in running status', run)
-          await finish(run, 'le traitement a été interrompu suite à une opération de maintenance', 'error')
+          await finish(run, 'the processing was interrupted by a maintenance operation', 'error')
           const processing = await mongo.processings.findOne({ _id: run.processing._id })
           await locks.release(run.processing._id)
           if (processing && processing.active && processing.scheduling.length) {

@@ -21,15 +21,18 @@ export default {
   properties: {
     _id: {
       type: 'string',
-      title: 'Identifiant du traitement',
+      title: 'Processing ID',
+      'x-i18n-title': { fr: 'Identifiant du traitement' },
       readOnly: true
     },
     title: {
       type: 'string',
-      title: 'Titre'
+      title: 'Title',
+      'x-i18n-title': { fr: 'Titre' }
     },
     active: {
-      title: 'Actif',
+      title: 'Active',
+      'x-i18n-title': { fr: 'Actif' },
       type: 'boolean',
       default: false,
       layout: {
@@ -76,8 +79,10 @@ export default {
     },
     debug: {
       type: 'boolean',
-      title: 'Mode debug',
-      description: 'Capture des logs détaillés (stacks d\'erreurs, appels HTTP) réservés aux super-admins, pour diagnostiquer un plugin en erreur.',
+      title: 'Debug mode',
+      'x-i18n-title': { fr: 'Mode debug' },
+      description: 'Captures detailed logs (error stacks, HTTP calls) reserved to super-admins, to diagnose a failing plugin.',
+      'x-i18n-description': { fr: 'Capture des logs détaillés (stacks d\'erreurs, appels HTTP) réservés aux super-admins, pour diagnostiquer un plugin en erreur.' },
       readOnly: true
     },
     owner: {
@@ -91,10 +96,12 @@ export default {
     },
     scheduling: {
       type: 'array',
-      title: 'Planification du traitement',
+      title: 'Processing scheduling',
+      'x-i18n-title': { fr: 'Planification du traitement' },
       layout: {
         messages: {
-          addItem: 'Ajouter une règle de planification'
+          addItem: 'Add a scheduling rule',
+          'x-i18n-addItem': { fr: 'Ajouter une règle de planification' }
         },
         cols: 6
       },
@@ -114,7 +121,8 @@ export default {
       title: 'Permissions',
       layout: {
         messages: {
-          addItem: 'Ajouter une permission'
+          addItem: 'Add a permission',
+          'x-i18n-addItem': { fr: 'Ajouter une permission' }
         },
         cols: 6
       },
@@ -153,16 +161,17 @@ export default {
     lastRun: jsonSchema(RunSchema)
       .removeId()
       .removeProperties(['log', 'processing', 'owner'])
-      .appendTitle('Dernière exécution')
+      .appendTitle(' last run')
       .schema,
     nextRun: jsonSchema(RunSchema)
       .removeId()
       .removeProperties(['log', 'processing', 'owner'])
-      .appendTitle('Prochaine exécution')
+      .appendTitle(' next run')
       .schema,
     webhookKey: {
       type: 'string',
-      title: 'Clé pour exécution à distance du traitement',
+      title: 'Remote execution key of the processing',
+      'x-i18n-title': { fr: 'Clé pour exécution à distance du traitement' },
       readOnly: true
     }
   },

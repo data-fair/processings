@@ -58,7 +58,7 @@ const prepareLog = (processing: Processing, run: Run): LogFunctions => {
       // limit. Make room so the run can still be finished, leave an explicit
       // error and fail the task.
       overflowed = true
-      const msg = 'Le journal d\'exécution a atteint la taille maximale autorisée, l\'exécution est interrompue. Le traitement produit trop de messages, réduisez sa verbosité.'
+      const msg = 'The run log reached its maximum allowed size, the run is interrupted. The processing writes too many messages, reduce its verbosity.'
       await truncateLog(run._id)
       const errorLog: any = { type: 'error', msg, extra: '', date: log.date }
       await mongo.runs.updateOne({ _id: run._id }, { $push: { log: errorLog } })
@@ -104,7 +104,7 @@ export const run = async (mailTransport: any) => {
   // and (when processing.debug) appends debug entries to run.log.
   const memReporter = startMemoryReporter(processing, log.debug, config.worker.task.memorySampleIntervalMs)
   if (run.status === 'running') {
-    await log.step('Reprise après interruption.')
+    await log.step('Resuming after an interruption.')
   }
   await running(run)
   console.log('<running>')
@@ -131,7 +131,7 @@ export const run = async (mailTransport: any) => {
   } catch (err) {
     const status = (err as any)?.status ?? (err as any)?.statusCode
     if (status === 404 || status === 403) {
-      await log.error(`Le plugin ${processing.plugin} n'est plus disponible (supprimé ou accès retiré).`)
+      await log.error(`The plugin ${processing.plugin} is no longer available (deleted or access revoked).`)
     }
     throw err
   }
@@ -198,8 +198,8 @@ export const run = async (mailTransport: any) => {
       await mongo.runs.updateOne({ _id: run._id }, { $set: { deleteOnComplete: true } })
     }
     process.chdir(cwd)
-    if (_stopped) await log.error('L\'exécution a été interrompue', '')
-    else await log.info('L\'exécution est terminée', '')
+    if (_stopped) await log.error('The run was interrupted', '')
+    else await log.info('The run is finished', '')
   } catch (e: any) {
     process.chdir(cwd)
     const err = prepareAxiosError(e)

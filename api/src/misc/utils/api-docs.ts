@@ -19,24 +19,24 @@ export default (origin: string, options: { processing: Processing, plugin?: ApiD
   const doc: Record<string, any> = {
     openapi: '3.1.1',
     info: {
-      title: options?.processing?.title ? `API du traitement : ${options.processing.title}` : 'API Traitements de données',
-      description: `Cette documentation interactive à destination des développeurs permet d'utiliser l'API du ${options?.processing?.title ? `traitement ${options.processing.title}` : 'service de traitements periodiques'}.`,
+      title: options?.processing?.title ? `API of the processing: ${options.processing.title}` : 'API Processings',
+      description: `This interactive documentation for developers covers the API of the ${options?.processing?.title ? `processing ${options.processing.title}` : 'periodic processings service'}.`,
       version: packageJson.version,
       termsOfService: 'https://koumoul.com/pages/conditions-generales-dutilisation'
     },
     servers: [{
       url: `${origin}/processings/api/v1${options?.processing?._id ? `/processings/${options.processing?._id}` : ''}`,
-      description: `Instance DataFair - ${new URL(origin).hostname}`
+      description: `Data Fair instance - ${new URL(origin).hostname}`
     }],
     paths: {
       '/api-docs.json': {
         get: {
-          summary: 'Obtenir la documentation OpenAPI',
-          description: 'Accéder à cette documentation au format OpenAPI v3.',
+          summary: 'Get the OpenAPI documentation',
+          description: 'Get this documentation in the OpenAPI v3 format.',
           operationId: 'getApiDoc',
           responses: {
             200: {
-              description: 'La documentation de l\'API',
+              description: 'The API documentation.',
               content: {
                 'application/json': {
                   schema: {
@@ -51,12 +51,12 @@ export default (origin: string, options: { processing: Processing, plugin?: ApiD
 
       '/': {
         get: {
-          summary: 'Lire les informations de ce traitement',
-          description: 'Accéder aux données de ce traitement.',
+          summary: 'Read this processing',
+          description: 'Read the information of this processing.',
           operationId: 'getProcessing',
           responses: {
             200: {
-              description: 'Le traitement trouvé.',
+              description: 'The processing.',
               content: {
                 'application/json': {
                   schema: ProcessingSchema
@@ -64,19 +64,19 @@ export default (origin: string, options: { processing: Processing, plugin?: ApiD
               }
             },
             403: {
-              description: 'L\'utilisateur n\'a pas le droit de voir ce traitement.'
+              description: 'The user is not allowed to read this processing.'
             },
             404: {
-              description: 'Traitement non trouvé.'
+              description: 'Processing not found.'
             }
           }
         },
         patch: {
-          summary: 'Mettre à jour ce traitement',
-          description: 'Mettre à jour ce traitement.',
+          summary: 'Update this processing',
+          description: 'Update some fields of this processing.',
           operationId: 'patchProcessing',
           requestBody: {
-            description: 'Le traitement à mettre à jour',
+            description: 'The fields of the processing to update.',
             required: true,
             content: {
               'application/json': {
@@ -101,7 +101,7 @@ export default (origin: string, options: { processing: Processing, plugin?: ApiD
           },
           responses: {
             200: {
-              description: 'Le traitement a été mis à jour avec succès.',
+              description: 'The updated processing.',
               content: {
                 'application/json': {
                   schema: ProcessingSchema
@@ -109,41 +109,41 @@ export default (origin: string, options: { processing: Processing, plugin?: ApiD
               }
             },
             400: {
-              description: 'Body de la requête invalide.'
+              description: 'Invalid request body.'
             },
             403: {
-              description: 'L\'utilisateur n\'a pas le droit de mettre à jour ce traitement ou de faire cette modification sur ce traitement'
+              description: 'The user is not allowed to update this processing or to make this change to it.'
             },
             404: {
-              description: 'Traitement non trouvé.'
+              description: 'Processing not found.'
             }
           }
         },
         delete: {
-          summary: 'Supprimer ce traitement',
-          description: 'Supprimer ce traitement.',
+          summary: 'Delete this processing',
+          description: 'Delete this processing and its runs.',
           operationId: 'deleteProcessing',
           responses: {
             204: {
-              description: 'Le traitement a été supprimé avec succès.'
+              description: 'The processing was deleted.'
             },
             403: {
-              description: 'L\'utilisateur n\'a pas le droit de supprimer ce traitement.'
+              description: 'The user is not allowed to delete this processing.'
             },
             404: {
-              description: 'Traitement non trouvé.'
+              description: 'Processing not found.'
             }
           }
         }
       },
       '/webhook-key': {
         get: {
-          summary: 'Lire la clé de webhook de ce traitement',
-          description: 'Lire la clé de webhook de ce traitement.',
+          summary: 'Read the webhook key of this processing',
+          description: 'Read the key that triggers this processing through its webhook.',
           operationId: 'getProcessingWebhookKey',
           responses: {
             200: {
-              description: 'La clé de webhook du traitement.',
+              description: 'The webhook key of the processing.',
               content: {
                 'application/json': {
                   schema: {
@@ -153,63 +153,63 @@ export default (origin: string, options: { processing: Processing, plugin?: ApiD
               }
             },
             403: {
-              description: 'L\'utilisateur n\'a pas le droit de voir ce traitement.'
+              description: 'The user is not allowed to read this processing.'
             },
             404: {
-              description: 'Traitement non trouvé.'
+              description: 'Processing not found.'
             }
           }
         },
         delete: {
-          summary: 'Recréer la clé de webhook de ce traitement',
-          description: 'Recréer la clé de webhook de ce traitement.',
+          summary: 'Renew the webhook key of this processing',
+          description: 'Replace the webhook key of this processing with a new one, the previous key stops working.',
           operationId: 'deleteProcessingWebhookKey',
           responses: {
             200: {
-              description: 'La clé de webhook du traitement a été recréée avec succès.',
+              description: 'The webhook key was renewed.',
               content: {
                 'application/json': {
                   schema: {
                     type: 'string',
-                    description: 'La nouvelle clé de webhook du traitement.'
+                    description: 'The new webhook key of the processing.'
                   }
                 }
               }
             },
             403: {
-              description: 'L\'utilisateur n\'a pas le droit de voir ce traitement.'
+              description: 'The user is not allowed to read this processing.'
             },
             404: {
-              description: 'Traitement non trouvé.'
+              description: 'Processing not found.'
             }
           }
         }
       },
       '/_trigger': {
         post: {
-          summary: 'Déclencher ce traitement manuellement',
-          description: 'Déclencher ce traitement manuellement.',
+          summary: 'Trigger this processing',
+          description: 'Trigger a run of this processing now, with a session or with its webhook key.',
           operationId: 'postProcessingTrigger',
           parameters: [
             {
               name: 'key',
               in: 'query',
-              description: 'La clé de déclenchement du traitement.',
+              description: 'The webhook key of the processing, to trigger it without a session.',
               schema: {
                 type: 'string',
-                title: 'Clé de déclenchement'
+                title: 'Webhook key'
               }
             }
           ],
           responses: {
             200: {
-              description: 'Le traitement a été déclenché avec succès.'
+              description: 'The processing was triggered.'
             },
             403: {
-              description: 'L\'utilisateur n\'a pas le droit de déclencher ce traitement, ou la clé de déclenchement n\'est pas valide.'
+              description: 'The user is not allowed to trigger this processing, or the webhook key is invalid.'
             },
             404: {
-              description: 'Traitement non trouvé.'
+              description: 'Processing not found.'
             }
           }
         }

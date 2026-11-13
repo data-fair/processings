@@ -154,7 +154,7 @@ type NewProcessing = {
 }
 
 const { t, locale } = useI18n()
-const session = useSessionAuthenticated(() => new Error('Authentification nécessaire'))
+const session = useSessionAuthenticated(() => new Error(t('authRequired')))
 const router = useRouter()
 
 /*
@@ -207,11 +207,11 @@ const filteredArtefacts = computed(() => {
 })
 
 const artefactDisplayName = (a: RegistryArtefact) =>
-  a.title?.[locale.value as 'fr' | 'en'] ?? a.title?.fr ?? a.title?.en ?? a.name
+  localizedText(a.title, locale.value) ?? a.name
 const artefactDisplayDescription = (a: RegistryArtefact) =>
-  a.description?.[locale.value as 'fr' | 'en'] ?? a.description?.fr ?? a.description?.en ?? ''
+  localizedText(a.description, locale.value) ?? ''
 const artefactGroup = (a: RegistryArtefact) =>
-  a.group?.[locale.value as 'fr' | 'en'] ?? a.group?.fr ?? a.group?.en ?? t('otherGroup')
+  localizedText(a.group, locale.value) ?? t('otherGroup')
 
 // Configured groups define the leading display order. Any registry group not
 // listed in the config is appended (alphabetically) after the configured ones,
@@ -278,6 +278,7 @@ onMounted(() => {
 
 <i18n lang="yaml">
   en:
+    authRequired: Authentication required
     selectPluginType: Plugin selection
     information: Information
     title: Title
@@ -294,6 +295,7 @@ onMounted(() => {
     otherGroup: Other
 
   fr:
+    authRequired: Authentification nécessaire
     selectPluginType: Sélection du plugin
     information: Informations
     title: Titre

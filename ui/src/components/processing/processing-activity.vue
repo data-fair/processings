@@ -8,13 +8,13 @@
     v-if="processing.updated"
     :prepend-icon="mdiPencil"
     :title="processing.updated.name ?? t('formerUser')"
-    :subtitle="dayjs(processing.updated.date).format('D MMM YYYY à HH:mm')"
+    :subtitle="dayjs(processing.updated.date).format('lll')"
   />
   <v-list-item
     v-if="processing.created"
     :prepend-icon="mdiPlusCircleOutline"
     :title="processing.created.name ?? t('formerUser')"
-    :subtitle="dayjs(processing.created.date).format('D MMM YYYY à HH:mm')"
+    :subtitle="dayjs(processing.created.date).format('lll')"
   />
   <v-list-item
     :prepend-icon="mdiPowerPlug"
