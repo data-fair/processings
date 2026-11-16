@@ -81,7 +81,7 @@ export default {
       type: 'boolean',
       title: 'Debug mode',
       'x-i18n-title': { fr: 'Mode debug' },
-      description: 'Captures detailed logs (error stacks, HTTP calls) reserved to super-admins, to diagnose a failing plugin.',
+      description: 'Captures detailed logs (error stacks, HTTP calls) reserved for super-admins, to diagnose a failing plugin.',
       'x-i18n-description': { fr: 'Capture des logs détaillés (stacks d\'erreurs, appels HTTP) réservés aux super-admins, pour diagnostiquer un plugin en erreur.' },
       readOnly: true
     },

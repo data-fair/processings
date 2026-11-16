@@ -30,7 +30,7 @@ export default {
           const: 'exec',
           title: 'Exec profile',
           'x-i18n-title': {
-            en: 'Execution - gives access to the essential information of the processing and allows to trigger it',
+            en: 'Execution - gives access to the essential information of the processing and allows triggering it',
             fr: "Exécution - permet d'accéder aux informations essentielles du traitement et de déclencher le traitement"
           }
         }

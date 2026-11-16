@@ -230,7 +230,7 @@ export default (locale: ScopeLocale = 'fr') => {
   return {
     openapi: '3.1.0',
     info: {
-      title: 'API Processings',
+      title: 'Processings API',
       description: 'Periodic processings: plugins that ingest, transform and publish datasets, their configs and their runs.',
       version: '1.0.0'
     },

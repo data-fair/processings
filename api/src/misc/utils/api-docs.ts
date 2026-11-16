@@ -19,7 +19,7 @@ export default (origin: string, options: { processing: Processing, plugin?: ApiD
   const doc: Record<string, any> = {
     openapi: '3.1.1',
     info: {
-      title: options?.processing?.title ? `API of the processing: ${options.processing.title}` : 'API Processings',
+      title: options?.processing?.title ? `API of the processing: ${options.processing.title}` : 'Processings API',
       description: `This interactive documentation for developers covers the API of the ${options?.processing?.title ? `processing ${options.processing.title}` : 'periodic processings service'}.`,
       version: packageJson.version,
       termsOfService: 'https://koumoul.com/pages/conditions-generales-dutilisation'
