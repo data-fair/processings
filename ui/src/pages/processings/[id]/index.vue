@@ -350,9 +350,9 @@ onUnmounted(() => {
   ws?.unsubscribe(patchConfigWSChannel, onPatchConfig)
 })
 
-const timezoneLabel = (timeZone: string) => {
+const timezoneLabel = (timeZone?: string) => {
   if (timeZone === 'Europe/Paris') return ''
-  return ' — ' + t('timezone') + ' ' + timeZone ? timeZone : 'UTC'
+  return ' — ' + t('timezone') + ' ' + (timeZone || 'UTC')
 }
 
 </script>
