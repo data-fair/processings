@@ -19,7 +19,7 @@ export const importPluginModule = async <T = unknown>(
   const mainRel = typeof pkg.main === 'string' && pkg.main.length > 0 ? pkg.main : 'index.js'
   const mainAbs = path.resolve(pluginDir, mainRel)
   if (!(await fs.pathExists(mainAbs))) {
-    throw new Error(`fichier source manquant : ${mainAbs}`)
+    throw new Error(`missing source file: ${mainAbs}`)
   }
   return (await import(mainAbs)) as T
 }

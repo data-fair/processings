@@ -209,9 +209,9 @@ const operations: Record<ScopedOperationId, Operation> = {
 }
 
 const tagTitles = {
-  processings: { fr: 'Traitements', en: 'Processings' },
-  runs: { fr: 'Exécutions', en: 'Runs' },
-  limits: { fr: 'Limites', en: 'Limits' }
+  processings: { en: 'Processings', fr: 'Traitements' },
+  runs: { en: 'Runs', fr: 'Exécutions' },
+  limits: { en: 'Limits', fr: 'Limites' }
 }
 
 export default (locale: ScopeLocale = 'fr') => {
@@ -230,7 +230,7 @@ export default (locale: ScopeLocale = 'fr') => {
   return {
     openapi: '3.1.0',
     info: {
-      title: 'API Processings',
+      title: 'Processings API',
       description: 'Periodic processings: plugins that ingest, transform and publish datasets, their configs and their runs.',
       version: '1.0.0'
     },

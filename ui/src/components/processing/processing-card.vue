@@ -55,7 +55,7 @@
           <template #prepend>
             <v-icon :icon="mdiPowerPlug" />
           </template>
-          {{ pluginFetch.data.value?.title?.fr ?? pluginFetch.data.value?.title?.en ?? pluginFetch.data.value?.name ?? processing.plugin }}
+          {{ localizedText(pluginFetch.data.value?.title, locale) ?? pluginFetch.data.value?.name ?? processing.plugin }}
         </v-list-item>
 
         <!-- Linked dataset -->
@@ -176,7 +176,7 @@
 
 <script setup lang="ts">
 import ownerAvatar from '@data-fair/lib-vuetify/owner-avatar.vue'
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { dayjs } = useLocaleDayjs()
 
 const props = defineProps({

@@ -32,14 +32,14 @@
 </template>
 
 <i18n lang="yaml">
-fr:
-  public: Public
-  privateAccess: Vue restreinte à des comptes
-  searchName: Saisissez un nom d'organisation / un utilisateur
 en:
   public: Public
   privateAccess: Restricted access to some accounts
   searchName: Search an organization name / a user name
+fr:
+  public: Public
+  privateAccess: Vue restreinte à des comptes
+  searchName: Saisissez un nom d'organisation / un utilisateur
 </i18n>
 
 <script setup lang="ts">

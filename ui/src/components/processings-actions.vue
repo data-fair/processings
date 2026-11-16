@@ -52,7 +52,7 @@
     :items="statusesItems"
     item-title="display"
     item-value="statusKey"
-    label="Status"
+    :label="t('status')"
     class="mt-4 mx-4"
     chips
     closable-chips
@@ -65,7 +65,7 @@
     :items="pluginsItems"
     item-title="display"
     item-value="pluginKey"
-    label="Plugin"
+    :label="t('plugin')"
     class="mt-4 mx-4"
     chips
     closable-chips
@@ -102,7 +102,7 @@
 import SearchField from '@data-fair/lib-vuetify/search-field.vue'
 import '@data-fair/frame/lib/d-frame.js'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { departmentLabel } = useDisplayOwner()
 const router = useRouter()
 const session = useSessionAuthenticated()
@@ -185,7 +185,7 @@ const pluginsItems = computed(() => {
     .map(
       ([pluginKey, count]) => {
         const artefact = installedPlugins.value?.find((p) => p._id === pluginKey)
-        const customName = artefact?.title?.fr ?? artefact?.title?.en ?? artefact?.name
+        const customName = localizedText(artefact?.title, locale.value) ?? artefact?.name
         return {
           display: `${customName || t('deleted') + ' - ' + pluginKey} (${count})`,
           pluginKey
@@ -230,7 +230,9 @@ const ownersItems = computed(() => {
     deleted: Deleted
     notifications: Notifications
     owner: Owner
+    plugin: Plugin
     showAllProcessings: Show all processings
+    status: Status
     statusError: Failed
     statusFinished: Finished
     statusKill: Interrupting
@@ -249,7 +251,9 @@ const ownersItems = computed(() => {
     deleted: Supprimé
     notifications: Notifications
     owner: Propriétaire
+    plugin: Plugin
     showAllProcessings: Voir tous les traitements
+    status: Statut
     statusError: En échec
     statusFinished: Terminé
     statusKill: Interruption

@@ -10,7 +10,7 @@ export type ExitDiagnosis = {
   category: ExitCategory
   // English text for ops/console/Prometheus context.
   adminMessage: string
-  // French text written to run.log (user-facing). Empty for silent categories.
+  // Text written to run.log (user-facing). Empty for silent categories.
   userMessage: string
   // Resource metrics (RSS / CPU / heap), kept separate from the human-readable
   // cause so the worker can log them as an independent (debug) entry instead of
@@ -34,25 +34,11 @@ const memLine = (lastMem: MemorySample | null, maxHeapMB: number): string => {
   return `Last memory sample — heap used: ${toMB(lastMem.heapUsed)} / ${maxHeapMB}MB; RSS: ${toMB(lastMem.rss)}.`
 }
 
-const memLineFr = (lastMem: MemorySample | null, maxHeapMB: number): string => {
-  if (!lastMem) return 'aucune mesure mémoire n\'a été reportée avant la sortie'
-  return `Dernière mesure mémoire — heap utilisé : ${toMB(lastMem.heapUsed)} / ${maxHeapMB}MB ; RSS : ${toMB(lastMem.rss)}.`
-}
-
 const extLines = (lastExt: ExternalSample | null): string[] => {
   if (!lastExt) return []
   const out = [`Last seen RSS (external): ${toMB(lastExt.rssBytes)}.`]
   if (lastExt.cpuRatio !== null) {
     out.push(`CPU usage (external): ${lastExt.cpuRatio.toFixed(2)} (1.0 = one full core).`)
-  }
-  return out
-}
-
-const extLinesFr = (lastExt: ExternalSample | null): string[] => {
-  if (!lastExt) return []
-  const out = [`Dernier RSS observé (parent) : ${toMB(lastExt.rssBytes)}.`]
-  if (lastExt.cpuRatio !== null) {
-    out.push(`Utilisation CPU (parent) : ${lastExt.cpuRatio.toFixed(2)} (1.0 = un cœur saturé).`)
   }
   return out
 }
@@ -65,8 +51,8 @@ const oomHeapAdmin = (ctx: DiagnoseContext): string => [
 ].join('\n')
 
 const oomHeapUser = (ctx: DiagnoseContext): string => [
-  `Le traitement a dépassé la limite de mémoire (tas JavaScript) allouée à la tâche (${ctx.maxHeapMB}MB).`,
-  'Contactez un administrateur pour augmenter la limite ou réduire la concurrence.'
+  `The processing exceeded the memory limit (JavaScript heap) allocated to the task (${ctx.maxHeapMB}MB).`,
+  'Contact an administrator to raise the limit or lower the concurrency.'
 ].join('\n')
 
 const oomHostAdmin = (): string => [
@@ -76,25 +62,25 @@ const oomHostAdmin = (): string => [
 ].join('\n')
 
 const oomHostUser = (): string => [
-  'Le traitement a été terminé par le système (signal SIGKILL), vraisemblablement à cause d\'un dépassement de la mémoire allouée au conteneur.',
-  'Contactez un administrateur pour augmenter la limite mémoire du conteneur ou réduire la concurrence.'
+  'The processing was killed by the system (SIGKILL signal), probably because it exceeded the memory allocated to the container.',
+  'Contact an administrator to raise the memory limit of the container or lower the concurrency.'
 ].join('\n')
 
 // heap OOM: child-reported heap is primary, external RSS secondary.
 const oomHeapMetricsAdmin = (lastMem: MemorySample | null, lastExt: ExternalSample | null, ctx: DiagnoseContext): string =>
   [memLine(lastMem, ctx.maxHeapMB), ...extLines(lastExt)].join('\n')
 const oomHeapMetricsUser = (lastMem: MemorySample | null, lastExt: ExternalSample | null, ctx: DiagnoseContext): string =>
-  [memLineFr(lastMem, ctx.maxHeapMB), ...extLinesFr(lastExt)].join('\n')
+  [memLine(lastMem, ctx.maxHeapMB), ...extLines(lastExt)].join('\n')
 
 // host OOM: external (parent-observed) RSS is primary, child sample secondary.
 const oomHostMetricsAdmin = (lastMem: MemorySample | null, lastExt: ExternalSample | null, ctx: DiagnoseContext): string =>
   [...extLines(lastExt), memLine(lastMem, ctx.maxHeapMB)].join('\n')
 const oomHostMetricsUser = (lastMem: MemorySample | null, lastExt: ExternalSample | null, ctx: DiagnoseContext): string =>
-  [...extLinesFr(lastExt), memLineFr(lastMem, ctx.maxHeapMB)].join('\n')
+  [...extLines(lastExt), memLine(lastMem, ctx.maxHeapMB)].join('\n')
 
 const unknownUser = (code: number | null, signal: NodeJS.Signals | null, stderr: string): string => {
   const tail = buildErrorMessageFromStderr(stderr, '')
-  const base = `Fin de tâche inattendue (code=${code}, signal=${signal ?? 'null'}).`
+  const base = `Task ended unexpectedly (code=${code}, signal=${signal ?? 'null'}).`
   return tail ? `${base} ${tail}` : base
 }
 
@@ -146,7 +132,7 @@ export const diagnoseExit = (
       adminMessage: base,
       userMessage: base,
       adminMetrics: extLines(lastExt).join('\n'),
-      userMetrics: extLinesFr(lastExt).join('\n')
+      userMetrics: extLines(lastExt).join('\n')
     }
   }
   return {
@@ -154,6 +140,6 @@ export const diagnoseExit = (
     adminMessage: `Task ended unexpectedly (code=${code}, signal=${signal ?? 'null'}). ${buildErrorMessageFromStderr(stderr, '')}`.trim(),
     userMessage: unknownUser(code, signal, stderr),
     adminMetrics: extLines(lastExt).join('\n'),
-    userMetrics: extLinesFr(lastExt).join('\n')
+    userMetrics: extLines(lastExt).join('\n')
   }
 }

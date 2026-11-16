@@ -40,9 +40,9 @@ export const nextScheduledDate = (schedulings: Scheduling[]): Date | null => {
 export const createNext = async (db: Db, locks: Locks, processing: Processing, triggered: boolean = false, delaySeconds:number = 0): Promise<Run | null> => {
   const ack = await locks.acquire(processing._id + '/next-run')
   try {
-    if (!ack) throw httpError(400, 'une planification est déjà en cours')
+    if (!ack) throw httpError(400, 'A scheduling is already in progress')
     if (await db.collection('runs').countDocuments({ 'processing._id': processing._id, status: 'running' }) > 0) {
-      throw httpError(400, 'une exécution est déjà en cours')
+      throw httpError(400, 'A run is already in progress')
     }
 
     const run = {
@@ -74,7 +74,7 @@ export const createNext = async (db: Db, locks: Locks, processing: Processing, t
       }
     } else {
       if (await db.collection('runs').countDocuments({ 'processing._id': processing._id, status: 'triggered' }) > 0) {
-        throw httpError(400, 'une exécution manuelle est déjà demandée')
+        throw httpError(400, 'A manual run is already requested')
       }
       await runsCollection.deleteMany({ 'processing._id': processing._id, status: 'scheduled' })
       await processingsCollection.updateOne({ _id: run.processing._id }, { $unset: { nextRun: 1 } })

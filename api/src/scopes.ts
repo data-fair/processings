@@ -12,10 +12,10 @@ export const vocabulary = defineScopes({
   processings: {
     tiers: ['read', 'write', 'admin'],
     descriptions: {
-      umbrella: { fr: 'Tous les droits sur les traitements', en: 'All processing scopes' },
-      read: { fr: 'Lire les traitements du compte, leurs exécutions et leurs journaux', en: "Read the account's processings, their runs and logs" },
-      write: { fr: 'Créer et configurer les traitements, déclencher et arrêter leurs exécutions', en: 'Create and configure processings, trigger and kill their runs' },
-      admin: { fr: 'Supprimer les traitements, gérer leurs permissions, leur propriétaire et leur clé de webhook', en: 'Delete processings, manage their permissions, owner and webhook key' }
+      umbrella: { en: 'All processing scopes', fr: 'Tous les droits sur les traitements' },
+      read: { en: "Read the account's processings, their runs and logs", fr: 'Lire les traitements du compte, leurs exécutions et leurs journaux' },
+      write: { en: 'Create and configure processings, trigger and kill their runs', fr: 'Créer et configurer les traitements, déclencher et arrêter leurs exécutions' },
+      admin: { en: 'Delete processings, manage their permissions, owner and webhook key', fr: 'Supprimer les traitements, gérer leurs permissions, leur propriétaire et leur clé de webhook' }
     }
   }
 })

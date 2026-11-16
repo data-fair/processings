@@ -10,7 +10,7 @@
       >
         <template v-if="log.msg.status">
           <template v-if="typeof log.msg.data === 'string'">{{ log.msg.data }}</template>
-          <template v-else>{{ log.msg.statusText || 'Erreur HTTP' }} - {{ log.msg.status }}</template>
+          <template v-else>{{ log.msg.statusText || t('httpError') }} - {{ log.msg.status }}</template>
         </template>
         <template v-else>
           {{ log.msg }}
@@ -27,8 +27,8 @@
         :class="`${taskColor(log)}--text`"
       >
         {{ log.msg }}
-        <span v-if="log.progress && !log.total">({{ log.progress.toLocaleString() }})</span>
-        <span v-if="log.total">({{ (log.progress || 0).toLocaleString() }} / {{ log.total.toLocaleString() }})</span>
+        <span v-if="log.progress && !log.total">({{ log.progress.toLocaleString(locale) }})</span>
+        <span v-if="log.total">({{ (log.progress || 0).toLocaleString(locale) }} / {{ log.total.toLocaleString(locale) }})</span>
         <v-progress-linear
           rounded
           :color="taskColor(log)"
@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { dayjs } = useLocaleDayjs()
 const session = useSession()
 const { sendUiNotif } = useUiNotif()
@@ -135,11 +135,13 @@ const formatDate = (date: string) => dayjs(date).format('lll')
     viewExtra: View extra
     copy: Copy
     extraCopied: Extra copied to clipboard
+    httpError: HTTP error
 
   fr:
     viewExtra: Voir l'extra
     copy: Copier
     extraCopied: Extra copié dans le presse-papier
+    httpError: Erreur HTTP
 </i18n>
 
 <style scoped>

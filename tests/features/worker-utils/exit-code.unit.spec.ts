@@ -39,7 +39,7 @@ test('code 143 alone is sigterm', () => {
   expect(d.category).toBe('sigterm')
 })
 
-test('SIGKILL -> oom-host with English adminMessage and French userMessage', () => {
+test('SIGKILL -> oom-host with an admin message and a user message', () => {
   const d = diagnoseExit(null, 'SIGKILL', '', sample, null, ctx)
   expect(d.category).toBe('oom-host')
   // English ops message (cause only, metrics live in adminMetrics)
@@ -47,8 +47,8 @@ test('SIGKILL -> oom-host with English adminMessage and French userMessage', () 
   expect(d.adminMessage).toContain('SIGKILL')
   expect(d.adminMetrics).toContain('heap used: 723.0MB')
   expect(d.adminMetrics).toContain('RSS: 812.0MB')
-  // French user-facing message in run log
-  expect(d.userMessage).toMatch(/tué|terminé par le système/i)
+  // user-facing message in run log
+  expect(d.userMessage).toContain('killed by the system')
   expect(d.userMessage).toContain('SIGKILL')
 })
 
@@ -70,15 +70,15 @@ test('code 137 with selfKilled=true -> sigterm category', () => {
   expect(d.category).toBe('sigterm')
 })
 
-test('code 134 -> oom-heap with mention of max heap config (English admin + French user)', () => {
+test('code 134 -> oom-heap with mention of max heap config (admin + user messages)', () => {
   const d = diagnoseExit(134, null, 'FATAL ERROR: JavaScript heap out of memory', sample, null, ctx)
   expect(d.category).toBe('oom-heap')
   // English admin message (cause + mitigation)
   expect(d.adminMessage).toContain('exit code 134')
   expect(d.adminMessage).toContain('WORKER_TASK_MAX_HEAP_MB=768')
   expect(d.adminMessage).toContain('Concurrent tasks at exit: 3 / concurrency 4')
-  // French user message
-  expect(d.userMessage).toMatch(/mémoire|tas/i)
+  // user message
+  expect(d.userMessage).toContain('memory limit (JavaScript heap)')
   expect(d.userMessage).toContain('768')
 })
 
@@ -114,8 +114,8 @@ test('unknown code 99 -> unknown', () => {
   const d = diagnoseExit(99, null, 'weird', null, null, ctx)
   expect(d.category).toBe('unknown')
   expect(d.adminMessage).toContain('code=99')
-  // French user message for unknown
-  expect(d.userMessage).toMatch(/inattendue|inattendu/i)
+  // user message for unknown
+  expect(d.userMessage).toContain('Task ended unexpectedly')
 })
 
 test('null code, null signal -> unknown', () => {
@@ -159,16 +159,16 @@ test('lastExt with null cpuRatio omits CPU usage line', () => {
   expect(d.adminMetrics).not.toMatch(/CPU usage/)
 })
 
-test('oom-host with lastExt includes French external RSS and CPU usage in userMetrics', () => {
+test('oom-host with lastExt includes external RSS and CPU usage in userMetrics', () => {
   const d = diagnoseExit(null, 'SIGKILL', '', sample, ext, ctx)
-  expect(d.userMetrics).toMatch(/Dernier RSS observé \(parent\)\s*:\s*815\.0MB/)
-  expect(d.userMetrics).toMatch(/Utilisation CPU \(parent\)\s*:\s*0\.92/)
+  expect(d.userMetrics).toMatch(/Last seen RSS \(external\):\s*815\.0MB/)
+  expect(d.userMetrics).toMatch(/CPU usage \(external\):\s*0\.92/)
 })
 
-test('lastExt with null cpuRatio omits CPU usage line from French userMetrics', () => {
+test('lastExt with null cpuRatio omits CPU usage line from userMetrics', () => {
   const d = diagnoseExit(null, 'SIGKILL', '', sample, { ...ext, cpuRatio: null }, ctx)
-  expect(d.userMetrics).toMatch(/Dernier RSS observé \(parent\)/)
-  expect(d.userMetrics).not.toMatch(/Utilisation CPU/)
+  expect(d.userMetrics).toMatch(/Last seen RSS \(external\)/)
+  expect(d.userMetrics).not.toMatch(/CPU usage/)
 })
 
 test('oom-host renders external RSS BEFORE in-process memLine in metrics (external is primary)', () => {
