@@ -11,6 +11,7 @@ import kill from 'tree-kill'
 import { init as wsInit } from '@data-fair/lib-node/ws-emitter.js'
 import { startObserver, stopObserver } from '@data-fair/lib-node/observer.js'
 import log, { withLogContext } from '@data-fair/lib-node/log.js'
+import { ownerLogFields, truncateLogValue } from '@data-fair/processings-shared/log-fields.ts'
 import upgradeScripts from '@data-fair/lib-node/upgrade-scripts.js'
 import { createNext } from '@data-fair/processings-shared/runs.ts'
 import eventsQueue from '@data-fair/lib-node/events-queue.js'
@@ -159,7 +160,7 @@ async function mainLoop (lastActivity: number) {
       if (stopped) continue
 
       // every line about this run, deep in the call stack included, carries its ids
-      const iterPromise = withLogContext({ processingId: run.processing._id, runId: run._id, ownerKey: `${run.owner.type}.${run.owner.id}` }, () => iter(run, freeSlot))
+      const iterPromise = withLogContext({ processingId: run.processing._id, runId: run._id, ...ownerLogFields(run.owner) }, () => iter(run, freeSlot))
       promisePool[freeSlot] = iterPromise
       // empty the slot after the promise is finished
       // do not catch failure, they should trigger a restart of the loop
@@ -282,14 +283,14 @@ async function iter (run: Run, freeSlot: number) {
       }
       // Echo non-sample lines for ops visibility (preserving prior behaviour)
       for (const line of out.other) {
-        log.info(line, { code: 'task-stdout' })
+        log.info(truncateLogValue(line), { code: 'task-stdout' })
         if (line.includes('<running>')) {
           // @test:spy("isRunning")
         }
       }
     })
     child.stderr?.on('data', data => {
-      log.warn(data.toString('utf8'), { code: 'task-stderr' })
+      log.warn(truncateLogValue(data.toString('utf8')), { code: 'task-stderr' })
       if (stderr.length <= 2000) {
         stderr += data
         if (stderr.length > 2000) {
@@ -352,7 +353,7 @@ async function iter (run: Run, freeSlot: number) {
         // Resource metrics (RSS/CPU/heap) are kept as a separate log entry so
         // they don't get appended to the human-readable error.
         // a failure of the plugin or of its resources, not of the worker
-        log.warn(`run failed [${diag.category}]: ` + [diag.adminMessage || err.message, diag.adminMetrics].filter(Boolean).join('\n'), { code: 'worker-run-failed', category: diag.category })
+        log.warn(truncateLogValue(`run failed [${diag.category}]: ` + [diag.adminMessage || err.message, diag.adminMetrics].filter(Boolean).join('\n')), { code: 'worker-run-failed', category: diag.category })
         await finish(run, diag.userMessage || buildErrorMessageFromStderr(stderr, err.message), 'debug', diag.userMetrics || undefined)
         // @test:spy("isFailure")
       }

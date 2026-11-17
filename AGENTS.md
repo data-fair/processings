@@ -142,7 +142,8 @@ full API is in the "Logging" section of the `@data-fair/lib-node` README. eslint
 - `error` is for internal failures only (counted in `df_logs`, alerting). A plugin that fails, or a run
   killed for its memory, is `warn`.
 - The actor of a request comes from `session.middleware()`'s log context, never passed by hand. The worker
-  runs each run in `withLogContext({ processingId, runId, ownerKey })`.
+  runs each run in `withLogContext({ processingId, runId, ...ownerLogFields(owner) })`
+  (`shared/log-fields.ts`, the owner* names of data-fair); plugin output is cut with `truncateLogValue`.
 - The task child process (`worker/src/task/index.ts`, `task.ts`) keeps `console`: the parent reads its
   stdout (`<running>`, memory samples) and shows its stderr to the user. The parent relays the other lines
   as `task-stdout` / `task-stderr` log lines.
