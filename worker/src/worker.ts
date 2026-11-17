@@ -9,7 +9,8 @@ import resolvePath from 'resolve-path'
 import kill from 'tree-kill'
 
 import { init as wsInit } from '@data-fair/lib-node/ws-emitter.js'
-import { startObserver, stopObserver, internalError } from '@data-fair/lib-node/observer.js'
+import { startObserver, stopObserver } from '@data-fair/lib-node/observer.js'
+import log, { withLogContext } from '@data-fair/lib-node/log.js'
 import upgradeScripts from '@data-fair/lib-node/upgrade-scripts.js'
 import { createNext } from '@data-fair/processings-shared/runs.ts'
 import eventsQueue from '@data-fair/lib-node/events-queue.js'
@@ -73,18 +74,18 @@ export const start = async () => {
     warnThresholdPct: config.worker.task.memoryHeadroomWarnPct
   })
   const report = formatReport(budget)
-  if (budget.status === 'ok') console.log(report)
-  else console.warn(report)
+  if (budget.status === 'ok') log.info(report, { code: 'memory-budget' })
+  else log.warn(report, { code: 'memory-budget' })
 
   externalSamplerActive = config.worker.task.externalSamplerEnabled && procStatIsSupported()
   setExternalRssActive(externalSamplerActive)
   if (externalSamplerActive) {
     externalSamplerFactory = createExternalSamplerFactory({ updateGauge: updateTaskExternalGauges })
-    console.log('[external-sampler] enabled: per-slot RSS/CPU sampled from /proc')
+    log.info('external sampler enabled: per-slot RSS/CPU sampled from /proc', { code: 'external-sampler' })
   } else if (config.worker.task.externalSamplerEnabled && !procStatIsSupported()) {
-    console.warn('[external-sampler] disabled: /proc is not available on this platform')
+    log.warn('external sampler disabled: /proc is not available on this platform', { code: 'external-sampler' })
   } else {
-    console.log('[external-sampler] disabled by configuration (WORKER_TASK_EXTERNAL_SAMPLER_ENABLED=false)')
+    log.info('external sampler disabled by configuration (WORKER_TASK_EXTERNAL_SAMPLER_ENABLED=false)', { code: 'external-sampler' })
   }
 
   // Initialise the worker's own memory gauges and keep them fresh. A sample
@@ -157,7 +158,8 @@ async function mainLoop (lastActivity: number) {
 
       if (stopped) continue
 
-      const iterPromise = iter(run, freeSlot)
+      // every line about this run, deep in the call stack included, carries its ids
+      const iterPromise = withLogContext({ processingId: run.processing._id, runId: run._id, ownerKey: `${run.owner.type}.${run.owner.id}` }, () => iter(run, freeSlot))
       promisePool[freeSlot] = iterPromise
       // empty the slot after the promise is finished
       // do not catch failure, they should trigger a restart of the loop
@@ -182,12 +184,11 @@ async function killLoop () {
           try {
             await killRun(run)
           } catch (err) {
-            internalError('worker-task-kill', err)
+            log.error('failed to kill a run', { code: 'worker-task-kill', processingId: run.processing._id, runId: run._id, err })
           }
         }
       } catch (err) {
-        internalError('worker-loop-kill', err)
-        console.error('(loop-kill) error while killing task loop', err)
+        log.error('error in the kill loop', { code: 'worker-loop-kill', err })
       }
     }
     resolve()
@@ -202,7 +203,7 @@ async function killRun (run: Run) {
     const ack = await locks.acquire(run.processing._id, 'worker-loop-kill')
     if (ack) {
       try {
-        console.warn('the run should be killed, it is not locked by another worker and we have no running PID, mark it as already killed', run._id)
+        log.warn('the run should be killed, it is not locked by another worker and we have no running PID, mark it as already killed', { code: 'worker-kill-orphan', processingId: run.processing._id, runId: run._id })
         debug('mark as already killed', run)
         run.status = 'killed'
         await finish(run)
@@ -220,7 +221,7 @@ async function killRun (run: Run) {
   // this is more than the internal grace period of the task, so it should never be used
   await new Promise(resolve => setTimeout(resolve, config.worker.gracePeriod * 1.2))
   if (pids[run._id]) {
-    console.warn('send SIGKILL for forceful interruption of a task that did not stop properly', run.processing._id, run._id, pids[run._id])
+    log.warn('send SIGKILL for forceful interruption of a task that did not stop properly', { code: 'worker-sigkill', processingId: run.processing._id, runId: run._id, pid: pids[run._id] })
     // Mark as self-kill BEFORE delivering the signal — diagnoseExit reads
     // this set in iter()'s catch handler, which can be entered as soon as the
     // child observes the signal.
@@ -241,7 +242,7 @@ async function iter (run: Run, freeSlot: number) {
 
   try {
     if (!processing) {
-      internalError('worker-missing-processing', 'found a run without associated processing, weird')
+      log.error('found a run without associated processing, weird', { code: 'worker-missing-processing' })
       await mongo.runs.deleteOne({ _id: run._id })
       return
     }
@@ -281,14 +282,14 @@ async function iter (run: Run, freeSlot: number) {
       }
       // Echo non-sample lines for ops visibility (preserving prior behaviour)
       for (const line of out.other) {
-        process.stdout.write(`[spawned task stdout] ${run.processing._id} / ${run._id} ${line}\n`)
+        log.info(line, { code: 'task-stdout' })
         if (line.includes('<running>')) {
           // @test:spy("isRunning")
         }
       }
     })
     child.stderr?.on('data', data => {
-      process.stderr.write(`[spawned task stderr] ${run.processing._id} / ${run._id}` + data)
+      log.warn(data.toString('utf8'), { code: 'task-stderr' })
       if (stderr.length <= 2000) {
         stderr += data
         if (stderr.length > 2000) {
@@ -350,12 +351,13 @@ async function iter (run: Run, freeSlot: number) {
         // matching the pre-existing convention for technical failure messages).
         // Resource metrics (RSS/CPU/heap) are kept as a separate log entry so
         // they don't get appended to the human-readable error.
-        console.warn(`failure ${processing?.title ?? run.processing.title} > ${run._id} [${diag.category}]`, [diag.adminMessage || err.message, diag.adminMetrics].filter(Boolean).join('\n'))
+        // a failure of the plugin or of its resources, not of the worker
+        log.warn(`run failed [${diag.category}]: ` + [diag.adminMessage || err.message, diag.adminMetrics].filter(Boolean).join('\n'), { code: 'worker-run-failed', category: diag.category })
         await finish(run, diag.userMessage || buildErrorMessageFromStderr(stderr, err.message), 'debug', diag.userMetrics || undefined)
         // @test:spy("isFailure")
       }
     } else {
-      internalError('worker', err)
+      log.error('failed to manage the run', { code: 'worker', err })
     }
   } finally {
     if (run) {
@@ -414,7 +416,7 @@ async function acquireNext (): Promise<Run | undefined> {
       // if we could acquire the lock it means the task was brutally interrupted
       if (run.status === 'running') {
         try {
-          console.warn('we had to close a run that was stuck in running status', run)
+          log.warn('we had to close a run that was stuck in running status', { code: 'worker-stuck-run', processingId: run.processing._id, runId: run._id })
           await finish(run, 'the processing was interrupted by a maintenance operation', 'error')
           const processing = await mongo.processings.findOne({ _id: run.processing._id })
           await locks.release(run.processing._id)
@@ -422,8 +424,7 @@ async function acquireNext (): Promise<Run | undefined> {
             await createNext(mongo.db, locks, processing) // we create the next scheduled run
           }
         } catch (err) {
-          const message = `failure while closing a run that was left in running status by error (${run.processing._id} / ${run._id})`
-          internalError('worker-manage-running', err, message)
+          log.error('failure while closing a run that was left in running status by error', { code: 'worker-manage-running', processingId: run.processing._id, runId: run._id, err })
           await locks.release(run.processing._id)
         }
         continue

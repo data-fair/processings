@@ -1,17 +1,18 @@
+import log from '@data-fair/lib-node/log.js'
 import { start, stop } from './src/worker.ts'
 
 start().then(() => {}, err => {
-  console.error('Failure while starting worker', err)
+  log.error('failure while starting the worker', { code: 'start-process', err })
   process.exit(1)
 })
 
 process.on('SIGTERM', function onSigterm () {
-  console.info('Received SIGTERM signal, shutdown gracefully...')
+  log.info('received SIGTERM signal, shutting down gracefully...')
   stop().then(() => {
-    console.log('shutting down now')
+    log.info('shutting down now')
     process.exit()
   }, err => {
-    console.error('Failure while stopping worker', err)
+    log.error('failure while stopping the worker', { code: 'stop-process', err })
     process.exit(1)
   })
 })

@@ -7,6 +7,7 @@ import fs from 'fs-extra'
 import path from 'path'
 import resolvePath from 'resolve-path'
 import locks from '#locks'
+import log from '@data-fair/lib-node/log.js'
 
 const processingsDir = path.resolve(config.dataDir ?? config.tmpDir, 'processings')
 
@@ -25,7 +26,7 @@ export const applyProcessing = async (mongo: ProcessingsMongo, processing: Proce
   try {
     await createNext(mongo.db, locks, processing)
   } catch (error) {
-    console.error('Error creating next run', error)
+    log.error('failed to create the next run', { code: 'create-next-run', processingId: processing._id, err: error })
   }
 }
 

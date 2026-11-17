@@ -6,7 +6,7 @@ import { runsMetrics } from './metrics.ts'
 import eventsQueue from '@data-fair/lib-node/events-queue.js'
 import config from '#config'
 import mongo from '#mongo'
-import { internalError } from '@data-fair/lib-node/observer.js'
+import log from '@data-fair/lib-node/log.js'
 import { isDocumentTooLargeError, shouldDisableForFailures } from './runs-operations.ts'
 
 const runTitles = {
@@ -100,7 +100,7 @@ export const finish = async (run: Run, errorMessage: string | undefined = undefi
     if (!isDocumentTooLargeError(err)) throw err
     // A run whose log filled the document would otherwise be impossible to
     // finish or kill, and the kill loop would retry it forever.
-    console.warn('run document too large to be finished, truncating its log', run._id)
+    log.warn('run document too large to be finished, truncating its log', { code: 'run-too-large', runId: run._id })
     await truncateLog(run._id)
     lastRun = await mongo.runs.findOneAndUpdate(
       { _id: run._id },
@@ -108,14 +108,14 @@ export const finish = async (run: Run, errorMessage: string | undefined = undefi
       { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
     )
   }
-  if (!lastRun) return internalError('processing-worker', 'Last run not found after finish update')
+  if (!lastRun) return log.error('last run not found after finish update', { code: 'processing-worker', runId: run._id })
   if (!lastRun.startedAt) {
     lastRun = (await mongo.runs.findOneAndUpdate(
       { _id: run._id },
       { $set: { startedAt: lastRun.finishedAt } },
       { returnDocument: 'after', projection: { processing: 0, owner: 0 } }
     ))
-    if (!lastRun) return internalError('processing-worker', 'Last run not found after startedAt update')
+    if (!lastRun) return log.error('last run not found after startedAt update', { code: 'processing-worker', runId: run._id })
   }
   await wsEmitter.emit(`processings/${run.processing._id}/run-patch`, { _id: run._id, patch: query.$set })
   const duration = (new Date(lastRun.finishedAt!).getTime() - new Date(lastRun.startedAt!).getTime()) / 1000

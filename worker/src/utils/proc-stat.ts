@@ -3,6 +3,7 @@
 // Linux only — isSupported() checks /proc/self/stat at module load.
 
 import { readFileSync, existsSync } from 'node:fs'
+import log from '@data-fair/lib-node/log.js'
 import { execSync } from 'node:child_process'
 
 export type ProcStatSnapshot = {
@@ -50,7 +51,7 @@ const detectClockTicksPerSec = (): number => {
     const n = Number(out)
     if (Number.isFinite(n) && n > 0) return n
   } catch {
-    console.info('[proc-stat] getconf CLK_TCK failed, falling back to 100')
+    log.info('getconf CLK_TCK failed, falling back to 100', { code: 'proc-stat' })
   }
   return 100
 }
