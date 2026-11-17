@@ -1365,7 +1365,7 @@
     },
     {
       "name": "processing_config_setData",
-      "description": "Write several \"Processing config\" fields at once: the given keys are merged into the current data, nested objects included; arrays you pass replace the existing ones. Prefer setFieldValue to change one field. Check the errors and warnings in the response.",
+      "description": "Write several \"Processing config\" fields at once: the given keys are merged into the current data, nested objects included; arrays you pass replace the existing ones. Pass only the keys that change: the ones you leave out stay as they are, and data re-sent unchanged reads, to whoever approves the call, as content being replaced. To change one item of a list, use setFieldValue on its field rather than re-sending the list. Check the errors and warnings in the response.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -1503,6 +1503,22 @@
             "type": "number",
             "description": "Index from the last getFieldSuggestions call on this same path. Exclusive with \"value\"."
           },
+          "suggestionTitle": {
+            "type": "string",
+            "description": "The title getFieldSuggestions gave the suggestion at \"suggestionIndex\", copied as listed. Checked: the write is refused if it is not that suggestion's title. Pass it with every suggestionIndex, so that the call says which option it picks.",
+            "x-checked": {
+              "against": "suggestionIndex",
+              "field": "/title"
+            }
+          },
+          "item": {
+            "type": "object",
+            "description": "Optional check of the list item this write applies to: keys and values that item must hold, e.g. { \"uuid\": \"a1b2\" } or { \"type\": \"title\" }. The write is refused, and nothing written, if the item at that position does not hold them. It makes a positional path such as /elements/1 say which item it means.",
+            "x-checked": {
+              "against": "path",
+              "field": ""
+            }
+          },
           "save": {
             "type": "boolean",
             "description": "Save the form after this write, when the write leaves it valid (default false)."
@@ -1551,7 +1567,7 @@
     },
     {
       "name": "processing_config_getFieldSuggestions",
-      "description": "Get the accepted values of a field of \"Processing config\" that describeState marked \"suggestions\", optionally filtered by a query. A field whose values describeState already stated on its line as values=[...] needs no call — write one of them. Each option comes back with an index and a title; one whose value is not a short scalar is listed by title alone, exactly as a user sees it. To choose one, call setFieldValue with the same path and \"suggestionIndex\" set to its index, and the full original value is applied.",
+      "description": "Get the accepted values of a field of \"Processing config\" that describeState marked \"suggestions\", optionally filtered by a query. A field whose values describeState already stated on its line as values=[...] needs no call — write one of them. Each option comes back with an index and a title; one whose value is not a short scalar is listed by title alone, exactly as a user sees it. To choose one, call setFieldValue with the same path, \"suggestionIndex\" set to its index and \"suggestionTitle\" to its title as listed, and the full original value is applied.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -1641,6 +1657,14 @@
           "to": {
             "type": "number",
             "description": "Index the item should have afterwards (move only, required)"
+          },
+          "item": {
+            "type": "object",
+            "description": "Optional check of the list item this write applies to: keys and values that item must hold, e.g. { \"uuid\": \"a1b2\" } or { \"type\": \"title\" }. The write is refused, and nothing written, if the item at that position does not hold them. It makes a positional path such as /elements/1 say which item it means. For remove and move it checks the item removed or moved; for add, the list item the array is in, if any.",
+            "x-checked": {
+              "against": "path",
+              "field": ""
+            }
           },
           "value": {
             "description": "Value for the new item (for add action). For an item that is a choice between options, choose its option by the discriminator value describeState lists for it, e.g. { \"type\": \"...\" }: \"$oneOf\" is a path segment, not a data key. Or omit the value and choose the option afterwards with setFieldValue on the item's $oneOf."
@@ -1802,7 +1826,7 @@
     {
       "name": "processing-config",
       "description": "Processing config: how to use the processing_config_* form tools.",
-      "digest": "sha256:eba2657ee9a1397a6cd956d7e2dbb633ecbc208b175e204342ae318225d52e8c"
+      "digest": "sha256:b95a7053e8ec695d0ce2fba4fadae5374e8f0d8ddecb1e44f6055266b304b06c"
     }
   ],
   "guides": []
