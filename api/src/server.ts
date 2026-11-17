@@ -6,6 +6,7 @@ import * as wsServer from '@data-fair/lib-express/ws-server.js'
 import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
 import eventsQueue from '@data-fair/lib-node/events-queue.js'
 import { startObserver, stopObserver } from '@data-fair/lib-node/observer.js'
+import log from '@data-fair/lib-node/log.js'
 import { createHttpTerminator } from 'http-terminator'
 import { exec as execCallback } from 'child_process'
 import { promisify } from 'util'
@@ -50,7 +51,7 @@ export const start = async () => {
   const npmHttpsProxy = config.npm?.httpsProxy || process.env.HTTPS_PROXY || process.env.https_proxy
   if (npmHttpsProxy) await exec('npm --workspaces=false --include-workspace-root config set https-proxy ' + npmHttpsProxy)
 
-  console.log(`API server listening on port ${config.port}`)
+  log.info(`API server listening on port ${config.port}`)
 }
 
 export const stop = async () => {

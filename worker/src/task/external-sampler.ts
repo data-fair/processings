@@ -1,5 +1,6 @@
 import type { ProcStatSnapshot } from '../utils/proc-stat.ts'
 import { readProcStat as defaultReadProcStat, computeCpuRatio, CLOCK_TICKS_PER_SEC } from '../utils/proc-stat.ts'
+import log from '@data-fair/lib-node/log.js'
 
 export type ExternalSample = {
   rssBytes: number
@@ -22,7 +23,7 @@ export const createExternalSamplerFactory = (deps: FactoryDeps = {}) => {
   const reader = deps.readProcStat ?? defaultReadProcStat
   const clockTicksPerSec = deps.clockTicksPerSec ?? CLOCK_TICKS_PER_SEC
   const updateGauge = deps.updateGauge ?? noopUpdateGauge
-  const logWarn = deps.logWarn ?? ((msg, err) => console.warn(msg, err))
+  const logWarn = deps.logWarn ?? ((msg, err) => log.warn(msg, { code: 'external-sampler', err }))
 
   return {
     start (
