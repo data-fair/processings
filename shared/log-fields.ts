@@ -1,6 +1,7 @@
 // Log fields shared by the api and the worker (see the "Logging" section of AGENTS.md), as in data-fair.
 // The actor (accountKey, userId...) comes from the request log context; the owner of a processing uses owner*.
 // Config-free on purpose: only plain values.
+// TODO: move ownerLogFields to lib-node (data-fair, catalogs, events, agents and simple-directory hold the same copy).
 
 export type OwnerLike = { type: string, id: string, name?: string, department?: string }
 
