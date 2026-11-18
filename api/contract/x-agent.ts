@@ -1,12 +1,24 @@
 /**
  * The x-agent annotations of the OpenAPI document (api-docs.ts): one tool per purpose, named as
- * data-fair's platform merge prefixes them (processings_<name>). Vocabulary: docs/x-agent.md of
- * `@data-fair/openapi-mcp`. Operations without an entry here are not offered as tools.
+ * data-fair's platform merge prefixes them (processings_<name>). Vocabulary: docs/x-agent.md and
+ * docs/editor-tool-groups.md of `@data-fair/openapi-mcp`. Operations without an entry here are not
+ * offered as tools.
+ *
+ * The config editor is not a tool of its own: it joins the platform's one group of form_* tools
+ * (form_describeState, form_setFieldValue, form_saveForm...), where its form is named
+ * "processings_processing_config" ("processing_config" in this document loaded alone).
  */
 import type { AgentOperation, AgentOperationAnnotation, AgentRoot } from '@data-fair/openapi-mcp'
 import { oauth2Alternatives } from '@data-fair/lib-common-types/scopes.js'
 import { acceptedScopes, type ScopedOperationId } from '../src/scopes.ts'
 import { processingPatchFields } from '../src/processings/patch-fields.ts'
+
+// Checked labels (openapi-mcp labels): a destructive write naming a processing or a run by its opaque id
+// also takes the title of the processing, which the tool reads with the call's own token and compares
+// before the call, refusing it on a mismatch. Whoever approves or reviews the call sees what it acts on.
+const titleLabel = (operation: 'getProcessing' | 'getRun', field: string) => ({
+  id: { name: 'processingTitle', operation, field, description: 'The title of the processing, as the API gives it. The call is refused unless it matches.' }
+})
 
 const listProcessings = {
   name: 'list_processings',
@@ -38,7 +50,7 @@ const describeProcessing = {
 const createProcessing = {
   name: 'create_processing',
   title: { en: 'Create a processing', fr: 'Créer un traitement' },
-  description: 'Create a processing of a plugin. The plugin id is the _id of a processing artefact found with registry_search_artefacts (category processing). The owner defaults to the active account. The processing is created inactive and without config: fill the config next with the processing_config tools, then activate it with update_processing.',
+  description: 'Create a processing of a plugin. The plugin id is the _id of a processing artefact found with registry_search_artefacts (category processing). The owner defaults to the active account. The processing is created inactive and without config: fill its config next with the form_* tools (form "processings_processing_config"), then activate it with update_processing.',
   annotations: { openWorldHint: false },
   bodyFields: ['title', 'plugin', 'owner'],
   bodyRequired: ['title', 'plugin']
@@ -47,7 +59,7 @@ const createProcessing = {
 const updateProcessing = {
   name: 'update_processing',
   title: { en: 'Update a processing', fr: 'Modifier un traitement' },
-  description: 'Rename a processing, activate or deactivate it, or replace its scheduling. A processing needs a valid config to be activated. The scheduling is the whole list of its schedules, an empty list for on-demand runs only. Use the processing_config tools for its config.',
+  description: 'Rename a processing, activate or deactivate it, or replace its scheduling, the whole list of its schedules ([] for on-demand runs only). Only the parts sent change. Activation needs a valid config, edited with the form_* tools (form "processings_processing_config").',
   annotations: { openWorldHint: false },
   bodyFields: ['title', 'active', 'scheduling']
 } satisfies AgentOperation
@@ -58,6 +70,7 @@ const updateProcessingPermissions = {
   description: 'Replace the whole permissions list of a processing, which gives other users or partner organizations a read or exec profile on it, or give the processing to another owner. Read the current permissions first with describe_processing: the list sent replaces them all.',
   annotations: { destructiveHint: true, openWorldHint: false },
   bodyFields: [...processingPatchFields.admin],
+  labels: titleLabel('getProcessing', '/title'),
   // the admin parts of the body need the admin tier, the operation accepts the write tier
   security: [{ sdCookie: [] }, ...oauth2Alternatives(acceptedScopes('processings', 'admin'))]
 } satisfies AgentOperation
@@ -110,14 +123,16 @@ const killRun = {
   name: 'kill_run',
   title: { en: 'Kill a run', fr: 'Arrêter une exécution' },
   description: 'Stop a running run: its status becomes kill until the worker stops it (killed). The work done by the plugin so far is not rolled back.',
-  annotations: { destructiveHint: true, openWorldHint: false }
+  annotations: { destructiveHint: true, openWorldHint: false },
+  labels: titleLabel('getRun', '/processing/title')
 } satisfies AgentOperation
 
 const deleteProcessing = {
   name: 'delete_processing',
   title: { en: 'Delete a processing', fr: 'Supprimer un traitement' },
   description: 'Delete a processing permanently, its runs are deleted too. The datasets it published stay.',
-  annotations: { destructiveHint: true, openWorldHint: false }
+  annotations: { destructiveHint: true, openWorldHint: false },
+  labels: titleLabel('getProcessing', '/title')
 } satisfies AgentOperation
 
 export const operations = {
@@ -138,8 +153,9 @@ const toolNames = [listProcessings, describeProcessing, createProcessing, update
 export const root: AgentRoot = {
   skills: [{
     name: 'workflow',
-    description: 'How to set up and follow processings: find a plugin, create a processing, fill its config, schedule and activate it, trigger it, then follow its runs and diagnose a failed one from its log. Read it before creating or repairing a processing.',
-    // the body is skills/workflow.md, served next to this document
+    description: 'How to set up and follow processings: find a plugin, create a processing, fill its config, schedule and activate it, trigger it, then follow its runs and diagnose a failed one from its log. Read it before creating or repairing a processing; the form mechanics are in the form skill.',
+    // the body is skills/workflow.md, served next to this document. The form_* tools are not listed:
+    // the group is shared by the forms of every service, a token granted another one's would be offered this skill
     href: 'agents/skills/workflow.md',
     tools: toolNames
   }]
