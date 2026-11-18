@@ -7,14 +7,14 @@ test.describe('config editor tools', () => {
   test.beforeEach(clean)
   test.afterAll(clean)
 
-  test('the processing_config tools fill and save the config of a processing', async () => {
+  test('the form tools fill and save the config of a processing', async () => {
     const plugin = await publishFixturePlugin({ name: '@data-fair/processing-hello-world', version: '1.2.2' })
     const admin = await axiosAuth({ email: 'test_admin1@test.com', org: 'test_org1' })
     const processing = (await admin.post('/api/v1/processings', { title: 'Editor processing', plugin: plugin.pluginId })).data
 
     const doc = (await anonymousAx.get('/api/v1/api-docs.json', { headers: { 'Accept-Language': 'en' } })).data
     const toolSet = await load(doc, { baseUrl: `${baseURL}/api/v1`, lint: 'error' })
-    const tool = (name: string) => toolSet.tools.find(t => t.name === `processing_config_${name}`)!
+    const tool = (name: string) => toolSet.tools.find(t => t.name === `form_${name}`)!
     // records the urls the editor session fetches (its schema, the document, the suggestions)
     const fetched: string[] = []
     const recordingFetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -23,7 +23,7 @@ test.describe('config editor tools', () => {
     }) as typeof fetch
     const ctx = { headers: { cookie: admin.cookieJar.getCookieStringSync(baseURL) }, identity: 'test_admin1', fetch: recordingFetch }
     const call = async (name: string, params: Record<string, unknown>) => {
-      const res = await tool(name).execute({ id: processing._id, ...params }, ctx)
+      const res = await tool(name).execute({ form: 'processing_config', id: processing._id, ...params }, ctx)
       if (process.env.DEBUG_EDITOR) console.log(name, JSON.stringify(params), '\n', res.text)
       return res
     }

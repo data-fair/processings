@@ -21,27 +21,66 @@ import { vocabulary, acceptedScopes, scopedOperations, type ScopedOperationId } 
 import { processingPatchFields } from '../src/processings/patch-fields.ts'
 import { root, operations as agentOperations } from './x-agent.ts'
 
-// the resolved schemas as OpenAPI components: no $id, no build annotations, no vjsf layout
-const stripExports = (value: any): any => {
-  if (Array.isArray(value)) return value.map(stripExports)
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.entries(value).filter(([k]) => k !== 'x-exports').map(([k, v]) => [k, stripExports(v)]))
+// the resolved schemas as OpenAPI components, which are also the input schemas of the agent tools:
+// no $id, no build annotations, no vjsf layout, and the texts in the locale of the document.
+// The resolved schemas hold no $ref, so their $defs are dead copies.
+const uiKeys = new Set(['$id', '$defs', 'x-exports', 'layout', 'oneOfLayout'])
+const component = (schema: unknown, locale: ScopeLocale): any => {
+  if (Array.isArray(schema)) return schema.map(s => component(s, locale))
+  if (!schema || typeof schema !== 'object') return schema
+  const result: Record<string, any> = {}
+  for (const [key, value] of Object.entries(schema)) {
+    if (uiKeys.has(key)) continue
+    if (key.startsWith('x-i18n-')) {
+      const text = (value as Record<string, string>)[locale]
+      if (text) result[key.slice('x-i18n-'.length)] = text
+      continue
+    }
+    // a translation wins over the default text, whatever the order of the keys
+    if (!(key in result)) result[key] = component(value, locale)
   }
-  return value
+  return hoistSharedProperties(result)
 }
-const component = (schema: Record<string, any>) => {
-  const { $id, $defs, layout, ...rest } = stripExports(schema)
-  return rest
+
+/**
+ * A property that every branch of a oneOf declares identically moves up to the parent, written once
+ * (the scheduling variants share their minute and time zone). Validation is the same, as long as no
+ * branch closes its properties.
+ */
+const hoistSharedProperties = (schema: Record<string, any>) => {
+  const branches: Record<string, any>[] | undefined = schema.oneOf
+  if (!branches || branches.length < 2 || !branches.every(b => b.properties && !('additionalProperties' in b) && !('patternProperties' in b))) return schema
+  const shared = Object.keys(branches[0].properties).filter(key => !schema.properties?.[key] &&
+    branches.every(b => key in b.properties && JSON.stringify(b.properties[key]) === JSON.stringify(branches[0].properties[key])))
+  if (!shared.length) return schema
+  return {
+    ...schema,
+    properties: { ...schema.properties, ...Object.fromEntries(shared.map(key => [key, branches[0].properties[key]])) },
+    oneOf: branches.map(b => ({ ...b, properties: Object.fromEntries(Object.entries(b.properties).filter(([key]) => !shared.includes(key))) }))
+  }
 }
+
+/**
+ * A PATCH body changes the parts it names: a default would be sent in place of a part left out, and
+ * a readOnly part (the owner, which its own route checks) would not be sent at all.
+ */
+const patchProperties = (properties: Record<string, any>) =>
+  Object.fromEntries(Object.entries(properties).map(([k, { default: _, readOnly: __, ...s }]) => [k, s]))
+/** the plugin and the owner are readOnly once the processing exists, a POST sends them */
+const requestProperties = (properties: Record<string, any>) =>
+  Object.fromEntries(Object.entries(properties).map(([k, { readOnly: _, ...s }]) => [k, s]))
 
 const ref = (name: string) => ({ $ref: `#/components/schemas/${name}` })
 
-const processingComponent = component(processingSchema)
-// the config follows the schema of the processing's plugin, read with getPluginConfigSchema
-processingComponent.properties.config = { type: 'object', description: 'The config of the plugin, its schema is returned by getPluginConfigSchema.' }
-// written by the worker, not part of the stored schema
-processingComponent.properties.lastRun = { ...ref('run'), readOnly: true, description: 'The last run of the processing.' }
-processingComponent.properties.nextRun = { ...ref('run'), readOnly: true, description: 'The next scheduled run of the processing.' }
+const processingComponent = (locale: ScopeLocale) => {
+  const schema = component(processingSchema, locale)
+  // the config follows the schema of the processing's plugin, read with getPluginConfigSchema
+  schema.properties.config = { type: 'object', description: 'The config of the plugin, its schema is returned by getPluginConfigSchema.' }
+  // written by the worker, not part of the stored schema
+  schema.properties.lastRun = { ...ref('run'), readOnly: true, description: 'The last run of the processing.' }
+  schema.properties.nextRun = { ...ref('run'), readOnly: true, description: 'The next scheduled run of the processing.' }
+  return schema
+}
 
 const json = (description: string, schema: Record<string, any>) => ({ description, content: { 'application/json': { schema } } })
 const idParam = (description: string) => ({ in: 'path', name: 'id', required: true, description, schema: { type: 'string' } })
@@ -59,11 +98,15 @@ const queryDescriptions: Record<string, string> = {
   owner: 'Owners, comma separated, as type:id or type:id:department (e.g. organization:myorg).',
   processing: 'Id of the processing whose runs are listed.'
 }
+// the request schemas validate the raw query strings; a client sends these as numbers
+const integerParams: Record<string, Record<string, any>> = {
+  size: { type: 'integer', minimum: 0 },
+  page: { type: 'integer', minimum: 1 },
+  skip: { type: 'integer', minimum: 0 }
+}
 const queryParams = (schema: { properties: Record<string, any> }) => Object.entries(schema.properties).map(([name, s]) => ({
-  in: 'query', name, required: false, description: queryDescriptions[name], schema: s
+  in: 'query', name, required: false, description: queryDescriptions[name], schema: integerParams[name] ?? s
 }))
-
-const editableProperties = (fields: readonly string[]) => Object.fromEntries(fields.map(f => [f, processingComponent.properties[f]]))
 
 // the security of an operation: the cookie session, or a token holding one of the scopes it accepts
 const operationSecurity = (operationId: ScopedOperationId) => {
@@ -72,139 +115,142 @@ const operationSecurity = (operationId: ScopedOperationId) => {
 }
 
 type Operation = Record<string, any> & { tags: string[] }
-const operations: Record<ScopedOperationId, Operation> = {
-  listProcessings: {
-    summary: 'List processings',
-    description: 'List the processings the session can read, with facets on their statuses, plugins and owners.',
-    tags: ['processings'],
-    parameters: queryParams(processingsGetReq),
-    responses: { 200: json('A page of processings.', { type: 'object', properties: { count: { type: 'integer' }, results: { type: 'array', items: ref('processing') }, facets: { type: 'object' } } }) }
-  },
-  postProcessing: {
-    summary: 'Create a processing',
-    description: 'Create a processing of a plugin. The owner defaults to the active account; the processing is inactive until it has a valid config.',
-    tags: ['processings'],
-    requestBody: {
-      required: true,
-      content: { 'application/json': { schema: { type: 'object', required: ['title', 'plugin'], properties: editableProperties(['title', 'plugin', 'owner', ...processingPatchFields.write]) } } }
+const localizedOperations = (processing: Record<string, any>): Record<ScopedOperationId, Operation> => {
+  const editableProperties = (fields: readonly string[]) => Object.fromEntries(fields.map(f => [f, processing.properties[f]]))
+  return {
+    listProcessings: {
+      summary: 'List processings',
+      description: 'List the processings the session can read, with facets on their statuses, plugins and owners.',
+      tags: ['processings'],
+      parameters: queryParams(processingsGetReq),
+      responses: { 200: json('A page of processings.', { type: 'object', properties: { count: { type: 'integer' }, results: { type: 'array', items: ref('processing') }, facets: { type: 'object' } } }) }
     },
-    responses: { 200: json('The created processing.', ref('processing')) }
-  },
-  getProcessing: {
-    summary: 'Read a processing',
-    description: 'Its config, permissions and webhook key are only returned to the admins of the processing.',
-    tags: ['processings'],
-    parameters: [idParam('Id of the processing.')],
-    responses: { 200: json('The processing.', ref('processing')) }
-  },
-  patchProcessing: {
-    summary: 'Update a processing',
-    description: 'Update some parts of a processing. permissions and owner need the admin tier of the processings scopes. A null value removes a part.',
-    tags: ['processings'],
-    parameters: [idParam('Id of the processing.')],
-    requestBody: {
-      required: true,
-      content: { 'application/json': { schema: { type: 'object', properties: editableProperties([...processingPatchFields.write, ...processingPatchFields.admin]) } } }
+    postProcessing: {
+      summary: 'Create a processing',
+      description: 'Create a processing of a plugin. The owner defaults to the active account; the processing is inactive until it has a valid config.',
+      tags: ['processings'],
+      requestBody: {
+        required: true,
+        content: { 'application/json': { schema: { type: 'object', required: ['title', 'plugin'], properties: requestProperties(editableProperties(['title', 'plugin', 'owner', ...processingPatchFields.write])) } } }
+      },
+      responses: { 200: json('The created processing.', ref('processing')) }
     },
-    responses: { 200: json('The updated processing.', ref('processing')) }
-  },
-  deleteProcessing: {
-    summary: 'Delete a processing',
-    description: 'Delete a processing and its runs.',
-    tags: ['processings'],
-    parameters: [idParam('Id of the processing.')],
-    responses: { 204: { description: 'The processing is deleted.' } }
-  },
-  getProcessingConfig: {
-    summary: 'Read the config of a processing',
-    description: 'The config follows the schema returned by getPluginConfigSchema. Admins of the processing only.',
-    tags: ['processings'],
-    parameters: [idParam('Id of the processing.')],
-    responses: { 200: json('The config, an empty object when the processing has none.', { type: 'object' }) }
-  },
-  putProcessingConfig: {
-    summary: 'Replace the config of a processing',
-    description: 'Replace the whole config, validated against the schema returned by getPluginConfigSchema. Admins of the processing only.',
-    tags: ['processings'],
-    parameters: [idParam('Id of the processing.')],
-    requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
-    responses: { 200: json('The saved config.', { type: 'object' }) }
-  },
-  getPluginConfigSchema: {
-    summary: 'Read the config schema of a processing',
-    description: 'The JSON schema of the config of the processing, defined by its plugin.',
-    tags: ['processings'],
-    parameters: [
-      idParam('Id of the processing.'),
-      { in: 'query', name: 'agent', required: false, description: 'true for the schema in json-layout v3 syntax, with the urls and owner filters of its layout resolved.', schema: { type: 'boolean' } }
-    ],
-    responses: { 200: json('A JSON schema.', { type: 'object' }) }
-  },
-  getProcessingPlugin: {
-    summary: 'Read the plugin of a processing',
-    description: 'The metadata of the plugin version the processing runs.',
-    tags: ['processings'],
-    parameters: [idParam('Id of the processing.')],
-    responses: { 200: json('The plugin metadata.', { type: 'object' }) }
-  },
-  getProcessingWebhookKey: {
-    summary: 'Read the webhook key of a processing',
-    description: 'The key that triggers the processing without credentials (triggerProcessing with key).',
-    tags: ['processings'],
-    parameters: [idParam('Id of the processing.')],
-    responses: { 200: { description: 'The key.', content: { 'text/plain': { schema: { type: 'string' } } } } }
-  },
-  deleteProcessingWebhookKey: {
-    summary: 'Renew the webhook key of a processing',
-    description: 'Replace the webhook key by a new one, the previous key stops working.',
-    tags: ['processings'],
-    parameters: [idParam('Id of the processing.')],
-    responses: { 200: { description: 'The new key.', content: { 'text/plain': { schema: { type: 'string' } } } } }
-  },
-  triggerProcessing: {
-    summary: 'Trigger a run',
-    description: 'Run an active processing now, or after a delay. With a webhook key the call needs no credentials.',
-    tags: ['processings'],
-    parameters: [
-      idParam('Id of the processing.'),
-      { in: 'query', name: 'key', required: false, description: 'The webhook key of the processing, instead of a session.', schema: { type: 'string' } },
-      { in: 'query', name: 'delay', required: false, description: 'Delay before the run, in seconds.', schema: { type: 'integer', minimum: 0 } }
-    ],
-    responses: {
-      200: json('The triggered run.', ref('run')),
-      409: { description: 'The processing is not active.' }
+    getProcessing: {
+      summary: 'Read a processing',
+      description: 'Its config, permissions and webhook key are only returned to the admins of the processing.',
+      tags: ['processings'],
+      parameters: [idParam('Id of the processing.')],
+      responses: { 200: json('The processing.', ref('processing')) }
+    },
+    patchProcessing: {
+      summary: 'Update a processing',
+      description: 'Update some parts of a processing. permissions and owner need the admin tier of the processings scopes. A null value removes a part.',
+      tags: ['processings'],
+      parameters: [idParam('Id of the processing.')],
+      requestBody: {
+        required: true,
+        content: { 'application/json': { schema: { type: 'object', properties: patchProperties(editableProperties([...processingPatchFields.write, ...processingPatchFields.admin])) } } }
+      },
+      responses: { 200: json('The updated processing.', ref('processing')) }
+    },
+    deleteProcessing: {
+      summary: 'Delete a processing',
+      description: 'Delete a processing and its runs.',
+      tags: ['processings'],
+      parameters: [idParam('Id of the processing.')],
+      responses: { 204: { description: 'The processing is deleted.' } }
+    },
+    getProcessingConfig: {
+      summary: 'Read the config of a processing',
+      description: 'The config follows the schema returned by getPluginConfigSchema. Admins of the processing only.',
+      tags: ['processings'],
+      parameters: [idParam('Id of the processing.')],
+      responses: { 200: json('The config, an empty object when the processing has none.', { type: 'object' }) }
+    },
+    putProcessingConfig: {
+      summary: 'Replace the config of a processing',
+      description: 'Replace the whole config, validated against the schema returned by getPluginConfigSchema. Admins of the processing only.',
+      tags: ['processings'],
+      parameters: [idParam('Id of the processing.')],
+      requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+      responses: { 200: json('The saved config.', { type: 'object' }) }
+    },
+    getPluginConfigSchema: {
+      summary: 'Read the config schema of a processing',
+      description: 'The JSON schema of the config of the processing, defined by its plugin.',
+      tags: ['processings'],
+      parameters: [
+        idParam('Id of the processing.'),
+        { in: 'query', name: 'agent', required: false, description: 'true for the schema in json-layout v3 syntax, with the urls and owner filters of its layout resolved.', schema: { type: 'boolean' } }
+      ],
+      responses: { 200: json('A JSON schema.', { type: 'object' }) }
+    },
+    getProcessingPlugin: {
+      summary: 'Read the plugin of a processing',
+      description: 'The metadata of the plugin version the processing runs.',
+      tags: ['processings'],
+      parameters: [idParam('Id of the processing.')],
+      responses: { 200: json('The plugin metadata.', { type: 'object' }) }
+    },
+    getProcessingWebhookKey: {
+      summary: 'Read the webhook key of a processing',
+      description: 'The key that triggers the processing without credentials (triggerProcessing with key).',
+      tags: ['processings'],
+      parameters: [idParam('Id of the processing.')],
+      responses: { 200: { description: 'The key.', content: { 'text/plain': { schema: { type: 'string' } } } } }
+    },
+    deleteProcessingWebhookKey: {
+      summary: 'Renew the webhook key of a processing',
+      description: 'Replace the webhook key by a new one, the previous key stops working.',
+      tags: ['processings'],
+      parameters: [idParam('Id of the processing.')],
+      responses: { 200: { description: 'The new key.', content: { 'text/plain': { schema: { type: 'string' } } } } }
+    },
+    triggerProcessing: {
+      summary: 'Trigger a run',
+      description: 'Run an active processing now, or after a delay. With a webhook key the call needs no credentials.',
+      tags: ['processings'],
+      parameters: [
+        idParam('Id of the processing.'),
+        { in: 'query', name: 'key', required: false, description: 'The webhook key of the processing, instead of a session.', schema: { type: 'string' } },
+        { in: 'query', name: 'delay', required: false, description: 'Delay before the run, in seconds.', schema: { type: 'integer', minimum: 0 } }
+      ],
+      responses: {
+        200: json('The triggered run.', ref('run')),
+        409: { description: 'The processing is not active.' }
+      }
+    },
+    listRuns: {
+      summary: 'List runs',
+      description: 'List the runs of the processings the session can read, most recent first. Logs are not included.',
+      tags: ['runs'],
+      parameters: queryParams(runsGetReq),
+      responses: { 200: json('A page of runs.', { type: 'object', properties: { count: { type: 'integer' }, results: { type: 'array', items: ref('run') } } }) }
+    },
+    getRun: {
+      summary: 'Read a run',
+      description: 'A run with its logs.',
+      tags: ['runs'],
+      parameters: [idParam('Id of the run.')],
+      responses: { 200: json('The run.', ref('run')) }
+    },
+    killRun: {
+      summary: 'Kill a run',
+      description: 'Ask the worker to stop a running run.',
+      tags: ['runs'],
+      parameters: [idParam('Id of the run.')],
+      responses: { 200: json('The run, in kill status.', ref('run')) }
+    },
+    getAccountLimits: {
+      summary: 'Read the limits of an account',
+      description: 'The processing time quota of an account and its consumption. Members of the account only.',
+      tags: ['limits'],
+      parameters: [
+        { in: 'path', name: 'type', required: true, description: 'user or organization.', schema: { type: 'string', enum: ['user', 'organization'] } },
+        { in: 'path', name: 'id', required: true, description: 'Id of the account.', schema: { type: 'string' } }
+      ],
+      responses: { 200: json('The limits.', ref('limit')) }
     }
-  },
-  listRuns: {
-    summary: 'List runs',
-    description: 'List the runs of the processings the session can read, most recent first. Logs are not included.',
-    tags: ['runs'],
-    parameters: queryParams(runsGetReq),
-    responses: { 200: json('A page of runs.', { type: 'object', properties: { count: { type: 'integer' }, results: { type: 'array', items: ref('run') } } }) }
-  },
-  getRun: {
-    summary: 'Read a run',
-    description: 'A run with its logs.',
-    tags: ['runs'],
-    parameters: [idParam('Id of the run.')],
-    responses: { 200: json('The run.', ref('run')) }
-  },
-  killRun: {
-    summary: 'Kill a run',
-    description: 'Ask the worker to stop a running run.',
-    tags: ['runs'],
-    parameters: [idParam('Id of the run.')],
-    responses: { 200: json('The run, in kill status.', ref('run')) }
-  },
-  getAccountLimits: {
-    summary: 'Read the limits of an account',
-    description: 'The processing time quota of an account and its consumption. Members of the account only.',
-    tags: ['limits'],
-    parameters: [
-      { in: 'path', name: 'type', required: true, description: 'user or organization.', schema: { type: 'string', enum: ['user', 'organization'] } },
-      { in: 'path', name: 'id', required: true, description: 'Id of the account.', schema: { type: 'string' } }
-    ],
-    responses: { 200: json('The limits.', ref('limit')) }
   }
 }
 
@@ -215,6 +261,8 @@ const tagTitles = {
 }
 
 export default (locale: ScopeLocale = 'fr') => {
+  const processing = processingComponent(locale)
+  const operations = localizedOperations(processing)
   const paths: Record<string, Record<string, any>> = {}
   for (const [operationId, { method, path }] of Object.entries(scopedOperations)) {
     const operation = operations[operationId as ScopedOperationId]
@@ -244,9 +292,9 @@ export default (locale: ScopeLocale = 'fr') => {
         oauth2: oauth2SecurityScheme(vocabulary, { directoryUrl: '/simple-directory', locale })
       },
       schemas: {
-        processing: processingComponent,
-        run: component(runSchema),
-        limit: component(limitSchema)
+        processing,
+        run: component(runSchema, locale),
+        limit: component(limitSchema, locale)
       }
     },
     security: [{ sdCookie: [] }],

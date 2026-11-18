@@ -7,13 +7,15 @@
         "type": "object",
         "properties": {
           "size": {
-            "type": "string",
+            "type": "integer",
+            "minimum": 0,
             "description": "Number of processings per page.",
             "default": 10,
             "maximum": 50
           },
           "page": {
-            "type": "string",
+            "type": "integer",
+            "minimum": 1,
             "description": "Page number, starting at 1.",
             "default": 1
           },
@@ -89,24 +91,19 @@
     },
     {
       "name": "create_processing",
-      "description": "Create a processing of a plugin. The plugin id is the _id of a processing artefact found with registry_search_artefacts (category processing). The owner defaults to the active account. The processing is created inactive and without config: fill the config next with the processing_config tools, then activate it with update_processing.",
+      "description": "Create a processing of a plugin. The plugin id is the _id of a processing artefact found with registry_search_artefacts (category processing). The owner defaults to the active account. The processing is created inactive and without config: fill its config next with the form_* tools (form \"processings_processing_config\"), then activate it with update_processing.",
       "inputSchema": {
         "type": "object",
         "properties": {
           "title": {
             "type": "string",
-            "title": "Title",
-            "x-i18n-title": {
-              "fr": "Titre"
-            }
+            "title": "Title"
           },
           "plugin": {
             "type": "string",
-            "readOnly": true,
             "description": "Registry artefact id of the plugin (e.g. @data-fair-processing-hello-world-1)."
           },
           "owner": {
-            "readOnly": true,
             "type": "object",
             "title": "account",
             "required": [
@@ -133,32 +130,6 @@
               },
               "departmentName": {
                 "type": "string"
-              }
-            },
-            "$defs": {
-              "accountKeys": {
-                "type": "object",
-                "title": "account keys",
-                "required": [
-                  "type",
-                  "id"
-                ],
-                "additionalProperties": false,
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "user",
-                      "organization"
-                    ]
-                  },
-                  "id": {
-                    "type": "string"
-                  },
-                  "department": {
-                    "type": "string"
-                  }
-                }
               }
             }
           }
@@ -276,11 +247,20 @@
           "id": {
             "type": "string",
             "description": "Id of the processing."
+          },
+          "processingTitle": {
+            "type": "string",
+            "description": "The title of the processing, as the API gives it. The call is refused unless it matches.",
+            "x-checked": {
+              "against": "id",
+              "field": "/title"
+            }
           }
         },
         "additionalProperties": false,
         "required": [
-          "id"
+          "id",
+          "processingTitle"
         ]
       },
       "annotations": {
@@ -311,7 +291,7 @@
     },
     {
       "name": "update_processing",
-      "description": "Rename a processing, activate or deactivate it, or replace its scheduling. A processing needs a valid config to be activated. The scheduling is the whole list of its schedules, an empty list for on-demand runs only. Use the processing_config tools for its config.",
+      "description": "Rename a processing, activate or deactivate it, or replace its scheduling, the whole list of its schedules ([] for on-demand runs only). Only the parts sent change. Activation needs a valid config, edited with the form_* tools (form \"processings_processing_config\").",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -321,48 +301,15 @@
           },
           "title": {
             "type": "string",
-            "title": "Title",
-            "x-i18n-title": {
-              "fr": "Titre"
-            }
+            "title": "Title"
           },
           "active": {
             "title": "Active",
-            "x-i18n-title": {
-              "fr": "Actif"
-            },
-            "type": "boolean",
-            "default": false,
-            "layout": {
-              "comp": "switch",
-              "switch": [
-                {
-                  "if": "!parent.data.active",
-                  "props": {
-                    "base-color": "error"
-                  }
-                }
-              ],
-              "props": {
-                "color": "primary"
-              }
-            }
+            "type": "boolean"
           },
           "scheduling": {
             "type": "array",
             "title": "Processing scheduling",
-            "x-i18n-title": {
-              "fr": "Planification du traitement"
-            },
-            "layout": {
-              "messages": {
-                "addItem": "Add a scheduling rule",
-                "x-i18n-addItem": {
-                  "fr": "Ajouter une règle de planification"
-                }
-              },
-              "cols": 6
-            },
             "items": {
               "title": "Scheduling",
               "type": "object",
@@ -374,234 +321,95 @@
                 "hour",
                 "minute"
               ],
-              "oneOfLayout": {
-                "emptyData": true
-              },
               "oneOf": [
                 {
                   "title": "Monthly",
-                  "x-i18n-title": {
-                    "fr": "Mensuel"
-                  },
                   "properties": {
                     "type": {
                       "const": "monthly"
-                    },
-                    "month": {
-                      "const": "*"
                     },
                     "dayOfWeek": {
                       "const": "*"
                     },
                     "dayOfMonth": {
                       "title": "Day of the Month",
-                      "x-i18n-title": {
-                        "fr": "Jour fixe dans le mois"
-                      },
                       "type": "integer",
                       "minimum": 1,
                       "maximum": 28,
-                      "default": 1,
-                      "layout": {
-                        "cols": {
-                          "xs": 6
-                        },
-                        "switch": [
-                          {
-                            "if": "parent.data?.lastDayOfMonth",
-                            "props": {
-                              "disabled": true
-                            }
-                          }
-                        ]
-                      }
+                      "default": 1
                     },
                     "lastDayOfMonth": {
                       "title": "Last Day of the Month",
-                      "x-i18n-title": {
-                        "fr": "Dernier jour du mois"
-                      },
                       "type": "boolean",
-                      "default": false,
-                      "layout": {
-                        "cols": {
-                          "xs": 6
-                        }
-                      }
+                      "default": false
                     },
                     "hour": {
                       "title": "Hour",
-                      "x-i18n-title": {
-                        "fr": "Heure fixe dans le jour"
-                      },
                       "type": "integer",
                       "minimum": 0,
                       "maximum": 23,
-                      "default": 0,
-                      "layout": {
-                        "cols": {
-                          "xs": 6
-                        }
-                      }
-                    },
-                    "minute": {
-                      "title": "Minute",
-                      "x-i18n-title": {
-                        "fr": "Minute fixe dans l'heure"
-                      },
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 59,
-                      "default": 0,
-                      "layout": {
-                        "cols": {
-                          "xs": 6
-                        }
-                      }
-                    },
-                    "timeZone": {
-                      "type": "string",
-                      "title": "Time Zone",
-                      "x-i18n-title": {
-                        "fr": "Fuseau horaire"
-                      },
-                      "default": "Europe/Paris",
-                      "layout": {
-                        "comp": "autocomplete",
-                        "getItems": "context.utcs"
-                      }
+                      "default": 0
                     }
                   }
                 },
                 {
                   "title": "Weekly",
-                  "x-i18n-title": {
-                    "fr": "Hebdomadaire"
-                  },
                   "properties": {
                     "type": {
                       "const": "weekly"
-                    },
-                    "month": {
-                      "const": "*"
                     },
                     "dayOfMonth": {
                       "const": "*"
                     },
                     "dayOfWeek": {
                       "title": "Day of the Week",
-                      "x-i18n-title": {
-                        "fr": "Jour fixe dans la semaine"
-                      },
                       "type": "string",
                       "oneOf": [
                         {
                           "const": "1",
-                          "title": "Monday",
-                          "x-i18n-title": {
-                            "fr": "Lundi"
-                          }
+                          "title": "Monday"
                         },
                         {
                           "const": "2",
-                          "title": "Tuesday",
-                          "x-i18n-title": {
-                            "fr": "Mardi"
-                          }
+                          "title": "Tuesday"
                         },
                         {
                           "const": "3",
-                          "title": "Wednesday",
-                          "x-i18n-title": {
-                            "fr": "Mercredi"
-                          }
+                          "title": "Wednesday"
                         },
                         {
                           "const": "4",
-                          "title": "Thursday",
-                          "x-i18n-title": {
-                            "fr": "Jeudi"
-                          }
+                          "title": "Thursday"
                         },
                         {
                           "const": "5",
-                          "title": "Friday",
-                          "x-i18n-title": {
-                            "fr": "Vendredi"
-                          }
+                          "title": "Friday"
                         },
                         {
                           "const": "6",
-                          "title": "Saturday",
-                          "x-i18n-title": {
-                            "fr": "Samedi"
-                          }
+                          "title": "Saturday"
                         },
                         {
                           "const": "0",
-                          "title": "Sunday",
-                          "x-i18n-title": {
-                            "fr": "Dimanche"
-                          }
+                          "title": "Sunday"
                         }
                       ],
                       "default": "1"
                     },
                     "hour": {
                       "title": "Hour",
-                      "x-i18n-title": {
-                        "fr": "Heure fixe dans le jour"
-                      },
                       "type": "integer",
                       "minimum": 0,
                       "maximum": 23,
-                      "default": 0,
-                      "layout": {
-                        "cols": {
-                          "xs": 6
-                        }
-                      }
-                    },
-                    "minute": {
-                      "title": "Minute",
-                      "x-i18n-title": {
-                        "fr": "Minute fixe dans l'heure"
-                      },
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 59,
-                      "default": 0,
-                      "layout": {
-                        "cols": {
-                          "xs": 6
-                        }
-                      }
-                    },
-                    "timeZone": {
-                      "type": "string",
-                      "title": "Time Zone",
-                      "x-i18n-title": {
-                        "fr": "Fuseau horaire"
-                      },
-                      "default": "Europe/Paris",
-                      "layout": {
-                        "comp": "autocomplete",
-                        "getItems": "context.utcs"
-                      }
+                      "default": 0
                     }
                   }
                 },
                 {
                   "title": "Daily",
-                  "x-i18n-title": {
-                    "fr": "Journalier"
-                  },
                   "properties": {
                     "type": {
                       "const": "daily"
-                    },
-                    "month": {
-                      "const": "*"
                     },
                     "dayOfMonth": {
                       "const": "*"
@@ -611,59 +419,18 @@
                     },
                     "hour": {
                       "title": "Hour",
-                      "x-i18n-title": {
-                        "fr": "Heure fixe dans le jour"
-                      },
                       "type": "integer",
                       "minimum": 0,
                       "maximum": 23,
-                      "default": 0,
-                      "layout": {
-                        "cols": {
-                          "xs": 6
-                        }
-                      }
-                    },
-                    "minute": {
-                      "title": "Minute",
-                      "x-i18n-title": {
-                        "fr": "Minute fixe dans l'heure"
-                      },
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 59,
-                      "default": 0,
-                      "layout": {
-                        "cols": {
-                          "xs": 6
-                        }
-                      }
-                    },
-                    "timeZone": {
-                      "type": "string",
-                      "title": "Time Zone",
-                      "x-i18n-title": {
-                        "fr": "Fuseau horaire"
-                      },
-                      "default": "Europe/Paris",
-                      "layout": {
-                        "comp": "autocomplete",
-                        "getItems": "context.utcs"
-                      }
+                      "default": 0
                     }
                   }
                 },
                 {
                   "title": "Each # Hours",
-                  "x-i18n-title": {
-                    "fr": "Toutes les # heures"
-                  },
                   "properties": {
                     "type": {
                       "const": "hours"
-                    },
-                    "month": {
-                      "const": "*"
                     },
                     "dayOfMonth": {
                       "const": "*"
@@ -676,101 +443,29 @@
                     },
                     "hourStep": {
                       "title": "Interval in Hours",
-                      "x-i18n-title": {
-                        "fr": "Interval en heures"
-                      },
                       "type": "integer",
                       "minimum": 1,
                       "maximum": 12,
-                      "default": 1,
-                      "layout": {
-                        "cols": {
-                          "xs": 6
-                        }
-                      }
-                    },
-                    "minute": {
-                      "title": "Minute",
-                      "x-i18n-title": {
-                        "fr": "Minute fixe dans l'heure"
-                      },
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 59,
-                      "default": 0,
-                      "layout": {
-                        "cols": {
-                          "xs": 6
-                        }
-                      }
-                    },
-                    "timeZone": {
-                      "type": "string",
-                      "title": "Time Zone",
-                      "x-i18n-title": {
-                        "fr": "Fuseau horaire"
-                      },
-                      "default": "Europe/Paris",
-                      "layout": {
-                        "comp": "autocomplete",
-                        "getItems": "context.utcs"
-                      }
+                      "default": 1
                     }
                   }
                 }
               ],
-              "layout": {
-                "switch": [
-                  {
-                    "if": "summary",
-                    "slots": {
-                      "component": "scheduling-summary"
-                    }
-                  }
-                ]
-              },
-              "$defs": {
-                "hour": {
-                  "title": "Hour",
-                  "x-i18n-title": {
-                    "fr": "Heure fixe dans le jour"
-                  },
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 23,
-                  "default": 0,
-                  "layout": {
-                    "cols": {
-                      "xs": 6
-                    }
-                  }
+              "properties": {
+                "month": {
+                  "const": "*"
                 },
                 "minute": {
                   "title": "Minute",
-                  "x-i18n-title": {
-                    "fr": "Minute fixe dans l'heure"
-                  },
                   "type": "integer",
                   "minimum": 0,
                   "maximum": 59,
-                  "default": 0,
-                  "layout": {
-                    "cols": {
-                      "xs": 6
-                    }
-                  }
+                  "default": 0
                 },
                 "timeZone": {
                   "type": "string",
                   "title": "Time Zone",
-                  "x-i18n-title": {
-                    "fr": "Fuseau horaire"
-                  },
-                  "default": "Europe/Paris",
-                  "layout": {
-                    "comp": "autocomplete",
-                    "getItems": "context.utcs"
-                  }
+                  "default": "Europe/Paris"
                 }
               }
             }
@@ -830,15 +525,6 @@
           "permissions": {
             "type": "array",
             "title": "Permissions",
-            "layout": {
-              "messages": {
-                "addItem": "Add a permission",
-                "x-i18n-addItem": {
-                  "fr": "Ajouter une permission"
-                }
-              },
-              "cols": 6
-            },
             "items": {
               "title": "permission",
               "type": "object",
@@ -851,44 +537,23 @@
                 "profile": {
                   "type": "string",
                   "title": "Profile",
-                  "x-i18n-title": {
-                    "fr": "Profil"
-                  },
                   "default": "read",
                   "oneOf": [
                     {
                       "const": "read",
-                      "title": "Read profile",
-                      "x-i18n-title": {
-                        "en": "Read - gives access to the essential information of the processing, logs included, but not to the sensitive information",
-                        "fr": "Lecture - permet d'accéder aux informations essentielles du traitement dont les logs, mais pas aux informations sensibles"
-                      }
+                      "title": "Read - gives access to the essential information of the processing, logs included, but not to the sensitive information"
                     },
                     {
                       "const": "exec",
-                      "title": "Exec profile",
-                      "x-i18n-title": {
-                        "en": "Execution - gives access to the essential information of the processing and allows triggering it",
-                        "fr": "Exécution - permet d'accéder aux informations essentielles du traitement et de déclencher le traitement"
-                      }
+                      "title": "Execution - gives access to the essential information of the processing and allows triggering it"
                     }
                   ]
                 },
                 "target": {
                   "type": "object",
-                  "oneOfLayout": {
-                    "label": "Target type",
-                    "x-i18n-label": {
-                      "fr": "Type de cible"
-                    }
-                  },
                   "oneOf": [
                     {
-                      "title": "User email",
-                      "x-i18n-title": {
-                        "en": "User designated by their email",
-                        "fr": "Utilisateur désigné par son email"
-                      },
+                      "title": "User designated by their email",
                       "required": [
                         "email"
                       ],
@@ -898,18 +563,12 @@
                         },
                         "email": {
                           "type": "string",
-                          "title": "Email",
-                          "x-i18n-title": {
-                            "fr": "Email"
-                          }
+                          "title": "Email"
                         }
                       }
                     },
                     {
                       "title": "Partner organization",
-                      "x-i18n-title": {
-                        "fr": "Organisation partenaire"
-                      },
                       "required": [
                         "organization",
                         "roles"
@@ -921,19 +580,7 @@
                         "organization": {
                           "type": "object",
                           "title": "Organization",
-                          "x-i18n-title": {
-                            "fr": "Organisation"
-                          },
                           "additionalProperties": true,
-                          "layout": {
-                            "cols": 8,
-                            "getItems": {
-                              "url": "${context.directoryUrl}/api/organizations/${context.owner.id}",
-                              "itemsResults": "data.partners",
-                              "itemKey": "data.id",
-                              "itemTitle": "data.name"
-                            }
-                          },
                           "properties": {
                             "id": {
                               "type": "string"
@@ -946,15 +593,9 @@
                         "roles": {
                           "type": "array",
                           "title": "Roles",
-                          "x-i18n-title": {
-                            "fr": "Rôles"
-                          },
                           "default": [
                             "admin"
                           ],
-                          "layout": {
-                            "cols": 4
-                          },
                           "items": {
                             "type": "string",
                             "enum": [
@@ -972,7 +613,6 @@
             }
           },
           "owner": {
-            "readOnly": true,
             "type": "object",
             "title": "account",
             "required": [
@@ -1000,38 +640,21 @@
               "departmentName": {
                 "type": "string"
               }
-            },
-            "$defs": {
-              "accountKeys": {
-                "type": "object",
-                "title": "account keys",
-                "required": [
-                  "type",
-                  "id"
-                ],
-                "additionalProperties": false,
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "user",
-                      "organization"
-                    ]
-                  },
-                  "id": {
-                    "type": "string"
-                  },
-                  "department": {
-                    "type": "string"
-                  }
-                }
-              }
+            }
+          },
+          "processingTitle": {
+            "type": "string",
+            "description": "The title of the processing, as the API gives it. The call is refused unless it matches.",
+            "x-checked": {
+              "against": "id",
+              "field": "/title"
             }
           }
         },
         "additionalProperties": false,
         "required": [
-          "id"
+          "id",
+          "processingTitle"
         ]
       },
       "annotations": {
@@ -1071,13 +694,15 @@
             "description": "The _id of the processing whose runs are listed."
           },
           "size": {
-            "type": "string",
+            "type": "integer",
+            "minimum": 0,
             "description": "Number of runs per page.",
             "default": 10,
             "maximum": 50
           },
           "page": {
-            "type": "string",
+            "type": "integer",
+            "minimum": 1,
             "description": "Page number, starting at 1.",
             "default": 1
           },
@@ -1266,11 +891,20 @@
           "id": {
             "type": "string",
             "description": "Id of the run."
+          },
+          "processingTitle": {
+            "type": "string",
+            "description": "The title of the processing, as the API gives it. The call is refused unless it matches.",
+            "x-checked": {
+              "against": "id",
+              "field": "/processing/title"
+            }
           }
         },
         "additionalProperties": false,
         "required": [
-          "id"
+          "id",
+          "processingTitle"
         ]
       },
       "annotations": {
@@ -1310,13 +944,21 @@
       ]
     },
     {
-      "name": "processing_config_getData",
-      "description": "Get the current \"Processing config\" data and validity status. The data is always returned whole and unmodified, so on a large form pass \"path\" to read one part of it rather than the entire document.",
+      "name": "form_getData",
+      "description": "Get the form's current data and validity status. The data is always returned whole and unmodified, so on a large form pass \"path\" to read one part of it rather than the entire document.",
       "inputSchema": {
         "type": "object",
         "properties": {
+          "form": {
+            "type": "string",
+            "enum": [
+              "processing_config"
+            ],
+            "description": "The form this call edits. \"processing_config\": Processing config. A form keeps its edits between calls with the same form and parameters."
+          },
           "id": {
-            "type": "string"
+            "type": "string",
+            "description": "Id of the processing."
           },
           "path": {
             "type": "string",
@@ -1324,6 +966,7 @@
           }
         },
         "required": [
+          "form",
           "id"
         ]
       },
@@ -1364,13 +1007,21 @@
       ]
     },
     {
-      "name": "processing_config_setData",
-      "description": "Write several \"Processing config\" fields at once: the given keys are merged into the current data, nested objects included; arrays you pass replace the existing ones. Pass only the keys that change: the ones you leave out stay as they are, and data re-sent unchanged reads, to whoever approves the call, as content being replaced. To change one item of a list, use setFieldValue on its field rather than re-sending the list. Check the errors and warnings in the response.",
+      "name": "form_setData",
+      "description": "Write several fields of the form at once: the given keys are merged into the current data, nested objects included; arrays you pass replace the existing ones. Pass only the keys that change: the ones you leave out stay as they are, and data re-sent unchanged reads, to whoever approves the call, as content being replaced. To change one item of a list, use setFieldValue on its field rather than re-sending the list. Check the errors and warnings in the response.",
       "inputSchema": {
         "type": "object",
         "properties": {
+          "form": {
+            "type": "string",
+            "enum": [
+              "processing_config"
+            ],
+            "description": "The form this call edits. \"processing_config\": Processing config. A form keeps its edits between calls with the same form and parameters."
+          },
           "id": {
-            "type": "string"
+            "type": "string",
+            "description": "Id of the processing."
           },
           "data": {
             "description": "The form data object to set"
@@ -1385,6 +1036,7 @@
           }
         },
         "required": [
+          "form",
           "id",
           "data"
         ]
@@ -1426,13 +1078,21 @@
       ]
     },
     {
-      "name": "processing_config_describeState",
-      "description": "Describe the \"Processing config\" form: every field with its path, type, constraints, current value and errors. Pass \"path\" to describe one subtree instead of the whole form; what is too large to describe whole is answered as an outline. Each option of a choice is listed with the fields it brings, and a path to an option not chosen (\".../$oneOf/2\") or to an item of a list still empty describes what it would hold. To find a field without knowing which tab holds it, pass \"query\" with words of its name.",
+      "name": "form_describeState",
+      "description": "Describe the form: every field with its path, type, constraints, current value and errors. Pass \"path\" to describe one subtree instead of the whole form; what is too large to describe whole is answered as an outline. Each option of a choice is listed with the fields it brings, and a path to an option not chosen (\".../$oneOf/2\") or to an item of a list still empty describes what it would hold. To find a field without knowing which tab holds it, pass \"query\" with words of its name.",
       "inputSchema": {
         "type": "object",
         "properties": {
+          "form": {
+            "type": "string",
+            "enum": [
+              "processing_config"
+            ],
+            "description": "The form this call edits. \"processing_config\": Processing config. A form keeps its edits between calls with the same form and parameters."
+          },
           "id": {
-            "type": "string"
+            "type": "string",
+            "description": "Id of the processing."
           },
           "path": {
             "type": "string",
@@ -1444,6 +1104,7 @@
           }
         },
         "required": [
+          "form",
           "id"
         ]
       },
@@ -1484,13 +1145,21 @@
       ]
     },
     {
-      "name": "processing_config_setFieldValue",
-      "description": "Set the value of a specific field of \"Processing config\" by path. To switch a variant selector, set value to the desired variant index (shown in describeState); the answer then lists the fields of the branch it activated. The returned errors are scoped to the modified field.",
+      "name": "form_setFieldValue",
+      "description": "Set the value of a specific field of the form by path. To switch a variant selector, set value to the desired variant index (shown in describeState); the answer then lists the fields of the branch it activated. The returned errors are scoped to the modified field.",
       "inputSchema": {
         "type": "object",
         "properties": {
+          "form": {
+            "type": "string",
+            "enum": [
+              "processing_config"
+            ],
+            "description": "The form this call edits. \"processing_config\": Processing config. A form keeps its edits between calls with the same form and parameters."
+          },
           "id": {
-            "type": "string"
+            "type": "string",
+            "description": "Id of the processing."
           },
           "path": {
             "type": "string",
@@ -1525,6 +1194,7 @@
           }
         },
         "required": [
+          "form",
           "id",
           "path"
         ]
@@ -1566,13 +1236,21 @@
       ]
     },
     {
-      "name": "processing_config_getFieldSuggestions",
-      "description": "Get the accepted values of a field of \"Processing config\" that describeState marked \"suggestions\", optionally filtered by a query. A field whose values describeState already stated on its line as values=[...] needs no call — write one of them. Each option comes back with an index and a title; one whose value is not a short scalar is listed by title alone, exactly as a user sees it. To choose one, call setFieldValue with the same path, \"suggestionIndex\" set to its index and \"suggestionTitle\" to its title as listed, and the full original value is applied.",
+      "name": "form_getFieldSuggestions",
+      "description": "Get the accepted values of a field of the form that describeState marked \"suggestions\", optionally filtered by a query. A field whose values describeState already stated on its line as values=[...] needs no call — write one of them. Each option comes back with an index and a title; one whose value is not a short scalar is listed by title alone, exactly as a user sees it. To choose one, call setFieldValue with the same path, \"suggestionIndex\" set to its index and \"suggestionTitle\" to its title as listed, and the full original value is applied.",
       "inputSchema": {
         "type": "object",
         "properties": {
+          "form": {
+            "type": "string",
+            "enum": [
+              "processing_config"
+            ],
+            "description": "The form this call edits. \"processing_config\": Processing config. A form keeps its edits between calls with the same form and parameters."
+          },
           "id": {
-            "type": "string"
+            "type": "string",
+            "description": "Id of the processing."
           },
           "path": {
             "type": "string",
@@ -1584,6 +1262,7 @@
           }
         },
         "required": [
+          "form",
           "id",
           "path"
         ]
@@ -1625,13 +1304,21 @@
       ]
     },
     {
-      "name": "processing_config_editArray",
-      "description": "Add, remove or move items in an array field of \"Processing config\". Use describeState to see current array contents. When adding an item it is activated for edition and its children fields are returned, they can then be filled with setFieldValue. The returned errors are scoped to this array. Moving an item keeps its data, so reorder with move rather than adding and removing.",
+      "name": "form_editArray",
+      "description": "Add, remove or move items in an array field of the form. Use describeState to see current array contents. When adding an item it is activated for edition and its children fields are returned, they can then be filled with setFieldValue. The returned errors are scoped to this array. Moving an item keeps its data, so reorder with move rather than adding and removing.",
       "inputSchema": {
         "type": "object",
         "properties": {
+          "form": {
+            "type": "string",
+            "enum": [
+              "processing_config"
+            ],
+            "description": "The form this call edits. \"processing_config\": Processing config. A form keeps its edits between calls with the same form and parameters."
+          },
           "id": {
-            "type": "string"
+            "type": "string",
+            "description": "Id of the processing."
           },
           "path": {
             "type": "string",
@@ -1675,6 +1362,7 @@
           }
         },
         "required": [
+          "form",
           "id",
           "path",
           "action"
@@ -1717,16 +1405,25 @@
       ]
     },
     {
-      "name": "processing_config_saveForm",
-      "description": "Save the \"Processing config\" form: persist the data currently in it through the session's save function. Refuses while the form is invalid. On a version conflict, reload first.",
+      "name": "form_saveForm",
+      "description": "Save the form: persist the data currently in it through the session's save function. Refuses while the form is invalid. On a version conflict, reload first.",
       "inputSchema": {
         "type": "object",
         "properties": {
+          "form": {
+            "type": "string",
+            "enum": [
+              "processing_config"
+            ],
+            "description": "The form this call edits. \"processing_config\": Processing config. A form keeps its edits between calls with the same form and parameters."
+          },
           "id": {
-            "type": "string"
+            "type": "string",
+            "description": "Id of the processing."
           }
         },
         "required": [
+          "form",
           "id"
         ]
       },
@@ -1767,16 +1464,25 @@
       ]
     },
     {
-      "name": "processing_config_reloadForm",
-      "description": "Reload the \"Processing config\" form from its source, discarding local changes. Use it to resolve a save conflict.",
+      "name": "form_reloadForm",
+      "description": "Reload the form from its source, discarding local changes. Use it to resolve a save conflict.",
       "inputSchema": {
         "type": "object",
         "properties": {
+          "form": {
+            "type": "string",
+            "enum": [
+              "processing_config"
+            ],
+            "description": "The form this call edits. \"processing_config\": Processing config. A form keeps its edits between calls with the same form and parameters."
+          },
           "id": {
-            "type": "string"
+            "type": "string",
+            "description": "Id of the processing."
           }
         },
         "required": [
+          "form",
           "id"
         ]
       },
@@ -1820,13 +1526,13 @@
   "skills": [
     {
       "name": "workflow",
-      "description": "How to set up and follow processings: find a plugin, create a processing, fill its config, schedule and activate it, trigger it, then follow its runs and diagnose a failed one from its log. Read it before creating or repairing a processing.",
-      "digest": "sha256:59f9148c861439c0d69f759a229ca939991d71793794d2b1335fd7b6578476f3"
+      "description": "How to set up and follow processings: find a plugin, create a processing, fill its config, schedule and activate it, trigger it, then follow its runs and diagnose a failed one from its log. Read it before creating or repairing a processing; the form mechanics are in the form skill.",
+      "digest": "sha256:ea6ae51eeeea26aa4901fdf7a884ed4e638dd3ee6f58443717e875c45df19586"
     },
     {
-      "name": "processing-config",
-      "description": "Processing config: how to use the processing_config_* form tools.",
-      "digest": "sha256:b95a7053e8ec695d0ce2fba4fadae5374e8f0d8ddecb1e44f6055266b304b06c"
+      "name": "form",
+      "description": "How to use the form_* tools. Forms: \"processing_config\": Processing config.",
+      "digest": "sha256:ffe5e4ec7920199b711d4399aa16f9aca253e774e8c72f91bc797d83f4d00edf"
     }
   ],
   "guides": []
