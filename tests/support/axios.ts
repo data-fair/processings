@@ -39,14 +39,15 @@ export const waitForWorkerIdle = async (timeoutMs = 10_000): Promise<void> => {
 }
 
 /**
- * Clean the test sub-space here: the processings, runs, limits and worker locks of its accounts, the legacy plugins
- * directory and the local registry caches. Nothing in another service: the registry keeps the suite's fixture plugins
+ * Clean the test sub-space here: the processings, runs, limits and worker locks of its accounts, and the entries of
+ * its own plugins (`@test_processings_…`) in the legacy plugins directory and the local registry cache, where the
+ * other sub-spaces' plugins stay. Nothing in another service: the registry keeps the suite's fixture plugins
  * (`@test_processings_…`, re-uploaded by each test that needs one, removed by registry's own prefixed clean).
  */
 export const clean = async () => {
   await waitForWorkerIdle()
   await anonymousAx.delete(`${apiUrl}/api/v1/test-env`, { params: { prefix } })
-  await anonymousAx.delete(`${apiUrl}/api/v1/test-env/plugins`)
+  await anonymousAx.delete(`${apiUrl}/api/v1/test-env/plugins`, { params: { prefix } })
   const { cleanRegistryCache } = await import('./registry.ts')
   await cleanRegistryCache()
 }

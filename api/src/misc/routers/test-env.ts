@@ -191,15 +191,21 @@ router.put('/data-fair-api-key', async (req, res, next) => {
   }
 })
 
-// Wipe the installed plugins directory (used between test runs).
-// No-op when the legacy plugins volume isn't mounted (config.dataDir unset).
+// Remove the installed plugins of a sub-space (DELETE /plugins?prefix=test_<suite>_): the entries of the legacy plugins
+// directory named after its plugins (`@test_<suite>_…`), the others stay. No-op when the legacy plugins volume isn't
+// mounted (config.dataDir unset).
 router.delete('/plugins', async (req, res, next) => {
   try {
+    const prefix = validPrefix(req)
+    if (!prefix) return res.status(400).type('text/plain').send('invalid test prefix')
     if (config.dataDir) {
       const pluginsDir = path.resolve(config.dataDir, 'plugins')
-      await fs.emptyDir(pluginsDir)
+      const entries = await fs.pathExists(pluginsDir) ? await fs.readdir(pluginsDir) : []
+      for (const entry of entries.filter(e => e.startsWith('@' + prefix))) {
+        await fs.remove(path.join(pluginsDir, entry))
+      }
     }
-    res.json({ ok: true })
+    res.status(204).send()
   } catch (err) {
     next(err)
   }

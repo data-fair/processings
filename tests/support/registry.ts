@@ -186,14 +186,17 @@ export const publishFixturePlugin = async (opts: PublishOptions): Promise<Publis
 }
 
 /**
- * Wipe the API and worker tarball caches (<dataDir>/tmp/registry-cache, dev
- * config: ../data/development/tmp/...). Called from `clean()` between tests so
- * a re-published fixture (same ref, possibly different content) is actually
- * re-downloaded — lib-node-registry's cache key is `{artefactId}/{arch}` and
- * would otherwise serve stale extracted files from the previous test.
+ * Remove the suite's own plugins (`@test_processings_…`) from the API and worker tarball cache
+ * (<dataDir>/tmp/registry-cache, dev config: ../data/development/tmp/..., one directory per artefact id). Called from
+ * `clean()` between tests so a re-published fixture (same ref, possibly different content) is actually
+ * re-downloaded — lib-node-registry's cache key is `{artefactId}/{arch}` and would otherwise serve stale extracted
+ * files from the previous test. The entries of the other sub-spaces' plugins stay: a run of theirs may be using them.
  */
 export const cleanRegistryCache = async () => {
   const repoRoot = path.resolve(import.meta.dirname, '../..')
   const cacheRoot = path.join(repoRoot, 'data/development/tmp/registry-cache')
-  await fs.promises.rm(cacheRoot, { recursive: true, force: true })
+  const entries = await fs.promises.readdir(cacheRoot).catch(() => [] as string[])
+  for (const entry of entries.filter(e => e.startsWith('@' + prefix))) {
+    await fs.promises.rm(path.join(cacheRoot, entry), { recursive: true, force: true })
+  }
 }
