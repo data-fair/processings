@@ -16,7 +16,7 @@ test.describe('processing config', () => {
 
   test('an admin replaces and reads the config of a processing', async () => {
     const plugin = await publishFixturePlugin({ name: '@data-fair/processing-hello-world', version: '1.2.2' })
-    const admin = await axiosAuth({ email: 'test_admin1@test.com', org: 'test_org1' })
+    const admin = await axiosAuth({ email: 'test_processings_admin1@test.com', org: 'test_processings_org1' })
     const processing = (await admin.post('/api/v1/processings', { title: 'Config processing', plugin: plugin.pluginId })).data
 
     expect((await admin.get(`/api/v1/processings/${processing._id}/config`)).data).toEqual({})
@@ -34,9 +34,9 @@ test.describe('processing config', () => {
     expect((await admin.get(`/api/v1/processings/${processing._id}/config`)).data).toEqual(helloConfig)
 
     await admin.patch(`/api/v1/processings/${processing._id}`, {
-      permissions: [{ profile: 'exec', target: { type: 'userEmail', email: 'test_alone@test.com' } }]
+      permissions: [{ profile: 'exec', target: { type: 'userEmail', email: 'test_processings_alone@test.com' } }]
     })
-    const executor = await axiosAuth('test_alone@test.com')
+    const executor = await axiosAuth('test_processings_alone@test.com')
     expect((await executor.get(`/api/v1/processings/${processing._id}`)).data.userProfile).toBe('exec')
     expect((await executor.put(`/api/v1/processings/${processing._id}/config`, helloConfig, status)).status).toBe(403)
     expect((await executor.get(`/api/v1/processings/${processing._id}/config`, status)).status).toBe(403)
@@ -47,12 +47,12 @@ test.describe('processing config', () => {
 
   test('the agent flag resolves the context of the plugin config schema', async () => {
     const plugin = await publishFixturePlugin({ name: '@data-fair/processing-hello-world', version: '1.2.2' })
-    const admin = await axiosAuth({ email: 'test_admin1@test.com', org: 'test_org1' })
+    const admin = await axiosAuth({ email: 'test_processings_admin1@test.com', org: 'test_processings_org1' })
     const processing = (await admin.post('/api/v1/processings', { title: 'Schema processing', plugin: plugin.pluginId })).data
     const raw = (await admin.get(`/api/v1/processings/${processing._id}/plugin-config-schema`)).data
     expect(JSON.stringify(raw)).toContain('{context.')
     const agent = (await admin.get(`/api/v1/processings/${processing._id}/plugin-config-schema`, { params: { agent: true } })).data
     expect(JSON.stringify(agent)).not.toContain('{context.')
-    expect(JSON.stringify(agent)).toContain('owner=organization:test_org1')
+    expect(JSON.stringify(agent)).toContain('owner=organization:test_processings_org1')
   })
 })

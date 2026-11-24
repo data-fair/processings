@@ -12,7 +12,7 @@ test.describe('processing edit page — explicit save', () => {
   test.afterAll(clean)
 
   const setup = async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     const fixture = await publishFixturePlugin({
       name: '@data-fair/processing-hello-world',
       version: '1.2.2'
@@ -20,14 +20,14 @@ test.describe('processing edit page — explicit save', () => {
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Save e2e processing',
       plugin: fixture.pluginId,
-      owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' }
+      owner: { type: 'user', id: 'test_processings_superadmin', name: 'Test Super Admin' }
     })).data
     return { superadmin, id: processing._id as string }
   }
 
   test('save button appears on edit, cancel restores, save persists', { tag: '@smoke' }, async ({ page, goToWithAuth }) => {
     const { superadmin, id } = await setup()
-    await goToWithAuth(`/processings/processings/${id}`, 'test_superadmin')
+    await goToWithAuth(`/processings/processings/${id}`, 'test_processings_superadmin')
     await expect(page.locator('.vjsf')).toBeVisible({ timeout: 20000 })
     // an available plugin: the form renders and no broken-plugin banner shows (regression: the
     // registry artefact was fetched under the API base URL, 404, every processing looked broken)
@@ -68,7 +68,7 @@ test.describe('processing edit page — explicit save', () => {
     const { id } = await setup()
     // Enter the edit page through the list so that going back is an in-app
     // router navigation (the breadcrumbs live in the parent frame).
-    await goToWithAuth('/processings/processings', 'test_superadmin')
+    await goToWithAuth('/processings/processings', 'test_processings_superadmin')
     await page.getByText('Save e2e processing').first().click()
     // an in-app navigation: web-first assertion on the URL, no wait for a load event
     await expect(page).toHaveURL(new RegExp(`/processings/processings/${id}$`), { timeout: 20_000 })

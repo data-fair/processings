@@ -3,7 +3,7 @@ import { translateRegistryError } from '../../../api/src/processings/operations.
 
 // the api specs plugin-access and plugin-info-transitivity check the real registry round trip;
 // the message of each status lives here
-const processing = { plugin: '@test-plugin-1', owner: { type: 'user', id: 'test_user1', name: 'Test User 1' } } as any
+const processing = { plugin: '@test-plugin-1', owner: { type: 'user', id: 'test_processings_user1', name: 'Test User 1' } } as any
 
 test.describe('translateRegistryError', () => {
   test('403 names the owner and the plugin', () => {
@@ -13,8 +13,8 @@ test.describe('translateRegistryError', () => {
   })
 
   test('403 falls back to the owner id without a name', () => {
-    const err = translateRegistryError({ statusCode: 403 }, { ...processing, owner: { type: 'user', id: 'test_user1' } })
-    expect(err.message).toContain('The account test_user1 ')
+    const err = translateRegistryError({ statusCode: 403 }, { ...processing, owner: { type: 'user', id: 'test_processings_user1' } })
+    expect(err.message).toContain('The account test_processings_user1 ')
   })
 
   test('404 says the plugin is missing from the registry', () => {

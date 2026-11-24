@@ -17,13 +17,13 @@ test.describe('processing — branch ref artefact', () => {
 
   test('runs a branch-backed processing end-to-end', async () => {
     test.slow() // a real run through the worker
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     const plugin = await installBranchPlugin()
 
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Branch processing',
       plugin: plugin.pluginId,
-      owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' },
+      owner: { type: 'user', id: 'test_processings_superadmin', name: 'Test Super Admin' },
       active: true,
       config: {
         datasetMode: 'create',

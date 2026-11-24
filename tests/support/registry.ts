@@ -63,9 +63,9 @@ export interface PublishOptions {
 }
 
 const DEFAULT_GRANTS: Grantee[] = [
-  { type: 'user', id: 'test_superadmin' },
-  { type: 'organization', id: 'test_org1' },
-  { type: 'organization', id: 'test_org2' }
+  { type: 'user', id: 'test_processings_superadmin' },
+  { type: 'organization', id: 'test_processings_org1' },
+  { type: 'organization', id: 'test_processings_org2' }
 ]
 
 const DEFAULT_TARBALL = path.resolve(import.meta.dirname, '../fixtures/processing-hello-world.tgz')

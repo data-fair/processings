@@ -44,14 +44,14 @@ test.describe('api docs', () => {
   })
 
   test('the admin document is gone, the per-processing one stays', async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     // unknown paths fall through to the UI's index.html: no document is served there anymore
     const removed = await superadmin.get('/api/v1/admin/api-docs.json', status)
     expect(removed.headers['content-type']).not.toContain('json')
     expect(removed.data?.openapi).toBeUndefined()
     const plugin = await publishFixturePlugin({ name: '@data-fair/processing-hello-world', version: '1.2.2' })
     const processing = (await superadmin.post('/api/v1/processings', {
-      title: 'Doc processing', plugin: plugin.pluginId, owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' }
+      title: 'Doc processing', plugin: plugin.pluginId, owner: { type: 'user', id: 'test_processings_superadmin', name: 'Test Super Admin' }
     })).data
     const perProcessing = await superadmin.get(`/api/v1/processings/${processing._id}/api-docs.json`)
     expect(perProcessing.status).toBe(200)

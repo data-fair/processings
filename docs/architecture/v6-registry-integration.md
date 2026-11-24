@@ -325,8 +325,8 @@ To delete:
 1. `docker compose --profile dev up -d` — brings up registry alongside processings, mongo, simple-directory.
 2. As superadmin in registry UI, create an upload API key.
 3. Build a self-contained plugin tarball (`npm pack` over a directory that already has `node_modules`) and `curl -F file=@plugin.tgz -F architecture=x64 -H 'x-api-key: ...' http://localhost/registry/api/v1/artefacts/@data-fair%2Fprocessing-hello-world/versions`.
-4. PATCH the artefact `public: true` (or grant access to `organization:test_org1`).
-5. As `test_admin1@test.com` in processings UI, navigate to `/processings/new` — registry plugin list renders.
+4. PATCH the artefact `public: true` (or grant access to `organization:test_processings_org1`).
+5. As `test_processings_admin1@test.com` in processings UI, navigate to `/processings/new` — registry plugin list renders.
 6. Pick the plugin, fill config, save → API runs `validateFullProcessing` (HTTP fetch) and `prepareProcessing` (lib-node download to API cache). Both succeed.
 7. Trigger a run. Worker downloads via lib-node into its own cache (`downloaded: true` first time, `false` on the next run).
 8. Smoke checks:

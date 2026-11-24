@@ -43,13 +43,13 @@ running dev API, dev worker and dev UI. There is no separate test server.
 ### Test users
 
 Test fixtures live in `dev/resources/users.json` and `dev/resources/organizations.json`.
-All test users and orgs are prefixed with `test_` (e.g. `test_admin1@test.com`,
-`test_org1`). The cleanup endpoint `DELETE /api/v1/test-env` only purges documents
+All test users and orgs are prefixed with `test_processings_` (e.g. `test_processings_admin1@test.com`,
+`test_processings_org1`). The cleanup endpoint `DELETE /api/v1/test-env` only purges documents
 whose `owner.id` matches `^test_` so that interactive dev work under non-prefixed
-accounts (e.g. `superadmin`, `albanm`) survives test runs.
+accounts survives test runs.
 
 Special accounts:
-- `test_superadmin@test.com` / password `superpasswd` — superadmin
+- `test_processings_superadmin@test.com` / password `superpasswd` — superadmin
 - all other `test_*@test.com` — password `passwd`
 
 ### Test-env API

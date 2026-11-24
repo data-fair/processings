@@ -62,7 +62,7 @@ test.describe('memory pressure diagnostics', () => {
   test('task that exhausts V8 heap produces oom-heap diagnostic', async () => {
     test.setTimeout(120_000)
 
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
 
     // Capture the baseline counter so we can assert it increments.
     let baselineExits = 0
@@ -87,7 +87,7 @@ test.describe('memory pressure diagnostics', () => {
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'OOM leak test',
       plugin: plugin.pluginId,
-      owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' },
+      owner: { type: 'user', id: 'test_processings_superadmin', name: 'Test Super Admin' },
       active: true,
       config: {}
     })).data
@@ -118,7 +118,7 @@ test.describe('memory pressure diagnostics', () => {
   test('CPU-saturated task still reports RSS via external sampler', async () => {
     test.setTimeout(120_000)
 
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
 
     // Snapshot the metrics for all 4 slots before triggering. We need a
     // "moved" assertion that's robust whichever slot picks up the run.
@@ -134,7 +134,7 @@ test.describe('memory pressure diagnostics', () => {
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'CPU leak test',
       plugin: plugin.pluginId,
-      owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' },
+      owner: { type: 'user', id: 'test_processings_superadmin', name: 'Test Super Admin' },
       active: true,
       config: {}
     })).data

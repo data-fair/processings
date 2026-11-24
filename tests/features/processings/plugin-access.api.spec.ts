@@ -10,8 +10,8 @@ import { publishFixturePlugin } from '../../support/registry.ts'
  * caller already knows the id). The processings API translates that into
  * a user-facing message and routes the response status correctly.
  *
- * The owner used here is `test_user1` because the default fixture grants only
- * include `test_superadmin` + the two orgs — a plain user account is the
+ * The owner used here is `test_processings_user1` because the default fixture grants only
+ * include `test_processings_superadmin` + the two orgs — a plain user account is the
  * cleanest "has a grant but no privateAccess for THIS plugin" subject.
  */
 test.describe('processing creation with restricted plugin access', () => {
@@ -19,29 +19,29 @@ test.describe('processing creation with restricted plugin access', () => {
   test.afterAll(clean)
 
   test('superadmin can create a processing without config even if the owner has no plugin access (broken state)', async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     const fixture = await publishFixturePlugin({
       name: '@data-fair/processing-hello-world',
       version: '1.2.2',
       isPublic: false,
-      privateAccess: [{ type: 'organization', id: 'test_org1', name: 'Test Org 1' }],
-      // Grant test_user1 the global access-grant so the only thing missing
+      privateAccess: [{ type: 'organization', id: 'test_processings_org1', name: 'Test Org 1' }],
+      // Grant test_processings_user1 the global access-grant so the only thing missing
       // is the privateAccess entry — that's the scenario we want to test.
       grants: [
-        { type: 'user', id: 'test_superadmin' },
-        { type: 'user', id: 'test_user1' },
-        { type: 'organization', id: 'test_org1' }
+        { type: 'user', id: 'test_processings_superadmin' },
+        { type: 'user', id: 'test_processings_user1' },
+        { type: 'organization', id: 'test_processings_org1' }
       ]
     })
 
     const res = await superadmin.post('/api/v1/processings', {
       title: 'Owner has no access',
       plugin: fixture.pluginId,
-      owner: { type: 'user', id: 'test_user1', name: 'Test User 1' }
+      owner: { type: 'user', id: 'test_processings_user1', name: 'Test User 1' }
     })
     expect(res.status).toBe(200)
     expect(res.data._id).toBeTruthy()
-    expect(res.data.owner.id).toBe('test_user1')
+    expect(res.data.owner.id).toBe('test_processings_user1')
 
     // The schema fetch is the first call that hits the registry on behalf of
     // the owner. Pre-rebuild registry image hides the artefact behind 404;
@@ -62,23 +62,23 @@ test.describe('processing creation with restricted plugin access', () => {
   })
 
   test('PATCH with a config field on a processing whose owner has no access fails with 403 + message', async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     const fixture = await publishFixturePlugin({
       name: '@data-fair/processing-hello-world',
       version: '1.2.2',
       isPublic: false,
-      privateAccess: [{ type: 'organization', id: 'test_org1', name: 'Test Org 1' }],
+      privateAccess: [{ type: 'organization', id: 'test_processings_org1', name: 'Test Org 1' }],
       grants: [
-        { type: 'user', id: 'test_superadmin' },
-        { type: 'user', id: 'test_user1' },
-        { type: 'organization', id: 'test_org1' }
+        { type: 'user', id: 'test_processings_superadmin' },
+        { type: 'user', id: 'test_processings_user1' },
+        { type: 'organization', id: 'test_processings_org1' }
       ]
     })
 
     const created = (await superadmin.post('/api/v1/processings', {
       title: 'Owner has no access',
       plugin: fixture.pluginId,
-      owner: { type: 'user', id: 'test_user1', name: 'Test User 1' }
+      owner: { type: 'user', id: 'test_processings_user1', name: 'Test User 1' }
     })).data
 
     const patch = await superadmin.patch(
@@ -102,18 +102,18 @@ test.describe('processing creation with restricted plugin access', () => {
   })
 
   test('owner with privateAccess can have a processing created with config', async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     const fixture = await publishFixturePlugin({
       name: '@data-fair/processing-hello-world',
       version: '1.2.2',
       isPublic: false,
-      privateAccess: [{ type: 'organization', id: 'test_org1', name: 'Test Org 1' }]
+      privateAccess: [{ type: 'organization', id: 'test_processings_org1', name: 'Test Org 1' }]
     })
 
     const res = await superadmin.post('/api/v1/processings', {
       title: 'Authorized owner with config',
       plugin: fixture.pluginId,
-      owner: { type: 'organization', id: 'test_org1', name: 'Test Org 1' },
+      owner: { type: 'organization', id: 'test_processings_org1', name: 'Test Org 1' },
       config: {
         datasetMode: 'create',
         dataset: { id: 'test_y', title: 'Y' },

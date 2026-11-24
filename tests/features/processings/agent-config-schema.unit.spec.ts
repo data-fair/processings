@@ -10,10 +10,10 @@ const withGetItems = () => ({
 
 test.describe('agent config schema', () => {
   test('context placeholders become relative urls and the owner filter', () => {
-    const dep = agentConfigSchema(withGetItems(), { owner: { type: 'organization', id: 'test_org1', name: 'Test Org 1', department: 'dep1' } })
-    expect(dep.properties.dataset.layout.getItems.url).toBe('/data-fair/api/v1/datasets?select=id,title&owner=organization:test_org1:dep1&raw=true')
-    const noDep = agentConfigSchema(withGetItems(), { owner: { type: 'organization', id: 'test_org1', name: 'Test Org 1' } })
-    expect(noDep.properties.dataset.layout.getItems.url).toBe('/data-fair/api/v1/datasets?select=id,title&owner=organization:test_org1&raw=true')
+    const dep = agentConfigSchema(withGetItems(), { owner: { type: 'organization', id: 'test_processings_org1', name: 'Test Org 1', department: 'dep1' } })
+    expect(dep.properties.dataset.layout.getItems.url).toBe('/data-fair/api/v1/datasets?select=id,title&owner=organization:test_processings_org1:dep1&raw=true')
+    const noDep = agentConfigSchema(withGetItems(), { owner: { type: 'organization', id: 'test_processings_org1', name: 'Test Org 1' } })
+    expect(noDep.properties.dataset.layout.getItems.url).toBe('/data-fair/api/v1/datasets?select=id,title&owner=organization:test_processings_org1&raw=true')
   })
 
   test('owner values and the directory url are substituted, other placeholders kept', () => {

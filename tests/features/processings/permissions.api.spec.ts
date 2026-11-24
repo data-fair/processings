@@ -14,11 +14,11 @@ test.describe('processing permissions', () => {
   test('should create a processing and check permissions across roles', { tag: '@smoke' }, async () => {
     const plugin = await installTestPlugin()
 
-    const adminTestOrg1 = await axiosAuth({ email: 'test_admin1@test.com', org: 'test_org1' })
-    const contribTestOrg1 = await axiosAuth({ email: 'test_contrib1@test.com', org: 'test_org1' })
-    const userTestOrg1 = await axiosAuth({ email: 'test_user1@test.com', org: 'test_org1' })
-    const aloneOutsider = await axiosAuth('test_alone@test.com')
-    const partnerAdmin = await axiosAuth({ email: 'test_user2@test.com', org: 'test_org2' })
+    const adminTestOrg1 = await axiosAuth({ email: 'test_processings_admin1@test.com', org: 'test_processings_org1' })
+    const contribTestOrg1 = await axiosAuth({ email: 'test_processings_contrib1@test.com', org: 'test_processings_org1' })
+    const userTestOrg1 = await axiosAuth({ email: 'test_processings_user1@test.com', org: 'test_processings_org1' })
+    const aloneOutsider = await axiosAuth('test_processings_alone@test.com')
+    const partnerAdmin = await axiosAuth({ email: 'test_processings_user2@test.com', org: 'test_processings_org2' })
 
     const processing = (await adminTestOrg1.post('/api/v1/processings', {
       title: 'Hello processing',
@@ -60,8 +60,8 @@ test.describe('processing permissions', () => {
     await expect(userTestOrg1.patch(`/api/v1/processings/${processing._id}`, { title: 'test' })).rejects.toMatchObject({ status: 403 })
 
     // no permission at all for outsiders
-    expect((await partnerAdmin.get('/api/v1/processings', { params: { owner: 'organization:test_org1' } })).data.count).toBe(0)
-    expect((await aloneOutsider.get('/api/v1/processings', { params: { owner: 'organization:test_org1' } })).data.count).toBe(0)
+    expect((await partnerAdmin.get('/api/v1/processings', { params: { owner: 'organization:test_processings_org1' } })).data.count).toBe(0)
+    expect((await aloneOutsider.get('/api/v1/processings', { params: { owner: 'organization:test_processings_org1' } })).data.count).toBe(0)
     await expect(partnerAdmin.get(`/api/v1/processings/${processing._id}`)).rejects.toMatchObject({ status: 403 })
     await expect(aloneOutsider.get(`/api/v1/processings/${processing._id}`)).rejects.toMatchObject({ status: 403 })
 
@@ -69,21 +69,21 @@ test.describe('processing permissions', () => {
     await adminTestOrg1.patch(`/api/v1/processings/${processing._id}`, {
       permissions: [{
         profile: 'read',
-        target: { type: 'userEmail', email: 'test_alone@test.com' }
+        target: { type: 'userEmail', email: 'test_processings_alone@test.com' }
       }, {
         profile: 'read',
-        target: { type: 'partner', organization: { name: 'Test Org 2', id: 'test_org2' }, roles: ['admin'] }
+        target: { type: 'partner', organization: { name: 'Test Org 2', id: 'test_processings_org2' }, roles: ['admin'] }
       }]
     })
 
-    expect((await partnerAdmin.get('/api/v1/processings', { params: { owner: 'organization:test_org1' } })).data.count).toBe(1)
-    expect((await aloneOutsider.get('/api/v1/processings', { params: { owner: 'organization:test_org1' } })).data.count).toBe(1)
+    expect((await partnerAdmin.get('/api/v1/processings', { params: { owner: 'organization:test_processings_org1' } })).data.count).toBe(1)
+    expect((await aloneOutsider.get('/api/v1/processings', { params: { owner: 'organization:test_processings_org1' } })).data.count).toBe(1)
     const partnerProcessing = (await partnerAdmin.get(`/api/v1/processings/${processing._id}`)).data
     expect(partnerProcessing.userProfile).toBe('read')
     const alonePartnerProcessing = (await aloneOutsider.get(`/api/v1/processings/${processing._id}`)).data
     expect(alonePartnerProcessing.userProfile).toBe('read')
-    expect((await partnerAdmin.get('/api/v1/runs', { params: { processing: processing._id, owner: 'organization:test_org1' } })).data.count).toBe(1)
-    expect((await aloneOutsider.get('/api/v1/runs', { params: { processing: processing._id, owner: 'organization:test_org1' } })).data.count).toBe(1)
+    expect((await partnerAdmin.get('/api/v1/runs', { params: { processing: processing._id, owner: 'organization:test_processings_org1' } })).data.count).toBe(1)
+    expect((await aloneOutsider.get('/api/v1/runs', { params: { processing: processing._id, owner: 'organization:test_processings_org1' } })).data.count).toBe(1)
 
     // still no write permissions for the granted readers
     await expect(partnerAdmin.patch(`/api/v1/processings/${processing._id}`, { title: 'test' })).rejects.toMatchObject({ status: 403 })
@@ -93,11 +93,11 @@ test.describe('processing permissions', () => {
   })
 
   test('should list processings with proper org isolation', async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     const plugin = await installTestPlugin()
 
-    const adminTestOrg1 = await axiosAuth({ email: 'test_admin1@test.com', org: 'test_org1' })
-    const partnerAdmin = await axiosAuth({ email: 'test_user2@test.com', org: 'test_org2' })
+    const adminTestOrg1 = await axiosAuth({ email: 'test_processings_admin1@test.com', org: 'test_processings_org1' })
+    const partnerAdmin = await axiosAuth({ email: 'test_processings_user2@test.com', org: 'test_processings_org2' })
 
     await adminTestOrg1.post('/api/v1/processings', {
       title: 'Hello processing 1',
@@ -108,23 +108,23 @@ test.describe('processing permissions', () => {
       plugin: plugin.pluginId
     })
 
-    expect((await adminTestOrg1.get('/api/v1/processings?owner=organization:test_org1')).data.count).toBe(1)
-    expect((await partnerAdmin.get('/api/v1/processings?owner=organization:test_org2')).data.count).toBe(1)
+    expect((await adminTestOrg1.get('/api/v1/processings?owner=organization:test_processings_org1')).data.count).toBe(1)
+    expect((await partnerAdmin.get('/api/v1/processings?owner=organization:test_processings_org2')).data.count).toBe(1)
 
     expect((await superadmin.get('/api/v1/processings?showAll=true')).data.count).toBeGreaterThanOrEqual(2)
-    expect((await superadmin.get('/api/v1/processings?showAll=true&owner=organization:test_org1')).data.results.length).toBe(1)
+    expect((await superadmin.get('/api/v1/processings?showAll=true&owner=organization:test_processings_org1')).data.results.length).toBe(1)
   })
 
   test('should manage processings as a department admin', async () => {
     const plugin = await installTestPlugin()
-    const depAdmin = await axiosAuth({ email: 'test_dep_admin@test.com', org: 'test_org1', dep: 'dep1' })
+    const depAdmin = await axiosAuth({ email: 'test_processings_dep_admin@test.com', org: 'test_processings_org1', dep: 'dep1' })
 
     // create a processing in his department
     const processing = (await depAdmin.post('/api/v1/processings', {
       title: 'Hello processing',
       plugin: plugin.pluginId,
       owner: {
-        id: 'test_org1',
+        id: 'test_processings_org1',
         name: 'Test Org 1',
         type: 'organization',
         department: 'dep1',
@@ -138,7 +138,7 @@ test.describe('processing permissions', () => {
       title: 'Hello processing',
       plugin: plugin.pluginId,
       owner: {
-        id: 'test_org1',
+        id: 'test_processings_org1',
         name: 'Test Org 1',
         type: 'organization',
         department: 'dep2',
@@ -151,7 +151,7 @@ test.describe('processing permissions', () => {
       title: 'Hello processing',
       plugin: plugin.pluginId,
       owner: {
-        id: 'test_org1',
+        id: 'test_processings_org1',
         name: 'Test Org 1',
         type: 'organization'
       }
@@ -160,7 +160,7 @@ test.describe('processing permissions', () => {
     // cannot change owner to a different organization
     await expect(depAdmin.patch(`/api/v1/processings/${processing._id}`, {
       owner: {
-        id: 'test_org2',
+        id: 'test_processings_org2',
         name: 'Test Org 2',
         type: 'organization'
       }
@@ -170,7 +170,7 @@ test.describe('processing permissions', () => {
     // here the dep_admin is only admin in dep1, so this still fails
     await expect(depAdmin.patch(`/api/v1/processings/${processing._id}`, {
       owner: {
-        id: 'test_org1',
+        id: 'test_processings_org1',
         name: 'Test Org 1',
         type: 'organization',
         department: 'dep2',
@@ -181,7 +181,7 @@ test.describe('processing permissions', () => {
 
   test('an org admin cannot patch the read-only parts of a processing', async () => {
     const plugin = await installTestPlugin()
-    const adminTestOrg1 = await axiosAuth({ email: 'test_admin1@test.com', org: 'test_org1' })
+    const adminTestOrg1 = await axiosAuth({ email: 'test_processings_admin1@test.com', org: 'test_processings_org1' })
     const processing = (await adminTestOrg1.post('/api/v1/processings', { title: 'Hello processing', plugin: plugin.pluginId })).data
     const status = { validateStatus: () => true }
     let res = await adminTestOrg1.patch(`/api/v1/processings/${processing._id}`, { webhookKey: 'x' }, status)
@@ -193,7 +193,7 @@ test.describe('processing permissions', () => {
 
   test('an org admin cannot create a processing with its read-only parts', async () => {
     const plugin = await installTestPlugin()
-    const adminTestOrg1 = await axiosAuth({ email: 'test_admin1@test.com', org: 'test_org1' })
+    const adminTestOrg1 = await axiosAuth({ email: 'test_processings_admin1@test.com', org: 'test_processings_org1' })
     const status = { validateStatus: () => true }
     for (const part of [{ secrets: { a: 'b' } }, { debug: true }, { userProfile: 'admin' }]) {
       const res = await adminTestOrg1.post('/api/v1/processings', { title: 'Hello processing', plugin: plugin.pluginId, ...part }, status)
