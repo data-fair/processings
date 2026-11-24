@@ -77,9 +77,6 @@ When `NODE_ENV=development` the API exposes `/api/v1/test-env`:
 - `GET /raw-processing/:id`, `PATCH /raw-processing/:id`, `GET /raw-run/:id`, `POST /docs/:collection`,
   `GET /docs/:collection/:id` — raw mongo docs
 - `PUT /data-fair-api-key` — the worker's data-fair key (above)
-- `POST /set-env`, `POST /set-config` — runtime overrides of the whole API process, for testing: they answer only
-  a direct call (not through the proxy) while this checkout's own test run holds its stateful lock
-  (`dev/logs/stateful-tests.lock`), 403 otherwise
 - `DELETE /plugins?prefix=test_<suite>_` — remove the plugins of that prefix (`@test_<suite>_…`) from the legacy
   plugins directory, the others stay; 400 without a valid prefix
 

@@ -1,5 +1,5 @@
 import { test, expect } from '../../fixtures/login.ts'
-import { anonymousAx, apiUrl, clean } from '../../support/axios.ts'
+import { anonymousAx, clean } from '../../support/axios.ts'
 
 const status = { validateStatus: () => true }
 const invalidPrefixes = ['', 'test', 'test_', 'test_processings', 'other_x_', 'test_.*_']
@@ -76,22 +76,5 @@ test.describe('test-env clean', () => {
     } finally {
       await clean()
     }
-  })
-})
-
-// The runtime overrides of the API process answer only the suite's own test run: a direct call (no proxy) while its
-// stateful lock is held. This run holds it (state-setup).
-test.describe('test-env runtime overrides', () => {
-  test('refused through the proxy', async () => {
-    for (const route of ['set-env', 'set-config']) {
-      const res = await anonymousAx.post(`/api/v1/test-env/${route}`, {}, status)
-      expect(res.status, route).toBe(403)
-    }
-  })
-
-  test('accepted from the suite\'s own run', async () => {
-    const res = await anonymousAx.post(`${apiUrl}/api/v1/test-env/set-env`, { key: 'PROCESSINGS_TEST_ENV_PROBE', value: '1' }, status)
-    expect(res.status).toBe(200)
-    expect((await anonymousAx.post(`${apiUrl}/api/v1/test-env/set-env`, { key: 'PROCESSINGS_TEST_ENV_PROBE', value: null }, status)).status).toBe(200)
   })
 })

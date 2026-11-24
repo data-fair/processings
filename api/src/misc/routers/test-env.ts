@@ -1,7 +1,6 @@
 import express from 'express'
 import fs from 'fs-extra'
 import path from 'node:path'
-import { readFileSync } from 'node:fs'
 import mongo from '#mongo'
 import config from '#config'
 
@@ -92,63 +91,6 @@ router.get('/raw-run/:id', async (req, res, next) => {
     const run = await mongo.runs.findOne({ _id: req.params.id })
     if (!run) return res.status(404).json({ error: 'run not found' })
     res.json(run)
-  } catch (err) {
-    next(err)
-  }
-})
-
-// The runtime overrides below change the whole API process, for every sub-space: they only answer a test run of this
-// checkout's own suite (test_processings_). Two conditions, both checked on each call:
-// - a direct call, not through the reverse proxy (no X-Forwarded-Host): the suite calls the API on its private port,
-//   the world loader, the browsers and the other suites of a shared environment go through the proxy;
-// - the stateful lock of this checkout's suite is held by a live test run (tests/support/stateful-lock.ts, taken by
-//   its state-setup project and released by its teardown).
-const statefulLockPath = path.resolve(import.meta.dirname, '../../../../dev/logs/stateful-tests.lock')
-const ownTestRunOnly: express.RequestHandler = (req, res, next) => {
-  if (req.get('x-forwarded-host')) return res.status(403).type('text/plain').send('direct calls only')
-  let holder = 0
-  try {
-    holder = parseInt(readFileSync(statefulLockPath, 'utf8'), 10)
-  } catch {}
-  let alive = false
-  if (holder) {
-    try {
-      process.kill(holder, 0)
-      alive = true
-    } catch (err: any) {
-      alive = err?.code === 'EPERM'
-    }
-  }
-  if (!alive) return res.status(403).type('text/plain').send('only during a test run of this checkout')
-  next()
-}
-
-// Set an environment variable in the main process (for testing)
-router.post('/set-env', ownTestRunOnly, (req, res, next) => {
-  try {
-    const { key, value } = req.body
-    if (value === undefined || value === null) {
-      delete process.env[key]
-    } else {
-      process.env[key] = value
-    }
-    res.json({ ok: true })
-  } catch (err) {
-    next(err)
-  }
-})
-
-// Set a config value at runtime (for testing)
-router.post('/set-config', ownTestRunOnly, (req, res, next) => {
-  try {
-    const { path: configPath, value } = req.body
-    const parts = configPath.split('.')
-    let obj: any = config
-    for (let i = 0; i < parts.length - 1; i++) {
-      obj = obj[parts[i]]
-    }
-    obj[parts[parts.length - 1]] = value
-    res.json({ ok: true })
   } catch (err) {
     next(err)
   }
