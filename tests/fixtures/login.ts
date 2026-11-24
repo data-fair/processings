@@ -1,6 +1,5 @@
 import { test as base, expect, request, type BrowserContext } from '@playwright/test'
-import { execFile } from 'node:child_process'
-import { promisify } from 'node:util'
+import { processLogs } from '../support/process-logs.ts'
 
 const baseUrl = `http://${process.env.DEV_HOST}:${process.env.NGINX_PORT}`
 const directoryUrl = `${baseUrl}/simple-directory`
@@ -33,13 +32,6 @@ const apiLogin = async (user: string): Promise<Cookies> => {
   }
 }
 
-const exec = promisify(execFile)
-// the scrollback of a df-dev pane, or nothing when df-dev is not running (CI keeps its own logs)
-const paneLogs = async (pane: string) => {
-  const { stdout } = await exec('./node_modules/.bin/df-dev', ['logs', pane, '-n', '200']).catch(() => ({ stdout: '' }))
-  return stdout
-}
-
 export const test = base.extend<{
   goToWithAuth: (url: string, user: string) => Promise<void>,
   diagnostics: void
@@ -62,14 +54,14 @@ export const test = base.extend<{
     })
   },
 
-  // on a failure, the api and worker pane logs are attached to the report
+  // on a failure, the last lines of the api and worker logs are attached to the report
   // eslint-disable-next-line no-empty-pattern -- playwright requires a destructuring pattern here
   diagnostics: [async ({}, use, testInfo) => {
     await use()
     if (testInfo.status === testInfo.expectedStatus) return
-    for (const pane of ['api', 'worker']) {
-      const logs = await paneLogs(pane)
-      if (logs) await testInfo.attach(`${pane}.log`, { body: logs, contentType: 'text/plain' })
+    for (const name of ['api', 'worker']) {
+      const logs = processLogs(name)
+      if (logs) await testInfo.attach(`${name}.log`, { body: logs, contentType: 'text/plain' })
     }
   }, { auto: true }]
 })

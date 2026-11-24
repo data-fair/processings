@@ -3,7 +3,7 @@
 # gate (static checks + the whole unit/api/e2e suite) runs on pull requests and releases
 # (no nightly: the suite is small); `npm run quality` still runs it locally on demand.
 #
-# api/e2e tests need the dev env up (npx --no df-dev status).
+# api/e2e tests need the dev env up (npm run dev).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

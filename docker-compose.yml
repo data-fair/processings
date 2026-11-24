@@ -195,7 +195,7 @@ services:
       - elasticsearch-data:/usr/share/elasticsearch/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9200"]
-      # 2 s probes while starting (df-dev wait-deps gives up after 3 min), then one per minute
+      # 2 s probes while starting, then one per minute
       interval: 60s
       timeout: 10s
       retries: 3
