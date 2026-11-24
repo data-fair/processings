@@ -1,17 +1,17 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import FormData from 'form-data'
-import { MongoClient } from 'mongodb'
 import { axiosBuilder } from '@data-fair/lib-node/axios.js'
+import { prefix } from './sd-fixtures.ts'
 
 /**
- * Registry test harness — talks to the dev-mode registry container at
- * /registry on the same nginx as processings, with the matching internal
- * secret defined in `docker-compose.yml`.
+ * Registry test harness — talks to the registry at /registry on the same nginx as processings, and to its private
+ * URL with the matching internal secret defined in `docker-compose.yml`.
  *
- * Tests publish their fixture plugin once at the top of a describe block (or
- * via state-setup) and reset registry state between runs by dropping the
- * `data-fair-registry` mongo db directly.
+ * Tests publish their fixture plugin at the top of a describe block or a test. The artefact ids carry the prefix of
+ * the test sub-space (`@test_processings_…`): a publication replaces the previous one, registry's own prefixed clean
+ * (DELETE /registry/api/test-env?prefix=test_processings_) removes them, and the clean of another sub-space leaves
+ * them alone. The suite never cleans anything in the registry itself.
  */
 
 // Through nginx for browser-visible reads (matches what the UI does in dev).
@@ -20,7 +20,8 @@ export const registryBaseUrl = `http://${process.env.DEV_HOST}:${process.env.NGI
 // only honours x-secret-key when reqIsInternal is true, which checks for the
 // absence of x-forwarded-host. nginx adds that header, so internal calls have
 // to skip the proxy.
-export const registryInternalUrl = `http://localhost:${process.env.REGISTRY_PORT}/registry`
+// PRIVATE_REGISTRY_URL is the production name the api and the worker read too.
+export const registryInternalUrl = process.env.PRIVATE_REGISTRY_URL || `http://localhost:${process.env.REGISTRY_PORT}/registry`
 export const registryInternalSecret = 'secret-registry-internal'
 
 export const axiosRegistryInternal = axiosBuilder({
@@ -68,6 +69,9 @@ const DEFAULT_GRANTS: Grantee[] = [
   { type: 'organization', id: 'test_processings_org2' }
 ]
 
+/** The artefact id of a fixture plugin: `@test_processings_` then the v5 id form of the package (`@data-fair/x` → `data-fair-x-<major>`). */
+export const fixturePluginId = (name: string, major: number | string) => `@${prefix}${name.replace(/^@/, '').replace('/', '-')}-${major}`
+
 const DEFAULT_TARBALL = path.resolve(import.meta.dirname, '../fixtures/processing-hello-world.tgz')
 
 /**
@@ -83,7 +87,7 @@ const DEFAULT_TARBALL = path.resolve(import.meta.dirname, '../fixtures/processin
  * non-execution behaviour.
  */
 export interface PublishBranchOptions {
-  /** Registry artefact id (the v5 id form, e.g. `@data-fair-processing-hello-world-main`). */
+  /** Registry artefact id (the v5 id form, e.g. `@test_processings_data-fair-processing-hello-world-main`). */
   artefactId: string
   /** Local path to the .tgz to upload. */
   tarballPath?: string
@@ -100,7 +104,7 @@ export interface PublishBranchOptions {
 /**
  * Publish a fixture plugin as a branch ref — an artefact whose id carries a
  * non-numeric (branch-name) suffix instead of a major (e.g.
- * `@data-fair-processing-hello-world-main`); its tarball slots are replaced on
+ * `@test_processings_data-fair-processing-hello-world-main`); its tarball slots are replaced on
  * each upload. The returned `pluginId` is the artefact id verbatim.
  */
 export const publishFixtureBranchPlugin = async (opts: PublishBranchOptions): Promise<PublishedFixture> => {
@@ -144,8 +148,9 @@ export const publishFixturePlugin = async (opts: PublishOptions): Promise<Publis
 
   const major = parseInt(opts.version.split('.')[0], 10)
   // The artefact id is the v5 id form (`{name}` with `/` flattened to `-`, plus
-  // `-{major}`) — the same value stored on `processing.plugin`.
-  const pluginId = `${opts.name.replace('/', '-')}-${major}`
+  // `-{major}`), behind the prefix of the test sub-space — the same value stored on
+  // `processing.plugin`. The package inside keeps its name.
+  const pluginId = fixturePluginId(opts.name, major)
 
   const form = new FormData()
   form.append('architecture', arch)
@@ -181,24 +186,13 @@ export const publishFixturePlugin = async (opts: PublishOptions): Promise<Publis
 }
 
 /**
- * Drop the registry mongo db AND the API/worker tarball caches. Called from
- * `clean()` between tests so a re-published fixture (same ref, possibly
- * different content) is actually re-downloaded — lib-node-registry's cache
- * key is `{artefactId}/{arch}` and would otherwise serve stale extracted
- * files from the previous test.
+ * Wipe the API and worker tarball caches (<dataDir>/tmp/registry-cache, dev
+ * config: ../data/development/tmp/...). Called from `clean()` between tests so
+ * a re-published fixture (same ref, possibly different content) is actually
+ * re-downloaded — lib-node-registry's cache key is `{artefactId}/{arch}` and
+ * would otherwise serve stale extracted files from the previous test.
  */
-export const cleanRegistryDb = async () => {
-  const url = `mongodb://localhost:${process.env.MONGO_PORT ?? '27017'}/data-fair-registry`
-  const client = new MongoClient(url)
-  try {
-    await client.connect()
-    await client.db().dropDatabase()
-  } finally {
-    await client.close()
-  }
-  // The API and worker each have their own tarball cache under
-  // <dataDir>/tmp/registry-cache (dev config: ../data/development/tmp/...).
-  // Wiping both keeps tests deterministic across rebuilds of the fixture.
+export const cleanRegistryCache = async () => {
   const repoRoot = path.resolve(import.meta.dirname, '../..')
   const cacheRoot = path.join(repoRoot, 'data/development/tmp/registry-cache')
   await fs.promises.rm(cacheRoot, { recursive: true, force: true })

@@ -40,28 +40,48 @@ log a failure per pushed event, an empty `EVENTS_PORT` turns the integration off
 The dev environment also serves as the test environment: the Playwright test suite hits the
 running dev API, dev worker and dev UI. There is no separate test server.
 
-### Test users
+### Test sub-space
 
-Test fixtures live in `dev/resources/users.json` and `dev/resources/organizations.json`.
-All test users and orgs are prefixed with `test_processings_` (e.g. `test_processings_admin1@test.com`,
-`test_processings_org1`). The cleanup endpoint `DELETE /api/v1/test-env` only purges documents
-whose `owner.id` matches `^test_` so that interactive dev work under non-prefixed
-accounts survives test runs.
+The tests own the simple-directory accounts whose ids start with `test_processings_`
+(@tests/support/sd-fixtures.ts: `test_processings_superadmin`, a simple-directory admin, `test_processings_org1`
+with its admin, contributor, users, department admin and scope NHI, `test_processings_org2`, a partner of org1, and
+the `alone` and `outsider` accounts; password `passwd`, email `<id>@test.com`). `tests/global-setup.ts` upserts
+them through simple-directory's test API before the spec files load, and `tests/state-setup.ts`, under a lock
+against a second concurrent run, cleans and seeds them again, cleans the sub-space here and sets up the worker's
+data-fair key (below). The dev world `test_demo_` (`npm run dev-world`, run by `dev-deps`,
+@dev/resources/demo-world.json, login `test_demo_dev@example.org` / `passwd`, a simple-directory admin) is never
+cleaned by the tests.
 
-Special accounts:
-- `test_processings_superadmin@test.com` / password `superpasswd` — superadmin
-- all other `test_*@test.com` — password `passwd`
+Everything a test creates belongs to the sub-space: owners under `test_processings_`, and the fixture plugins'
+registry artefacts `@test_processings_…` (`tests/support/registry.ts`, uploaded with the registry's internal
+secret on its private URL). The suite never cleans anything in the registry: a fixture upload replaces the
+previous one, and registry's own prefixed clean removes them.
+
+**The worker's data-fair key.** The worker runs the plugins, whose data-fair requests carry an API key in admin
+mode acting as the processing's owner (`x-account`). `tests/support/data-fair.ts` creates it through data-fair's
+API, as `test_processings_superadmin` in admin mode on its own settings, and hands it to the worker through
+`PUT /api/v1/test-env/data-fair-api-key`: in development, without `DATA_FAIR_API_KEY`, the worker reads it from
+its database before each run and gives it to the run's process (`worker/src/utils/data-fair-api-key.ts`). The
+tests never write into another service's database. For manual work, run the tests once, or set
+`DATA_FAIR_API_KEY` in `.env` (an admin mode key with `asAccount`, created in data-fair by a super admin).
 
 ### Test-env API
 
 When `NODE_ENV=development` the API exposes `/api/v1/test-env`:
-- `DELETE /` — delete all `test_*`-owned processings, runs and limits
-- `GET /pending-tasks` — list runs in `triggered`/`scheduled`/`running` status
-- `GET /raw-processing/:id`, `GET /raw-run/:id` — raw mongo docs
-- `POST /set-env`, `POST /set-config` — runtime overrides for testing
+- `DELETE /?prefix=test_<suite>_` — delete the processings, runs and limits of the accounts of that prefix, and
+  the worker locks of those processings; 400 without a valid prefix, 204 after the clean. Several suites can share
+  one processings service: the clean of one prefix never touches another one
+  (`tests/features/test-env/test-env.api.spec.ts`)
+- `GET /pending-tasks?prefix=test_<suite>_` — the runs of that prefix in `triggered`/`scheduled`/`running` status
+- `GET /raw-processing/:id`, `PATCH /raw-processing/:id`, `GET /raw-run/:id`, `POST /docs/:collection`,
+  `GET /docs/:collection/:id` — raw mongo docs
+- `PUT /data-fair-api-key` — the worker's data-fair key (above)
+- `POST /set-env`, `POST /set-config` — runtime overrides of the whole API process, for testing: they answer only
+  a direct call (not through the proxy) while this checkout's own test run holds its stateful lock
+  (`dev/logs/stateful-tests.lock`), 403 otherwise
 - `DELETE /plugins` — wipe the installed plugins directory
 
-These endpoints are used by the Playwright support helpers in `tests/support/axios.ts`.
+These endpoints are used by the Playwright support helpers in `tests/support/`.
 
 ### Testing
 
@@ -85,8 +105,8 @@ user and worker, renewed after 10 min) and turn off lib-vue's keepalive with a f
 `sd-keepalive` localStorage timestamp, so no page ever rotates the shared exchange token.
 
 Tests are organized under `tests/features/<topic>/<name>.{unit,api,e2e}.spec.ts`.
-The `state-setup` project pings `/api/v1/test-env/pending-tasks` and seeds the data-fair API
-key of the worker. Pure logic goes to unit specs; api specs cover the HTTP contract and the
+The `state-setup` project pings `/api/v1/test-env/pending-tasks`, seeds the test sub-space and sets up the
+data-fair API key of the worker. Pure logic goes to unit specs; api specs cover the HTTP contract and the
 worker; e2e specs only cover user flows and what only a browser can check.
 
 The `e2e` project depends on `e2e-warmup` (`tests/e2e-warmup.ts`), which walks the list

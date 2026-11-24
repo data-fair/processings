@@ -17,10 +17,9 @@ export default {
   dataFairAdminMode: true,
   // data-fair's public URL, the base of the plugins' relative requests (the default is a fixed port)
   dataFairUrl: `http://${process.env.DEV_HOST ?? 'localhost'}:${envPort('NGINX_PORT')}/data-fair`,
-  // Dev/test default. The matching settings doc in DF's mongo is seeded by
-  // tests/state-setup.ts (idempotent). Real deployments override this via
-  // DATA_FAIR_API_KEY or local-development.cjs.
-  dataFairAPIKey: 'dev-test-processings-worker-key',
+  // none by default (DATA_FAIR_API_KEY sets one): the tasks then use the key the test setup handed over
+  // (worker/src/utils/data-fair-api-key.ts)
+  dataFairAPIKey: '',
   mails: {
     transport: {
       host: 'localhost',

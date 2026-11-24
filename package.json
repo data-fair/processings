@@ -12,6 +12,7 @@
     "dev:api": "cd api && FORCE_COLOR=1 NODE_ENV=development DEBUG=upgrade exec ../node_modules/.bin/nodemon -e js,ts,json index.ts",
     "dev:worker": "cd worker && FORCE_COLOR=1 NODE_ENV=development DEBUG='worker,upgrade*' exec ../node_modules/.bin/nodemon -e js,ts,json index.ts",
     "dev:ui": "cd ui && FORCE_COLOR=1 NODE_CONFIG_DIR=../api/config/ exec ../node_modules/.bin/vite --port ${DEV_UI_PORT}",
+    "dev-world": "node dev/world.ts",
     "lint": "eslint . && npm -w ui run lint",
     "lint-fix": "eslint --fix . && npm -w ui run lint-fix",
     "prepare": "husky || true",

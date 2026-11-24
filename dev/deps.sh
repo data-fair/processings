@@ -13,3 +13,6 @@ fi
 npm run dev-setup
 
 docker compose --progress quiet "$@" up -d --wait
+
+# the dev world (test_demo_ accounts of dev/resources/demo-world.json), never cleaned by the tests
+npm run dev-world

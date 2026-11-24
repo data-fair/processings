@@ -18,7 +18,7 @@ const apiLogin = async (user: string): Promise<Cookies> => {
     // no adminMode: e2e specs browse with a normal session, superadmin included
     const res = await ctx.post(`${directoryUrl}/api/auth/password`, {
       params: { redirect: directoryUrl },
-      data: { email: `${user}@test.com`, password: user === 'test_processings_superadmin' ? 'superpasswd' : 'passwd' }
+      data: { email: `${user}@test.com`, password: 'passwd' }
     })
     if (!res.ok()) throw new Error(`login of ${user} failed: ${res.status()} ${await res.text()}`)
     // the callback sets the session cookies (id_token, id_token_sign, id_token_ex) and redirects

@@ -1,15 +1,12 @@
 import type { AxiosAuthOptions } from '@data-fair/lib-node/axios-auth.js'
 import { axiosBuilder } from '@data-fair/lib-node/axios.js'
 import { axiosAuth as _axiosAuth } from '@data-fair/lib-node/axios-auth.js'
+import { prefix } from './sd-fixtures.ts'
 
 /**
- * Test users and orgs are defined in:
- *   - dev/resources/users.json — accounts test_processings_user1, test_processings_user2, test_processings_contrib1,
- *     test_processings_admin1, test_processings_alone, test_processings_superadmin (all use password 'passwd' except
- *     test_processings_superadmin which uses 'superpasswd').
- *   - dev/resources/organizations.json — test_processings_org1, test_processings_org2 with departments and roles.
- *
- * Loaded by simple-directory (STORAGE_TYPE=file in docker-compose.yml).
+ * The test accounts are those of the sub-space test_processings_ (tests/support/sd-fixtures.ts), seeded in
+ * simple-directory by tests/global-setup.ts and tests/state-setup.ts: password 'passwd', email `<id>@test.com`.
+ * test_processings_superadmin is a simple-directory admin, logged in admin mode.
  */
 
 export const directoryUrl = `http://${process.env.DEV_HOST}:${process.env.NGINX_PORT}/simple-directory`
@@ -23,17 +20,15 @@ export const anonymousAx = axios()
 
 export const axiosAuth = (opts: string | Omit<AxiosAuthOptions, 'directoryUrl' | 'axiosOpts' | 'password'>) => {
   opts = typeof opts === 'string' ? { email: opts } : opts
-  const isSuperadmin = opts.email === 'test_processings_superadmin@test.com'
-  const password = isSuperadmin ? 'superpasswd' : 'passwd'
-  const adminMode = isSuperadmin
-  return _axiosAuth({ ...opts, password, adminMode, axiosOpts, directoryUrl })
+  const adminMode = opts.email === `${prefix}superadmin@test.com`
+  return _axiosAuth({ ...opts, password: 'passwd', adminMode, axiosOpts, directoryUrl })
 }
 
 export const waitForWorkerIdle = async (timeoutMs = 10_000): Promise<void> => {
   const start = Date.now()
   let pending: any[] = []
   while (Date.now() - start < timeoutMs) {
-    const res = await anonymousAx.get(`${apiUrl}/api/v1/test-env/pending-tasks`)
+    const res = await anonymousAx.get(`${apiUrl}/api/v1/test-env/pending-tasks`, { params: { prefix } })
     pending = [...res.data.triggered, ...res.data.running]
     if (pending.length === 0) return
     await new Promise(resolve => setTimeout(resolve, 200))
@@ -43,14 +38,17 @@ export const waitForWorkerIdle = async (timeoutMs = 10_000): Promise<void> => {
   throw new Error(`worker still busy after ${timeoutMs}ms: ${list}`)
 }
 
+/**
+ * Clean the test sub-space here: the processings, runs, limits and worker locks of its accounts, the legacy plugins
+ * directory and the local registry caches. Nothing in another service: the registry keeps the suite's fixture plugins
+ * (`@test_processings_…`, re-uploaded by each test that needs one, removed by registry's own prefixed clean).
+ */
 export const clean = async () => {
   await waitForWorkerIdle()
-  await anonymousAx.delete(`${apiUrl}/api/v1/test-env`)
+  await anonymousAx.delete(`${apiUrl}/api/v1/test-env`, { params: { prefix } })
   await anonymousAx.delete(`${apiUrl}/api/v1/test-env/plugins`)
-  // Registry has no test-env endpoint — drop the db directly. Lazy import to
-  // avoid pulling the mongodb client into specs that don't need it.
-  const { cleanRegistryDb } = await import('./registry.ts')
-  await cleanRegistryDb()
+  const { cleanRegistryCache } = await import('./registry.ts')
+  await cleanRegistryCache()
 }
 
 /** Poll the test-env raw-run endpoint until status matches one of the given values. */

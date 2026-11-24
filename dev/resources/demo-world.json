@@ -1,0 +1,40 @@
+{
+  "prefix": "test_demo_",
+  "users": [{
+    "id": "test_demo_dev",
+    "firstName": "Dev",
+    "lastName": "User",
+    "email": "test_demo_dev@example.org",
+    "password": {
+      "clear": "passwd"
+    },
+    "defaultOrg": "test_demo_org"
+  }, {
+    "id": "test_demo_contrib",
+    "firstName": "Demo",
+    "lastName": "Contrib",
+    "email": "test_demo_contrib@example.org",
+    "password": {
+      "clear": "passwd"
+    }
+  }, {
+    "id": "test_demo_outsider",
+    "firstName": "Demo",
+    "lastName": "Outsider",
+    "email": "test_demo_outsider@example.org",
+    "password": {
+      "clear": "passwd"
+    }
+  }],
+  "organizations": [{
+    "id": "test_demo_org",
+    "name": "Fixtures Demo",
+    "members": [{
+      "id": "test_demo_dev",
+      "role": "admin"
+    }, {
+      "id": "test_demo_contrib",
+      "role": "contrib"
+    }]
+  }]
+}

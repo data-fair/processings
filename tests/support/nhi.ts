@@ -4,7 +4,7 @@ import { importPKCS8, SignJWT } from 'jose'
 import { axiosBuilder } from '@data-fair/lib-node/axios.js'
 import { baseURL, directoryUrl } from './axios.ts'
 
-// the non human identity of dev/resources/users.json, admin of test_processings_org1
+// the non human identity of tests/support/sd-fixtures.ts, admin of test_processings_org1
 export const scopeNhiId = 'test_processings_scope_nhi'
 const issuer = 'https://processings-tests.example.com'
 const subject = 'scope-tests'

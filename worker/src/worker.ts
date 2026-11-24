@@ -22,6 +22,7 @@ import limits from './utils/limits.ts'
 import { initMetrics, updateTaskMemoryGauges, updateWorkerMemoryGauges, setSlotState, recordExit, setExternalRssActive, updateTaskExternalGauges } from './utils/metrics.ts'
 import { finish } from './utils/runs.ts'
 import { buildErrorMessageFromStderr } from './utils/worker-operations.ts'
+import { taskEnv } from './utils/data-fair-api-key.ts'
 import { splitMemSampleLines, type MemorySample } from './utils/mem-sample.ts'
 import { diagnoseExit, type ExitDiagnosis } from './utils/exit-code.ts'
 import { createExternalSamplerFactory, type ExternalSample, type ExternalSamplerHandle } from './task/external-sampler.ts'
@@ -270,7 +271,7 @@ async function iter (run: Run, freeSlot: number) {
       '--no-warnings',
       './src/task/index.ts', run._id, processing._id
     ], {
-      env: process.env,
+      env: await taskEnv(),
       stdio: ['ignore', 'pipe', 'pipe']
     })
     child.stdout?.on('data', data => {
