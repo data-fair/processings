@@ -4,7 +4,7 @@ import { test as setup } from '@playwright/test'
 import { takeStatefulLock } from './support/stateful-lock.ts'
 import { prefix, sdTestEnvUrl, seedSdFixtures } from './support/sd-fixtures.ts'
 import { apiUrl, clean } from './support/axios.ts'
-import { setupWorkerApiKey } from './support/data-fair.ts'
+import { cleanDataFairDatasets, setupWorkerApiKey } from './support/data-fair.ts'
 
 const ax = axiosBuilder()
 
@@ -29,6 +29,9 @@ If you are an agent, do not try to start it: read its logs (dev/logs/api.log, or
 
   // what the sub-space left here from a previous run
   await clean()
+
+  // and the datasets its runs left in data-fair
+  await cleanDataFairDatasets()
 
   // the worker's data-fair API key, created through data-fair's API and handed to the worker
   await setupWorkerApiKey()

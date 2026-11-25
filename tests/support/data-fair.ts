@@ -1,6 +1,6 @@
 import { axiosAuth } from '@data-fair/lib-node/axios-auth.js'
 import { anonymousAx, apiUrl, directoryUrl } from './axios.ts'
-import { prefix } from './sd-fixtures.ts'
+import { prefix, sdFixtures } from './sd-fixtures.ts'
 
 /**
  * The worker runs the plugins, whose data-fair requests carry an API key in admin mode acting as the processing's
@@ -37,4 +37,20 @@ export const setupWorkerApiKey = async (): Promise<string> => {
   if (!clearKey) throw new Error(`data-fair did not return the clear key of the worker: ${JSON.stringify(res.data.apiKeys)}`)
   await anonymousAx.put(`${apiUrl}/api/v1/test-env/data-fair-api-key`, { key: clearKey })
   return clearKey
+}
+
+/**
+ * Delete the datasets the sub-space's accounts own in data-fair (the runs of the fixture plugins create some), through
+ * data-fair's public API as the sub-space's super admin: data-fair's own test API is absent from its image (minimal
+ * path), and what a run leaves would pile up to the owner's dataset limit (nbDatasets) over the runs.
+ */
+export const cleanDataFairDatasets = async (): Promise<void> => {
+  const { users, organizations } = sdFixtures()
+  const owners = [...users.map(u => `user:${u.id}`), ...organizations.map(o => `organization:${o.id}`)].join(',')
+  const superadmin = await dataFairSuperadmin()
+  for (;;) {
+    const { results } = (await superadmin.get('/datasets', { params: { owner: owners, size: 100, select: 'id' } })).data
+    if (!results.length) return
+    for (const dataset of results) await superadmin.delete(`/datasets/${dataset.id}`)
+  }
 }
