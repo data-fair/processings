@@ -3,11 +3,11 @@ import { anonymousAx, axiosAuth, clean } from '../../support/axios.ts'
 import { nhiSession } from '../../support/nhi.ts'
 import { publishFixturePlugin } from '../../support/registry.ts'
 
-const owner = { type: 'organization', id: 'test_org1', name: 'Test Org 1' }
+const owner = { type: 'organization', id: 'test_processings_org1', name: 'Test Org 1' }
 const status = { validateStatus: () => true }
 
 const createProcessing = async () => {
-  const admin = await axiosAuth({ email: 'test_admin1@test.com', org: 'test_org1' })
+  const admin = await axiosAuth({ email: 'test_processings_admin1@test.com', org: 'test_processings_org1' })
   const plugin = await publishFixturePlugin({ name: '@data-fair/processing-hello-world', version: '1.2.2' })
   const processing = (await admin.post('/api/v1/processings', { title: 'Scoped processing', plugin: plugin.pluginId, owner })).data
   return { admin, plugin, processing }
@@ -84,7 +84,7 @@ test.describe('scopes', () => {
 
   test('creating a processing with permissions needs the admin tier', async () => {
     const { admin, plugin } = await createProcessing()
-    const permissions = [{ profile: 'read', target: { type: 'userEmail', email: 'test_alone@test.com' } }]
+    const permissions = [{ profile: 'read', target: { type: 'userEmail', email: 'test_processings_alone@test.com' } }]
     const write = (await nhiSession('processings:write')).bearerAx
     expect((await write.post('/api/v1/processings', { title: 'shared', plugin: plugin.pluginId, owner, permissions }, status)).status).toBe(403)
     expect((await admin.get('/api/v1/processings', { params: { q: 'shared' } })).data.count).toBe(0)

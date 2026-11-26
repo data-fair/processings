@@ -10,34 +10,28 @@
 
 ```sh
 npm ci
-npx --no df-dev setup     # .env with free ports (kept if it exists, --force to redraw), types, UI build
 docker compose pull       # at first and then once in a while
 ```
 
 ## Start the development environment
 
 ```sh
-npm run dev-zellij                                        # core containers + ui, api, worker
-npm run dev-zellij -- --services events,openapi-viewer    # with the optional containers
+npm run dev                            # core containers, then the api, the worker and the ui
+npm run dev -- --profile events        # with an optional container (events, openapi-viewer, maildev)
 ```
 
-This opens a [zellij](https://zellij.dev/) (>= 0.44) session named after the checkout directory, or attaches to it if it runs. Start it from a shell on the `.nvmrc` Node version. The dev URL is in the footer. From another terminal: `npx --no df-dev status`, `npx --no df-dev logs <pane>`, `npx --no df-dev restart <pane>`, `npx --no df-dev up <service>`.
+`npm run dev` copies `dev/default.env` to `.env` the first time (fixed ports 5900-5914; `.env` overrides them
+and is never overwritten), builds the types and the UI once, starts the containers, then the api, the worker and
+the ui in the terminal. Ctrl+C stops them. The dev page is at `http://localhost:5900/processings/dev`, the process
+logs in `dev/logs/`. `npm run dev-deps` starts only the containers; `npm run dev:api`, `dev:worker` and `dev:ui`
+run one process each, with the variables of `.env` exported.
 
 ## Stop the development environment
 
-Quit zellij, then:
+Ctrl+C, then:
 
 ```sh
 npm run stop-dev-deps
-```
-
-## Worktrees
-
-Each checkout has its own `.env` with random ports, so you can run multiple worktrees side by side :
-
-```sh
-npx --no df-worktree feat-xyz          # from the main checkout: ../processings_feat-xyz, installed and built
-npx --no df-worktree-delete feat-xyz   # its containers, volumes and zellij session, then the worktree
 ```
 
 ## Working on types
@@ -59,7 +53,7 @@ docker build --progress=plain --target=worker -t data-fair/processings/worker:de
 
 ## Running the tests
 
-Run the test suite :
+The test suite runs against the running dev environment (`npm run dev`):
 
 ```sh
 npm run test

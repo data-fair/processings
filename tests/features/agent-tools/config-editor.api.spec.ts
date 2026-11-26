@@ -9,7 +9,7 @@ test.describe('config editor tools', () => {
 
   test('the form tools fill and save the config of a processing', async () => {
     const plugin = await publishFixturePlugin({ name: '@data-fair/processing-hello-world', version: '1.2.2' })
-    const admin = await axiosAuth({ email: 'test_admin1@test.com', org: 'test_org1' })
+    const admin = await axiosAuth({ email: 'test_processings_admin1@test.com', org: 'test_processings_org1' })
     const processing = (await admin.post('/api/v1/processings', { title: 'Editor processing', plugin: plugin.pluginId })).data
 
     const doc = (await anonymousAx.get('/api/v1/api-docs.json', { headers: { 'Accept-Language': 'en' } })).data
@@ -21,7 +21,7 @@ test.describe('config editor tools', () => {
       fetched.push(input instanceof Request ? input.url : String(input))
       return fetch(input, init)
     }) as typeof fetch
-    const ctx = { headers: { cookie: admin.cookieJar.getCookieStringSync(baseURL) }, identity: 'test_admin1', fetch: recordingFetch }
+    const ctx = { headers: { cookie: admin.cookieJar.getCookieStringSync(baseURL) }, identity: 'test_processings_admin1', fetch: recordingFetch }
     const call = async (name: string, params: Record<string, unknown>) => {
       const res = await tool(name).execute({ form: 'processing_config', id: processing._id, ...params }, ctx)
       if (process.env.DEBUG_EDITOR) console.log(name, JSON.stringify(params), '\n', res.text)
@@ -40,7 +40,7 @@ test.describe('config editor tools', () => {
     // download, in the UI too: what is checked here is that the download reached data-fair, filtered
     // on the owner of the processing
     const datasets = fetched.map(u => new URL(u)).find(u => u.pathname === '/data-fair/api/v1/datasets')
-    expect(datasets?.searchParams.get('owner')).toBe('organization:test_org1')
+    expect(datasets?.searchParams.get('owner')).toBe('organization:test_processings_org1')
     // back to a dataset to create, then save
     expect((await call('setFieldValue', { path: '/$allOf-0/$oneOf', value: 0 })).isError).toBeFalsy()
     expect((await call('setFieldValue', { path: '/$allOf-0/$oneOf/0/dataset/title', value: 'Agent dataset' })).isError).toBeFalsy()

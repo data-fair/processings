@@ -4,32 +4,49 @@ import path from 'node:path'
 import mongo from '#mongo'
 import config from '#config'
 
+// Mounted in development only (app.ts): the Playwright test suite resets and inspects state on the running dev API.
 const router = express.Router()
 
-// Cleanup test_* owned data from mongo + plugins on disk
+// Prefixed test sub-spaces: a test suite owns the accounts whose ids start with its own prefix (test_<suite>_)
+// and the data they own, cleaned without touching the other suites nor the unprefixed accounts
+const testPrefixRegexp = /^test_[a-z0-9]+(?:_[a-z0-9]+)*_$/
+const validPrefix = (req: express.Request) => {
+  const prefix = req.query.prefix
+  return typeof prefix === 'string' && testPrefixRegexp.test(prefix) ? prefix : undefined
+}
+// the prefix only holds [a-z0-9_], safe in a regexp
+const ownerFilter = (prefix: string) => ({ 'owner.id': { $regex: new RegExp('^' + prefix) } })
+
+// Cleanup of a sub-space (DELETE /?prefix=test_<suite>_): the processings and runs owned by its accounts, their
+// limits, and the worker locks of those processings. Nothing else: the other sub-spaces and the unprefixed accounts
+// keep their data, the worker keeps its other locks.
 router.delete('/', async (req, res, next) => {
   try {
-    const testOwnerFilter = { 'owner.id': { $regex: /^test_/ } }
-    const testIdFilter = { id: { $regex: /^test_/ } }
-
+    const prefix = validPrefix(req)
+    if (!prefix) return res.status(400).type('text/plain').send('invalid test prefix')
+    const filter = ownerFilter(prefix)
+    // the worker locks a run by the id of its processing
+    const processingIds = (await mongo.processings.find(filter).project<{ _id: string }>({ _id: 1 }).toArray()).map(p => p._id)
     await Promise.all([
-      mongo.processings.deleteMany(testOwnerFilter),
-      mongo.runs.deleteMany(testOwnerFilter),
-      mongo.limits.deleteMany(testIdFilter),
-      mongo.db.collection('locks').deleteMany({})
+      mongo.processings.deleteMany(filter),
+      mongo.runs.deleteMany(filter),
+      mongo.limits.deleteMany({ id: { $regex: new RegExp('^' + prefix) } }),
+      mongo.db.collection<{ _id: string }>('locks').deleteMany({ _id: { $in: processingIds } })
     ])
-
-    res.json({ ok: true })
+    res.status(204).send()
   } catch (err) {
     next(err)
   }
 })
 
-// Return the list of runs that are not yet completed (used by tests to wait for worker idle)
+// The runs of a sub-space that are not yet completed (GET /pending-tasks?prefix=test_<suite>_, used by its tests to
+// wait for the worker to be idle): the runs of the other sub-spaces are not theirs to wait for
 router.get('/pending-tasks', async (req, res, next) => {
   try {
+    const prefix = validPrefix(req)
+    if (!prefix) return res.status(400).type('text/plain').send('invalid test prefix')
     const runs = await mongo.runs.find(
-      { status: { $in: ['triggered', 'scheduled', 'running'] } },
+      { ...ownerFilter(prefix), status: { $in: ['triggered', 'scheduled', 'running'] } },
       { projection: { _id: 1, status: 1, 'processing._id': 1, 'processing.title': 1 } }
     ).toArray()
     const grouped: Record<string, any[]> = { triggered: [], scheduled: [], running: [] }
@@ -79,46 +96,58 @@ router.get('/raw-run/:id', async (req, res, next) => {
   }
 })
 
-// Set an environment variable in the main process (for testing)
-router.post('/set-env', (req, res, next) => {
+// Documents written as is in one of the collections of the sub-space clean, and read back: the test of the clean
+// owns nested sub-spaces whose accounts do not exist in simple-directory.
+const docsCollections = ['processings', 'runs', 'limits', 'locks']
+router.post('/docs/:collection', async (req, res, next) => {
   try {
-    const { key, value } = req.body
-    if (value === undefined || value === null) {
-      delete process.env[key]
-    } else {
-      process.env[key] = value
-    }
-    res.json({ ok: true })
+    if (!docsCollections.includes(req.params.collection)) return res.status(400).send('unknown collection')
+    await mongo.db.collection(req.params.collection).insertOne(req.body)
+    res.status(201).send()
+  } catch (err) {
+    next(err)
+  }
+})
+router.get('/docs/:collection/:id', async (req, res, next) => {
+  try {
+    if (!docsCollections.includes(req.params.collection)) return res.status(400).send('unknown collection')
+    const doc = await mongo.db.collection<{ _id: string }>(req.params.collection).findOne({ _id: req.params.id })
+    if (!doc) return res.status(404).send()
+    res.json(doc)
   } catch (err) {
     next(err)
   }
 })
 
-// Set a config value at runtime (for testing)
-router.post('/set-config', (req, res, next) => {
+// The data-fair API key of the worker in development: the test setup creates it through data-fair's API and hands it
+// over here, the worker reads it from this database before each run (worker/src/utils/data-fair-api-key.ts).
+router.put('/data-fair-api-key', async (req, res, next) => {
   try {
-    const { path: configPath, value } = req.body
-    const parts = configPath.split('.')
-    let obj: any = config
-    for (let i = 0; i < parts.length - 1; i++) {
-      obj = obj[parts[i]]
-    }
-    obj[parts[parts.length - 1]] = value
-    res.json({ ok: true })
+    const key = req.body?.key
+    if (typeof key !== 'string' || !key) return res.status(400).send('key is required')
+    await mongo.db.collection<{ _id: string, key: string }>('test-env')
+      .updateOne({ _id: 'data-fair-api-key' }, { $set: { key } }, { upsert: true })
+    res.status(204).send()
   } catch (err) {
     next(err)
   }
 })
 
-// Wipe the installed plugins directory (used between test runs).
-// No-op when the legacy plugins volume isn't mounted (config.dataDir unset).
+// Remove the installed plugins of a sub-space (DELETE /plugins?prefix=test_<suite>_): the entries of the legacy plugins
+// directory named after its plugins (`@test_<suite>_…`), the others stay. No-op when the legacy plugins volume isn't
+// mounted (config.dataDir unset).
 router.delete('/plugins', async (req, res, next) => {
   try {
+    const prefix = validPrefix(req)
+    if (!prefix) return res.status(400).type('text/plain').send('invalid test prefix')
     if (config.dataDir) {
       const pluginsDir = path.resolve(config.dataDir, 'plugins')
-      await fs.emptyDir(pluginsDir)
+      const entries = await fs.pathExists(pluginsDir) ? await fs.readdir(pluginsDir) : []
+      for (const entry of entries.filter(e => e.startsWith('@' + prefix))) {
+        await fs.remove(path.join(pluginsDir, entry))
+      }
     }
-    res.json({ ok: true })
+    res.status(204).send()
   } catch (err) {
     next(err)
   }

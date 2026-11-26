@@ -15,7 +15,7 @@ const createBrokenProcessing = async (
   const processing = (await superadmin.post('/api/v1/processings', {
     title: 'Broken processing',
     plugin: fixture.pluginId,
-    owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' }
+    owner: { type: 'user', id: 'test_processings_superadmin', name: 'Test Super Admin' }
   })).data
   await anonymousAx.patch(
     `${apiUrl}/api/v1/test-env/raw-processing/${processing._id}`,
@@ -29,7 +29,7 @@ test.describe('processing with unavailable plugin', () => {
   test.afterAll(clean)
 
   test('GET /processings/:id returns 200', async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     const id = await createBrokenProcessing(superadmin)
 
     const res = await superadmin.get(`/api/v1/processings/${id}`)
@@ -39,7 +39,7 @@ test.describe('processing with unavailable plugin', () => {
   })
 
   test('PATCH /processings/:id with no config field succeeds even when the plugin is gone', async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     const id = await createBrokenProcessing(superadmin)
 
     // Renaming/changing scheduling on a broken-plugin processing must work —
@@ -51,7 +51,7 @@ test.describe('processing with unavailable plugin', () => {
   })
 
   test('PATCH /processings/:id with a config field surfaces a 404 with the plugin id', { tag: '@smoke' }, async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     const id = await createBrokenProcessing(superadmin)
 
     const res = await superadmin.patch(
@@ -65,7 +65,7 @@ test.describe('processing with unavailable plugin', () => {
   })
 
   test('DELETE /processings/:id returns 204', async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     const id = await createBrokenProcessing(superadmin)
 
     const del = await superadmin.delete(`/api/v1/processings/${id}`)
@@ -80,7 +80,7 @@ test.describe('processing with unavailable plugin', () => {
   })
 
   test('worker logs a friendly message when the plugin is unavailable', async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     const id = await createBrokenProcessing(superadmin)
 
     // Activate the processing via the raw test-env endpoint to bypass the

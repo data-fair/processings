@@ -1,38 +1,45 @@
-const mongoPort = process.env.MONGO_PORT ?? '27017'
-const eventsPort = process.env.EVENTS_PORT ?? '8083'
-const dfPort = process.env.DF_PORT ?? '8081'
-const registryPort = process.env.REGISTRY_PORT ?? '8085'
-const maildevSmtpPort = parseInt(process.env.MAILDEV_SMTP_PORT ?? '1025')
-const observerPort = parseInt(process.env.DEV_WORKER_OBSERVER_PORT ?? '9091')
+// the dev ports come from .env (copied from dev/default.env by npm run dev-deps); the production names of
+// custom-environment-variables.mjs (MONGO_URL, DATA_FAIR_URL, PRIVATE_DATA_FAIR_URL, DATA_FAIR_API_KEY...) override
+// this file
+/** @param {string} name */
+const envPort = (name) => {
+  const port = process.env[name]
+  if (!port) throw new Error(`${name} must be set, run "npm run dev-deps" (it creates .env from dev/default.env)`)
+  return port
+}
+// optional services (events): turned off ('') when their port variable is empty
+/** @param {string | undefined} port */
+const optionalUrl = (port) => port ? `http://localhost:${port}` : ''
 
 export default {
   cipherPassword: 'dev-cipher-password-0123456789abcdef',
   dataDir: '../data/development',
   dataFairAdminMode: true,
-  // Dev/test default. The matching settings doc in DF's mongo is seeded by
-  // tests/state-setup.ts (idempotent). Real deployments override this via
-  // DATA_FAIR_API_KEY or local-development.cjs.
-  dataFairAPIKey: 'dev-test-processings-worker-key',
+  // data-fair's public URL, the base of the plugins' relative requests (the default is a fixed port)
+  dataFairUrl: `http://${process.env.DEV_HOST ?? 'localhost'}:${envPort('NGINX_PORT')}/data-fair`,
+  // none by default (DATA_FAIR_API_KEY sets one): the tasks then use the key the test setup handed over
+  // (worker/src/utils/data-fair-api-key.ts)
+  dataFairAPIKey: '',
   mails: {
     transport: {
       host: 'localhost',
-      port: maildevSmtpPort,
+      port: parseInt(envPort('MAILDEV_SMTP_PORT')),
       ignoreTLS: true
     }
   },
   maxFailures: 2,
   maxFailuresCooldown: 0.05, // 3 minutes
-  mongoUrl: `mongodb://localhost:${mongoPort}/data-fair-processings-development`,
-  privateRegistryUrl: `http://localhost:${registryPort}/registry`,
+  mongoUrl: `mongodb://localhost:${envPort('MONGO_PORT')}/data-fair-processings-development`,
+  privateRegistryUrl: `http://localhost:${envPort('REGISTRY_PORT')}/registry`,
   secretKeys: {
     events: 'secret-events',
     registry: 'secret-registry-internal'
   },
   observer: {
-    port: observerPort
+    port: parseInt(envPort('DEV_WORKER_OBSERVER_PORT'))
   },
-  privateDataFairUrl: `http://localhost:${dfPort}`,
-  privateEventsUrl: `http://localhost:${eventsPort}`,
+  privateDataFairUrl: `http://localhost:${envPort('DF_PORT')}`,
+  privateEventsUrl: optionalUrl(process.env.EVENTS_PORT),
   runsRetention: 5,
   upgradeRoot: '../',
   worker: {

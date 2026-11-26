@@ -3,7 +3,7 @@ import { anonymousAx, apiUrl, axiosAuth, clean } from '../../support/axios.ts'
 import { publishFixturePlugin } from '../../support/registry.ts'
 
 const setupBrokenProcessing = async () => {
-  const superadmin = await axiosAuth('test_superadmin@test.com')
+  const superadmin = await axiosAuth('test_processings_superadmin@test.com')
   const fixture = await publishFixturePlugin({
     name: '@data-fair/processing-hello-world',
     version: '1.2.2'
@@ -11,7 +11,7 @@ const setupBrokenProcessing = async () => {
   const processing = (await superadmin.post('/api/v1/processings', {
     title: 'Broken e2e processing',
     plugin: fixture.pluginId,
-    owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' }
+    owner: { type: 'user', id: 'test_processings_superadmin', name: 'Test Super Admin' }
   })).data
   await anonymousAx.patch(
     `${apiUrl}/api/v1/test-env/raw-processing/${processing._id}`,
@@ -26,7 +26,7 @@ test.describe('processing with unavailable plugin — UI', () => {
 
   test('list shows the "Plugin indisponible" badge', async ({ page, goToWithAuth }) => {
     await setupBrokenProcessing()
-    await goToWithAuth('/processings/processings', 'test_superadmin')
+    await goToWithAuth('/processings/processings', 'test_processings_superadmin')
     await expect(page.getByText('Broken e2e processing')).toBeVisible({ timeout: 10000 })
     // The card list-item renders: t('pluginUnavailable') + ' — ' + processing.plugin
     // FR locale is the test default.
@@ -35,7 +35,7 @@ test.describe('processing with unavailable plugin — UI', () => {
 
   test('edit page shows the banner and hides the form', async ({ page, goToWithAuth }) => {
     const id = await setupBrokenProcessing()
-    await goToWithAuth(`/processings/processings/${id}`, 'test_superadmin')
+    await goToWithAuth(`/processings/processings/${id}`, 'test_processings_superadmin')
 
     // Banner present.
     await expect(page.getByText(/Plugin indisponible/).first()).toBeVisible({ timeout: 10000 })
@@ -51,7 +51,7 @@ test.describe('processing with unavailable plugin — UI', () => {
 
   test('delete from the edit page removes the processing', async ({ page, goToWithAuth }) => {
     const id = await setupBrokenProcessing()
-    await goToWithAuth(`/processings/processings/${id}`, 'test_superadmin')
+    await goToWithAuth(`/processings/processings/${id}`, 'test_processings_superadmin')
 
     // Wait for the page to fully load (banner must be visible before clicking).
     await expect(page.getByText(/Plugin indisponible/).first()).toBeVisible({ timeout: 10000 })
@@ -65,7 +65,7 @@ test.describe('processing with unavailable plugin — UI', () => {
     await page.waitForURL(/\/processings\/processings$/, { timeout: 10000 })
 
     // Verify the processing is gone via the API.
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     const res = await superadmin.get(
       `/api/v1/processings/${id}`,
       { validateStatus: () => true }

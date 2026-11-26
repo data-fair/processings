@@ -16,7 +16,7 @@ setup('Warmup heavy dev routes', async ({ page, goToWithAuth }, testInfo) => {
   const stamp = (label: string) => testInfo.annotations.push({ type: 'warmup', description: `${label}: ${((Date.now() - start) / 1000).toFixed(1)}s` })
 
   await clean()
-  const superadmin = await axiosAuth('test_superadmin@test.com')
+  const superadmin = await axiosAuth('test_processings_superadmin@test.com')
   const fixture = await publishFixturePlugin({
     name: '@data-fair/processing-hello-world',
     version: '1.2.2'
@@ -24,18 +24,18 @@ setup('Warmup heavy dev routes', async ({ page, goToWithAuth }, testInfo) => {
   const processing = (await superadmin.post('/api/v1/processings', {
     title: 'Warmup processing',
     plugin: fixture.pluginId,
-    owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' }
+    owner: { type: 'user', id: 'test_processings_superadmin', name: 'Test Super Admin' }
   })).data
   stamp('seeded plugin + processing')
 
   // 1) List route + login flow.
-  await goToWithAuth('/processings/processings', 'test_superadmin')
+  await goToWithAuth('/processings/processings', 'test_processings_superadmin')
   await expect(page.getByText('Warmup processing')).toBeVisible({ timeout: 60_000 })
   stamp('list rendered')
 
   // 2) Edit route: rendering the vjsf form proves the config schema compiled
   //    and pulled its form components (autocomplete, select, switch...).
-  await goToWithAuth(`/processings/processings/${processing._id}`, 'test_superadmin')
+  await goToWithAuth(`/processings/processings/${processing._id}`, 'test_processings_superadmin')
   await expect(page.locator('.vjsf')).toBeVisible({ timeout: 60_000 })
   stamp('edit form rendered')
 

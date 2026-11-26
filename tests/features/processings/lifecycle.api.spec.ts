@@ -19,19 +19,19 @@ test.describe('processing', () => {
   test.afterAll(clean)
 
   test('should create a new processing, activate it and run it', { tag: '@smoke' }, async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     const plugin = await installTestPlugin()
 
     let processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
       plugin: plugin.pluginId,
-      owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' }
+      owner: { type: 'user', id: 'test_processings_superadmin', name: 'Test Super Admin' }
     })).data
     expect(processing._id).toBeTruthy()
     expect(processing.scheduling).toEqual([])
     expect(processing.webhookKey).toBeFalsy()
 
-    const processings = (await superadmin.get('/api/v1/processings?showAll=true&owner=user:test_superadmin')).data
+    const processings = (await superadmin.get('/api/v1/processings?showAll=true&owner=user:test_processings_superadmin')).data
     expect(processings.results.find((p: any) => p._id === processing._id)).toBeTruthy()
 
     let runs = (await superadmin.get('/api/v1/runs', { params: { processing: processing._id } })).data
@@ -75,13 +75,13 @@ test.describe('processing', () => {
   })
 
   test('should kill a long run with SIGTERM', async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     const plugin = await installTestPlugin()
 
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
       plugin: plugin.pluginId,
-      owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' },
+      owner: { type: 'user', id: 'test_processings_superadmin', name: 'Test Super Admin' },
       active: true,
       config: {
         datasetMode: 'create',
@@ -97,19 +97,19 @@ test.describe('processing', () => {
     const killedRun = await waitForRunStatus(triggered._id, 'killed')
     expect(killedRun.log.length).toBe(6)
 
-    const limits = (await superadmin.get('/api/v1/limits/user/test_superadmin')).data
+    const limits = (await superadmin.get('/api/v1/limits/user/test_processings_superadmin')).data
     expect(limits.processings_seconds.consumption).toBeGreaterThanOrEqual(1)
     expect(limits.processings_seconds.limit).toBe(-1)
   })
 
   test('should kill a long run with SIGTERM and wait for grace period', async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     const plugin = await installTestPlugin()
 
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
       plugin: plugin.pluginId,
-      owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' },
+      owner: { type: 'user', id: 'test_processings_superadmin', name: 'Test Super Admin' },
       active: true,
       config: {
         datasetMode: 'create',
@@ -129,10 +129,10 @@ test.describe('processing', () => {
   })
 
   test('should fail a run if processings_seconds limit is exceeded', async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     const plugin = await installTestPlugin()
 
-    await superadmin.post('/api/v1/limits/user/test_superadmin', {
+    await superadmin.post('/api/v1/limits/user/test_processings_superadmin', {
       processings_seconds: { limit: 1 },
       lastUpdate: new Date().toISOString()
     })
@@ -140,7 +140,7 @@ test.describe('processing', () => {
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
       plugin: plugin.pluginId,
-      owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' },
+      owner: { type: 'user', id: 'test_processings_superadmin', name: 'Test Super Admin' },
       active: true,
       config: {
         datasetMode: 'create',
@@ -154,19 +154,19 @@ test.describe('processing', () => {
     const firstRun = (await superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)).data
     await waitForRunStatus(firstRun._id, 'finished', 30_000)
 
-    let limits = (await superadmin.get('/api/v1/limits/user/test_superadmin')).data
+    let limits = (await superadmin.get('/api/v1/limits/user/test_processings_superadmin')).data
     const consumption = limits.processings_seconds.consumption
     expect(consumption).toBeGreaterThanOrEqual(1)
 
     const secondRun = (await superadmin.post(`/api/v1/processings/${processing._id}/_trigger`)).data
     await waitForRunStatus(secondRun._id, 'error', 15_000)
-    limits = (await superadmin.get('/api/v1/limits/user/test_superadmin')).data
+    limits = (await superadmin.get('/api/v1/limits/user/test_processings_superadmin')).data
     expect(limits.processings_seconds.consumption).toBe(consumption)
   })
 
   test('should manage a processing as a department admin', async () => {
     const plugin = await installTestPlugin()
-    const depAdmin = await axiosAuth({ email: 'test_dep_admin@test.com', org: 'test_org1', dep: 'dep1' })
+    const depAdmin = await axiosAuth({ email: 'test_processings_dep_admin@test.com', org: 'test_processings_org1', dep: 'dep1' })
 
     const processing = (await depAdmin.post('/api/v1/processings', {
       title: 'Hello processing',
@@ -196,13 +196,13 @@ test.describe('processing', () => {
   })
 
   test('should config a new processing with a secret field', async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     const plugin = await installTestPlugin()
 
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
       plugin: plugin.pluginId,
-      owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' }
+      owner: { type: 'user', id: 'test_processings_superadmin', name: 'Test Super Admin' }
     })).data
     expect(processing._id).toBeTruthy()
 
@@ -241,13 +241,13 @@ test.describe('processing', () => {
   })
 
   test('should patch config with secrets', async () => {
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
     const plugin = await installTestPlugin()
 
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Hello processing',
       plugin: plugin.pluginId,
-      owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' },
+      owner: { type: 'user', id: 'test_processings_superadmin', name: 'Test Super Admin' },
       active: true,
       config: {
         datasetMode: 'create',

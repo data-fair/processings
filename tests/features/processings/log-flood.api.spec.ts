@@ -26,7 +26,7 @@ test.describe('run log size guard', () => {
 
   test('a task flooding its log is failed once the run document is full', async () => {
     test.setTimeout(300_000)
-    const superadmin = await axiosAuth('test_superadmin@test.com')
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
 
     const plugin = await publishFixturePlugin({
       name: '@data-fair-tests/processing-log-flood',
@@ -36,7 +36,7 @@ test.describe('run log size guard', () => {
     const processing = (await superadmin.post('/api/v1/processings', {
       title: 'Log flood test',
       plugin: plugin.pluginId,
-      owner: { type: 'user', id: 'test_superadmin', name: 'Test Super Admin' },
+      owner: { type: 'user', id: 'test_processings_superadmin', name: 'Test Super Admin' },
       active: true,
       config: {}
     })).data
