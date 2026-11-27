@@ -113,6 +113,8 @@ export const publishFixtureBranchPlugin = async (opts: PublishBranchOptions): Pr
 
   const form = new FormData()
   form.append('file', tgz, { filename: 'package.tgz', contentType: 'application/gzip' })
+  // a processing plugin, as the registry lists it for the UI's plugin lists (picker, filter, cards); the default is `other`
+  form.append('category', 'processing')
   if (opts.architecture) form.append('architecture', opts.architecture)
   await axiosRegistryInternal.post(
     `/api/v1/artefacts/npm/${encodeURIComponent(opts.artefactId)}`,
@@ -155,6 +157,8 @@ export const publishFixturePlugin = async (opts: PublishOptions): Promise<Publis
   const form = new FormData()
   form.append('architecture', arch)
   form.append('file', tgz, { filename: 'package.tgz', contentType: 'application/gzip' })
+  // a processing plugin, as the registry lists it for the UI's plugin lists (picker, filter, cards); the default is `other`
+  form.append('category', 'processing')
   await axiosRegistryInternal.post(
     `/api/v1/artefacts/npm/${encodeURIComponent(pluginId)}`,
     form,

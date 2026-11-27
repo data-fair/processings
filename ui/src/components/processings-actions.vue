@@ -132,19 +132,8 @@ const statusesText = computed<Record<string, string>>(() => ({
   triggered: t('statusTriggered')
 }))
 
-// Subset of registry's Artefact shape used to render the plugin filter labels.
-type RegistryArtefact = {
-  _id: string
-  name: string
-  majorVersion: number
-  title?: { fr?: string, en?: string }
-}
-
-const installedPluginsFetch = useFetch<{ results: RegistryArtefact[], count: number }>(
-  '/registry/api/v1/artefacts',
-  { query: { category: 'processing', size: 200 } }
-)
-const installedPlugins = computed(() => installedPluginsFetch.data.value?.results)
+// the labels of the plugin filter, deprecated plugins included: their processings are still listed
+const { plugins: installedPlugins } = useRegistryPlugins()
 
 const eventsSubscribeUrl = computed(() => {
   const topics = [

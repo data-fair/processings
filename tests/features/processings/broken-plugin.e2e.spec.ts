@@ -1,6 +1,6 @@
 import { test, expect } from '../../fixtures/login.ts'
 import { anonymousAx, apiUrl, axiosAuth, clean } from '../../support/axios.ts'
-import { publishFixturePlugin } from '../../support/registry.ts'
+import { axiosRegistryInternal, fixturePluginId, publishFixtureBranchPlugin, publishFixturePlugin } from '../../support/registry.ts'
 
 const setupBrokenProcessing = async () => {
   const superadmin = await axiosAuth('test_processings_superadmin@test.com')
@@ -26,11 +26,39 @@ test.describe('processing with unavailable plugin — UI', () => {
 
   test('list shows the "Plugin indisponible" badge', async ({ page, goToWithAuth }) => {
     await setupBrokenProcessing()
+    // the cards of the active account read the registry list once, they no longer ask for their plugin one by one
+    const perCardRequests: string[] = []
+    page.on('request', r => { if (/\/processings\/[^/]+\/plugin$/.test(new URL(r.url()).pathname)) perCardRequests.push(r.url()) })
     await goToWithAuth('/processings/processings', 'test_processings_superadmin')
     await expect(page.getByText('Broken e2e processing')).toBeVisible({ timeout: 10000 })
     // The card list-item renders: t('pluginUnavailable') + ' — ' + processing.plugin
     // FR locale is the test default.
     await expect(page.getByText(/Plugin indisponible/)).toBeVisible()
+    expect(perCardRequests).toEqual([])
+  })
+
+  test('list and edit page flag a deprecated plugin', async ({ page, goToWithAuth }) => {
+    const superadmin = await axiosAuth('test_processings_superadmin@test.com')
+    const pluginId = fixturePluginId('@data-fair/processing-hello-world', 'deprecated')
+    await publishFixtureBranchPlugin({ artefactId: pluginId })
+    await axiosRegistryInternal.patch(`/api/v1/artefacts/${encodeURIComponent(pluginId)}`, { deprecated: false })
+    const processing = (await superadmin.post('/api/v1/processings', {
+      title: 'Deprecated e2e processing',
+      plugin: pluginId,
+      owner: { type: 'user', id: 'test_processings_superadmin', name: 'Test Super Admin' }
+    })).data
+    await axiosRegistryInternal.patch(`/api/v1/artefacts/${encodeURIComponent(pluginId)}`, { deprecated: true })
+    try {
+      await goToWithAuth('/processings/processings', 'test_processings_superadmin')
+      await expect(page.getByText('Deprecated e2e processing')).toBeVisible({ timeout: 10000 })
+      await expect(page.getByText(/— déprécié/)).toBeVisible()
+      await expect(page.getByText(/Plugin indisponible/)).toHaveCount(0)
+
+      await goToWithAuth(`/processings/processings/${processing._id}`, 'test_processings_superadmin')
+      await expect(page.getByText('Plugin déprécié')).toBeVisible({ timeout: 10000 })
+    } finally {
+      await axiosRegistryInternal.patch(`/api/v1/artefacts/${encodeURIComponent(pluginId)}`, { deprecated: false })
+    }
   })
 
   test('edit page shows the banner and hides the form', async ({ page, goToWithAuth }) => {

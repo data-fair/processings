@@ -85,7 +85,7 @@
             </template>
           </div>
           <v-alert
-            v-if="!filteredArtefacts.length && !installedPluginsFetch.loading.value"
+            v-if="!filteredArtefacts.length && !installedPluginsLoading"
             type="info"
             variant="tonal"
             class="mt-4"
@@ -186,14 +186,11 @@ const ownerRole = computed(() => {
 const canAdmin = computed(() => ownerRole.value === 'admin' || !!session.state.user?.adminMode)
 if (!canAdmin.value) throw new Error(t('noPermission'))
 
-// Registry sits on the same domain at /registry — same-origin call, the
-// SimpleDirectory session cookie is sent automatically. Filtered server-side
-// to processing-category artefacts the calling account can see.
-const installedPluginsFetch = useFetch<{ results: RegistryArtefact[], count: number }>(
-  '/registry/api/v1/artefacts',
-  { query: { category: 'processing', size: 100 } }
-)
-const installedPlugins = computed(() => installedPluginsFetch.data.value?.results ?? [])
+// The registry's processing plugins the session's account can see, every page of them (use-registry-plugins.ts).
+// A deprecated plugin still runs its processings but is not offered for a new one.
+const registryPlugins = useRegistryPlugins()
+const installedPlugins = computed(() => (registryPlugins.plugins.value ?? []).filter(a => !a.deprecated))
+const installedPluginsLoading = computed(() => !registryPlugins.plugins.value && !registryPlugins.error.value)
 
 const search = ref('')
 const filteredArtefacts = computed(() => {
