@@ -29,7 +29,7 @@
         style="background-color: inherit;"
       >
         <!-- Plugin name -->
-        <v-list-item v-if="pluginFetch.loading.value">
+        <v-list-item v-if="pluginLoading">
           <v-progress-circular
             indeterminate
             color="primary"
@@ -38,7 +38,7 @@
           />
         </v-list-item>
         <v-list-item
-          v-else-if="pluginFetch.error.value?.statusCode"
+          v-else-if="pluginUnavailable"
           :title="t('pluginUnavailableHint')"
         >
           <template #prepend>
@@ -51,11 +51,23 @@
             {{ t('pluginUnavailable') + ' — ' + processing.plugin }}
           </span>
         </v-list-item>
-        <v-list-item v-else>
+        <v-list-item
+          v-else
+          :title="plugin?.deprecated ? t('pluginDeprecatedHint') : undefined"
+        >
           <template #prepend>
-            <v-icon :icon="mdiPowerPlug" />
+            <v-icon
+              :icon="mdiPowerPlug"
+              :color="plugin?.deprecated ? 'warning' : undefined"
+            />
           </template>
-          {{ localizedText(pluginFetch.data.value?.title, locale) ?? pluginFetch.data.value?.name ?? processing.plugin }}
+          {{ localizedText(plugin?.title, locale) ?? plugin?.name ?? processing.plugin }}
+          <span
+            v-if="plugin?.deprecated"
+            class="text-warning"
+          >
+            {{ ' — ' + t('pluginDeprecated') }}
+          </span>
         </v-list-item>
 
         <!-- Linked dataset -->
@@ -191,7 +203,25 @@ const props = defineProps({
   showOwner: Boolean
 })
 
-const pluginFetch = usePluginFetch(props.processing._id)
+const session = useSession()
+
+// The plugin of a processing of the active account comes from the registry list, read once for the whole page; a
+// processing shared from another account asks the processings API, which reads the registry as its owner.
+const fromList = pluginFromList(props.processing.owner, session.state.account, !!session.state.user?.adminMode)
+const registryPlugins = fromList ? useRegistryPlugins() : null
+const pluginFetch = fromList ? null : usePluginFetch(props.processing._id)
+
+const plugin = computed(() => registryPlugins
+  ? registryPlugins.byId.value?.[props.processing.plugin]
+  : pluginFetch?.data.value)
+const pluginLoading = computed(() => registryPlugins
+  ? !registryPlugins.byId.value && !registryPlugins.error.value
+  : !!pluginFetch?.loading.value)
+// absent from a complete list of the owner's plugins: deleted, or its access revoked (a list that failed to load
+// says nothing, the plugin id is shown as is)
+const pluginUnavailable = computed(() => registryPlugins
+  ? !!registryPlugins.byId.value && !plugin.value
+  : !!pluginFetch?.error.value?.statusCode)
 
 </script>
 
@@ -199,6 +229,8 @@ const pluginFetch = usePluginFetch(props.processing._id)
   en:
     pluginUnavailable: Plugin unavailable
     pluginUnavailableHint: This processing's plugin has been removed or its access revoked. You can no longer edit or run it, but you can view its history and delete it.
+    pluginDeprecated: deprecated
+    pluginDeprecatedHint: This plugin is deprecated. This processing still runs, but no new processing can be created from it.
     runStarted: Run started
     lastRunFinished: Last run finished
     duration: "Duration:"
@@ -214,6 +246,8 @@ const pluginFetch = usePluginFetch(props.processing._id)
   fr:
     pluginUnavailable: Plugin indisponible
     pluginUnavailableHint: Le plugin de ce traitement a été supprimé ou son accès retiré. Vous ne pouvez plus le modifier ni l'exécuter, mais vous pouvez consulter son historique et le supprimer.
+    pluginDeprecated: déprécié
+    pluginDeprecatedHint: Ce plugin est déprécié. Ce traitement fonctionne toujours, mais aucun nouveau traitement ne peut être créé à partir de ce plugin.
     runStarted: Exécution commencée
     lastRunFinished: Dernière exécution terminée
     duration: "Durée :"

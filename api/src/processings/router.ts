@@ -397,6 +397,13 @@ router.post('', requireOperationScope('postProcessing'), async (req, res) => {
   body._id = nanoid()
   body.owner = body.owner ?? sessionState.account
   if (!permissions.isAdmin(sessionState, body.owner)) return res.status(403).send('No permission to create a processing')
+  // A deprecated plugin still runs and edits its processings, but no new one is created from it. Any other registry
+  // answer (a missing plugin, no access, an outage) leaves the creation as it was: the plugin is only checked when
+  // the config needs it (below).
+  if (body.plugin) {
+    const artefact = await fetchPluginArtefact(body).catch(() => null)
+    if (artefact?.deprecated) return res.status(400).send(`The plugin ${body.plugin} is deprecated: no new processing can be created from it.`)
+  }
   body.scheduling = body.scheduling || []
   body.webhookKey = cryptoRandomString({ length: 16, type: 'url-safe' })
   body.created = body.updated = {

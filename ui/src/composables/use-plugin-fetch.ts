@@ -13,6 +13,8 @@ export interface RegistryArtefact {
   group?: { fr?: string, en?: string }
   documentation?: string
   thumbnail?: { id: string, width: number, height: number }
+  /** still runs its processings, but no new one can be created from it */
+  deprecated?: boolean
 }
 
 const fetches: Record<string, ReturnType<typeof useFetch<RegistryArtefact>>> = {}

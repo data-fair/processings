@@ -14,6 +14,15 @@
       <br>
       <code>{{ processing?.plugin }}</code>
     </v-alert>
+    <v-alert
+      v-else-if="plugin?.deprecated"
+      type="warning"
+      variant="tonal"
+      class="mb-4"
+      :title="t('pluginDeprecatedTitle')"
+    >
+      {{ t('pluginDeprecatedBody') }}
+    </v-alert>
     <h2 class="text-headline-small">
       {{ t('processingTitle', { title: processing.title }) }}
     </h2>
@@ -373,6 +382,8 @@ const timezoneLabel = (timeZone?: string) => {
     pluginTitle: 'Plugin {title}'
     pluginUnavailableTitle: Plugin unavailable
     pluginUnavailableBody: This processing's plugin has been removed or its access revoked. You can no longer edit or run this processing, but you can still view its run history and delete it.
+    pluginDeprecatedTitle: Deprecated plugin
+    pluginDeprecatedBody: This processing still runs and can still be edited, but no new processing can be created from its plugin. Plan to move to another plugin.
     configSchemaFetchError: Failed to load the plugin's configuration schema
 
   fr:
@@ -390,6 +401,8 @@ const timezoneLabel = (timeZone?: string) => {
     pluginTitle: 'Plugin {title}'
     pluginUnavailableTitle: Plugin indisponible
     pluginUnavailableBody: Le plugin de ce traitement a été supprimé ou son accès retiré. Vous ne pouvez plus modifier ni exécuter ce traitement, mais vous pouvez consulter son historique et le supprimer.
+    pluginDeprecatedTitle: Plugin déprécié
+    pluginDeprecatedBody: Ce traitement fonctionne toujours et reste modifiable, mais son plugin ne permet plus de créer de nouveau traitement. Prévoyez de passer à un autre plugin.
     configSchemaFetchError: Échec du chargement du schéma de configuration du plugin
 
 </i18n>
